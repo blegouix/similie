@@ -10,6 +10,18 @@
 #include <similie/multidomains/laplacian.hpp>
 
 namespace {
+template <
+        sil::exterior::CellComplex Complex,
+        class Source,
+        class Target,
+        class Metric,
+        class Position,
+        class Element>
+using CachedHodgeStar = sil::exterior::StagedOperator<
+        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
+}
+
+namespace {
 namespace md = sil::multidomains;
 namespace solvers = similie::solvers;
 using sil::tensor::BoundarySide;
@@ -543,13 +555,12 @@ void check_2d(
     Kokkos::deep_copy(input, input_host);
     apply_matrix(system.matrix, input, applied);
     auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
-    auto staged = sil::exterior::
-            make_laplacian<Metric, Direction, Scalar, sil::exterior::StagedHodgeStar>(
-                    Kokkos::DefaultExecutionSpace {},
-                    sil::tensor::Tensor(output),
-                    sil::tensor::Tensor(device_potential),
-                    sil::tensor::Tensor(metric),
-                    sil::tensor::Tensor(device_position));
+    auto staged = sil::exterior::make_laplacian<Metric, Direction, Scalar, CachedHodgeStar>(
+            Kokkos::DefaultExecutionSpace {},
+            sil::tensor::Tensor(output),
+            sil::tensor::Tensor(device_potential),
+            sil::tensor::Tensor(metric),
+            sil::tensor::Tensor(device_position));
     staged(sil::tensor::Tensor(output),
            sil::tensor::Tensor(device_potential),
            sil::tensor::NaturalScalarExtrapolationRule {},

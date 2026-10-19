@@ -170,6 +170,10 @@ jobs:
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build_omp" \
               -S .
+            # Young tableaux generate the dictionary at runtime; tensor consumers
+            # must compile after those entries exist for their #embed directive.
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp" unit_tests_young_tableau
+            "${CACHE_ROOT}/build_omp/tests/young_tableau/unit_tests_young_tableau"
             make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp"
           '
     - name: Package OpenMP build workspace

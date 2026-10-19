@@ -3,7 +3,7 @@
 // AI-GENERATED
 
 #pragma once
-#include "electrodynamics.hpp"
+#include <similie/physics/electrodynamics/electrodynamics.hpp>
 
 namespace similie::physics::electrodynamics {
 /** Electric-only conduction: j=E/eta, J=charge*u+j, Q=E.E/eta>=0.

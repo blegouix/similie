@@ -3,7 +3,7 @@
 // AI-GENERATED
 
 #pragma once
-#include "magnetodynamics.hpp"
+#include <similie/physics/magnetodynamics/magnetodynamics.hpp>
 
 namespace similie::physics::magnetodynamics {
 /** Dissipative Ohm-law extension of the Hamiltonian magnetic sector.

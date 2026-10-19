@@ -82,25 +82,21 @@ int main(int argc, char** argv)
                 });
         Exec().fence();
     } else if (reduce) {
-        sil::exterior::StagedReduction<
+        sil::exterior::StagedOperator<sil::exterior::Reduction<
                 Indices,
-                Field<One>,
-                Field<One>,
                 Field<PositionIndex>,
-                Exec,
+                typename Field<One>::non_indices_domain_t::discrete_element_type,
                 sil::exterior::CellComplex::Primal,
-                sil::tensor::TensorDiagonalIndex>
+                sil::tensor::TensorDiagonalIndex>>
                 cached(Exec(), position, domain());
         Exec().fence();
     } else {
-        sil::exterior::StagedReconstruction<
+        sil::exterior::StagedOperator<sil::exterior::Reconstruction<
                 Indices,
-                Field<One>,
-                Field<One>,
                 Field<PositionIndex>,
-                Exec,
+                typename Field<One>::non_indices_domain_t::discrete_element_type,
                 sil::exterior::CellComplex::Primal,
-                sil::tensor::TensorDiagonalIndex>
+                sil::tensor::TensorDiagonalIndex>>
                 cached(Exec(), position, domain());
         Exec().fence();
     }

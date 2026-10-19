@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // AI-GENERATED
 
+#pragma once
+
 #include <similie/exterior/continuous_hodge_star/levi_civita_continuous_hodge_star.hpp>
-#include <similie/exterior/discrete_hodge_star/staged_discrete_hodge_star.hpp>
 #include <similie/exterior/discrete_hodge_star/weighted_levi_civita_discrete_hodge_star.hpp>
 #include <similie/exterior/exterior.hpp>
-#include <similie/exterior/laplacian/staged_laplacian.hpp>
 
 #include "laplacian_modes.hpp"
 
@@ -46,8 +46,7 @@ struct HodgePolicies
     // Weighted discrete Hodge modes are orthogonal to the reduction,
     // reconstruction, and continuous Hodge choices. Keep their benchmark
     // composition aligned with the optimized mode (31).
-    static constexpr int coefficient_mode
-            = Mode == 34 || Mode == 35 ? 31 / 2 : Mode / 2;
+    static constexpr int coefficient_mode = Mode == 34 || Mode == 35 ? 31 / 2 : Mode / 2;
     static constexpr int reduction_mode = coefficient_mode % 4;
     static constexpr int reconstruction_mode = coefficient_mode / 4;
 
@@ -107,23 +106,24 @@ struct HodgePolicies
                     Element>,
             std::conditional_t<
                     Mode == 35,
-                    sil::exterior::StagedWeightedLeviCivitaDiscreteHodgeStar<
-                            Complex,
-                            Source,
-                            Target,
-                            Metric,
-                            Position,
-                            Element>,
-                    std::conditional_t<
-                            Mode == 32,
-                            sil::exterior::StagedHodgeStar<
+                    sil::exterior::StagedOperator<
+                            sil::exterior::WeightedLeviCivitaDiscreteHodgeStar<
                                     Complex,
                                     Source,
                                     Target,
                                     Metric,
                                     Position,
-                                    Element>,
-                            sil::exterior::ComposedDiscreteHodgeStar<
+                                    Element>>,
+                    std::conditional_t<
+                            Mode == 32,
+                            sil::exterior::StagedOperator<sil::exterior::DiscreteHodgeStar<
+                                    Complex,
+                                    Source,
+                                    Target,
+                                    Metric,
+                                    Position,
+                                    Element>>,
+                            sil::exterior::DiscreteHodgeStar<
                                     Complex,
                                     Source,
                                     Target,
@@ -143,14 +143,14 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
             = std::conditional_t<Form::rank() == 0, Vector, sil::tensor::Covariant<CurlDirection>>;
     using Operation = std::conditional_t<
             Mode == 33,
-            sil::exterior::StagedLaplacian<
+            sil::exterior::StagedOperator<sil::exterior::Laplacian<
                     MetricIndex,
                     DirectionIndex,
                     Form,
                     Tensor,
                     MetricTensor,
                     PositionTensor,
-                    Kokkos::DefaultExecutionSpace>,
+                    Kokkos::DefaultExecutionSpace>>,
             sil::exterior::Laplacian<
                     MetricIndex,
                     DirectionIndex,
@@ -210,14 +210,4 @@ std::unique_ptr<LaplacianOperator<Tensor>> make_laplacian_mode(
     return std::make_unique<SelectedLaplacian<Mode, Tensor>>(output, input, metric, position);
 }
 
-template std::unique_ptr<LaplacianOperator<ScalarTensor>> make_laplacian_mode<TGV_LAPLACIAN_MODE>(
-        ScalarTensor const&,
-        ScalarTensor const&,
-        MetricTensor const&,
-        PositionTensor const&);
-template std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_laplacian_mode<TGV_LAPLACIAN_MODE>(
-        TwoFormTensor const&,
-        TwoFormTensor const&,
-        MetricTensor const&,
-        PositionTensor const&);
 } // namespace taylor_green_vortex::detail

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // AI-GENERATED
 
-#include "laplacian_modes.hpp"
+#include "laplacian_mode.hpp"
 
 namespace taylor_green_vortex {
 namespace {

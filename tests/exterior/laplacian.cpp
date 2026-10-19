@@ -14,6 +14,18 @@
 
 #include "exterior.hpp"
 
+namespace {
+template <
+        sil::exterior::CellComplex Complex,
+        class Source,
+        class Target,
+        class Metric,
+        class Position,
+        class Element>
+using CachedHodgeStar = sil::exterior::StagedOperator<
+        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
+}
+
 template <class... CDim>
 using MetricIndex = sil::tensor::TensorIdentityIndex<
         sil::tensor::Covariant<sil::tensor::MetricIndex1<CDim...>>,
@@ -695,16 +707,13 @@ TEST(Laplacian, StagedHodge2D1Form)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
-    auto staged_laplacian = sil::exterior::make_laplacian<
-            MetricIndex<X, Y>,
-            InterestIndex,
-            InterestIndex,
-            sil::exterior::StagedHodgeStar>(
-            Kokkos::DefaultHostExecutionSpace(),
-            laplacian,
-            potential,
-            metric,
-            position);
+    auto staged_laplacian = sil::exterior::
+            make_laplacian<MetricIndex<X, Y>, InterestIndex, InterestIndex, CachedHodgeStar>(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    laplacian,
+                    potential,
+                    metric,
+                    position);
     staged_laplacian(laplacian, potential);
 
     ddc::host_for_each(

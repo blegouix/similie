@@ -3,7 +3,7 @@
 // AI-GENERATED
 
 #pragma once
-#include "electromagnetism.hpp"
+#include <similie/physics/electromagnetism/electromagnetism.hpp>
 
 namespace similie::physics::electromagnetism {
 /** Full Maxwell Ohm law: j=(E+u cross B)/eta, J=charge*u+j.
@@ -55,7 +55,7 @@ public:
     }
     KOKKOS_FUNCTION double charge_relaxation_rate() const
     {
-        return 1 / (resistivity * get<0>().permittivity);
+        return 1 / (resistivity * permittivity);
     }
 };
 

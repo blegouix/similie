@@ -98,7 +98,21 @@ def generate(output):
     output.write_text(text)
 
 
+def generate_model(output):
+    path = Path(__file__).resolve().parents[1] / "generate_cpp_field_model.py"
+    spec = importlib.util.spec_from_file_location("similie_field_model_generator", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.generate_field_model(
+        Magnetodynamics(), Path(__file__).with_suffix(".hpp.in"), output
+    )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    generate(parser.parse_args().output)
+    parser.add_argument("--model-output", type=Path)
+    arguments = parser.parse_args()
+    generate(arguments.output)
+    if arguments.model_output:
+        generate_model(arguments.model_output)

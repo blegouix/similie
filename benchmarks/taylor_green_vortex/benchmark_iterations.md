@@ -50,7 +50,7 @@ For the two complete HD reference campaigns, `--reference` instead runs the
 same time-step operation until exactly t=10, with solver performance recorded
 in JSON. This mode is restricted to HD. `--no-snapshots` suppresses field and
 coordinate output for short performance runs while retaining HDF5 monitors.
-See the [CI campaign](ci.md) for the physics matrix and reference mesh sizes.
+See the [benchmark documentation](../../docs/taylor_green_vortex.md) for the physical models.
 
 Post-processing accepts these shorter and longer trajectories. It checks that
 the final snapshot matches the final monitored time. Spectra and the vorticity

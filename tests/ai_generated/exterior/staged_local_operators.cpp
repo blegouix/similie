@@ -7,6 +7,12 @@
 #include "local_staging_fixture.hpp"
 
 namespace {
+template <class Source, class Target, class Metric, class Element>
+using CachedContinuousHodgeStar = sil::exterior::StagedOperator<
+        sil::exterior::ContinuousHodgeStar<Source, Target, Metric, Element>>;
+}
+
+namespace {
 using namespace local_staging_test;
 
 template <class Form>
@@ -35,23 +41,19 @@ void check_local(bool curved)
             Reduction<Indices, Field<PositionIndex>, Domain::discrete_element_type>;
     using Reconstruction = sil::exterior::
             Reconstruction<Indices, Field<PositionIndex>, Domain::discrete_element_type>;
-    sil::exterior::StagedReduction<
+    sil::exterior::StagedOperator<sil::exterior::Reduction<
             Indices,
-            Field<Form>,
-            Field<Form>,
             Field<PositionIndex>,
-            Exec,
+            typename Field<Form>::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
-            Coefficients>
+            Coefficients>>
             reduction(Exec(), cached, input, position);
-    sil::exterior::StagedReconstruction<
+    sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             Indices,
-            Field<Form>,
-            Field<Form>,
             Field<PositionIndex>,
-            Exec,
+            typename Field<Form>::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
-            Coefficients>
+            Coefficients>>
             reconstruction(Exec(), cached, input, position);
     Domain const cached_domain = domain();
     Kokkos::View<double*, Memory> coefficient_errors("staged_coefficient_errors", domain().size());
@@ -317,11 +319,11 @@ void check_continuous_and_composed()
             TargetIndices,
             Field<SymmetricMetric>,
             Domain::discrete_element_type>;
-    sil::exterior::StagedContinuousHodgeStar<
+    sil::exterior::StagedOperator<sil::exterior::ContinuousHodgeStar<
             SourceIndices,
             TargetIndices,
             Field<SymmetricMetric>,
-            Domain::discrete_element_type>
+            Domain::discrete_element_type>>
             continuous(Exec(), metric);
     ddc::parallel_for_each(
             Exec(),
@@ -339,7 +341,7 @@ void check_continuous_and_composed()
             Field<SymmetricMetric>,
             Field<PositionIndex>,
             Domain::discrete_element_type>;
-    sil::exterior::ComposedDiscreteHodgeStar<
+    sil::exterior::DiscreteHodgeStar<
             sil::exterior::CellComplex::Primal,
             SourceIndices,
             TargetIndices,
@@ -348,14 +350,13 @@ void check_continuous_and_composed()
             Domain::discrete_element_type,
             CachedReconstruction,
             CachedReduction,
-            sil::exterior::StagedContinuousHodgeStar>
+            CachedContinuousHodgeStar>
             composed(Exec(), metric, position);
     ddc::parallel_for_each(
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                DirectDiscrete::
-                operator()(reference[element], input[element], metric, position, element);
+                DirectDiscrete {}(reference[element], input[element], metric, position, element);
                 composed(result[element], input[element], metric, position, element);
             });
     expect_equal(result, reference);
@@ -507,12 +508,12 @@ void check_batched_reconstruction()
             Field<PositionIndex>,
             BatchedDomain::discrete_element_type>;
     static_assert(std::is_same_v<
-                  sil::exterior::StagedReconstruction<
+                  sil::exterior::StagedOperator<sil::exterior::Reconstruction<
                           ddc::TypeSeq<One>,
-                          BatchedField,
-                          BatchedField,
                           Field<PositionIndex>,
-                          Exec>,
+                          typename BatchedField::non_indices_domain_t::discrete_element_type,
+                          sil::exterior::CellComplex::Primal,
+                          sil::tensor::TensorFullIndex>>,
                   sil::exterior::StagedOperator<Operator>>);
     BatchedDomain const batched_domain(
             domain(),

@@ -25,7 +25,7 @@ void check_weighted_hodge()
             Field<MetricIndex>,
             Field<PositionIndex>,
             Domain::discrete_element_type>;
-    using Reference = sil::exterior::ComposedDiscreteHodgeStar<
+    using Reference = sil::exterior::DiscreteHodgeStar<
             Complex,
             SourceIndices,
             TargetIndices,

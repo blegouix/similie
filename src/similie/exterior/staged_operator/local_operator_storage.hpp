@@ -129,7 +129,7 @@ struct OperatorStencilValue<Operator>
     template <class Element, class... Geometry>
     KOKKOS_FUNCTION auto evaluate(Element element, Geometry const&... geometry) const
     {
-        return Operator::value(geometry..., element);
+        return Operator {}.value(geometry..., element);
     }
 };
 
@@ -207,7 +207,7 @@ public:
 
     template <class Geometry>
         requires requires(Geometry const& geometry, Element element) {
-            Operator::value(geometry, element);
+            Operator {}.value(geometry, element);
         }
     static LocalOperatorStorage build(Exec const& exec, Geometry const& geometry)
     {
@@ -216,7 +216,7 @@ public:
 
     template <class Geometry1, class Geometry2>
         requires requires(Geometry1 const& first, Geometry2 const& second, Element element) {
-            Operator::value(first, second, element);
+            Operator {}.value(first, second, element);
         }
     static LocalOperatorStorage build(
             Exec const& exec,
@@ -228,7 +228,7 @@ public:
 
     template <class Geometry>
         requires requires(Geometry const& geometry, Element element) {
-            Operator::value(geometry, element);
+            Operator {}.value(geometry, element);
         }
     static LocalOperatorStorage build(
             Exec const& exec,
@@ -240,7 +240,7 @@ public:
 
     template <class Geometry1, class Geometry2>
         requires requires(Geometry1 const& first, Geometry2 const& second, Element element) {
-            Operator::value(first, second, element);
+            Operator {}.value(first, second, element);
         }
     static LocalOperatorStorage build(
             Exec const& exec,
@@ -259,7 +259,7 @@ public:
                 sizeof...(Geometry) > 0
                 && requires(
                         Geometry const&... geometry,
-                        Element element) { Operator::value(geometry..., element); })
+                        Element element) { Operator {}.value(geometry..., element); })
     static LocalOperatorStorage build(
             Exec const& exec,
             Output const& output,
@@ -409,7 +409,7 @@ public:
     KOKKOS_FUNCTION void apply_pointwise(Output const& output, Input const& input, Element element)
             const
     {
-        Operator::operator()(output, input, m_geometry, element);
+        Operator {}(output, input, m_geometry, element);
     }
 
     template <class Output, class Input>
@@ -440,13 +440,13 @@ public:
 
     KOKKOS_FUNCTION auto value(Geometry, Element element) const
     {
-        return Operator::value(m_geometry, element);
+        return Operator {}.value(m_geometry, element);
     }
 
     template <class NaturalElement>
     KOKKOS_FUNCTION double value(Geometry, Element element, NaturalElement natural) const
     {
-        return Operator::value(m_geometry, element, natural);
+        return Operator {}.value(m_geometry, element, natural);
     }
 };
 

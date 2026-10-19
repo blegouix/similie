@@ -9,6 +9,18 @@
 #include "exterior.hpp"
 
 namespace {
+template <
+        sil::exterior::CellComplex Complex,
+        class Source,
+        class Target,
+        class Metric,
+        class Position,
+        class Element>
+using CachedHodgeStar = sil::exterior::StagedOperator<
+        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
+}
+
+namespace {
 struct X
 {
 };
@@ -94,13 +106,13 @@ void check_hodge(
             = sil::exterior::codifferential_hodge_output_indices_t<3 - Form::rank(), OneForm>;
     using Target = sil::misc::
             convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, TargetIndices>;
-    sil::exterior::StagedHodgeStar<
+    sil::exterior::StagedOperator<sil::exterior::DiscreteHodgeStar<
             Complex,
             SourceIndices,
             TargetIndices,
             Field<MetricIndex>,
             Field<PositionIndex>,
-            SpatialDomain::discrete_element_type>
+            SpatialDomain::discrete_element_type>>
             staged(Exec(), metric, position);
     using Direct = sil::exterior::DiscreteHodgeStar<
             Complex,
@@ -121,15 +133,14 @@ void check_hodge(
             Exec(),
             input.non_indices_domain(),
             KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
-                Direct::
-                operator()(direct_output[element], input[element], metric, position, element);
+                Direct {}(direct_output[element], input[element], metric, position, element);
                 sil::tensor::tensor_accessor_for_domain_t<
                         sil::exterior::hodge_star_domain_t<SourceIndices, TargetIndices>> const
                         accessor;
                 double error = 0.0;
                 ddc::device_for_each(accessor.domain(), [&](auto component) {
                     auto const natural = accessor.canonical_natural_element(component);
-                    double const reference = Direct::value(metric, position, element, natural);
+                    double const reference = Direct {}.value(metric, position, element, natural);
                     double const difference
                             = Kokkos::abs(
                                       staged.value(metric, position, element, natural) - reference)
@@ -230,14 +241,14 @@ void compare(bool curved, Primal const& primal, Dual const& dual, std::size_t si
 {
     using Memory = Kokkos::DefaultExecutionSpace::memory_space;
     using Exec = Kokkos::DefaultExecutionSpace;
-    using Operator = sil::exterior::StagedLaplacian<
+    using Operator = sil::exterior::StagedOperator<sil::exterior::Laplacian<
             MetricIndex,
             OneForm,
             Form,
             Field<Form>,
             Field<MetricIndex>,
             Field<PositionIndex>,
-            Exec>;
+            Exec>>;
     static_assert(sil::exterior::StagedOperatorConcept<Operator, Field<Form>>);
     SpatialDomain const
             domain(ddc::DiscreteElement<GridX, GridY, GridZ>(7, 7, 7),
@@ -290,7 +301,7 @@ void compare(bool curved, Primal const& primal, Dual const& dual, std::size_t si
             Field<MetricIndex>,
             Field<PositionIndex>,
             Exec,
-            sil::exterior::StagedHodgeStar>
+            CachedHodgeStar>
             reference(Exec(), expected, input, metric, position);
     Operator operation(Exec(), actual, input, metric, position, primal, dual);
     sil::exterior::Laplacian<

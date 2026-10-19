@@ -216,17 +216,10 @@ TEST(DiscreteHodgeStar, Metric3D)
             std::array<std::size_t, 2> const
                     ids {natural.template uid<MuLow>(), natural.template uid<NuLow>()};
             std::array<std::size_t, 1> const normal = sil::exterior::detail::complement_ids<3>(ids);
-            std::array<double, 9> const pairing = sil::exterior::DiscreteHodgeStar<
-                    sil::exterior::CellComplex::Primal,
-                    ddc::TypeSeq<RhoUp>,
-                    ddc::TypeSeq<MuLow, NuLow>,
-                    decltype(metric),
-                    decltype(position),
-                    ddc::DiscreteElement<DDimX, DDimY, DDimZ>>::
-                    one_form_pairing(
-                            metric,
-                            position,
-                            ddc::DiscreteElement<DDimX, DDimY, DDimZ>(elem));
+            std::array<double, 9> const pairing = sil::exterior::detail::one_form_pairing(
+                    metric,
+                    position,
+                    ddc::DiscreteElement<DDimX, DDimY, DDimZ>(elem));
             EXPECT_NEAR(
                     hodge_star2.mem(elem),
                     sil::exterior::detail::permutation_sign<3>(normal, ids)

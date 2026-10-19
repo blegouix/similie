@@ -11,6 +11,18 @@
 
 #include <similie/similie.hpp>
 
+namespace {
+template <
+        sil::exterior::CellComplex Complex,
+        class Source,
+        class Target,
+        class Metric,
+        class Position,
+        class Element>
+using CachedHodgeStar = sil::exterior::StagedOperator<
+        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
+}
+
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
 metadata:
@@ -210,13 +222,12 @@ int main(int argc, char** argv)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
-    auto laplacian = sil::exterior::
-            make_laplacian<MetricIndex, NuLow, DummyIndex, sil::exterior::StagedHodgeStar>(
-                    Kokkos::DefaultExecutionSpace(),
-                    laplacian_tensor,
-                    potential,
-                    metric,
-                    position);
+    auto laplacian = sil::exterior::make_laplacian<MetricIndex, NuLow, DummyIndex, CachedHodgeStar>(
+            Kokkos::DefaultExecutionSpace(),
+            laplacian_tensor,
+            potential,
+            metric,
+            position);
     // A single rule is broadcast to both boundaries of each grid dimension.
     laplacian(
             laplacian_tensor,

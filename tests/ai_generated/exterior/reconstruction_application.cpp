@@ -68,25 +68,33 @@ void check_reconstruction(bool singular)
 {
     using MemorySpace = Kokkos::DefaultExecutionSpace::memory_space;
     static_assert(sil::exterior::StagedOperatorConcept<
-                  sil::exterior::StagedLaplacian<
+                  sil::exterior::StagedOperator<sil::exterior::Laplacian<
                           MetricIndex,
                           OneForm,
                           Form,
                           Field<Form>,
                           Field<MetricIndex>,
                           Field<PositionIndex>,
-                          Kokkos::DefaultExecutionSpace>,
+                          Kokkos::DefaultExecutionSpace>>,
                   Field<Form>>);
     if constexpr (Form::rank() > 0)
         static_assert(sil::exterior::StagedOperatorConcept<
-                      sil::exterior::StagedCodifferential<
-                              MetricIndex,
-                              OneForm,
-                              Form,
-                              Field<Form>,
-                              Field<MetricIndex>,
-                              Field<PositionIndex>,
-                              Kokkos::DefaultExecutionSpace>,
+                      sil::exterior::StagedOperator<
+                              sil::exterior::Codifferential<
+                                      MetricIndex,
+                                      OneForm,
+                                      Form,
+                                      Field<Form>,
+                                      Field<MetricIndex>,
+                                      Field<PositionIndex>>,
+                              typename sil::exterior::Codifferential<
+                                      MetricIndex,
+                                      OneForm,
+                                      Form,
+                                      Field<Form>,
+                                      Field<MetricIndex>,
+                                      Field<PositionIndex>>::staged_storage_type::
+                                      template rebind<Kokkos::DefaultExecutionSpace>>,
                       sil::exterior::codifferential_tensor_t<OneForm, Form, Field<Form>>,
                       Field<Form>>);
     SpatialDomain const geometry_domain(
@@ -139,9 +147,11 @@ void check_reconstruction(bool singular)
                         operator()(reconstructed[elem], reduced[elem], position, elem);
             });
     sil::tensor::Tensor staged_result(staged_alloc);
-    auto staged = sil::exterior::make_staged_reconstruction<
+    auto staged = sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             Indices,
-            Complex>(Kokkos::DefaultExecutionSpace(), staged_result, reduced, position);
+            decltype(position),
+            SpatialDomain::discrete_element_type,
+            Complex>>(Kokkos::DefaultExecutionSpace(), staged_result, reduced, position);
     static_assert(sil::exterior::StagedOperatorConcept<
                   decltype(staged),
                   decltype(staged_result),
@@ -207,8 +217,10 @@ void check_reconstruction(bool singular)
                 reduced.mem(elem) *= 1.75;
             });
     staged(staged_result, reduced);
-    auto const updated = Kokkos::
-            create_mirror_view_and_copy(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());
+    // Keep a snapshot even when the execution space already uses host memory.
+    auto const updated
+            = Kokkos::create_mirror(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());
+    Kokkos::deep_copy(updated, staged_alloc.allocation_kokkos_view());
     for (std::size_t i = 0; i < actual.size(); ++i)
         EXPECT_NEAR(updated.data()[i], 1.75 * actual.data()[i], 1.e-12);
 
@@ -225,9 +237,11 @@ void check_reconstruction(bool singular)
             create_mirror_view_and_copy(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());
     for (std::size_t i = 0; i < actual.size(); ++i)
         EXPECT_NEAR(unchanged.data()[i], updated.data()[i], 1.e-13);
-    auto refreshed = sil::exterior::make_staged_reconstruction<
+    auto refreshed = sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             Indices,
-            Complex>(Kokkos::DefaultExecutionSpace(), staged_result, reduced, position);
+            decltype(position),
+            SpatialDomain::discrete_element_type,
+            Complex>>(Kokkos::DefaultExecutionSpace(), staged_result, reduced, position);
     refreshed(staged_result, reduced);
     auto const refreshed_host = Kokkos::
             create_mirror_view_and_copy(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());

@@ -3,7 +3,215 @@
 
 #pragma once
 
-#include <similie/exterior/discrete_hodge_star/discrete_hodge_star.hpp>
+#include <array>
+#include <stdexcept>
+
+#include <ddc/ddc.hpp>
+
+#include <similie/exterior/coboundary/coboundary.hpp>
+#include <similie/exterior/concepts.hpp>
+#include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
+#include <similie/exterior/stencil.hpp>
+#include <similie/exterior/volume.hpp>
+#include <similie/misc/factorial.hpp>
+#include <similie/misc/macros.hpp>
+#include <similie/misc/small_matrix.hpp>
+#include <similie/misc/specialization.hpp>
+#include <similie/misc/type_seq_conversion.hpp>
+#include <similie/tensor/metric.hpp>
+#include <similie/tensor/tensor_indices/antisymmetric_tensor.hpp>
+#include <similie/tensor/tensor_indices/character.hpp>
+#include <similie/tensor/tensor_indices/full_tensor.hpp>
+
+namespace sil {
+
+namespace exterior {
+
+template <misc::Specialization<ddc::TypeSeq> Indices1, misc::Specialization<ddc::TypeSeq> Indices2>
+using hodge_star_domain_t
+        = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
+                ddc::TypeSeq<misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>>,
+                std::conditional_t<
+                        (ddc::type_seq_size_v<Indices2> == 0),
+                        ddc::TypeSeq<>,
+                        ddc::TypeSeq<misc::convert_type_seq_to_t<
+                                tensor::TensorAntisymmetricIndex,
+                                Indices2>>>>>;
+
+template <
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
+        class MetricType,
+        class BatchElem>
+struct ContinuousHodgeStar;
+
+
+template <
+        CellComplex Complex,
+        class Indices1,
+        class Indices2,
+        class MetricType,
+        class PositionType,
+        class BatchElem,
+        template <class, class, class, CellComplex> class ReconstructionPolicy = Reconstruction,
+        template <class, class, class, CellComplex> class ReductionPolicy = Reduction,
+        template <class, class, class, class> class HodgePolicy = ContinuousHodgeStar>
+struct DiscreteHodgeStar;
+
+namespace detail {
+/** Pair primal one-cochains using the full cell metric and orientation.
+     * \important This operator and documentation is fully AI-generated.
+     */
+template <class MetricType, class PositionType, class BatchElem>
+KOKKOS_FUNCTION auto one_form_pairing(
+        MetricType const& metric,
+        PositionType const& position,
+        BatchElem elem)
+{
+    using PositionIndex = ddc::
+            type_seq_element_t<0, ddc::to_type_seq_t<typename PositionType::indices_domain_t>>;
+    using MetricIndex
+            = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
+    constexpr std::size_t N = PositionIndex::size();
+    std::array<double, N * N> jacobian {}, gram {}, inverse {}, workspace {};
+    for (std::size_t axis = 0; axis < N; ++axis) {
+        std::array<double, N> const edge = detail::edge_vector<PositionIndex>(position, elem, axis);
+        for (std::size_t physical = 0; physical < N; ++physical)
+            jacobian[physical * N + axis] = edge[physical];
+    }
+    for (std::size_t i = 0; i < N; ++i)
+        for (std::size_t j = 0; j < N; ++j)
+            for (std::size_t a = 0; a < N; ++a)
+                for (std::size_t b = 0; b < N; ++b)
+                    gram[i * N + j] += jacobian[a * N + i] * jacobian[b * N + j]
+                                       * metric.get(metric.access_element(
+                                               elem,
+                                               ddc::DiscreteElement<
+                                                       tensor::metric_index_1<MetricIndex>,
+                                                       tensor::metric_index_2<MetricIndex>>(a, b)));
+    auto gram_view
+            = misc::math::matrix_view<double, typename MetricType::memory_space>(gram.data(), N, N);
+    auto inverse_view = misc::math::
+            matrix_view<double, typename MetricType::memory_space>(inverse.data(), N, N);
+    if (!misc::math::
+                invert(inverse_view,
+                       gram_view,
+                       misc::math::vector_view<
+                               double,
+                               typename MetricType::memory_space>(workspace.data(), N * N)))
+        return inverse;
+    double const orientation = detail::reduction_determinant<N>(jacobian);
+    double const volume = (orientation < 0.0 ? -1.0 : 1.0)
+                          * Kokkos::sqrt(Kokkos::abs(detail::reduction_determinant<N>(gram)));
+    for (double& coefficient : inverse)
+        coefficient *= volume;
+    return inverse;
+}
+
+
+
+template <std::size_t N, std::size_t M>
+KOKKOS_FUNCTION bool has_unique_ids(std::array<std::size_t, M> const& ids)
+{
+    if constexpr (M > 0) {
+        for (std::size_t i = 0; i < M; ++i) {
+            if (ids[i] >= N) {
+                return false;
+            }
+            for (std::size_t j = i + 1; j < M; ++j) {
+                if (ids[i] == ids[j]) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+template <std::size_t N, std::size_t M1, std::size_t M2>
+KOKKOS_FUNCTION int permutation_sign(
+        std::array<std::size_t, M1> const& source_ids,
+        std::array<std::size_t, M2> const& target_ids)
+{
+    std::array<std::size_t, N> permutation {};
+    for (std::size_t i = 0; i < M1; ++i) {
+        permutation[i] = source_ids[i];
+    }
+    if constexpr (M2 > 0) {
+        for (std::size_t i = 0; i < M2; ++i) {
+            permutation[M1 + i] = target_ids[i];
+        }
+    }
+
+    bool odd = false;
+    for (std::size_t i = 0; i < N; ++i) {
+        for (std::size_t j = i + 1; j < N; ++j) {
+            odd = (permutation[i] > permutation[j]) != odd;
+        }
+    }
+    return odd ? -1 : 1;
+}
+
+template <std::size_t N, std::size_t M>
+KOKKOS_FUNCTION std::array<std::size_t, N - M> complement_ids(std::array<std::size_t, M> const& ids)
+{
+    std::array<std::size_t, N - M> complement {};
+    std::size_t complement_id = 0;
+    for (std::size_t i = 0; i < N; ++i) {
+        bool found = false;
+        for (std::size_t id : ids) {
+            found = found || (id == i);
+        }
+        if (!found) {
+            complement[complement_id++] = i;
+        }
+    }
+    return complement;
+}
+
+template <misc::Specialization<ddc::TypeSeq> Indices>
+struct HodgeStarTargetSize
+{
+    static constexpr std::size_t value
+            = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices>::mem_size();
+};
+
+template <>
+struct HodgeStarTargetSize<ddc::TypeSeq<>>
+{
+    static constexpr std::size_t value = 1;
+};
+
+
+template <
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class BatchElem>
+struct FillContinuousHodgeStarMem
+{
+    HodgeStarType m_hodge_star;
+    MetricType m_metric;
+    BatchElem m_elem;
+
+    template <class MemElem>
+    KOKKOS_FUNCTION void operator()(MemElem mem_elem) const
+    {
+        m_hodge_star.mem(typename HodgeStarType::discrete_element_type(m_elem, mem_elem))
+                = ContinuousHodgeStar<Indices1, Indices2, MetricType, BatchElem>::
+                        value(m_metric,
+                              m_elem,
+                              m_hodge_star.accessor().canonical_natural_element(mem_elem));
+    }
+};
+
+} // namespace detail
+
+
+} // namespace exterior
+} // namespace sil
+
 
 namespace sil {
 namespace exterior {
@@ -174,13 +382,14 @@ HodgeStarType fill_discrete_hodge_star(
             KOKKOS_LAMBDA(
                     typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
                 auto const stencil = DiscreteHodgeStar<
-                        Complex,
-                        Indices1,
-                        Indices2,
-                        MetricType,
-                        PositionType,
-                        typename HodgeStarType::non_indices_domain_t::discrete_element_type>::
-                        value(metric, position, elem);
+                                             Complex,
+                                             Indices1,
+                                             Indices2,
+                                             MetricType,
+                                             PositionType,
+                                             typename HodgeStarType::non_indices_domain_t::
+                                                     discrete_element_type> {}
+                                             .value(metric, position, elem);
                 ddc::device_for_each(hodge_star.accessor().domain(), [&](auto component) {
                     using Source = tensor::lower_t<reduction_index_t<Indices1>>;
                     using Target = reduction_index_t<Indices2>;
@@ -557,13 +766,8 @@ struct DualHodgeCochain
                     Kokkos::layout_right,
                     typename Position::memory_space>
                     local_position(positions);
-            std::array<double, N * N> const pairing = DiscreteHodgeStar<
-                    CellComplex::Primal,
-                    source_indices,
-                    dual_indices,
-                    decltype(metric),
-                    decltype(local_position),
-                    Element>::one_form_pairing(metric, local_position, cell);
+            std::array<double, N * N> const pairing
+                    = detail::one_form_pairing(metric, local_position, cell);
             using PositionIndex = ddc::
                     type_seq_element_t<0, ddc::to_type_seq_t<typename Position::indices_domain_t>>;
             std::array<double, N * edge_count * N> edges {};
@@ -689,7 +893,8 @@ struct DualHodgeCochain
                 ddc::TypeSeq<>,
                 decltype(metric),
                 decltype(local_position),
-                Element>::operator()(ScalarTensor(scalar), top, metric, local_position, elem);
+                Element> {}
+                .operator()(ScalarTensor(scalar), top, metric, local_position, elem);
         double const local_volume = SimplexVolume<
                 CellComplex::Primal,
                 Direction::size(),
@@ -784,4 +989,5 @@ auto make_dual_hodge_cochain(
 
 } // namespace sil::exterior
 
-#include <similie/exterior/discrete_hodge_star/staged_discrete_hodge_star.hpp>
+
+#include <similie/exterior/discrete_hodge_star/discrete_hodge_star.hpp>

@@ -5,6 +5,7 @@
 
 """Full Maxwell Hamiltonian and charged-fluid coupling from the two field sectors."""
 
+import argparse
 import importlib.util
 import sys
 from pathlib import Path
@@ -73,3 +74,16 @@ class ResistiveElectromagnetism(Electromagnetism):
         super().__init__()
         self.resistivity = symbols("eta", positive=True)
         self.conduction_current = self.rest_frame_electric_field / self.resistivity
+
+
+def generate_model(output):
+    module = _load("similie_field_model_generator", "generate_cpp_field_model.py")
+    module.generate_field_model(
+        Electromagnetism(), Path(__file__).with_suffix(".hpp.in"), output
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model-output", type=Path, required=True)
+    generate_model(parser.parse_args().model_output)

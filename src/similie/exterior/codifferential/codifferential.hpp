@@ -483,8 +483,8 @@ struct Codifferential<
                     source_hodge_output_indices,
                     MetricType,
                     PositionType,
-                    typename TensorType::non_indices_domain_t::discrete_element_type>::
-            operator()(dual_tensor, tensor[sampled_elem], metric, position, sampled_elem);
+                    typename TensorType::non_indices_domain_t::discrete_element_type> {}
+                    .operator()(dual_tensor, tensor[sampled_elem], metric, position, sampled_elem);
             return dual_tensor.mem(dual_elem);
         };
 
@@ -500,8 +500,8 @@ struct Codifferential<
                                     ddc::TypeSeq<TagToRemoveFromCochain>>,
                             MetricType,
                             PositionType,
-                            typename TensorType::non_indices_domain_t::discrete_element_type>::
-                    operator()(output, dual, metric, position, sample);
+                            typename TensorType::non_indices_domain_t::discrete_element_type> {}
+                            .operator()(output, dual, metric, position, sample);
                 },
                 chain,
                 lower_chain,
@@ -526,15 +526,21 @@ struct CodifferentialGeometry
             typename NonSpectatorDimension<Index, typename Tensor::non_indices_domain_t>::type;
     Metric metric;
     Position position;
-    StagedHodgeStar<CellComplex::Primal, SourceIndices, DualIndices, Metric, Position, Element>
+    StagedOperator<DiscreteHodgeStar<
+            CellComplex::Primal,
+            SourceIndices,
+            DualIndices,
+            Metric,
+            Position,
+            Element>>
             forward;
-    StagedHodgeStar<
+    StagedOperator<DiscreteHodgeStar<
             CellComplex::Primal,
             tensor::upper_t<InverseSourceIndices>,
             InverseTargetIndices,
             Metric,
             Position,
-            Element>
+            Element>>
             inverse;
     StencilChain<DualIndex::rank() + 1, ChainDomain, typename Tensor::memory_space> chain;
     StencilChain<DualIndex::rank(), ChainDomain, typename Tensor::memory_space> lower;
@@ -562,11 +568,12 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex TagToRemoveFromCochain,
         tensor::TensorIndex CochainTag,
+        class ExecSpace,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
-using StagedCodifferential = StagedOperator<
+        class Rules = tensor::ZeroExtrapolationRule>
+StagedOperator<
         Codifferential<
                 MetricIndex,
                 TagToRemoveFromCochain,
@@ -580,40 +587,7 @@ using StagedCodifferential = StagedOperator<
                 CochainTag,
                 TensorType,
                 MetricType,
-                PositionType>::staged_storage_type::template rebind<ExecSpace>>;
-
-static_assert(StagedOperatorConcept<
-              StagedCodifferential<
-                      detail::MetricIndexConcept,
-                      detail::DirectionConcept,
-                      detail::DirectionConcept,
-                      detail::FieldConcept<detail::DirectionConcept>,
-                      detail::FieldConcept<detail::MetricIndexConcept>,
-                      detail::FieldConcept<detail::PositionIndexConcept>,
-                      Kokkos::DefaultHostExecutionSpace>,
-              codifferential_tensor_t<
-                      detail::DirectionConcept,
-                      detail::DirectionConcept,
-                      detail::FieldConcept<detail::DirectionConcept>>,
-              detail::FieldConcept<detail::DirectionConcept>>);
-
-template <
-        tensor::TensorIndex MetricIndex,
-        tensor::TensorNatIndex TagToRemoveFromCochain,
-        tensor::TensorIndex CochainTag,
-        class ExecSpace,
-        misc::Specialization<tensor::Tensor> TensorType,
-        misc::Specialization<tensor::Tensor> MetricType,
-        misc::Specialization<tensor::Tensor> PositionType,
-        class Rules = tensor::ZeroExtrapolationRule>
-StagedCodifferential<
-        MetricIndex,
-        TagToRemoveFromCochain,
-        CochainTag,
-        TensorType,
-        MetricType,
-        PositionType,
-        ExecSpace>
+                PositionType>::staged_storage_type::template rebind<ExecSpace>>
 make_staged_codifferential(
         ExecSpace const& exec_space,
         TensorType const& tensor,
@@ -621,14 +595,22 @@ make_staged_codifferential(
         PositionType const& position,
         Rules const& rules = {})
 {
-    return StagedCodifferential<
-            MetricIndex,
-            TagToRemoveFromCochain,
-            CochainTag,
-            TensorType,
-            MetricType,
-            PositionType,
-            ExecSpace>(exec_space, tensor, metric, position, rules);
+    return StagedOperator<
+            Codifferential<
+                    MetricIndex,
+                    TagToRemoveFromCochain,
+                    CochainTag,
+                    TensorType,
+                    MetricType,
+                    PositionType>,
+            typename Codifferential<
+                    MetricIndex,
+                    TagToRemoveFromCochain,
+                    CochainTag,
+                    TensorType,
+                    MetricType,
+                    PositionType>::staged_storage_type::
+                    template rebind<ExecSpace>>(exec_space, tensor, metric, position, rules);
 }
 
 template <

@@ -32,22 +32,38 @@ using ThreeFormTensor = sil::tensor::Tensor<
 class VorticityDEC
 {
     StructuredGrid& m_grid;
-    using TwoCodifferential = sil::exterior::StagedCodifferential<
-            MetricIndex,
-            sil::tensor::Covariant<CurlDirection>,
-            TwoForm,
-            TwoFormTensor,
-            MetricTensor,
-            PositionTensor,
-            Kokkos::DefaultExecutionSpace>;
-    using OneCodifferential = sil::exterior::StagedCodifferential<
-            MetricIndex,
-            Vector,
-            Vector,
-            VectorTensor,
-            MetricTensor,
-            PositionTensor,
-            Kokkos::DefaultExecutionSpace>;
+    using TwoCodifferential = sil::exterior::StagedOperator<
+            sil::exterior::Codifferential<
+                    MetricIndex,
+                    sil::tensor::Covariant<CurlDirection>,
+                    TwoForm,
+                    TwoFormTensor,
+                    MetricTensor,
+                    PositionTensor>,
+            typename sil::exterior::Codifferential<
+                    MetricIndex,
+                    sil::tensor::Covariant<CurlDirection>,
+                    TwoForm,
+                    TwoFormTensor,
+                    MetricTensor,
+                    PositionTensor>::staged_storage_type::
+                    template rebind<Kokkos::DefaultExecutionSpace>>;
+    using OneCodifferential = sil::exterior::StagedOperator<
+            sil::exterior::Codifferential<
+                    MetricIndex,
+                    Vector,
+                    Vector,
+                    VectorTensor,
+                    MetricTensor,
+                    PositionTensor>,
+            typename sil::exterior::Codifferential<
+                    MetricIndex,
+                    Vector,
+                    Vector,
+                    VectorTensor,
+                    MetricTensor,
+                    PositionTensor>::staged_storage_type::
+                    template rebind<Kokkos::DefaultExecutionSpace>>;
     Field m_one, m_two, m_two_output, m_physical_one, m_physical_two, m_three, m_edges;
     std::unique_ptr<LaplacianOperator<TwoFormTensor>> m_laplacian;
     std::unique_ptr<TwoCodifferential> m_codifferential;

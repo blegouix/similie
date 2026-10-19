@@ -6,6 +6,8 @@
 
 #include <cstddef>
 
+#include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
+
 #include <Kokkos_Core.hpp>
 
 #include "concepts.hpp"
@@ -25,6 +27,11 @@ class CombinePhysics<>
 {
 public:
     static constexpr std::size_t size = 0;
+    static constexpr std::size_t N = 0;
+    static constexpr bool IS_LINEAR = true;
+    struct State
+    {
+    };
     CombinePhysics() = default;
 };
 
@@ -36,6 +43,13 @@ class CombinePhysics<First, Rest...>
 
 public:
     static constexpr std::size_t size = 1 + sizeof...(Rest);
+    static constexpr std::size_t N = First::N + CombinePhysics<Rest...>::N;
+    static constexpr bool IS_LINEAR = First::IS_LINEAR && CombinePhysics<Rest...>::IS_LINEAR;
+    struct State
+    {
+        typename First::State first;
+        typename CombinePhysics<Rest...>::State rest;
+    };
     KOKKOS_FUNCTION explicit CombinePhysics(First const& first, Rest const&... rest)
         : m_first(first)
         , m_rest(rest...)
@@ -60,4 +74,9 @@ public:
             return m_rest.template get<Index - 1>();
     }
 };
+static_assert(
+        PhysicsConcept<CombinePhysics<
+                scalar_field::ScalarFieldWithPowerCouplingHamiltonian<detail::GridConcept<int>>,
+                scalar_field::ScalarFieldWithPowerCouplingHamiltonian<detail::GridConcept<int>>>>);
+
 } // namespace similie::physics

@@ -5,23 +5,23 @@
 #pragma once
 
 #include <array>
+#include <cmath>
 #include <type_traits>
 
-#include <similie/physics/electrodynamics/electrodynamics_hamiltonian.hpp>
+#include <similie/physics/concepts.hpp>
 
 #include <Kokkos_Core.hpp>
 
 namespace similie::physics::electrodynamics {
-/** Electric-only Hamiltonian sector with advected charge, zero conductivity.
+/** Electric quasistatic sector with advected charge, zero conductivity.
  * H(D)=D.D/(2 epsilon), E=H_D=-grad(phi), -div(epsilon grad phi)=charge.
  * charge_t=-div J, J=charge*u. No magnetic induction or Maxwell-wave state.
+ * Magnetic induction is stationary and omitted in this zero-background model.
  * The caller reconstructs the potential with native exterior elliptic operators.
  * \important This operator and documentation is fully AI-generated.
  */
 class Electrodynamics
 {
-    ElectrodynamicsHamiltonian const m_hamiltonian;
-
 public:
     using Vector = std::array<double, 3>;
     static constexpr std::size_t N = 4;
@@ -33,8 +33,7 @@ public:
     };
     double const permittivity;
     KOKKOS_FUNCTION explicit Electrodynamics(double electric_permittivity)
-        : m_hamiltonian(electric_permittivity)
-        , permittivity(electric_permittivity)
+        : permittivity(electric_permittivity)
     {
         KOKKOS_ASSERT(permittivity > 0);
     }
@@ -47,18 +46,11 @@ public:
     }
     KOKKOS_FUNCTION double hamiltonian(Vector const& displacement) const
     {
-        ElectrodynamicsHamiltonian::State const state {{0.0}, displacement};
-        return m_hamiltonian.hamiltonian(state, 0);
+        return @energy@;
     }
     KOKKOS_FUNCTION Vector electric_field(Vector const& displacement) const
     {
-        ElectrodynamicsHamiltonian::State const state {{0.0}, displacement};
-        return {m_hamiltonian.template dhamiltonian_dmoments<
-                        std::integral_constant<std::size_t, 0>>(state, 0),
-                m_hamiltonian.template dhamiltonian_dmoments<
-                        std::integral_constant<std::size_t, 1>>(state, 0),
-                m_hamiltonian.template dhamiltonian_dmoments<
-                        std::integral_constant<std::size_t, 2>>(state, 0)};
+        return @electric_field@;
     }
     KOKKOS_FUNCTION Vector field_from_potential_gradient(Vector const& potential_gradient) const
     {

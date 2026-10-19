@@ -274,20 +274,5 @@ public:
     }
 };
 
-template <
-        CellComplex Complex,
-        class Indices1,
-        class Indices2,
-        class Metric,
-        class Position,
-        class Element>
-using StagedWeightedLeviCivitaDiscreteHodgeStar
-        = StagedOperator<WeightedLeviCivitaDiscreteHodgeStar<
-                Complex,
-                Indices1,
-                Indices2,
-                Metric,
-                Position,
-                Element>>;
 
 } // namespace sil::exterior

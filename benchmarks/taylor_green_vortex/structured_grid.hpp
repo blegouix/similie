@@ -28,50 +28,50 @@ namespace taylor_green_vortex {
  */
 class StructuredGrid
 {
-    using VectorCodifferential = sil::exterior::StagedCodifferential<
-            MetricIndex,
-            Vector,
-            Vector,
-            VectorTensor,
-            MetricTensor,
-            PositionTensor,
-            Kokkos::DefaultExecutionSpace>;
+    using VectorCodifferential = sil::exterior::StagedOperator<
+            sil::exterior::Codifferential<
+                    MetricIndex,
+                    Vector,
+                    Vector,
+                    VectorTensor,
+                    MetricTensor,
+                    PositionTensor>,
+            typename sil::exterior::Codifferential<
+                    MetricIndex,
+                    Vector,
+                    Vector,
+                    VectorTensor,
+                    MetricTensor,
+                    PositionTensor>::staged_storage_type::
+                    template rebind<Kokkos::DefaultExecutionSpace>>;
     template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
-    using OneReconstruction = sil::exterior::StagedReconstruction<
+    using OneReconstruction = sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             ddc::TypeSeq<Vector>,
-            VectorTensor,
-            VectorTensor,
             PositionTensor,
-            Kokkos::DefaultExecutionSpace,
+            typename VectorTensor::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
-            Coefficients>;
+            Coefficients>>;
     template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
-    using OneReduction = sil::exterior::StagedReduction<
+    using OneReduction = sil::exterior::StagedOperator<sil::exterior::Reduction<
             ddc::TypeSeq<Vector>,
-            VectorTensor,
-            VectorTensor,
             PositionTensor,
-            Kokkos::DefaultExecutionSpace,
+            typename VectorTensor::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
-            Coefficients>;
+            Coefficients>>;
     template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
-    using TwoReconstruction = sil::exterior::StagedReconstruction<
+    using TwoReconstruction = sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-            TwoFormTensor,
-            TwoFormTensor,
             PositionTensor,
-            Kokkos::DefaultExecutionSpace,
+            typename TwoFormTensor::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
-            Coefficients>;
+            Coefficients>>;
     template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
-    using TwoReduction = sil::exterior::StagedReduction<
+    using TwoReduction = sil::exterior::StagedOperator<sil::exterior::Reduction<
             ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-            TwoFormTensor,
-            TwoFormTensor,
             PositionTensor,
-            Kokkos::DefaultExecutionSpace,
+            typename TwoFormTensor::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
-            Coefficients>;
+            Coefficients>>;
     SpatialDomain m_domain;
     SpatialDomain m_geometry_domain;
     Field m_position, m_metric, m_oneform, m_pointwise, m_twoform, m_face_pointwise, m_scalar;
