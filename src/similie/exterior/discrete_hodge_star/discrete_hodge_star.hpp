@@ -8,24 +8,6 @@
 
 namespace sil::exterior {
 namespace detail {
-template <
-        class Indices,
-        class Position,
-        class Element,
-        CellComplex Complex,
-        template <class...> class Coefficients = tensor::TensorFullIndex>
-using CachedReconstruction
-        = StagedOperator<Reconstruction<Indices, Position, Element, Complex, Coefficients>>;
-
-template <
-        class Indices,
-        class Position,
-        class Element,
-        CellComplex Complex,
-        template <class...> class Coefficients = tensor::TensorFullIndex>
-using CachedReduction
-        = StagedOperator<Reduction<Indices, Position, Element, Complex, Coefficients>>;
-
 template <class Operator, class Exec, class Metric, class Position>
 Operator make_composed_operator(Exec const& exec, Metric const& metric, Position const& position)
 {

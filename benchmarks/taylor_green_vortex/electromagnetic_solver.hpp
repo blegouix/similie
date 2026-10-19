@@ -13,6 +13,7 @@
 #include <numbers>
 #include <stdexcept>
 
+#include <similie/physics/coupled_fluid_electromagnetism.hpp>
 #include <similie/physics/electrodynamics/resistive_electrodynamics.hpp>
 #include <similie/physics/electromagnetism/resistive_electromagnetism.hpp>
 #include <similie/physics/magnetodynamics/resistive_magnetodynamics.hpp>
@@ -33,55 +34,19 @@ struct ElectromagneticReference
     static constexpr double electric_resistivity = 10;
 };
 
-/** Matrix-free positive scalar Hodge Laplacian, with periodic constant gauge.
- * \important This operator and documentation is fully AI-generated.
- */
-class ElectricPoissonOperator
-{
-    StructuredGrid& m_grid;
-    Field m_input, m_output;
-
-public:
-    static constexpr bool IS_LINEAR = true, IS_SYMMETRIC = true;
-    explicit ElectricPoissonOperator(StructuredGrid& grid)
-        : m_grid(grid)
-        , m_input("electric_poisson_input", 1, grid.cells)
-        , m_output("electric_poisson_output", 1, grid.cells)
-    {
-    }
-    std::size_t size() const
-    {
-        return m_grid.cells;
-    }
-    template <class Input, class Output>
-    void apply(Kokkos::DefaultExecutionSpace exec, Input const& source, Output const& target) const
-    {
-        Field const input = m_input, output = m_output;
-        Kokkos::parallel_for(
-                "unpack_electric_poisson",
-                Kokkos::RangePolicy<>(exec, 0, m_grid.cells),
-                KOKKOS_LAMBDA(int i) { input(0, i) = source(i, 0); });
-        m_grid.laplacian(input, 0, output, 0);
-        Kokkos::parallel_for(
-                "pack_electric_poisson",
-                Kokkos::RangePolicy<>(exec, 0, m_grid.cells),
-                KOKKOS_LAMBDA(int i) { target(i, 0) = -output(0, i); });
-    }
-};
-
 /** EHD: evolve charge and reconstruct electrostatic D by a periodic Gauss solve.
  * MHD: evolve closed primal magnetic two-cochains. FMHD: also evolve electric
  * one-cochains and charge, using the same current in Ampere and continuity.
  * Native d and delta give d B_t=0 and (div D-charge)_t=0 in FMHD.
  * Fluid energy is evolved separately with J.E, paired on the same edges as
- * Ampere/Ohm. It is not the combined-energy state of the library MHD models.
+ * Ampere/Ohm. The library assembly's Fluid energy convention applies here.
  * \important This operator and documentation is fully AI-generated.
  */
 class ElectromagneticSolver
 {
     StructuredGrid& m_grid;
     VorticityDEC m_dec;
-    ElectricPoissonOperator m_poisson;
+    ScalarPoissonOperator m_poisson;
     Configuration const m_configuration;
     Field m_initial, m_stage, m_rate, m_b, m_d, m_j, m_e, m_curl, m_ampere, m_work, m_motional,
             m_edges, m_current_edges, m_electric_edges, m_motional_edges, m_displacement_edges,
@@ -92,7 +57,7 @@ public:
     void potential_displacement()
     {
         for (int a = 0; a < 3; ++a)
-            m_grid.forward_derivative(potential, 0, m_edges, a, a);
+            m_grid.edge_derivative_component(potential, 0, m_edges, a, a);
         Field const edges = m_edges;
         Kokkos::parallel_for(
                 "electric_potential_gradient",
@@ -240,7 +205,7 @@ public:
             m_dec.reduce_faces(faces, m_b);
         if (electric()) {
             potential_displacement();
-            m_dec.divergence(m_d, charge_density);
+            m_dec.negative_codifferential_one_form(m_d, charge_density);
         } else
             Kokkos::deep_copy(charge_density, 0.0);
         Field const q = state, b = m_b, d = m_d, charge = charge_density;
@@ -324,9 +289,14 @@ public:
                     "mhd_ohm_law",
                     m_grid.cells,
                     KOKKOS_LAMBDA(int i) {
+                        similie::physics::magnetodynamics::ResistiveMagnetodynamics const
+                                model(ElectromagneticReference::permeability,
+                                      ElectromagneticReference::magnetic_resistivity);
+                        std::array<double, 3> const conduction
+                                = model.ohm_electric_field({}, {}, {j(0, i), j(1, i), j(2, i)});
                         for (int a = 0; a < 3; ++a)
                             if (resistive)
-                                e(a, i) += ElectromagneticReference::magnetic_resistivity * j(a, i);
+                                e(a, i) += conduction[a];
                     });
         } else {
             m_dec.reduce_nodes(work, j);
@@ -334,12 +304,24 @@ public:
                     "electric_ohm_law",
                     m_grid.cells,
                     KOKKOS_LAMBDA(int i) {
+                        similie::physics::electrodynamics::ResistiveElectrodynamics const
+                                model(ElectromagneticReference::permittivity,
+                                      ElectromagneticReference::electric_resistivity);
+                        std::array<double, 3> effective_displacement {};
+                        for (int a = 0; a < 3; ++a)
+                            effective_displacement[a]
+                                    = d(a, i)
+                                      + (coupling == Coupling::FMHD
+                                                 ? model.permittivity * motion(a, i)
+                                                 : 0);
+                        std::array<double, 3> const electric
+                                = model.electric_field({d(0, i), d(1, i), d(2, i)});
+                        std::array<double, 3> const conduction
+                                = model.conduction_current(effective_displacement);
                         for (int a = 0; a < 3; ++a) {
-                            e(a, i) = d(a, i) / ElectromagneticReference::permittivity;
+                            e(a, i) = electric[a];
                             if (resistive)
-                                j(a,
-                                  i) += (e(a, i) + (coupling == Coupling::FMHD ? motion(a, i) : 0))
-                                        / ElectromagneticReference::electric_resistivity;
+                                j(a, i) += conduction[a];
                         }
                     });
         }
@@ -354,14 +336,18 @@ public:
                     std::array<double, 3> const magnetic {bn(0, i), bn(1, i), bn(2, i)};
                     std::array<double, 3> const
                             electric_displacement {dn(0, i), dn(1, i), dn(2, i)};
-                    similie::physics::electromagnetism::Electromagnetism const
-                            model(ElectromagneticReference::permittivity,
-                                  ElectromagneticReference::permeability);
-                    std::array<double, 3> const force_value = model.lorentz_force(
-                            charge(0, i),
-                            electric_displacement,
-                            magnetic,
-                            current_value);
+                    similie::physics::CoupledFluidElectromagnetism<
+                            CompressiblePhysics,
+                            similie::physics::electromagnetism::Electromagnetism> const
+                            model(Reference::model(),
+                                  similie::physics::electromagnetism::Electromagnetism(
+                                          ElectromagneticReference::permittivity,
+                                          ElectromagneticReference::permeability));
+                    std::array<double, 3> const force_value
+                            = model.coupling_sources(
+                                           {{}, {charge(0, i), electric_displacement, magnetic}},
+                                           current_value)
+                                      .momentum_source;
                     for (int a = 0; a < 3; ++a)
                         acceleration(a, i) = force_value[a];
                 });
@@ -397,9 +383,9 @@ public:
                     power(0, i) = energy;
                     heating(0, i) = heat;
                 });
-        m_dec.divergence(j, m_work);
+        m_dec.negative_codifferential_one_form(j, m_work);
         if (magnetic())
-            m_dec.exterior_curl(e, m_curl);
+            m_dec.derivative_one_form(e, m_curl);
         else
             Kokkos::deep_copy(m_curl, 0.0);
         Field const rate = m_rate, div = m_work, curl = m_curl;
@@ -407,13 +393,21 @@ public:
                 "electromagnetic_evolution",
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) {
-                    rate(0, i) = coupling == Coupling::MHD ? 0 : -div(0, i);
+                    similie::physics::electromagnetism::Electromagnetism const
+                            model(ElectromagneticReference::permittivity,
+                                  ElectromagneticReference::permeability);
+                    similie::physics::electromagnetism::Electromagnetism::State const update
+                            = model(div(0, i),
+                                    {ampere(0, i), ampere(1, i), ampere(2, i)},
+                                    {curl(0, i), curl(1, i), curl(2, i)},
+                                    {j(0, i), j(1, i), j(2, i)});
+                    rate(0, i) = coupling == Coupling::MHD ? 0 : update.charge_density;
                     for (int a = 0; a < 3; ++a) {
-                        rate(a + 1, i) = coupling == Coupling::FMHD ? ampere(a, i) - j(a, i) : 0;
-                        rate(a + 4, i) = -curl(a, i);
+                        rate(a + 1, i) = coupling == Coupling::FMHD ? update.displacement[a] : 0;
+                        rate(a + 4, i) = update.induction[a];
                     }
                 });
-        m_dec.divergence(d, gauss_error);
+        m_dec.negative_codifferential_one_form(d, gauss_error);
         Field const residual = gauss_error;
         Kokkos::parallel_for(
                 "gauss_constraint",

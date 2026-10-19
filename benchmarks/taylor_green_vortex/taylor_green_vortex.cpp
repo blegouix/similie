@@ -393,17 +393,17 @@ public:
                 });
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b)
-                dec.derivative(u, a, g, 3 * a + b, b);
+                dec.nodal_derivative_component(u, a, g, 3 * a + b, b);
         if (gas) {
-            dec.curl(u, w);
-            dec.divergence(u, velocity_divergence);
+            dec.reconstructed_derivative_one_form(u, w);
+            dec.negative_reduced_codifferential(u, velocity_divergence);
         }
         Field const div_field = velocity_divergence;
         CompressiblePhysics const physical_model = Reference::model();
         if (gas) {
             Field const heat = heat_flux;
             for (int a = 0; a < 3; ++a)
-                dec.derivative(t, 0, heat, a, a);
+                dec.nodal_derivative_component(t, 0, heat, a, a);
             Kokkos::parallel_for(
                     "fourier_heat_flux",
                     dec.cells,
@@ -764,7 +764,7 @@ void validate()
                     int const stride = axis == 0 ? n * n : (axis == 1 ? n : 1);
                     wave(0, i) = sin(-std::numbers::pi + ((i / stride) % n) * h);
                 });
-        simulation.dec.derivative(wave, 0, derivative, 0, axis);
+        simulation.dec.nodal_derivative_component(wave, 0, derivative, 0, axis);
         simulation.dec.laplacian(wave, 0, lap, 0);
         Kokkos::parallel_reduce(
                 "periodic_fourier_symbols",
@@ -831,6 +831,37 @@ void validate()
                 error);
         if (error / simulation.dec.cells > 1e-20)
             throw std::runtime_error("Zero-vorticity pressure reconstruction failed");
+        // A periodic gradient force has zero solenoidal response and a known
+        // Bernoulli pressure. Use its analytic DEC Fourier symbol to check the
+        // diagnostic solve independently of the Krylov convergence report.
+        Field gradient_force("pressure_gradient_force", 3, simulation.dec.cells);
+        Kokkos::parallel_for(
+                "initialize_pressure_gradient_force",
+                simulation.dec.cells,
+                KOKKOS_LAMBDA(int i) {
+                    double const x = -std::numbers::pi + (i / (n * n)) * h;
+                    gradient_force(0, i) = sin(x);
+                    gradient_force(1, i) = 0;
+                    gradient_force(2, i) = 0;
+                });
+        simulation.incompressible->compute_pressure(
+                zero,
+                uniform_pressure,
+                Reference::reference_pressure,
+                gradient_force);
+        Kokkos::parallel_reduce(
+                "manufactured_pressure",
+                simulation.dec.cells,
+                KOKKOS_LAMBDA(int i, double& sum) {
+                    double const x = -std::numbers::pi + (i / (n * n)) * h;
+                    double const expected = Reference::reference_pressure
+                                            - h * cos(h / 2) / (2 * sin(h / 2)) * cos(x);
+                    double const difference = uniform_pressure(0, i) - expected;
+                    sum += difference * difference;
+                },
+                error);
+        if (error / simulation.dec.cells > 1e-18)
+            throw std::runtime_error("Manufactured Bernoulli pressure reconstruction failed");
     } else {
         Field uniform("uniform_gas", 5, simulation.dec.cells);
         Field uniform_rhs("uniform_gas_rhs", 5, simulation.dec.cells);

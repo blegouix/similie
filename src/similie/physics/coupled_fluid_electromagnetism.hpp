@@ -14,7 +14,7 @@ namespace similie::physics {
 
 enum class EnergyConvention { Fluid, FluidAndField };
 
-/** Assemble a fluid model and full Maxwell dynamics using shared exchange laws.
+/** Assemble fluid and electric, magnetic, or full Maxwell sectors with shared exchange laws.
  * The state contains the two physical sectors; the stateless interactions own
  * no new degrees of freedom. get<0>() is the fluid, get<1>() is the field model,
  * and get<2/3>() are the generated electric/magnetic coupling objects.
@@ -47,6 +47,11 @@ class CoupledFluidElectromagnetism
               coupling::ElectricCouplingPhysics,
               coupling::MagneticCouplingPhysics>
 {
+    static constexpr bool has_electric
+            = requires(typename ElectromagneticPhysics::State state) { state.displacement; };
+    static constexpr bool has_magnetic
+            = requires(typename ElectromagneticPhysics::State state) { state.induction; };
+
 public:
     using Vector = std::array<double, 3>;
     static constexpr std::size_t N = FluidPhysics::N + ElectromagneticPhysics::N;
@@ -72,36 +77,93 @@ public:
     {
     }
 
+    /** Evaluate both exchanges using the spatially reduced current.
+     * Magnetic quasistatics also needs velocity to evaluate E=-u cross B+eta J.
+     * Electric quasistatics reconstructs displacement from charge separately.
+     */
     [[nodiscard]] KOKKOS_FUNCTION coupling::ElectromagneticExchange coupling_sources(
             State const& state,
-            Vector const& total_current) const
+            Vector const& total_current,
+            Vector const& velocity) const
     {
-        coupling::ElectromagneticCouplingState const
-                shared {state.electromagnetic.charge_density,
-                        this->template get<1>().electric_field(state.electromagnetic.displacement),
-                        state.electromagnetic.induction,
-                        total_current};
+        coupling::ElectromagneticCouplingState shared {};
+        shared.current = total_current;
+        if constexpr (has_electric) {
+            shared.charge_density = state.electromagnetic.charge_density;
+            shared.electric_field
+                    = this->template get<1>().electric_field(state.electromagnetic.displacement);
+        } else {
+            shared.electric_field = this->template get<1>().ohm_electric_field(
+                    velocity,
+                    state.electromagnetic.induction,
+                    total_current);
+        }
+        if constexpr (has_magnetic)
+            shared.induction = state.electromagnetic.induction;
         coupling::ElectromagneticExchange result = this->template get<2>()(shared);
         result += this->template get<3>()(shared);
         return result;
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION Vector current(State const& state, Vector const& velocity) const
+    [[nodiscard]] KOKKOS_FUNCTION coupling::ElectromagneticExchange coupling_sources(
+            State const& state,
+            Vector const& total_current) const
+        requires(has_electric)
     {
-        return this->template get<1>().current(
-                state.electromagnetic.charge_density,
-                velocity,
-                state.electromagnetic.displacement,
-                state.electromagnetic.induction);
+        return coupling_sources(state, total_current, {});
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double field_energy(State const& state) const
+    {
+        if constexpr (has_electric && has_magnetic)
+            return this->template get<1>().hamiltonian(
+                    state.electromagnetic.displacement,
+                    state.electromagnetic.induction);
+        else if constexpr (has_electric)
+            return this->template get<1>().hamiltonian(state.electromagnetic.displacement);
+        else
+            return this->template get<1>().hamiltonian(state.electromagnetic.induction);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION typename ElectromagneticPhysics::State field_rate(
+            double current_divergence,
+            Vector const& curl_magnetic_field,
+            Vector const& curl_electric_field,
+            Vector const& total_current) const
+    {
+        if constexpr (has_electric && has_magnetic)
+            return this->template get<1>()(
+                    current_divergence,
+                    curl_magnetic_field,
+                    curl_electric_field,
+                    total_current);
+        else if constexpr (has_electric)
+            return {this->template get<1>()(current_divergence), {}};
+        else
+            return {this->template get<1>()(curl_electric_field)};
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION Vector current(State const& state, Vector const& velocity) const
+        requires(has_electric)
+    {
+        if constexpr (has_magnetic)
+            return this->template get<1>().current(
+                    state.electromagnetic.charge_density,
+                    velocity,
+                    state.electromagnetic.displacement,
+                    state.electromagnetic.induction);
+        else
+            return this->template get<1>().current(
+                    state.electromagnetic.charge_density,
+                    velocity,
+                    state.electromagnetic.displacement);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION typename FluidPhysics::State fluid_state(State const& state) const
     {
         typename FluidPhysics::State result = state.fluid;
         if constexpr (Energy == EnergyConvention::FluidAndField) {
-            result.total_energy -= this->template get<1>().hamiltonian(
-                    state.electromagnetic.displacement,
-                    state.electromagnetic.induction);
+            result.total_energy -= field_energy(state);
         }
         return result;
     }
@@ -116,7 +178,8 @@ public:
             State const& state,
             typename Fluid::VelocityGradient const& velocity_gradient,
             Vector const& temperature_gradient,
-            int normal) const
+            int normal,
+            Vector const& total_current) const
     {
         KOKKOS_ASSERT(normal >= 0 && normal < 3);
         typename Fluid::State const hydro = fluid_state(state);
@@ -126,12 +189,37 @@ public:
                 = this->template get<0>()
                           .flux(hydro, primitive, velocity_gradient, temperature_gradient, normal);
         if constexpr (Energy == EnergyConvention::FluidAndField) {
-            Vector const poynting = this->template get<1>().poynting_flux(
-                    state.electromagnetic.displacement,
-                    state.electromagnetic.induction);
-            result.total_energy += poynting[normal];
+            static_assert(
+                    has_magnetic,
+                    "Electric quasistatics uses fluid energy with J.E exchange");
+            if constexpr (has_electric) {
+                Vector const poynting = this->template get<1>().poynting_flux(
+                        state.electromagnetic.displacement,
+                        state.electromagnetic.induction);
+                result.total_energy += poynting[normal];
+            } else {
+                Vector const electric = this->template get<1>().ohm_electric_field(
+                        primitive.velocity,
+                        state.electromagnetic.induction,
+                        total_current);
+                Vector const poynting
+                        = this->template get<1>()
+                                  .poynting_flux(electric, state.electromagnetic.induction);
+                result.total_energy += poynting[normal];
+            }
         }
         return result;
+    }
+
+    template <class Fluid = FluidPhysics>
+    [[nodiscard]] KOKKOS_FUNCTION typename Fluid::Flux flux(
+            State const& state,
+            typename Fluid::VelocityGradient const& velocity_gradient,
+            Vector const& temperature_gradient,
+            int normal) const
+        requires(has_electric)
+    {
+        return flux(state, velocity_gradient, temperature_gradient, normal, {});
     }
 
     template <class FluidFlux>
@@ -144,13 +232,16 @@ public:
             Vector const& total_current) const
     {
         typename FluidPhysics::State rate = this->template get<0>()(fluid_flux_divergence);
-        coupling::ElectromagneticExchange const exchange = coupling_sources(state, total_current);
+        coupling::ElectromagneticExchange const exchange = coupling_sources(
+                state,
+                total_current,
+                this->template get<0>().primitives(fluid_state(state)).velocity);
         for (int a = 0; a < 3; ++a)
             rate.momentum[a] += exchange.momentum_source[a];
         if constexpr (Energy == EnergyConvention::Fluid)
             rate.total_energy += exchange.fluid_energy_source;
         return {rate,
-                this->template get<1>()(
+                field_rate(
                         current_divergence,
                         curl_magnetic_field,
                         curl_electric_field,
@@ -162,17 +253,15 @@ public:
         if constexpr (Energy == EnergyConvention::FluidAndField)
             return state.fluid.total_energy;
         else
-            return state.fluid.total_energy
-                   + this->template get<1>().hamiltonian(
-                           state.electromagnetic.displacement,
-                           state.electromagnetic.induction);
+            return state.fluid.total_energy + field_energy(state);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION Vector
     transport(State const& state, Vector const& velocity, Vector const& total_current) const
     {
         Vector result = this->template get<0>().transport(velocity, state.fluid.vorticity);
-        coupling::ElectromagneticExchange const exchange = coupling_sources(state, total_current);
+        coupling::ElectromagneticExchange const exchange
+                = coupling_sources(state, total_current, velocity);
         for (int a = 0; a < 3; ++a)
             result[a] += exchange.momentum_source[a] / this->template get<0>().density;
         return result;
@@ -190,7 +279,8 @@ public:
                 state.fluid.vorticity,
                 bernoulli_gradient,
                 velocity_laplacian);
-        coupling::ElectromagneticExchange const exchange = coupling_sources(state, total_current);
+        coupling::ElectromagneticExchange const exchange
+                = coupling_sources(state, total_current, velocity);
         for (int a = 0; a < 3; ++a)
             result[a] += exchange.momentum_source[a] / this->template get<0>().density;
         return result;
@@ -208,7 +298,7 @@ public:
         for (int a = 0; a < 3; ++a)
             rate.vorticity[a] = this->template get<0>()(transport_curl[a], vorticity_laplacian[a]);
         return {rate,
-                this->template get<1>()(
+                field_rate(
                         current_divergence,
                         curl_magnetic_field,
                         curl_electric_field,

@@ -12,7 +12,7 @@ add_custom_command(
     COMMENT "Generating Taylor-Green ideal-gas closure from SymPy"
     VERBATIM
 )
-add_executable(taylor_green_vortex taylor_green_vortex.cpp laplacian_modes.cpp
+add_executable(taylor_green_vortex taylor_green_vortex.cpp
     "${TGV_IDEAL_GAS_HEADER}")
 target_include_directories(taylor_green_vortex PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo)

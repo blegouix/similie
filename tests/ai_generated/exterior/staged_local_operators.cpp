@@ -281,10 +281,11 @@ TEST(StagedLocalOperators, StridedDiagonalComponentProduct)
 }
 
 template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
-using CachedReconstruction
-        = sil::exterior::detail::CachedReconstruction<Indices, Position, Element, Complex>;
+using CachedReconstruction = sil::exterior::StagedOperator<
+        sil::exterior::Reconstruction<Indices, Position, Element, Complex>>;
 template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
-using CachedReduction = sil::exterior::detail::CachedReduction<Indices, Position, Element, Complex>;
+using CachedReduction = sil::exterior::StagedOperator<
+        sil::exterior::Reduction<Indices, Position, Element, Complex>>;
 
 void check_continuous_and_composed()
 {

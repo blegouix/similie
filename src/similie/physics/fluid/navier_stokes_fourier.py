@@ -367,6 +367,35 @@ public:
 {flux}
         return result;
     }}
+    /** Symmetric two-point kinetic-energy-preserving transport.
+     * Face gradients come from reduction/reconstruction of exterior derivatives.
+     * This centered flux is consistent but does not enforce positivity.
+     */
+    KOKKOS_FUNCTION Flux two_point_flux(State const& left, State const& right,
+            VelocityGradient const& face_velocity_gradient,
+            std::array<double,3> const& face_temperature_gradient, int normal) const
+    {{
+        KOKKOS_ASSERT(normal>=0 && normal<3);
+        PrimitiveVariables const l=primitives(left), r=primitives(right);
+        double const mass=0.25*(l.density+r.density)*(l.velocity[normal]+r.velocity[normal]);
+        double const pressure=0.5*(l.pressure+r.pressure);
+        double const internal=0.5*(specific_internal_energy(left)+specific_internal_energy(right));
+        double kinetic=0, work=0;
+        VelocityGradient const tau=stress(face_velocity_gradient);
+        std::array<double,3> const ql=heat_flux(left,face_temperature_gradient),
+                qr=heat_flux(right,face_temperature_gradient);
+        Flux result{{mass,{{}},0}};
+        for(int a=0;a<3;++a) {{
+            kinetic+=0.5*l.velocity[a]*r.velocity[a];
+            work+=tau[a][normal]*0.5*(l.velocity[a]+r.velocity[a]);
+            result.momentum[a]=mass*0.5*(l.velocity[a]+r.velocity[a])
+                    +(a==normal?pressure:0)-tau[a][normal];
+        }}
+        result.total_energy=mass*(internal+kinetic)
+                +0.5*pressure*(l.velocity[normal]+r.velocity[normal])-work
+                +0.5*(ql[normal]+qr[normal]);
+        return result;
+    }}
     KOKKOS_FUNCTION State operator()(Flux const& divergence) const
     {{
         return {{-divergence.mass,{{-divergence.momentum[0],-divergence.momentum[1],-divergence.momentum[2]}},-divergence.total_energy}};

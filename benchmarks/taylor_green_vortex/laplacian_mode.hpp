@@ -4,14 +4,27 @@
 
 #pragma once
 
+#include <memory>
+#include <stdexcept>
+
 #include <similie/exterior/continuous_hodge_star/levi_civita_continuous_hodge_star.hpp>
 #include <similie/exterior/discrete_hodge_star/weighted_levi_civita_discrete_hodge_star.hpp>
 #include <similie/exterior/exterior.hpp>
 
-#include "laplacian_modes.hpp"
+#include "configuration.hpp"
+#include "grid_types.hpp"
 
-namespace taylor_green_vortex::detail {
-namespace {
+namespace taylor_green_vortex {
+// Host dispatch selects a compiled operator type once, before solver iterations.
+template <class Tensor>
+class LaplacianOperator
+{
+public:
+    virtual ~LaplacianOperator() = default;
+    virtual void apply(Tensor const& output, Tensor const& input) = 0;
+};
+
+namespace detail {
 struct Periodic
 {
     template <class Tensor, class Element>
@@ -59,12 +72,12 @@ struct HodgePolicies
                     Element,
                     Complex,
                     CoefficientStructure<reconstruction_mode == 3>::template Index>,
-            sil::exterior::detail::CachedReconstruction<
+            sil::exterior::StagedOperator<sil::exterior::Reconstruction<
                     Indices,
                     Position,
                     Element,
                     Complex,
-                    CoefficientStructure<reconstruction_mode == 2>::template Index>>;
+                    CoefficientStructure<reconstruction_mode == 2>::template Index>>>;
 
     template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
     using Reduction = std::conditional_t<
@@ -75,12 +88,12 @@ struct HodgePolicies
                     Element,
                     Complex,
                     CoefficientStructure<reduction_mode == 3>::template Index>,
-            sil::exterior::detail::CachedReduction<
+            sil::exterior::StagedOperator<sil::exterior::Reduction<
                     Indices,
                     Position,
                     Element,
                     Complex,
-                    CoefficientStructure<reduction_mode == 2>::template Index>>;
+                    CoefficientStructure<reduction_mode == 2>::template Index>>>;
 
     template <class Indices1, class Indices2, class Metric, class Element>
     using Continuous = std::conditional_t<
@@ -198,8 +211,6 @@ public:
             m_operation(output, input, Periodic {}, Periodic {});
     }
 };
-} // namespace
-
 template <int Mode, class Tensor>
 std::unique_ptr<LaplacianOperator<Tensor>> make_laplacian_mode(
         Tensor const& output,
@@ -210,4 +221,41 @@ std::unique_ptr<LaplacianOperator<Tensor>> make_laplacian_mode(
     return std::make_unique<SelectedLaplacian<Mode, Tensor>>(output, input, metric, position);
 }
 
-} // namespace taylor_green_vortex::detail
+} // namespace detail
+
+namespace detail {
+template <int Mode = 0, class Tensor>
+std::unique_ptr<LaplacianOperator<Tensor>> dispatch(
+        int selected,
+        Tensor const& output,
+        Tensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position)
+{
+    if (selected == Mode)
+        return detail::make_laplacian_mode<Mode>(output, input, metric, position);
+    if constexpr (Mode < 35)
+        return dispatch<Mode + 1>(selected, output, input, metric, position);
+    throw std::invalid_argument("Unknown Taylor-Green Laplacian staging mode");
+}
+} // namespace detail
+
+inline std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian(
+        Configuration const& selected,
+        ScalarTensor const& output,
+        ScalarTensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position)
+{
+    return detail::dispatch(selected.laplacian_mode(), output, input, metric, position);
+}
+inline std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian(
+        Configuration const& selected,
+        TwoFormTensor const& output,
+        TwoFormTensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position)
+{
+    return detail::dispatch(selected.laplacian_mode(), output, input, metric, position);
+}
+} // namespace taylor_green_vortex

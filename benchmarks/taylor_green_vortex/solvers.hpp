@@ -14,13 +14,10 @@
 #include "vorticity_dec.hpp"
 
 namespace taylor_green_vortex {
-/** Conservative two-point kinetic-energy-preserving face transport, DEC divergence,
- * centered Newtonian stress and Fourier flux. Face-normal viscous derivatives
- * use exterior derivative/reconstruction, with centered tangential placement.
- * Mass flux is mean(rho)*mean(u_n); momentum flux is F_rho*mean(u)+mean(p)n.
- * Energy flux uses mean(internal energy)+u_L dot u_R/2 and mean(p)*mean(u_n).
- * The scheme is centered and second order, without reconstruction or limiter.
- * It is not positivity preserving; callers must reject invalid states.
+/** Assemble the library fluid flux with reduction and codifferential.
+ * Face gradients are reconstructed exterior derivatives, with arithmetic
+ * tangential placement on the uniform grid. NavierStokesFourier supplies the
+ * two-point flux, constitutive laws, and conservation rates.
  * \important This operator and documentation is fully AI-generated.
  */
 class CompressibleSolver
@@ -61,7 +58,7 @@ public:
         primitives(state);
         for (int c = 1; c < 4; ++c)
             for (int a = 0; a < 3; ++a)
-                m_dec.derivative(m_primitive, c, m_gradient, 3 * (c - 1) + a, a);
+                m_dec.nodal_derivative_component(m_primitive, c, m_gradient, 3 * (c - 1) + a, a);
         Kokkos::deep_copy(result, 0.0);
         Field const primitive = m_primitive, gradient = m_gradient, normal = m_normal_gradient,
                     flux = m_flux, divergence = m_divergence;
@@ -69,7 +66,7 @@ public:
         CompressiblePhysics const physics = m_physics;
         for (int axis = 0; axis < 3; ++axis) {
             for (int c = 1; c < 5; ++c)
-                m_dec.forward_derivative(primitive, c, normal, c - 1, axis);
+                m_dec.edge_derivative_component(primitive, c, normal, c - 1, axis);
             Kokkos::parallel_for(
                     "navier_stokes_face_flux",
                     m_dec.cells,
@@ -77,17 +74,6 @@ public:
                         int const j = StructuredGrid::neighbor(i, axis, 1, n);
                         CompressiblePhysics::State const left = Reference::state(state, i),
                                                          right = Reference::state(state, j);
-                        double const pl = physics.pressure(left), pr = physics.pressure(right);
-                        double const ul = primitive(axis + 1, i), ur = primitive(axis + 1, j);
-                        double const mass_flux
-                                = 0.25 * (primitive(0, i) + primitive(0, j)) * (ul + ur);
-                        double const pressure = 0.5 * (pl + pr);
-                        double kinetic_cross = 0;
-                        for (int a = 0; a < 3; ++a)
-                            kinetic_cross += 0.5 * primitive(a + 1, i) * primitive(a + 1, j);
-                        double const internal = 0.5
-                                                * (physics.specific_internal_energy(left)
-                                                   + physics.specific_internal_energy(right));
                         CompressiblePhysics::VelocityGradient strain {};
                         for (int a = 0; a < 3; ++a)
                             for (int b = 0; b < 3; ++b)
@@ -95,28 +81,21 @@ public:
                                                          : 0.5
                                                                    * (gradient(3 * a + b, i)
                                                                       + gradient(3 * a + b, j));
-                        CompressiblePhysics::VelocityGradient const tau = physics.stress(strain);
                         std::array<double, 3> temperature_gradient {};
                         temperature_gradient[axis] = normal(3, i);
-                        std::array<double, 3> const heat_flux
-                                = physics.heat_flux(left, temperature_gradient);
-                        std::array<double, 3> const right_heat_flux
-                                = physics.heat_flux(right, temperature_gradient);
-                        double work = 0;
+                        CompressiblePhysics::Flux const values = physics.two_point_flux(
+                                left,
+                                right,
+                                strain,
+                                temperature_gradient,
+                                axis);
+                        flux(0, i) = values.mass;
                         for (int a = 0; a < 3; ++a)
-                            work += tau[a][axis] * 0.5
-                                    * (primitive(a + 1, i) + primitive(a + 1, j));
-                        flux(0, i) = mass_flux;
-                        for (int a = 0; a < 3; ++a)
-                            flux(a + 1, i)
-                                    = mass_flux * 0.5 * (primitive(a + 1, i) + primitive(a + 1, j))
-                                      + (a == axis ? pressure : 0.0) - tau[a][axis];
-                        flux(4, i) = mass_flux * (internal + kinetic_cross)
-                                     + 0.5 * pressure * (ul + ur) - work
-                                     + 0.5 * (heat_flux[axis] + right_heat_flux[axis]);
+                            flux(a + 1, i) = values.momentum[a];
+                        flux(4, i) = values.total_energy;
                     });
             for (int c = 0; c < 5; ++c)
-                m_dec.flux_divergence(flux, c, divergence, c, axis);
+                m_dec.negative_face_codifferential(flux, c, divergence, c, axis);
             Kokkos::parallel_for(
                     "navier_stokes_conservation_laws",
                     m_dec.cells,
@@ -134,46 +113,59 @@ public:
     }
 };
 
-/** Diagnostic pressure reconstruction, with a centered DEC gradient and
- * its negative adjoint divergence. Orthogonal periodic projection solves
- * -D G phi=-div u by matrix-free CG. The mean and even-grid checkerboard
- * null modes are untouched; divergence is in the range of this operator.
- * Viscosity uses the exterior staged Hodge Laplacian with its diffusion sign.
- * Applied only to diagnostic momentum balance; the evolved state is vorticity.
- * The elliptic potential is Bernoulli pressure p+|u|^2/2.
+/** Matrix-free positive scalar Hodge Laplacian, with periodic constant gauge.
+ * \important This operator and documentation is fully AI-generated.
+ */
+class ScalarPoissonOperator
+{
+    StructuredGrid& m_grid;
+    Field m_input, m_output;
+
+public:
+    static constexpr bool IS_LINEAR = true, IS_SYMMETRIC = true;
+    explicit ScalarPoissonOperator(StructuredGrid& grid)
+        : m_grid(grid)
+        , m_input("scalar_poisson_input", 1, grid.cells)
+        , m_output("scalar_poisson_output", 1, grid.cells)
+    {
+    }
+    std::size_t size() const
+    {
+        return m_grid.cells;
+    }
+    template <class Input, class Output>
+    void apply(Kokkos::DefaultExecutionSpace exec, Input const& source, Output const& target) const
+    {
+        Field const input = m_input, output = m_output;
+        Kokkos::parallel_for(
+                "unpack_scalar_poisson",
+                Kokkos::RangePolicy<>(exec, 0, m_grid.cells),
+                KOKKOS_LAMBDA(int i) { input(0, i) = source(i, 0); });
+        m_grid.laplacian(input, 0, output, 0);
+        Kokkos::parallel_for(
+                "pack_scalar_poisson",
+                Kokkos::RangePolicy<>(exec, 0, m_grid.cells),
+                KOKKOS_LAMBDA(int i) { target(i, 0) = -output(0, i); });
+    }
+};
+
+/** Bernoulli pressure from the native scalar Hodge Laplacian.
+ * With F=u cross omega+nu Delta u+force/rho, solve delta d Pi=delta R(F),
+ * where R reduces the reconstructed force to one-cochains. This is a diagnostic
+ * solve; velocity remains delta B plus its harmonic component. The zero-start
+ * library Krylov solve fixes the constant potential gauge, then pressure is
+ * p=rho(Pi-|u|^2/2), shifted to the requested mean.
  * \important This operator and documentation is fully AI-generated.
  */
 class PressureReconstruction
 {
     StructuredGrid& m_dec;
+    ScalarPoissonOperator m_poisson;
     similie::physics::fluid::IncompressibleNavierStokes const m_physics;
-    Field m_vorticity, m_lap, m_phi, m_r, m_p, m_ap, m_temp, m_projection_gradient,
-            m_pressure_acceleration;
+    Field m_vorticity, m_lap, m_phi, m_r, m_rhs, m_solution, m_pressure_acceleration;
 
 public:
     // NVCC requires methods enclosing extended device lambdas to be public.
-    void poisson(Field const& input, Field const& output)
-    {
-        for (int a = 0; a < 3; ++a)
-            m_dec.derivative(input, 0, m_projection_gradient, a, a);
-        m_dec.divergence(m_projection_gradient, output);
-        Kokkos::parallel_for(
-                "negative_div_gradient",
-                m_dec.cells,
-                KOKKOS_LAMBDA(int i) { output(0, i) *= -1; });
-    }
-
-    double dot(Field const& left, Field const& right)
-    {
-        double value;
-        Kokkos::parallel_reduce(
-                "projection_dot",
-                m_dec.cells,
-                KOKKOS_LAMBDA(int i, double& sum) { sum += left(0, i) * right(0, i); },
-                value);
-        return value;
-    }
-
     void unprojected_rhs(
             Field const& velocity,
             Field const& result,
@@ -182,7 +174,7 @@ public:
         if (supplied_vorticity.data())
             Kokkos::deep_copy(m_vorticity, supplied_vorticity);
         else
-            m_dec.curl(velocity, m_vorticity);
+            m_dec.reconstructed_derivative_one_form(velocity, m_vorticity);
         for (int c = 0; c < 3; ++c)
             m_dec.laplacian(velocity, c, m_lap, c);
         Field const rotation = m_vorticity, lap = m_lap;
@@ -229,28 +221,20 @@ public:
     std::int64_t total_iterations = 0;
     explicit PressureReconstruction(StructuredGrid& dec)
         : m_dec(dec)
+        , m_poisson(dec)
         , m_physics(1.0, Reference::viscosity)
-        , m_vorticity("velocity_curl", 3, dec.cells)
+        , m_vorticity("velocity_exterior_derivative", 3, dec.cells)
         , m_lap("velocity_laplacian", 3, dec.cells)
-        , m_phi("projection", 1, dec.cells)
-        , m_r("cg_r", 1, dec.cells)
-        , m_p("cg_p", 1, dec.cells)
-        , m_ap("cg_ap", 1, dec.cells)
-        , m_temp("cg_temp", 1, dec.cells)
-        , m_projection_gradient("projection_gradient", 3, dec.cells)
+        , m_phi("bernoulli_potential", 1, dec.cells)
+        , m_r("pressure_codifferential", 1, dec.cells)
+        , m_rhs("pressure_poisson_rhs", dec.cells, 1)
+        , m_solution("pressure_poisson_solution", dec.cells, 1)
         , m_pressure_acceleration("pressure_reconstruction_acceleration", 3, dec.cells)
         , pressure("pressure", 1, dec.cells)
     {
         Kokkos::deep_copy(pressure, 0.0);
     }
-    /** Reconstruct periodic pressure for a supplied divergence-free velocity.
-     * Solve -D G Pi=-D(u cross omega+nu Delta u), then recover
-     * p=rho(Pi-|u|^2/2) and shift it to the requested volume mean.
-     * Zero-start CG fixes unresolved checkerboard modes of Pi on even grids.
-     * The supplied velocity is unchanged; output must be a separate scalar field.
-     * This can be called independently of vorticity time integration.
-     * \important This operator and documentation is fully AI-generated.
-     */
+
     void compute_pressure(
             Field const& velocity,
             Field const& output,
@@ -269,54 +253,34 @@ public:
                             rate(a, i) += acceleration(a, i);
                     });
         }
-        project(m_pressure_acceleration);
-        recover_pressure(velocity, output, mean_pressure);
-    }
-
-    void project(Field const& velocity)
-    {
-        m_dec.divergence(velocity, m_r);
-        Field const r = m_r, p = m_p, ap = m_ap, phi = m_phi, temp = m_temp;
-        similie::physics::fluid::IncompressibleNavierStokes const physics = m_physics;
+        m_dec.negative_reduced_codifferential(m_pressure_acceleration, m_r);
+        Field const source = m_rhs, divergence = m_r;
         Kokkos::parallel_for(
-                "incompressibility_constraint",
+                "pressure_poisson_rhs",
                 m_dec.cells,
-                KOKKOS_LAMBDA(int i) { r(0, i) = -physics.incompressibility(r(0, i)); });
-        Kokkos::deep_copy(phi, 0.0);
-        Kokkos::deep_copy(p, r);
-        double rr = dot(r, r);
-        double const tolerance = 1e-20 * fmax(rr, 1.0);
-
-        for (int iteration = 0; rr > tolerance && iteration < 4 * m_dec.n; ++iteration) {
-            poisson(p, ap);
-            double const pap = dot(p, ap);
-            if (!(pap > 0))
-                throw std::runtime_error("Incompressible projection CG breakdown");
-            double const alpha = rr / pap;
-            Kokkos::parallel_for(
-                    "projection_cg_update",
-                    m_dec.cells,
-                    KOKKOS_LAMBDA(int i) {
-                        phi(0, i) += alpha * p(0, i);
-                        r(0, i) -= alpha * ap(0, i);
-                    });
-            double const next = dot(r, r), beta = next / rr;
-            Kokkos::parallel_for(
-                    "projection_cg_direction",
-                    m_dec.cells,
-                    KOKKOS_LAMBDA(int i) { p(0, i) = r(0, i) + beta * p(0, i); });
-            rr = next;
-            ++total_iterations;
-        }
-        if (rr > tolerance)
-            throw std::runtime_error("Incompressible projection did not converge");
-        for (int a = 0; a < 3; ++a) {
-            m_dec.derivative(phi, 0, temp, 0, a);
-            Kokkos::parallel_for(
-                    "orthogonal_projection",
-                    m_dec.cells,
-                    KOKKOS_LAMBDA(int i) { velocity(a, i) -= temp(0, i); });
-        }
+                KOKKOS_LAMBDA(int i) { source(i, 0) = -divergence(0, i); });
+        similie::solvers::StrongFormulationSolverSettings settings;
+        settings.use_matrix_free = true;
+        settings.preconditioner = similie::solvers::PreconditionerType::Identity;
+        settings.relative_tolerance = 1e-11;
+        settings.max_iterations = 8 * m_dec.n;
+        similie::solvers::StrongFormulationSolverDiagnostics const diagnostics
+                = similie::solvers::minimize_strong_formulation_residual(
+                        Kokkos::DefaultExecutionSpace(),
+                        m_poisson,
+                        source,
+                        m_solution,
+                        settings);
+        if (!std::isfinite(diagnostics.final_relative_residual)
+            || diagnostics.final_relative_residual > 1e-10)
+            throw std::runtime_error("Pressure reconstruction did not converge");
+        total_iterations += diagnostics.iterations;
+        Field const solution = m_solution, phi = m_phi;
+        Kokkos::parallel_for(
+                "unpack_bernoulli_potential",
+                m_dec.cells,
+                KOKKOS_LAMBDA(int i) { phi(0, i) = solution(i, 0); });
+        recover_pressure(velocity, output, mean_pressure);
     }
 };
 
@@ -429,7 +393,7 @@ public:
                     edges(2, i) = 0;
                 });
         m_dec.reduce_edges(edges, m_one);
-        m_dec.exterior_curl(m_one, state);
+        m_dec.derivative_one_form(m_one, state);
     }
     void reconstruct_velocity(Field const& state, Field const& output, bool time_derivative = false)
     {
@@ -564,7 +528,7 @@ public:
                                 = values[a] + (acceleration.data() ? acceleration(a, i) : 0);
                 });
         m_dec.reduce_nodes(m_transport, m_transport_one);
-        m_dec.exterior_curl(m_transport_one, result);
+        m_dec.derivative_one_form(m_transport_one, result);
         m_dec.positive_laplacian(state, m_lap);
         Field const lap = m_lap;
         Kokkos::parallel_for(
@@ -591,14 +555,14 @@ public:
     }
     void divergence(Field const& output)
     {
-        m_dec.divergence(m_one, output);
+        m_dec.negative_codifferential_one_form(m_one, output);
     }
     void monitor_constraints(Field const& state)
     {
         vorticity_divergence_rms = m_dec.closure_rms(state);
         gauge_rms = m_dec.closure_rms(m_potential);
         m_dec.axial_nodes(m_potential, vector_potential);
-        m_dec.exterior_curl(m_one, m_check);
+        m_dec.derivative_one_form(m_one, m_check);
         Field const check = m_check;
         double sum;
         Kokkos::parallel_reduce(

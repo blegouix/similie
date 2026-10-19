@@ -3,7 +3,10 @@
 // AI-GENERATED
 
 #include <gtest/gtest.h>
-#include <similie/physics/fmhd/fmhd.hpp>
+#include <similie/physics/coupled_fluid_electromagnetism.hpp>
+#include <similie/physics/electromagnetism/resistive_electromagnetism.hpp>
+#include <similie/physics/fluid/incompressible_navier_stokes.hpp>
+#include <similie/physics/fluid/navier_stokes_fourier.hpp>
 
 namespace {
 struct CaloricClosure
@@ -64,74 +67,80 @@ TEST(ResistiveElectromagnetism, MotionalConductionAndJouleHeating)
 
 TEST(IncompressibleFMHD, BothFieldForcesAndSharedCurrent)
 {
-    similie::physics::fluid::IncompressibleNavierStokes const fluid(2, 0);
-    similie::physics::fmhd::IdealIncompressibleFMHD const
-            ideal(fluid, similie::physics::electromagnetism::Electromagnetism(2, 1));
-    similie::physics::fmhd::ResistiveIncompressibleFMHD const resistive(
-            fluid,
+    using Model = similie::physics::CoupledFluidElectromagnetism<
+            similie::physics::fluid::IncompressibleNavierStokes,
+            similie::physics::electromagnetism::ResistiveElectromagnetism>;
+    Model const resistive(
+            similie::physics::fluid::IncompressibleNavierStokes(2, 0),
             similie::physics::electromagnetism::ResistiveElectromagnetism(2, 1, 4));
-    similie::physics::fmhd::IdealIncompressibleFMHD::State const
-            state {{0, 0, 2}, 3, {4, 0, 0}, {1, 0, 0}};
-    similie::physics::fmhd::ResistiveIncompressibleFMHD::State const resistive_state {
-            state.vorticity,
-            state.charge_density,
-            state.displacement,
-            state.induction};
-    std::array<double, 3> const u {0, 1, 0}, current = ideal.current(state, u);
-    EXPECT_DOUBLE_EQ(ideal.transport(state, u, current)[0], 5);
-    EXPECT_DOUBLE_EQ(ideal.transport(state, u, current)[2], -1.5);
-    EXPECT_DOUBLE_EQ(ideal.momentum_rate(state, u, {}, {}, current)[2], -1.5);
-    std::array<double, 3> const conducting_current = resistive.current(resistive_state, u);
-    EXPECT_DOUBLE_EQ(conducting_current[0], 0.5);
-    EXPECT_DOUBLE_EQ(conducting_current[2], -0.25);
-    EXPECT_DOUBLE_EQ(resistive.ohmic_heating(resistive_state, u), 1.25);
-    similie::physics::fmhd::ResistiveIncompressibleFMHD::State const rate
-            = resistive({1, 2, 3}, {}, 9, {}, {}, conducting_current);
-    EXPECT_DOUBLE_EQ(rate.vorticity[1], 2);
-    EXPECT_DOUBLE_EQ(rate.charge_density, -9);
-    EXPECT_DOUBLE_EQ(rate.displacement[2], 0.25);
+    Model::State const state {{{0, 0, 2}}, {3, {4, 0, 0}, {1, 0, 0}}};
+    std::array<double, 3> const velocity {0, 1, 0}, ideal_current {0, 3, 0};
+    EXPECT_DOUBLE_EQ(resistive.transport(state, velocity, ideal_current)[0], 5);
+    EXPECT_DOUBLE_EQ(resistive.transport(state, velocity, ideal_current)[2], -1.5);
+    EXPECT_DOUBLE_EQ(resistive.momentum_rate(state, velocity, {}, {}, ideal_current)[2], -1.5);
+    std::array<double, 3> const current = resistive.current(state, velocity);
+    EXPECT_DOUBLE_EQ(current[0], 0.5);
+    EXPECT_DOUBLE_EQ(current[2], -0.25);
+    EXPECT_DOUBLE_EQ(
+            resistive.get<1>().ohmic_heating(
+                    velocity,
+                    state.electromagnetic.displacement,
+                    state.electromagnetic.induction),
+            1.25);
+    Model::State const rate = resistive({1, 2, 3}, {}, 9, {}, {}, current);
+    EXPECT_DOUBLE_EQ(rate.fluid.vorticity[1], 2);
+    EXPECT_DOUBLE_EQ(rate.electromagnetic.charge_density, -9);
+    EXPECT_DOUBLE_EQ(rate.electromagnetic.displacement[2], 0.25);
 }
 
 TEST(CompressibleFMHD, CombinedEnergyThermodynamicsAndPoyntingFlux)
 {
-    similie::physics::fluid::NavierStokesFourier<CaloricClosure> const
-            fluid(CaloricClosure(), 1, 0);
-    similie::physics::fmhd::IdealCompressibleFMHD<CaloricClosure> const
-            ideal(fluid, similie::physics::electromagnetism::Electromagnetism(2, 1));
-    similie::physics::fmhd::IdealCompressibleFMHD<CaloricClosure>::State const
-            state {1, {1, 0, 0}, 4.5, 2, {2, 0, 0}, {0, 1, 0}};
+    using Fluid = similie::physics::fluid::NavierStokesFourier<CaloricClosure>;
+    using Model = similie::physics::CoupledFluidElectromagnetism<
+            Fluid,
+            similie::physics::electromagnetism::Electromagnetism,
+            similie::physics::EnergyConvention::FluidAndField>;
+    Model const
+            ideal(Fluid(CaloricClosure(), 1, 0),
+                  similie::physics::electromagnetism::Electromagnetism(2, 1));
+    Model::State const state {{1, {1, 0, 0}, 4.5}, {2, {2, 0, 0}, {0, 1, 0}}};
     EXPECT_DOUBLE_EQ(ideal.fluid_state(state).total_energy, 3);
-    EXPECT_NEAR(ideal.pressure(state), 1, 1e-14);
-    EXPECT_NEAR(ideal.flux(state, {}, {}, 0).conservation.total_energy, 4, 1e-14);
-    EXPECT_DOUBLE_EQ(ideal.flux(state, {}, {}, 2).conservation.total_energy, 1);
+    EXPECT_NEAR(ideal.get<0>().pressure(ideal.fluid_state(state)), 1, 1e-14);
+    EXPECT_NEAR(ideal.flux(state, {}, {}, 0).total_energy, 4, 1e-14);
+    EXPECT_DOUBLE_EQ(ideal.flux(state, {}, {}, 2).total_energy, 1);
     std::array<double, 3> const current = ideal.current(state);
-    similie::physics::fmhd::IdealCompressibleFMHD<CaloricClosure>::State const rate
-            = ideal(state, {0, {}, 0}, 0, {}, {}, current);
-    EXPECT_DOUBLE_EQ(rate.momentum[0], 2);
-    EXPECT_DOUBLE_EQ(rate.momentum[2], 2);
-    EXPECT_DOUBLE_EQ(rate.displacement[0], -2);
-    EXPECT_DOUBLE_EQ(rate.total_energy, 0);
-    EXPECT_DOUBLE_EQ(ideal.fluid_energy_source(state, current), 2);
+    Model::State const rate = ideal(state, Fluid::Flux {0, {}, 0}, 0, {}, {}, current);
+    EXPECT_DOUBLE_EQ(rate.fluid.momentum[0], 2);
+    EXPECT_DOUBLE_EQ(rate.fluid.momentum[2], 2);
+    EXPECT_DOUBLE_EQ(rate.electromagnetic.displacement[0], -2);
+    EXPECT_DOUBLE_EQ(rate.fluid.total_energy, 0);
+    EXPECT_DOUBLE_EQ(ideal.coupling_sources(state, current).fluid_energy_source, 2);
 }
 
 TEST(ResistiveCompressibleFMHD, PowerExchangeWithoutDoubleCounting)
 {
-    similie::physics::fluid::NavierStokesFourier<CaloricClosure> const
-            fluid(CaloricClosure(), 1, 0);
-    similie::physics::fmhd::ResistiveCompressibleFMHD<CaloricClosure> const resistive(
-            fluid,
+    using Fluid = similie::physics::fluid::NavierStokesFourier<CaloricClosure>;
+    using Model = similie::physics::CoupledFluidElectromagnetism<
+            Fluid,
+            similie::physics::electromagnetism::ResistiveElectromagnetism,
+            similie::physics::EnergyConvention::FluidAndField>;
+    Model const resistive(
+            Fluid(CaloricClosure(), 1, 0),
             similie::physics::electromagnetism::ResistiveElectromagnetism(2, 1, 2));
-    similie::physics::fmhd::ResistiveCompressibleFMHD<CaloricClosure>::State const
-            state {1, {1, 0, 0}, 4.5, 2, {2, 0, 0}, {0, 1, 0}};
+    Model::State const state {{1, {1, 0, 0}, 4.5}, {2, {2, 0, 0}, {0, 1, 0}}};
     std::array<double, 3> const current = resistive.current(state);
     EXPECT_DOUBLE_EQ(current[0], 2.5);
     EXPECT_DOUBLE_EQ(current[2], 0.5);
-    EXPECT_DOUBLE_EQ(resistive.ohmic_heating(state), 1);
-    EXPECT_DOUBLE_EQ(resistive.fluid_energy_source(state, current), 2.5);
-    similie::physics::fmhd::ResistiveCompressibleFMHD<CaloricClosure>::State const rate
-            = resistive(state, {0, {}, 0}, 0, {}, {}, current);
-    EXPECT_DOUBLE_EQ(rate.momentum[0], 1.5);
-    EXPECT_DOUBLE_EQ(rate.momentum[2], 2.5);
-    EXPECT_DOUBLE_EQ(rate.displacement[0], -2.5);
-    EXPECT_DOUBLE_EQ(rate.total_energy, 0);
+    EXPECT_DOUBLE_EQ(
+            resistive.get<1>().ohmic_heating(
+                    {1, 0, 0},
+                    state.electromagnetic.displacement,
+                    state.electromagnetic.induction),
+            1);
+    EXPECT_DOUBLE_EQ(resistive.coupling_sources(state, current).fluid_energy_source, 2.5);
+    Model::State const rate = resistive(state, Fluid::Flux {0, {}, 0}, 0, {}, {}, current);
+    EXPECT_DOUBLE_EQ(rate.fluid.momentum[0], 1.5);
+    EXPECT_DOUBLE_EQ(rate.fluid.momentum[2], 2.5);
+    EXPECT_DOUBLE_EQ(rate.electromagnetic.displacement[0], -2.5);
+    EXPECT_DOUBLE_EQ(rate.fluid.total_energy, 0);
 }

@@ -62,9 +62,26 @@ remains active in ideal FMHD; its wave speed here is one.
 spacing \f$2\pi/N\f$. The code stores vorticity and magnetic flux as two-cochains
 and calls the exterior module for reduction, reconstruction, exterior derivative,
 codifferential and Hodge Laplacian. Pointwise physics supplies material laws and
-forces. The compressible solver currently adds a centered two-point face flux;
-it is not positivity preserving. Replacing that flux requires a compatible
-nonlinear transport operator, beyond the linear DEC operators.
+forces. `NavierStokesFourier` supplies the centered two-point transport flux;
+the benchmark reduces its face samples and applies the codifferential. This
+flux conserves mass and total energy on the periodic grid, but does not enforce
+positivity. Incompressible velocity comes from the native two-form Hodge solve;
+its diagnostic Bernoulli pressure uses the scalar Hodge solve. Both use the
+library matrix-free solver.
+
+Fluid and field models are combined through `CoupledFluidElectromagnetism`,
+which composes the sectors and the generated electric and magnetic exchange
+laws with `CombinePhysics`. Select electric quasistatics, magnetic quasistatics,
+or full Maxwell dynamics by supplying the corresponding field model. The
+assembly accepts one spatially reduced current for force, power, and field
+updates; it adds no new degrees of freedom. With fluid energy as the state,
+exchange adds \f$J\cdot E\f$ once. With fluid-plus-field energy, the flux
+contains Poynting transport instead. The benchmark uses fluid energy and pairs
+its electric work on the same edges as Ampere's law.
+
+The exterior operators and benchmark selection remain header-only. The final
+benchmark source instantiates its Laplacian choices directly; no separately
+compiled Laplacian implementations are linked.
 
 Build with `SIMILIE_BUILD_BENCHMARKS=ON`, then run the executable from the build
 directory, for example:

@@ -16,7 +16,7 @@
 
 #include "configuration.hpp"
 #include "grid_types.hpp"
-#include "laplacian_modes.hpp"
+#include "laplacian_mode.hpp"
 
 namespace taylor_green_vortex {
 /** Benchmark storage and field placement, delegating all differential operators.
@@ -178,7 +178,7 @@ public:
         VectorTensor const form = vector(m_pointwise), cochain = vector(m_oneform);
         reduce(cochain, form);
     }
-    void reduced_divergence(Field const& output, int component)
+    void negative_reduced_codifferential(Field const& output, int component)
     {
         reduce_one_form();
         (*m_codifferential)(scalar(output, component), vector(m_oneform));
@@ -463,7 +463,7 @@ public:
         int const coordinate = (index / stride) % nodes;
         return index + (((coordinate + offset + nodes) % nodes) - coordinate) * stride;
     }
-    void forward_derivative(
+    void edge_derivative_component(
             Field const& input,
             int component,
             Field const& output,
@@ -477,7 +477,7 @@ public:
                 cells,
                 KOKKOS_LAMBDA(int i) { output(out_component, i) = gradient(0, 3 * i + axis); });
     }
-    void derivative(
+    void nodal_derivative_component(
             Field const& input,
             int component,
             Field const& output,
@@ -496,7 +496,7 @@ public:
                             = 0.5 * (gradient(0, 3 * i + axis) + gradient(0, 3 * previous + axis));
                 });
     }
-    void flux_divergence(
+    void negative_face_codifferential(
             Field const& flux,
             int component,
             Field const& output,
@@ -511,9 +511,9 @@ public:
                     for (int a = 0; a < 3; ++a)
                         pointwise(0, 3 * i + a) = a == axis ? flux(component, i) : 0;
                 });
-        reduced_divergence(output, out_component);
+        negative_reduced_codifferential(output, out_component);
     }
-    void divergence(Field const& velocity, Field const& output)
+    void negative_reduced_codifferential(Field const& velocity, Field const& output)
     {
         Field const placed = m_pointwise;
         int const nodes = n;
@@ -525,7 +525,7 @@ public:
                         placed(0, 3 * i + a)
                                 = 0.5 * (velocity(a, i) + velocity(a, neighbor(i, a, 1, nodes)));
                 });
-        reduced_divergence(output, 0);
+        negative_reduced_codifferential(output, 0);
     }
 
     void laplacian(Field const& input, int component, Field const& output, int out_component)
@@ -537,7 +537,7 @@ public:
                 cells,
                 KOKKOS_LAMBDA(int i) { output(out_component, i) *= -1; });
     }
-    void curl(Field const& velocity, Field const& output)
+    void reconstructed_derivative_one_form(Field const& velocity, Field const& output)
     {
         Field const placed = m_pointwise;
         int const nodes = n;

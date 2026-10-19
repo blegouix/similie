@@ -241,7 +241,7 @@ public:
                         output(a, i) = axial(physical, i, a, n);
                 });
     }
-    void exterior_curl(Field const& one_cochain, Field const& two_cochain)
+    void derivative_one_form(Field const& one_cochain, Field const& two_cochain)
     {
         pack(one_cochain, m_one);
         sil::exterior::deriv<sil::tensor::Covariant<CurlDirection>, Vector>(
@@ -263,7 +263,7 @@ public:
         m_laplacian->apply(tensor<TwoForm>(m_two_output), tensor<TwoForm>(m_two));
         unpack(m_two_output, output);
     }
-    void divergence(Field const& one_cochain, Field const& output)
+    void negative_codifferential_one_form(Field const& one_cochain, Field const& output)
     {
         pack(one_cochain, m_one);
         (*m_one_codifferential)(m_grid.scalar(output), tensor<Vector>(m_one));

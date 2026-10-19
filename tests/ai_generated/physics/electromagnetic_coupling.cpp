@@ -156,3 +156,29 @@ TEST(FluidElectromagneticAssembly, DeviceEvaluation)
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result);
     EXPECT_DOUBLE_EQ(host(0), 33);
 }
+
+TEST(NavierStokesFourier, TwoPointFluxIsSymmetricAndConsistent)
+{
+    Fluid const model(CaloricClosure(), 0.71, 0.01);
+    Fluid::State const left {2, {1, -2, 3}, 12}, right {1, {-1, 2, 0}, 10};
+    Fluid::VelocityGradient const gradient {{{1, 2, 3}, {-2, 1, 0}, {0, 4, -2}}};
+    std::array<double, 3> const temperature_gradient {2, -1, 3};
+    for (int normal = 0; normal < 3; ++normal) {
+        Fluid::Flux const physical
+                = model.flux(left, model.primitives(left), gradient, temperature_gradient, normal);
+        Fluid::Flux const identical
+                = model.two_point_flux(left, left, gradient, temperature_gradient, normal);
+        EXPECT_NEAR(physical.mass, identical.mass, 1e-14);
+        EXPECT_NEAR(physical.total_energy, identical.total_energy, 1e-14);
+        Fluid::Flux const forward
+                = model.two_point_flux(left, right, gradient, temperature_gradient, normal);
+        Fluid::Flux const backward
+                = model.two_point_flux(right, left, gradient, temperature_gradient, normal);
+        EXPECT_DOUBLE_EQ(forward.mass, backward.mass);
+        EXPECT_DOUBLE_EQ(forward.total_energy, backward.total_energy);
+        for (int a = 0; a < 3; ++a) {
+            EXPECT_NEAR(physical.momentum[a], identical.momentum[a], 1e-14);
+            EXPECT_DOUBLE_EQ(forward.momentum[a], backward.momentum[a]);
+        }
+    }
+}
