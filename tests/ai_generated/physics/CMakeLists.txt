@@ -4,6 +4,11 @@
 
 if(BUILD_TESTING)
     include(GoogleTest)
+    add_executable(unit_tests_electromagnetic_coupling electromagnetic_coupling.cpp ../../main.cpp)
+    target_link_libraries(unit_tests_electromagnetic_coupling PRIVATE GTest::gtest sil::sil physics)
+    gtest_discover_tests(unit_tests_electromagnetic_coupling DISCOVERY_MODE PRE_TEST)
+    add_test(NAME ElectromagneticCoupling.MinimalHamiltonianDerivation
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/electromagnetic_coupling.py")
     add_executable(unit_tests_fmhd fmhd.cpp ../../main.cpp)
     target_link_libraries(unit_tests_fmhd PRIVATE GTest::gtest sil::sil)
     gtest_discover_tests(unit_tests_fmhd DISCOVERY_MODE PRE_TEST)

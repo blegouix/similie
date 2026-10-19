@@ -9,6 +9,7 @@
 #include <type_traits>
 
 #include <similie/physics/concepts.hpp>
+#include <similie/physics/coupling/magnetic_coupling_physics.hpp>
 
 #include <Kokkos_Core.hpp>
 
@@ -87,7 +88,7 @@ public:
     }
     KOKKOS_FUNCTION Vector lorentz_force(Vector const& current, Vector const& induction) const
     {
-        return cross(current, induction);
+        return coupling::MagneticCouplingPhysics()({0, {}, induction, current}).momentum_source;
     }
     KOKKOS_FUNCTION Tensor momentum_flux(Vector const& induction) const
     {

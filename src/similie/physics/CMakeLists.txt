@@ -6,6 +6,22 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(SIMILIE_GENERATED_PHYSICS_DIR "${PROJECT_BINARY_DIR}/src/similie/physics")
 
+set(ELECTROMAGNETIC_COUPLING_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/coupling/electromagnetic_coupling.py")
+set(ELECTRIC_COUPLING_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/coupling/electric_coupling_physics.hpp")
+set(MAGNETIC_COUPLING_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/coupling/magnetic_coupling_physics.hpp")
+add_custom_command(
+    OUTPUT "${ELECTRIC_COUPLING_HEADER}" "${MAGNETIC_COUPLING_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${ELECTROMAGNETIC_COUPLING_GENERATOR}"
+            --output-directory "${SIMILIE_GENERATED_PHYSICS_DIR}/coupling"
+    DEPENDS "${ELECTROMAGNETIC_COUPLING_GENERATOR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/coupling/electromagnetic_coupling.hpp.in"
+    COMMENT "Generating electric and magnetic exchange from minimal Hamiltonian coupling"
+    VERBATIM
+)
+
 set(SCALAR_FIELD_GENERATOR
     "${CMAKE_CURRENT_SOURCE_DIR}/scalar_field/scalar_field.py")
 set(GENERIC_HAMILTONIAN_GENERATOR
@@ -221,6 +237,8 @@ add_custom_command(
 
 add_custom_target(similie_physics_generated
     DEPENDS
+        "${ELECTRIC_COUPLING_HEADER}"
+        "${MAGNETIC_COUPLING_HEADER}"
         "${SCALAR_FIELD_HEADER}"
         "${LINEAR_MAGNETOSTATICS_HEADER}"
         "${LINEAR_MAGNETOSTATICS_CONSTITUTIVE_LAW_HEADER}"

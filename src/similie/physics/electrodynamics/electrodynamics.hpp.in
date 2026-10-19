@@ -9,6 +9,7 @@
 #include <type_traits>
 
 #include <similie/physics/concepts.hpp>
+#include <similie/physics/coupling/electric_coupling_physics.hpp>
 
 #include <Kokkos_Core.hpp>
 
@@ -86,16 +87,17 @@ public:
     }
     KOKKOS_FUNCTION Vector electric_force(double charge_density, Vector const& displacement) const
     {
-        Vector result = electric_field(displacement);
-        for (double& value : result)
-            value *= charge_density;
-        return result;
+        return coupling::ElectricCouplingPhysics()(
+                       {charge_density, electric_field(displacement), {}, {}})
+                .momentum_source;
     }
     KOKKOS_FUNCTION double fluid_energy_source(
             Vector const& displacement,
             Vector const& total_current) const
     {
-        return dot(total_current, electric_field(displacement));
+        return coupling::ElectricCouplingPhysics()(
+                       {0, electric_field(displacement), {}, total_current})
+                .fluid_energy_source;
     }
     KOKKOS_FUNCTION double ohmic_heating([[maybe_unused]] Vector const& displacement) const
     {

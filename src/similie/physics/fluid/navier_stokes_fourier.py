@@ -301,7 +301,6 @@ public:
     static constexpr std::size_t N = 5;
     static constexpr bool IS_LINEAR = false;
     struct State {{ double density; std::array<double,3> momentum; double total_energy; }};
-    static_assert(PhysicsConcept<NavierStokesFourier>);
     struct PrimitiveVariables {{ double density; std::array<double,3> velocity; double pressure; double temperature; }};
     struct Flux {{ double mass; std::array<double,3> momentum; double total_energy; }};
     using VelocityGradient=std::array<std::array<double,3>,3>;
@@ -309,7 +308,12 @@ public:
     double const prandtl, viscosity;
     KOKKOS_FUNCTION explicit NavierStokesFourier(Thermodynamics closure, double prandtl_number,
             double dynamic_viscosity)
-        : thermodynamics(closure), prandtl(prandtl_number), viscosity(dynamic_viscosity) {{}}
+        : thermodynamics(closure), prandtl(prandtl_number), viscosity(dynamic_viscosity)
+    {{
+        // Check the complete type; a class-scope self-check recursively enters
+        // PhysicsConcept when this model is first used as a constrained argument.
+        static_assert(PhysicsConcept<NavierStokesFourier>);
+    }}
     KOKKOS_FUNCTION double specific_internal_energy(State const& state) const
     {{ return {energy}; }}
     KOKKOS_FUNCTION double pressure(State const& state) const

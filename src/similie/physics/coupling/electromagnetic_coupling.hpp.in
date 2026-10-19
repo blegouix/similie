@@ -1,0 +1,35 @@
+// SPDX-FileCopyrightText: 2026 Baptiste Legouix
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
+
+#pragma once
+
+#include <similie/physics/concepts.hpp>
+#include <similie/physics/coupling/electromagnetic_exchange.hpp>
+
+namespace similie::physics::coupling {
+/** Local exchange generated from H=|p-q A|^2/(2m)+q phi.
+ * Hamilton's equations are converted from canonical to mechanical momentum
+ * before summing charge carriers. The electric contribution transfers J.E;
+ * the magnetic contribution transfers momentum without additional total-fluid
+ * energy. Magnetic work on the bulk velocity can still be nonzero.
+ * N=0: this interaction owns no additional evolved degrees of freedom.
+ * State is a view by value of quantities shared by the physical sectors.
+ * This exchange must not be added to the stored fluid-plus-field Hamiltonian.
+ * \important This operator and documentation is fully AI-generated.
+ */
+class @class@
+{
+public:
+    using State = ElectromagneticCouplingState;
+    static constexpr std::size_t N = 0;
+    static constexpr bool IS_LINEAR = false;
+
+    [[nodiscard]] KOKKOS_FUNCTION ElectromagneticExchange operator()(State const& state) const
+    {
+        return {@force@, @power@, @field_power@};
+    }
+};
+
+static_assert(PhysicsConcept<@class@>);
+} // namespace similie::physics::coupling
