@@ -27,10 +27,6 @@ struct CaloricClosure
     {
         return 3.5;
     }
-    KOKKOS_FUNCTION double sound_speed_squared([[maybe_unused]] double rho, double e) const
-    {
-        return 0.56 * e;
-    }
 };
 } // namespace
 

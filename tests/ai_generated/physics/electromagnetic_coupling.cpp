@@ -39,6 +39,23 @@ static_assert(similie::physics::PhysicsConcept<Assembly>);
 static_assert(Assembly::N == Fluid::N + Fields::N);
 static_assert(Assembly::size == 4);
 
+void check_device_evaluation()
+{
+    Assembly const model(Fluid(CaloricClosure(), 1, 0), Fields(2, 4, 2));
+    Assembly::State const state {{2, {2, 0, 0}, 11}, {-2, {6, -8, 4}, {-2, 3, 4}}};
+    Kokkos::View<double*> result("coupled_energy_rate", 1);
+    Kokkos::parallel_for(
+            "evaluate_coupled_rate",
+            1,
+            KOKKOS_LAMBDA(int) {
+                Fluid::Flux const divergence {0, {}, 0};
+                result(0) = model(state, divergence, 0, {}, {}, {5, -1, 7}).fluid.total_energy;
+            });
+    Kokkos::View<double*, Kokkos::HostSpace> const host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result);
+    EXPECT_DOUBLE_EQ(host(0), 33);
+}
+
 } // namespace
 
 TEST(ElectromagneticCoupling, NeutralConductionStillTransfersMomentumAndEnergy)
@@ -142,19 +159,7 @@ TEST(FluidElectromagneticAssembly, IncompressibleForcePrecedesExteriorCurl)
 
 TEST(FluidElectromagneticAssembly, DeviceEvaluation)
 {
-    Assembly const model(Fluid(CaloricClosure(), 1, 0), Fields(2, 4, 2));
-    Assembly::State const state {{2, {2, 0, 0}, 11}, {-2, {6, -8, 4}, {-2, 3, 4}}};
-    Kokkos::View<double*> result("coupled_energy_rate", 1);
-    Kokkos::parallel_for(
-            "evaluate_coupled_rate",
-            1,
-            KOKKOS_LAMBDA(int) {
-                Fluid::Flux const divergence {0, {}, 0};
-                result(0) = model(state, divergence, 0, {}, {}, {5, -1, 7}).fluid.total_energy;
-            });
-    Kokkos::View<double*, Kokkos::HostSpace> const host
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result);
-    EXPECT_DOUBLE_EQ(host(0), 33);
+    check_device_evaluation();
 }
 
 TEST(NavierStokesFourier, TwoPointFluxIsSymmetricAndConsistent)

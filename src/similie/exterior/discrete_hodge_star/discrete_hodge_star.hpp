@@ -71,7 +71,7 @@ public:
             misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>>;
 
 
-    KOKKOS_FUNCTION DiscreteHodgeStar() = default;
+    DiscreteHodgeStar() = default;
 
     template <class Exec>
     DiscreteHodgeStar(Exec const& exec, MetricType const& metric, PositionType const& position)
