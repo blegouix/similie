@@ -15,11 +15,11 @@
 #include <similie/tensor/tensor_indices/full_tensor.hpp>
 #include <similie/tensor/tensor_indices/identity_tensor.hpp>
 #include <similie/tensor/tensor_indices/levi_civita_tensor.hpp>
-#include <similie/tensor/tensor_indices/weighted_levi_civita_tensor.hpp>
 #include <similie/tensor/tensor_indices/lorentzian_sign_tensor.hpp>
 #include <similie/tensor/tensor_indices/prime.hpp>
 #include <similie/tensor/tensor_indices/relabelization.hpp>
 #include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
+#include <similie/tensor/tensor_indices/weighted_levi_civita_tensor.hpp>
 #include <similie/tensor/tensor_prod/tensor_prod.hpp>
 
 #include "determinant.hpp"
