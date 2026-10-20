@@ -5,6 +5,7 @@
 add_subdirectory(exterior)
 add_subdirectory(multidomains)
 add_subdirectory(physics)
+add_subdirectory(solvers)
 add_subdirectory(tensor)
 
 add_library(check_concepts OBJECT concepts.cpp)

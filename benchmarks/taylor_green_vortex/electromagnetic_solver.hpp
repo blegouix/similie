@@ -47,6 +47,7 @@ class ElectromagneticSolver
     StructuredGrid& m_grid;
     VorticityDEC m_dec;
     ScalarPoissonOperator m_poisson;
+    PoissonSolver m_solver;
     Configuration const m_configuration;
     Field m_initial, m_stage, m_rate, m_b, m_d, m_j, m_e, m_curl, m_ampere, m_work, m_motional,
             m_edges, m_current_edges, m_electric_edges, m_motional_edges, m_displacement_edges,
@@ -91,11 +92,7 @@ public:
                 KOKKOS_LAMBDA(int i) {
                     source(i, 0) = (charge(0, i) - mean) / ElectromagneticReference::permittivity;
                 });
-        similie::solvers::StrongFormulationSolverSettings settings;
-        settings.use_matrix_free = true;
-        settings.preconditioner = similie::solvers::PreconditionerType::Identity;
-        settings.relative_tolerance = 1e-11;
-        settings.max_iterations = 8 * m_grid.n;
+        similie::solvers::StrongFormulationSolverSettings const settings = m_solver.settings();
         similie::solvers::StrongFormulationSolverDiagnostics const result
                 = similie::solvers::minimize_strong_formulation_residual(
                         Kokkos::DefaultExecutionSpace(),
@@ -122,7 +119,10 @@ public:
         Kokkos::parallel_for(
                 "electric_potential_gauge",
                 m_grid.cells,
-                KOKKOS_LAMBDA(int i) { phi(0, i) -= shift; });
+                KOKKOS_LAMBDA(int i) {
+                    phi(0, i) -= shift;
+                    solution(i, 0) = phi(0, i);
+                });
         potential_displacement();
     }
 
@@ -135,6 +135,7 @@ public:
         : m_grid(grid)
         , m_dec(grid)
         , m_poisson(grid)
+        , m_solver(grid.n, 1, grid.h)
         , m_configuration(configuration)
         , m_initial("initial_em", 7, grid.cells)
         , m_stage("stage_em", 7, grid.cells)

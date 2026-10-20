@@ -11,6 +11,7 @@
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
 #include "parameters.hpp"
+#include "poisson_solver.hpp"
 #include "vorticity_dec.hpp"
 
 namespace taylor_green_vortex {
@@ -152,8 +153,8 @@ public:
 /** Bernoulli pressure from the native scalar Hodge Laplacian.
  * With F=u cross omega+nu Delta u+force/rho, solve delta d Pi=delta R(F),
  * where R reduces the reconstructed force to one-cochains. This is a diagnostic
- * solve; velocity remains delta B plus its harmonic component. The zero-start
- * library Krylov solve fixes the constant potential gauge, then pressure is
+ * solve; velocity remains delta B plus its harmonic component. The warm-start
+ * library Krylov solve retains the previous potential, then pressure is
  * p=rho(Pi-|u|^2/2), shifted to the requested mean.
  * \important This operator and documentation is fully AI-generated.
  */
@@ -161,6 +162,7 @@ class PressureReconstruction
 {
     StructuredGrid& m_dec;
     ScalarPoissonOperator m_poisson;
+    PoissonSolver m_solver;
     similie::physics::fluid::IncompressibleNavierStokes const m_physics;
     Field m_vorticity, m_lap, m_phi, m_r, m_rhs, m_solution, m_pressure_acceleration;
 
@@ -222,6 +224,7 @@ public:
     explicit PressureReconstruction(StructuredGrid& dec)
         : m_dec(dec)
         , m_poisson(dec)
+        , m_solver(dec.n, 1, dec.h)
         , m_physics(1.0, Reference::viscosity)
         , m_vorticity("velocity_exterior_derivative", 3, dec.cells)
         , m_lap("velocity_laplacian", 3, dec.cells)
@@ -259,11 +262,7 @@ public:
                 "pressure_poisson_rhs",
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) { source(i, 0) = -divergence(0, i); });
-        similie::solvers::StrongFormulationSolverSettings settings;
-        settings.use_matrix_free = true;
-        settings.preconditioner = similie::solvers::PreconditionerType::Identity;
-        settings.relative_tolerance = 1e-11;
-        settings.max_iterations = 8 * m_dec.n;
+        similie::solvers::StrongFormulationSolverSettings const settings = m_solver.settings();
         similie::solvers::StrongFormulationSolverDiagnostics const diagnostics
                 = similie::solvers::minimize_strong_formulation_residual(
                         Kokkos::DefaultExecutionSpace(),
@@ -276,17 +275,27 @@ public:
             throw std::runtime_error("Pressure reconstruction did not converge");
         total_iterations += diagnostics.iterations;
         Field const solution = m_solution, phi = m_phi;
+        double sum;
+        Kokkos::parallel_reduce(
+                "bernoulli_potential_mean",
+                m_dec.cells,
+                KOKKOS_LAMBDA(int i, double& value) { value += solution(i, 0); },
+                sum);
+        double const mean = sum / m_dec.cells;
         Kokkos::parallel_for(
                 "unpack_bernoulli_potential",
                 m_dec.cells,
-                KOKKOS_LAMBDA(int i) { phi(0, i) = solution(i, 0); });
+                KOKKOS_LAMBDA(int i) {
+                    solution(i, 0) -= mean;
+                    phi(0, i) = solution(i, 0);
+                });
         recover_pressure(velocity, output, mean_pressure);
     }
 };
 
 /** Matrix-free native two-form Hodge Laplacian; uniform periodic metric makes
  * it symmetric in the cochain Euclidean inner product. Mean-zero right-hand
- * sides and zero-start CG exclude its three harmonic constant modes.
+ * sides and explicit mean removal fix its three harmonic constant modes.
  * \important This operator and documentation is fully AI-generated.
  */
 class VorticityPoissonOperator
@@ -342,10 +351,11 @@ class IncompressibleSolver
     StructuredGrid& m_grid;
     VorticityDEC m_dec;
     VorticityPoissonOperator m_poisson;
+    PoissonSolver m_solver;
     PressureReconstruction m_pressure;
     similie::physics::fluid::IncompressibleNavierStokes const m_physics;
     Field m_potential, m_one, m_transport, m_transport_one, m_lap, m_poisson_rhs,
-            m_poisson_solution, m_check;
+            m_poisson_solution, m_derivative_poisson_solution, m_check;
 
 public:
     Field velocity, vorticity, vector_potential, pressure;
@@ -357,6 +367,7 @@ public:
         : m_grid(grid)
         , m_dec(grid)
         , m_poisson(m_dec, grid.cells)
+        , m_solver(grid.n, 3, grid.h)
         , m_pressure(grid)
         , m_physics(1, Reference::viscosity)
         , m_potential("dual_vector_potential", 3, grid.cells)
@@ -366,6 +377,7 @@ public:
         , m_lap("vorticity_hodge_laplacian", 3, grid.cells)
         , m_poisson_rhs("vector_poisson_rhs", 3 * grid.cells, 1)
         , m_poisson_solution("vector_poisson_solution", 3 * grid.cells, 1)
+        , m_derivative_poisson_solution("vector_poisson_derivative_solution", 3 * grid.cells, 1)
         , m_check("curl_check", 3, grid.cells)
         , velocity("reconstructed_velocity", 3, grid.cells)
         , vorticity("reconstructed_vorticity", 3, grid.cells)
@@ -422,24 +434,22 @@ public:
                     cells,
                     KOKKOS_LAMBDA(int i) { rhs(c * cells + i, 0) = state(c, i) - mean; });
         }
-        similie::solvers::StrongFormulationSolverSettings settings;
-        settings.use_matrix_free = true;
-        settings.preconditioner = similie::solvers::PreconditionerType::Identity;
-        settings.relative_tolerance = 1e-11;
-        settings.max_iterations = 8 * m_grid.n;
+        similie::solvers::StrongFormulationSolverSettings const settings = m_solver.settings();
+        // Monitor solves of dW/dt must not overwrite the state potential history.
+        Field const solution = time_derivative ? m_derivative_poisson_solution : m_poisson_solution;
         similie::solvers::StrongFormulationSolverDiagnostics const diagnostics
                 = similie::solvers::minimize_strong_formulation_residual(
                         Kokkos::DefaultExecutionSpace(),
                         m_poisson,
                         rhs,
-                        m_poisson_solution,
+                        solution,
                         settings);
         if (!std::isfinite(diagnostics.final_relative_residual)
             || diagnostics.final_relative_residual > 10 * settings.relative_tolerance)
             throw std::runtime_error("Vector-potential reconstruction did not converge");
         total_iterations += diagnostics.iterations;
         last_relative_residual = diagnostics.final_relative_residual;
-        Field const solution = m_poisson_solution, potential = m_potential;
+        Field const potential = m_potential;
         Kokkos::parallel_for(
                 "unpack_vector_potential",
                 cells,
@@ -459,7 +469,10 @@ public:
             Kokkos::parallel_for(
                     "zero_mean_vector_potential",
                     cells,
-                    KOKKOS_LAMBDA(int i) { potential(c, i) -= mean; });
+                    KOKKOS_LAMBDA(int i) {
+                        potential(c, i) -= mean;
+                        solution(c * cells + i, 0) = potential(c, i);
+                    });
         }
         // Check the actual DEC residual, independently of the Krylov logger.
         m_dec.positive_laplacian(m_potential, m_check);

@@ -15,7 +15,8 @@ import h5py
 import numpy as np
 from post_process import process
 
-MESH_SIZES = (64, 128, 256)
+# N=256 is temporarily disabled: the CI GPU cannot allocate its stencil storage.
+MESH_SIZES = (64, 128)
 PERFORMANCE_STEPS = 5
 PERFORMANCE_REPETITIONS = 3
 STRATEGY_MIN_TIME = "0.5"
@@ -275,7 +276,9 @@ def campaign(binary, output, fluid, transport, coupling):
         else []
     )
     if coupling == "hd":
-        manifest["validation"] = "full reference trajectories at N=64,128,256"
+        manifest["validation"] = "full reference trajectories at N=" + ",".join(
+            map(str, MESH_SIZES)
+        )
     else:
         try:
             execute(
