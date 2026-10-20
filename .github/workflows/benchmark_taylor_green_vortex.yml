@@ -115,6 +115,7 @@ jobs:
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 \
+          -e SIMILIE_TGV_PROGRESS_STRIDE=10 \
           -e PYTHONDONTWRITEBYTECODE=1 \
           -v "${CI_ROOT}:${CI_ROOT}" -v "${ARTIFACT_ROOT}:${BUILD_ROOT}" \
           -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" bash -lc '
@@ -123,6 +124,7 @@ jobs:
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
+            grep "^CMAKE_BUILD_TYPE:STRING=" "${BUILD_ROOT}/build/CMakeCache.txt"
             python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/ci_campaign.py" \
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \

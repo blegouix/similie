@@ -8,6 +8,7 @@ import json
 import math
 import statistics
 import subprocess
+import sys
 from pathlib import Path
 
 import h5py
@@ -39,11 +40,24 @@ def execute(command, directory, log):
     with log.open("w") as output:
         output.write("Command: " + " ".join(map(str, command)) + "\n")
         output.flush()
-        result = subprocess.run(
-            command, cwd=directory, stdout=output, stderr=subprocess.STDOUT, check=False
+        process = subprocess.Popen(
+            command,
+            cwd=directory,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
-    if result.returncode:
-        raise RuntimeError(f"Command failed ({result.returncode}); see {log}")
+        if process.stdout is None:
+            raise RuntimeError("Could not capture benchmark output")
+        for line in process.stdout:
+            output.write(line)
+            output.flush()
+            sys.stdout.write(line)
+            sys.stdout.flush()
+        return_code = process.wait()
+    if return_code:
+        raise RuntimeError(f"Command failed ({return_code}); see {log}")
 
 
 def staged_laplacian_bytes(n):

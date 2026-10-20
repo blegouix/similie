@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -16,6 +17,7 @@
 #include <numbers>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -956,12 +958,35 @@ void run_trajectory(benchmark::State* benchmark_state)
 {
     static int invocation = 0;
     try {
+        unsigned int progress_stride = 0;
+        if (char const* const value = std::getenv("SIMILIE_TGV_PROGRESS_STRIDE")) {
+            std::size_t consumed = 0;
+            unsigned long const parsed = std::stoul(value, &consumed);
+            if (consumed != std::string(value).size()
+                || parsed > std::numeric_limits<unsigned int>::max())
+                throw std::runtime_error(
+                        "SIMILIE_TGV_PROGRESS_STRIDE must be an unsigned integer");
+            progress_stride = static_cast<unsigned int>(parsed);
+        }
+        std::int64_t const cells = std::int64_t(nodes) * nodes * nodes;
+        std::cout << "TGV setup: mode=" << (benchmark_state ? "performance" : "reference")
+                  << " configuration=" << configuration.name() << " N=" << nodes
+                  << " cells=" << cells << " Re=1600 Pr=0.71 execution_space="
+                  << Kokkos::DefaultExecutionSpace::name()
+                  << " laplacian=" << (configuration.staged_laplacian ? "staged" : "direct")
+                  << " operators=" << configuration.operator_name()
+                  << " staging=" << configuration.staging_name()
+                  << " snapshots=" << (write_snapshots ? "on" : "off")
+                  << " progress_stride=" << progress_stride << " output=" << output_directory
+                  << std::endl;
         std::filesystem::create_directories(output_directory);
         Clock::time_point const setup_start = Clock::now();
         Simulation simulation(nodes, physics);
         Kokkos::fence("taylor_green_setup_complete");
         double const setup_seconds
                 = std::chrono::duration<double>(Clock::now() - setup_start).count();
+        std::cout << "TGV setup complete: N=" << nodes << " setup_seconds=" << setup_seconds
+                  << std::endl;
         std::string const prefix = std::string("tgv_") + configuration.name() + "_N"
                                    + std::to_string(nodes) + "_run";
         std::filesystem::path base;
@@ -1050,6 +1075,17 @@ void run_trajectory(benchmark::State* benchmark_state)
                 if (benchmark_state)
                     benchmark_state->ResumeTiming();
                 throw;
+            }
+            if (progress_stride != 0
+                && (steps == 1 || steps % progress_stride == 0 || reached
+                    || (benchmark_state && steps == benchmark_state->iterations()))) {
+                std::cout << "TGV progress: mode="
+                          << (benchmark_state ? "performance" : "reference") << " N=" << nodes
+                          << " step=" << steps;
+                if (benchmark_state)
+                    std::cout << "/" << benchmark_state->iterations();
+                std::cout << " time=" << std::setprecision(8) << time << " dt=" << dt
+                          << " step_seconds=" << seconds << std::endl;
             }
             if (benchmark_state)
                 benchmark_state->ResumeTiming();
