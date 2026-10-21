@@ -52,7 +52,6 @@ bool strategy_suite = false, reference_suite = false;
 bool benchmark_output_requested = false;
 int strategy_index = 0;
 double reference_final_time = 10;
-std::filesystem::path postprocess_directory;
 bool write_snapshots = true;
 bool benchmark_failed = false;
 
@@ -536,8 +535,7 @@ std::string header(int n, Physics kind)
     return text.str();
 }
 
-// One interpreter and one PDI configuration serve every resolution in a suite.
-// Reinitializing the pycall interpreter between cases is not supported by PDI.
+// One PDI configuration serves every resolution in a suite.
 struct PdiSession
 {
     PC_tree_t config {};
@@ -656,12 +654,6 @@ public:
             for (std::pair<char const*, Field> const& item : fields)
                 yaml << "      " << item.first << ": {dataset: 'snapshot_${export_id}/"
                      << item.first << "'}\n";
-            yaml << "  pycall:\n    on_event:\n      vtk:\n"
-                 << "        with: {index: $export_id, filename: $file_name}\n        exec: |\n"
-                 << "          import sys\n          sys.path.insert(0, "
-                 << std::quoted(postprocess_directory.string(), '\'') << ")\n"
-                 << "          from post_process import pdi_vtk\n"
-                 << "          pdi_vtk(filename.tobytes().decode(), int(index))\n";
             pdi_session->config = PC_parse_string(yaml.str().c_str());
             if (PDI_init(pdi_session->config) != PDI_OK) {
                 PC_tree_destroy(&pdi_session->config);
@@ -692,7 +684,7 @@ public:
             if (PDI_share(item.first, values.data(), PDI_OUT) != PDI_OK)
                 throw std::runtime_error("Cannot expose PDI snapshot field");
         }
-        if (PDI_event("export") != PDI_OK || PDI_event("vtk") != PDI_OK)
+        if (PDI_event("export") != PDI_OK)
             throw std::runtime_error("PDI snapshot export failed");
         for (std::pair<char const*, Field> const& item : fields)
             PDI_reclaim(item.first);
@@ -763,19 +755,29 @@ public:
     }
     void write_xmf()
     {
-        std::ofstream out(m_base.string() + ".xmf");
-        out << "<?xml version=\"1.0\"?>\n<Xdmf Version=\"3.0\"><Domain><Grid Name=\"TimeSeries\" "
-               "GridType=\"Collection\" CollectionType=\"Temporal\">\n";
+        std::ofstream out(m_base.string() + ".xmf", std::ios::trunc);
+        if (!out)
+            throw std::runtime_error("Cannot open XDMF output");
+        out << R"XMF(<?xml version="1.0"?>
+<Xdmf Version="3.0">
+ <Domain>
+  <Grid Name="TimeSeries" GridType="Collection" CollectionType="Temporal">
+)XMF";
         std::string const file = m_base.filename().string() + ".h5";
         std::string const dimensions
                 = std::to_string(m_n) + " " + std::to_string(m_n) + " " + std::to_string(m_n);
         for (std::size_t i = 0; i < m_times.size(); ++i) {
-            out << "<Grid Name=\"snapshot_" << i << "\" GridType=\"Uniform\"><Time Value=\""
-                << m_times[i] << "\"/>\n"
-                << "<Topology TopologyType=\"3DSMesh\" Dimensions=\"" << dimensions << "\"/>\n"
-                << "<Geometry GeometryType=\"XYZ\"><DataItem Dimensions=\"" << dimensions
-                << " 3\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">" << file
-                << ":/position</DataItem></Geometry>\n";
+            out << "   <Grid Name=\"snapshot_" << i << "\" GridType=\"Uniform\">\n"
+                << "    <Time Value=\"" << m_times[i] << "\"/>\n"
+                << "    <Topology TopologyType=\"3DSMesh\" Dimensions=\"" << dimensions
+                << "\"/>\n"
+                << "    <Geometry GeometryType=\"XYZ\">\n"
+                << "     <DataItem Dimensions=\"" << dimensions
+                << " 3\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n      "
+                << file << ":/position\n"
+                << R"XMF(     </DataItem>
+    </Geometry>
+)XMF";
             std::vector<char const*>
                     fields {"velocity",
                             "vorticity",
@@ -803,16 +805,23 @@ public:
                           || std::string(name) == "induction" || std::string(name) == "displacement"
                           || std::string(name) == "electric_field" || std::string(name) == "current"
                           || std::string(name) == "lorentz_force";
-                out << "<Attribute Name=\"" << name << "\" AttributeType=\""
+                out << "    <Attribute Name=\"" << name << "\" AttributeType=\""
                     << (vector ? "Vector" : "Scalar")
-                    << "\" Center=\"Node\"><DataItem Dimensions=\"" << dimensions
+                    << "\" Center=\"Node\">\n     <DataItem Dimensions=\"" << dimensions
                     << (vector ? " 3" : "")
-                    << "\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">" << file
-                    << ":/snapshot_" << i << "/" << name << "</DataItem></Attribute>\n";
+                    << "\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n      "
+                    << file << ":/snapshot_" << i << "/" << name
+                    << R"XMF(
+     </DataItem>
+    </Attribute>
+)XMF";
             }
-            out << "</Grid>\n";
+            out << "   </Grid>\n";
         }
-        out << "</Grid></Domain></Xdmf>\n";
+        out << R"XMF(  </Grid>
+ </Domain>
+</Xdmf>
+)XMF";
         if (!out)
             throw std::runtime_error("Cannot write XDMF output");
     }
@@ -1389,7 +1398,6 @@ int main(int argc, char** argv)
             throw std::runtime_error("--strategy-suite cannot be combined with validation");
         if (!(reference_final_time > 0) || reference_final_time > 10)
             throw std::runtime_error("Reference final time must be in (0,10]");
-        postprocess_directory = std::filesystem::absolute(argv[0]).parent_path();
         // Library diagnostics are optional; campaign stdout is reserved for Google Benchmark.
         setenv("SIMILIE_SOLVER_QUIET", "1", 1);
         setenv("SIMILIE_SOLVER_PROGRESS_STRIDE", "0", 1);

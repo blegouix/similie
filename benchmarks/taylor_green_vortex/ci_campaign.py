@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tarfile
 import urllib.request
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import h5py
@@ -132,9 +133,14 @@ def validate_trajectory(path, configuration, n, reference=False):
                 raise ValueError(
                     f"Reference must finish at t=10 with snapshots every tc: {hdf}"
                 )
-            for index in range(11):
-                if not hdf.with_suffix(f".snapshot_{index}.vtk").is_file():
-                    raise ValueError(f"Missing live PDI VTK export {index}: {hdf}")
+            xmf = hdf.with_suffix(".xmf")
+            try:
+                grids = ET.parse(xmf).getroot().findall("./Domain/Grid/Grid")
+            except (ET.ParseError, OSError) as error:
+                raise ValueError(f"Missing or invalid XDMF time series: {xmf}") from error
+            times = [float(grid.find("Time").attrib["Value"]) for grid in grids]
+            if len(grids) != 11 or times != list(range(11)):
+                raise ValueError(f"XDMF time series is incomplete: {xmf}")
     return record, hdf
 
 
@@ -420,7 +426,7 @@ def write_report(output, phase, entries, error=None):
                 "",
                 "HD accuracy is compared with the UCL 512³ pseudo-spectral workshop history. Relative L2 errors are resolution-study metrics, not a workshop-prescribed acceptance threshold. An explicit --reference-relative-tolerance enables an accuracy gate. See reference-comparison.json and PNG plots. Spectra at t=8 are compared with the Spectral curve digitized from page 3, Figure 3 of the HOW4 BS1 PDF. The CSV, provenance, extraction overlay and pixel uncertainty bounds are included in reference-data; this is an image-derived reference.",
                 "",
-                "Live PDI HDF5/VTK snapshots are saved every convective time unit, including t=0,8,10.",
+                "HDF5 snapshots and their XDMF time series are saved every convective time unit, including t=0,8,10.",
             )
         )
     if phase == "validation":
@@ -604,7 +610,7 @@ def campaign(
             comparisons = {}
             for n in MESH_SIZES:
                 hdf = files[3, n]
-                _, wave_number, spectrum = process(hdf, vtk=False, plots=True)
+                _, wave_number, spectrum = process(hdf, plots=True)
                 compare_spectrum(
                     hdf, wave_number, spectrum, directory / "reference-data"
                 )

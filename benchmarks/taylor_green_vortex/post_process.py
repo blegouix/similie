@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # AI-GENERATED
-"""Workshop monitors, isotropic spectra, periodic-face slices, and VTK exports."""
+"""Workshop monitors, isotropic spectra, and periodic-face slices."""
 
 import argparse
 import json
@@ -39,19 +39,6 @@ EM_COLUMNS = (
     "mean_charge",
     "energy_exchange_residual",
 )
-EM_FIELDS = (
-    "induction",
-    "displacement",
-    "electric_field",
-    "current",
-    "charge_density",
-    "electric_potential",
-    "lorentz_force",
-    "joule_heating",
-    "gauss_error",
-)
-
-
 def energy_spectrum(velocity, density):
     """Shell-integrated energy of sqrt(rho/rho0)*u, with rho0=1.
 
@@ -89,43 +76,7 @@ def workshop_header(path):
     return "\n".join(line.removeprefix("# ") for line in lines)
 
 
-def write_vtk(path, position, fields, time):
-    """Legacy structured grid; VTK expects x to vary fastest."""
-    nx, ny, nz, _ = position.shape
-    with path.open("wb") as out:
-        out.write(
-            (
-                f"# vtk DataFile Version 3.0\nSimiLie Taylor-Green t={time:.17g}\n"
-                f"BINARY\nDATASET STRUCTURED_GRID\nDIMENSIONS {nx} {ny} {nz}\n"
-                f"POINTS {nx * ny * nz} double\n"
-            ).encode()
-        )
-        out.write(position.transpose(2, 1, 0, 3).astype(">f8").tobytes())
-        out.write(b"\nFIELD FieldData 1\ntime 1 1 double\n")
-        out.write(np.array([time], dtype=">f8").tobytes() + b"\n")
-        out.write(f"POINT_DATA {nx * ny * nz}\nFIELD Fields {len(fields)}\n".encode())
-        for name, field in fields.items():
-            components = 3 if field.ndim == 4 else 1
-            axes = (2, 1, 0, 3) if components == 3 else (2, 1, 0)
-            out.write(f"{name} {components} {nx * ny * nz} double\n".encode())
-            out.write(field.transpose(axes).astype(">f8").tobytes() + b"\n")
-
-
-def pdi_vtk(filename, index):
-    """PDI pycall hook: export the just-written snapshot before advancing time."""
-    path = Path(filename)
-    with h5py.File(path, "r") as data:
-        snapshot = data[f"snapshot_{index}"]
-        fields = {name: snapshot[name][:] for name in snapshot if name != "time"}
-        write_vtk(
-            path.with_suffix(f".snapshot_{index}.vtk"),
-            data["position"][:],
-            fields,
-            float(snapshot["time"][0]),
-        )
-
-
-def process(path, vtk=True, plots=True):
+def process(path, plots=True):
     if plots:
         import matplotlib
 
@@ -222,30 +173,6 @@ def process(path, vtk=True, plots=True):
             header=header
             + f"\nx/L=-pi; t/tc={spectrum_time:.17g}; y/L z/L vorticity_norm*L/V0",
         )
-        if vtk:
-            for name in snapshots:
-                fields = {
-                    key: data[name][key][:]
-                    for key in (
-                        "velocity",
-                        "vorticity",
-                        "density",
-                        "pressure",
-                        "temperature",
-                        "heat_flux",
-                    )
-                }
-                if "vector_potential" in data[name]:
-                    fields["vector_potential"] = data[name]["vector_potential"][:]
-                for field in EM_FIELDS:
-                    if field in data[name]:
-                        fields[field] = data[name][field][:]
-                write_vtk(
-                    path.with_suffix(f".{name}.vtk"),
-                    position,
-                    fields,
-                    float(data[name]["time"][0]),
-                )
         if plots:
             if electromagnetic is not None:
                 figure, axes = plt.subplots(
@@ -419,14 +346,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("files", type=Path, nargs="+", help="Benchmark .h5 files")
     parser.add_argument(
-        "--no-vtk", action="store_true", help="Skip large ASCII VTK exports"
-    )
-    parser.add_argument(
-        "--no-plots", action="store_true", help="Only create numeric tables and VTK"
+        "--no-plots", action="store_true", help="Only create numeric tables"
     )
     args = parser.parse_args()
     results = [
-        process(path, vtk=not args.no_vtk, plots=not args.no_plots)
+        process(path, plots=not args.no_plots)
         for path in args.files
     ]
     if not args.no_plots:

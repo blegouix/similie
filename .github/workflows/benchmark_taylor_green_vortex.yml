@@ -140,5 +140,5 @@ jobs:
           fi
         done
         if [ -n "${ARTIFACT_URL}" ]; then
-          echo "[Download all results, HDF5/VTK snapshots and PNG validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
+          echo "[Download all results, HDF5/XDMF snapshots and PNG validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
         fi
