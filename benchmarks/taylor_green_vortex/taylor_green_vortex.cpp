@@ -1049,15 +1049,13 @@ double run_trajectory(benchmark::State* benchmark_state)
         Clock::time_point const setup_start = Clock::now();
         Simulation simulation(nodes, physics);
         Kokkos::fence("taylor_green_setup_complete");
-        double const setup_seconds
-                = std::chrono::duration<double>(Clock::now() - setup_start).count();
+        double setup_seconds = 0;
         std::string const prefix = std::string("tgv_") + configuration.name() + "_N"
                                    + std::to_string(nodes) + "_run";
         std::filesystem::path base;
         do {
             base = output_directory / (prefix + std::to_string(invocation++));
         } while (std::filesystem::exists(base.string() + ".h5"));
-        Clock::time_point const start = Clock::now();
         double solver_seconds = 0, monitor_seconds = 0, export_seconds = 0;
 
         std::vector<Monitor> monitors;
@@ -1086,6 +1084,8 @@ double run_trajectory(benchmark::State* benchmark_state)
         output = std::make_unique<Export>(base, nodes);
         export_seconds += std::chrono::duration<double>(Clock::now() - export_start).count();
         sample(0, 0, true);
+        setup_seconds = std::chrono::duration<double>(Clock::now() - setup_start).count();
+        Clock::time_point progress_start = Clock::now();
         double time = 0;
         std::int64_t steps = 0, solver_reconstruction_iterations = 0;
         double solver_reconstruction_seconds = 0, electromagnetic_seconds = 0;
@@ -1141,18 +1141,27 @@ double run_trajectory(benchmark::State* benchmark_state)
             ++steps;
             if (benchmark_state)
                 benchmark_state->PauseTiming();
+            double step_execution_seconds = seconds;
             try {
                 sample(time, seconds, reached);
+                step_execution_seconds
+                        = std::chrono::duration<double>(Clock::now() - step_start).count();
             } catch (...) {
                 if (benchmark_state)
                     benchmark_state->ResumeTiming();
                 throw;
             }
             if (reference_run && (steps % 100 == 0 || time == reference_final_time)) {
+                double const progress_interval_seconds
+                        = std::chrono::duration<double>(Clock::now() - progress_start).count();
                 std::cout << "TGV N=" << nodes << " step=" << steps
                           << " time=" << std::setprecision(8) << time
                           << " optimizer_iterations=" << optimizer_iterations
-                          << " duration_seconds=" << seconds << std::endl;
+                          << " solver_duration_seconds=" << seconds
+                          << " step_execution_seconds=" << step_execution_seconds
+                          << " elapsed_since_previous_progress_seconds="
+                          << progress_interval_seconds << std::endl;
+                progress_start = Clock::now();
             }
             if (benchmark_state)
                 benchmark_state->ResumeTiming();
@@ -1174,7 +1183,7 @@ double run_trajectory(benchmark::State* benchmark_state)
         if (!energy)
             throw std::runtime_error("Cannot write energy history");
         export_seconds += std::chrono::duration<double>(Clock::now() - finish_export).count();
-        double const wall = std::chrono::duration<double>(Clock::now() - start).count();
+        double const wall = std::chrono::duration<double>(Clock::now() - setup_start).count();
         if (!(solver_seconds > 0))
             throw std::runtime_error("Invalid solver timing");
         std::ofstream performance(base.string() + ".performance.json");
@@ -1202,6 +1211,10 @@ double run_trajectory(benchmark::State* benchmark_state)
             throw std::runtime_error("Cannot write performance output");
         if (benchmark_state && steps != benchmark_state->iterations())
             throw std::runtime_error("Google Benchmark iterations and solver steps differ");
+        if (benchmark_state) {
+            benchmark_state->counters["setup_seconds"] = setup_seconds;
+            benchmark_state->counters["repeats"] = 1;
+        }
         return solver_seconds;
     } catch (std::exception const& error) {
         benchmark_failed = true;
@@ -1244,6 +1257,12 @@ Configuration select_strategy(Configuration selected, int strategy)
     selected.diagonal_reduction = strategy == 2 || strategy == 3;
     selected.diagonal_reconstruction = strategy == 2 || strategy == 3;
     selected.staged_laplacian = strategy == 4;
+    selected.levi_civita_discrete_hodge_star = strategy == 4;
+    if (strategy == 4) {
+        selected.levi_civita_continuous_hodge_star = true;
+        selected.diagonal_reduction = true;
+        selected.diagonal_reconstruction = true;
+    }
     return selected;
 }
 
@@ -1261,8 +1280,9 @@ void register_case(Configuration selected, int n, int strategy, std::filesystem:
                 output_directory = directory;
                 if (reference_run) {
                     try {
-                        for ([[maybe_unused]] auto iteration : state)
+                        for ([[maybe_unused]] auto iteration : state) {
                             state.SetIterationTime(run_trajectory(nullptr));
+                        }
                     } catch (std::exception const& error) {
                         benchmark_failed = true;
                         state.SkipWithError(error.what());

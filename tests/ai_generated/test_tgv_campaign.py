@@ -16,7 +16,21 @@ import numpy as np
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[2] / "benchmarks/taylor_green_vortex")
 )
-from ci_campaign import compare_spectrum, compare_strategies
+from ci_campaign import STRATEGIES, compare_spectrum, compare_strategies
+
+
+class CampaignConfiguration(unittest.TestCase):
+    def test_last_strategy_has_the_requested_ordered_operator_chain(self):
+        self.assertEqual(
+            STRATEGIES[-1],
+            (
+                "--staged-laplacian",
+                "--levi-civita-discrete-hodge-star",
+                "--diagonal-reduction",
+                "--levi-civita-continuous-hodge-star",
+                "--diagonal-reconstruction",
+            ),
+        )
 
 
 class StrategyComparison(unittest.TestCase):

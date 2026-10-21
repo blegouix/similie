@@ -27,6 +27,7 @@ struct Configuration
     bool staged_diagonal_reduction = false, staged_diagonal_reconstruction = false;
     bool diagonal_reduction = false, diagonal_reconstruction = false;
     bool levi_civita_continuous_hodge_star = false;
+    bool levi_civita_discrete_hodge_star = false;
     bool weighted_levi_civita_discrete_hodge_star = false;
     bool staged_weighted_levi_civita_discrete_hodge_star = false;
 
@@ -62,6 +63,8 @@ struct Configuration
             staged_discrete_hodge_star = true;
         else if (argument == "--weighted-levi-civita-discrete-hodge-star")
             weighted_levi_civita_discrete_hodge_star = true;
+        else if (argument == "--levi-civita-discrete-hodge-star")
+            levi_civita_discrete_hodge_star = true;
         else if (argument == "--staged-weighted-levi-civita-discrete-hodge-star")
             staged_weighted_levi_civita_discrete_hodge_star = true;
         else if (argument == "--staged-reduction")
@@ -96,13 +99,16 @@ struct Configuration
     }
     int laplacian_mode() const
     {
+        if (staged_laplacian && levi_civita_discrete_hodge_star && levi_civita_continuous_hodge_star
+            && diagonal_reduction && diagonal_reconstruction)
+            return 36;
         if (staged_laplacian)
             return 33;
         if (staged_weighted_levi_civita_discrete_hodge_star)
             return 35;
         if (staged_discrete_hodge_star)
             return 32;
-        if (weighted_levi_civita_discrete_hodge_star)
+        if (weighted_levi_civita_discrete_hodge_star || levi_civita_discrete_hodge_star)
             return 34;
         return (reduction_mode() + 4 * reconstruction_mode()) * 2
                + int(levi_civita_continuous_hodge_star);
@@ -117,14 +123,15 @@ struct Configuration
                 result += flag;
             }
         };
-        append(levi_civita_continuous_hodge_star, "--levi-civita-continuous-hodge-star");
+        append(staged_laplacian, "--staged-laplacian");
+        append(levi_civita_discrete_hodge_star, "--levi-civita-discrete-hodge-star");
         append(weighted_levi_civita_discrete_hodge_star,
                "--weighted-levi-civita-discrete-hodge-star");
         append(staged_weighted_levi_civita_discrete_hodge_star,
                "--staged-weighted-levi-civita-discrete-hodge-star");
         append(diagonal_reduction, "--diagonal-reduction");
+        append(levi_civita_continuous_hodge_star, "--levi-civita-continuous-hodge-star");
         append(diagonal_reconstruction, "--diagonal-reconstruction");
-        append(staged_laplacian, "--staged-laplacian");
         append(staged_discrete_hodge_star, "--staged-discrete-hodge-star");
         append(staged_reduction, "--staged-reduction");
         append(staged_reconstruction, "--staged-reconstruction");
@@ -154,7 +161,7 @@ struct Configuration
     std::string operator_name() const
     {
         return std::string(
-                       weighted_levi_civita_discrete_hodge_star
+                       weighted_levi_civita_discrete_hodge_star || levi_civita_discrete_hodge_star
                                        || staged_weighted_levi_civita_discrete_hodge_star
                                ? "weighted-levi-civita-discrete-hodge-star"
                                : (levi_civita_continuous_hodge_star ? "levi-civita"

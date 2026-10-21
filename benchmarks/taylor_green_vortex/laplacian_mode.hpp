@@ -59,7 +59,8 @@ struct HodgePolicies
     // Weighted discrete Hodge modes are orthogonal to the reduction,
     // reconstruction, and continuous Hodge choices. Keep their benchmark
     // composition aligned with the optimized mode (31).
-    static constexpr int coefficient_mode = Mode == 34 || Mode == 35 ? 31 / 2 : Mode / 2;
+    static constexpr int coefficient_mode
+            = Mode == 34 || Mode == 35 || Mode == 36 ? 31 / 2 : Mode / 2;
     static constexpr int reduction_mode = coefficient_mode % 4;
     static constexpr int reconstruction_mode = coefficient_mode / 4;
 
@@ -97,7 +98,7 @@ struct HodgePolicies
 
     template <class Indices1, class Indices2, class Metric, class Element>
     using Continuous = std::conditional_t<
-            Mode == 34 || Mode == 35 || Mode % 2 == 1,
+            Mode == 34 || Mode == 35 || Mode == 36 || Mode % 2 == 1,
             sil::exterior::LeviCivitaContinuousHodgeStar<Indices1, Indices2, Metric, Element>,
             sil::exterior::ContinuousHodgeStar<Indices1, Indices2, Metric, Element>>;
 
@@ -109,7 +110,7 @@ struct HodgePolicies
             class Position,
             class Element>
     using Discrete = std::conditional_t<
-            Mode == 34,
+            Mode == 34 || Mode == 36,
             sil::exterior::WeightedLeviCivitaDiscreteHodgeStar<
                     Complex,
                     Source,
@@ -154,25 +155,28 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
     using Form = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Tensor::indices_domain_t>>;
     using DirectionIndex
             = std::conditional_t<Form::rank() == 0, Vector, sil::tensor::Covariant<CurlDirection>>;
+    using StagedLaplacian = sil::exterior::StagedOperator<sil::exterior::Laplacian<
+            MetricIndex,
+            DirectionIndex,
+            Form,
+            Tensor,
+            MetricTensor,
+            PositionTensor,
+            Kokkos::DefaultExecutionSpace>>;
+    using ConfiguredLaplacian = sil::exterior::Laplacian<
+            MetricIndex,
+            DirectionIndex,
+            Form,
+            Tensor,
+            MetricTensor,
+            PositionTensor,
+            Kokkos::DefaultExecutionSpace,
+            HodgePolicies<Mode>::template Discrete>;
+    using StagedConfiguredLaplacian = sil::exterior::StagedOperator<ConfiguredLaplacian>;
     using Operation = std::conditional_t<
             Mode == 33,
-            sil::exterior::StagedOperator<sil::exterior::Laplacian<
-                    MetricIndex,
-                    DirectionIndex,
-                    Form,
-                    Tensor,
-                    MetricTensor,
-                    PositionTensor,
-                    Kokkos::DefaultExecutionSpace>>,
-            sil::exterior::Laplacian<
-                    MetricIndex,
-                    DirectionIndex,
-                    Form,
-                    Tensor,
-                    MetricTensor,
-                    PositionTensor,
-                    Kokkos::DefaultExecutionSpace,
-                    HodgePolicies<Mode>::template Discrete>>;
+            StagedLaplacian,
+            std::conditional_t<Mode == 36, StagedConfiguredLaplacian, ConfiguredLaplacian>>;
     Operation m_operation;
 
     static Operation make_operation(
@@ -181,7 +185,7 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
             MetricTensor const& metric,
             PositionTensor const& position)
     {
-        if constexpr (Mode == 33)
+        if constexpr (Mode == 33 || Mode == 36)
             return Operation(
                     Kokkos::DefaultExecutionSpace(),
                     output,
@@ -205,7 +209,7 @@ public:
     }
     void apply(Tensor const& output, Tensor const& input) override
     {
-        if constexpr (Mode == 33)
+        if constexpr (Mode == 33 || Mode == 36)
             m_operation(output, input);
         else
             m_operation(output, input, Periodic {}, Periodic {});
@@ -234,7 +238,7 @@ std::unique_ptr<LaplacianOperator<Tensor>> dispatch(
 {
     if (selected == Mode)
         return detail::make_laplacian_mode<Mode>(output, input, metric, position);
-    if constexpr (Mode < 35)
+    if constexpr (Mode < 36)
         return dispatch<Mode + 1>(selected, output, input, metric, position);
     throw std::invalid_argument("Unknown Taylor-Green Laplacian staging mode");
 }

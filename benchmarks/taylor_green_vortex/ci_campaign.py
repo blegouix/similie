@@ -25,18 +25,24 @@ STRATEGIES = (
     (),
     ("--levi-civita-continuous-hodge-star",),
     (
-        "--levi-civita-continuous-hodge-star",
         "--weighted-levi-civita-discrete-hodge-star",
         "--diagonal-reduction",
+        "--levi-civita-continuous-hodge-star",
         "--diagonal-reconstruction",
     ),
     (
-        "--levi-civita-continuous-hodge-star",
         "--staged-weighted-levi-civita-discrete-hodge-star",
         "--diagonal-reduction",
+        "--levi-civita-continuous-hodge-star",
         "--diagonal-reconstruction",
     ),
-    ("--staged-laplacian",),
+    (
+        "--staged-laplacian",
+        "--levi-civita-discrete-hodge-star",
+        "--diagonal-reduction",
+        "--levi-civita-continuous-hodge-star",
+        "--diagonal-reconstruction",
+    ),
 )
 REFERENCE_URL = "https://cfd.ku.edu/hiocfd/data.tgz"
 REFERENCE_FILE = "spectral_Re1600_512.gdiag"
@@ -371,20 +377,43 @@ def write_report(output, phase, entries, error=None):
         "",
         "Solver timings exclude monitoring, export, strategy comparisons and reference post-processing.",
         "",
-        "| N | Flags | Steps | Solver step (s) | Mcell updates/s |",
-        "| ---: | --- | ---: | ---: | ---: |",
+        "| N | Flags | Steps | Repeats | Setup (s) | Solver step (s) | Mcell updates/s |",
+        "| ---: | --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for record in entries:
         lines.append(
-            f"| {record['N']} | `{record['flags']}` | {record['steps']} | {record['mean_step_seconds']:.6g} | {record['cell_updates_per_second'] / 1e6:.6g} |"
+            f"| {record['N']} | `{record['flags']}` | {record['steps']} | {record['repeats']} | {record['setup_seconds']:.6g} | {record['mean_step_seconds']:.6g} | {record['cell_updates_per_second'] / 1e6:.6g} |"
         )
     if phase == "performance":
         lines.extend(
             (
                 "",
-                f"Final fluid/field states and monitor histories are compared with the default strategy using rtol={STRATEGY_RTOL:g}, atol={STRATEGY_ATOL:g}; see strategy-comparison.json.",
+                f"Final fluid/field states and monitor histories are compared with the default strategy using rtol={STRATEGY_RTOL:g}, atol={STRATEGY_ATOL:g}.",
             )
         )
+        comparison_path = output / "strategy-comparison.json"
+        if comparison_path.is_file():
+            comparison_data = json.loads(comparison_path.read_text())
+            comparisons = comparison_data["comparisons"]
+            lines.extend(
+                (
+                    "",
+                    f"Overall strategy equivalence: {'PASS' if comparison_data['passed'] else 'FAIL'}.",
+                )
+            )
+            lines.extend(
+                (
+                    "| N | Strategy | Dataset | Max absolute error | Relative L2 error | Result |",
+                    "| ---: | ---: | --- | ---: | ---: | --- |",
+                )
+            )
+            for case, datasets in comparisons.items():
+                strategy = int(case.split("/")[0].split("-")[-1])
+                n = int(case.rsplit("N", 1)[-1])
+                for name, metric in datasets.items():
+                    lines.append(
+                        f"| {n} | {strategy} | {name} | {metric['max_absolute_error']:.6e} | {metric['relative_l2_error']:.6e} | {'PASS' if metric['passed'] else 'FAIL'} |"
+                    )
     else:
         lines.extend(
             (
@@ -467,6 +496,38 @@ def campaign(
             row.get("error_occurred") or row.get("skipped") for row in rows
         ):
             raise ValueError("Incomplete Google Benchmark suite")
+        benchmark_rows = {}
+        expected_cases = [
+            (strategy, n)
+            for strategy in (range(5) if phase == "performance" else (3,))
+            for n in MESH_SIZES
+        ]
+        expected_names = {
+            f"TaylorGreen/{configuration}/N{n}/{'+'.join(STRATEGIES[strategy]) or 'default'}": (
+                strategy,
+                n,
+            )
+            for strategy, n in expected_cases
+        }
+        for row in rows:
+            key = expected_names.get(row.get("run_name"))
+            if key is None or key in benchmark_rows:
+                raise ValueError(
+                    f"Unexpected or duplicate Google Benchmark case: {row.get('run_name')}"
+                )
+            if row.get("repetitions") != 1 or (
+                phase == "performance" and row.get("repeats") != 1
+            ):
+                raise ValueError(f"Unexpected repeat count in {row.get('run_name')}")
+            if phase == "performance" and not np.isfinite(
+                row.get("setup_seconds", np.nan)
+            ):
+                raise ValueError(f"Missing setup timing in {row.get('run_name')}")
+            benchmark_rows[key] = row
+        if set(benchmark_rows) != set(expected_names.values()):
+            raise ValueError(
+                "Google Benchmark suite does not contain the expected cases"
+            )
         files = {}
         for strategy in range(5) if phase == "performance" else (3,):
             for n in MESH_SIZES:
@@ -486,6 +547,11 @@ def campaign(
                 ):
                     raise ValueError(f"Incorrect operator strategy in {case}")
                 entries.append(record)
+                row = benchmark_rows[strategy, n]
+                record["repeats"] = int(row.get("repeats", row["repetitions"]))
+                record["benchmark_iterations"] = int(row["iterations"])
+                if "setup_seconds" in row:
+                    record["setup_seconds"] = float(row["setup_seconds"])
                 files[strategy, n] = hdf
         if phase == "performance":
             comparisons = {
@@ -495,22 +561,42 @@ def campaign(
                 for strategy in range(1, 5)
                 for n in MESH_SIZES
             }
+            equivalence_passed = all(
+                result["passed"]
+                for comparison in comparisons.values()
+                for result in comparison.values()
+            )
             (directory / "strategy-comparison.json").write_text(
                 json.dumps(
                     {
                         "rtol": STRATEGY_RTOL,
                         "atol": STRATEGY_ATOL,
+                        "passed": equivalence_passed,
                         "comparisons": comparisons,
                     },
                     indent=2,
                 )
                 + "\n"
             )
-            if not all(
-                result["passed"]
-                for comparison in comparisons.values()
-                for result in comparison.values()
-            ):
+            print(
+                f"\nStrategy equivalence (against default at matching N): rtol={STRATEGY_RTOL:g}, atol={STRATEGY_ATOL:g}"
+            )
+            print(
+                "N  Strategy  Dataset                      Max abs error   Relative L2   Result"
+            )
+            for case, datasets in comparisons.items():
+                strategy = int(case.split("/")[0].split("-")[-1])
+                n = int(case.rsplit("N", 1)[-1])
+                for name, metric in datasets.items():
+                    print(
+                        f"{n:<3} {strategy:<9} {name:<29} {metric['max_absolute_error']:.6e} {metric['relative_l2_error']:.6e} {'PASS' if metric['passed'] else 'FAIL'}",
+                        flush=True,
+                    )
+            print(
+                f"Overall strategy equivalence: {'PASS' if equivalence_passed else 'FAIL'}",
+                flush=True,
+            )
+            if not equivalence_passed:
                 raise ValueError(
                     "Operator strategies disagree; see strategy-comparison.json"
                 )

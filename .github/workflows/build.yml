@@ -26,13 +26,16 @@ on:
         default: automatic-ci-run
 
 concurrency:
-  group: build-${{ inputs.build_target || 'all' }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
-  cancel-in-progress: true
+  group: similie-persistent-build-cache
+  cancel-in-progress: false
 
 jobs:
   build-cuda:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'cuda')
     runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-cuda-build
+      cancel-in-progress: false
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-cuda' || 'automatic-ci-run') }}
     env:
@@ -60,11 +63,12 @@ jobs:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
         fetch-depth: 0
-    - name: Clear temporary workspace path
+    - name: Clear persistent CUDA build
       run: |
+        set -euo pipefail
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=/tmp/similie-cuda-workspace-${GITHUB_RUN_ID}-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "/tmp/similie-cuda-workspace-${GITHUB_RUN_ID}-${TARGET_SHA}"
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/cuda"
     - name: Populate CUDA commit workspace
       run: |
         mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
@@ -97,20 +101,15 @@ jobs:
               -S .
             make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build"
           '
-    - name: Package CUDA build workspace
-      run: tar -I 'gzip -1' -cf "${RUNNER_TEMP}/similie-cuda-workspace.tar.gz" --exclude='*/.git' -C "${CACHE_ROOT}" .
-    - name: Upload CUDA build workspace
-      uses: actions/upload-artifact@v7
-      with:
-        name: similie-cuda-${{ steps.target.outputs.target_sha }}
-        overwrite: true
-        path: ${{ runner.temp }}/similie-cuda-workspace.tar.gz
-        compression-level: 0
-        retention-days: 1
+    - name: Tag persistent CUDA build
+      run: printf '%s\n' "${TARGET_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
 
   build-omp-debug:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'omp')
     runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-omp-build
+      cancel-in-progress: false
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run') }}
     env:
@@ -138,11 +137,12 @@ jobs:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
         fetch-depth: 0
-    - name: Clear temporary workspace path
+    - name: Clear persistent OMP debug build
       run: |
+        set -euo pipefail
         echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=/tmp/similie-omp-workspace-${GITHUB_RUN_ID}-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "/tmp/similie-omp-workspace-${GITHUB_RUN_ID}-${TARGET_SHA}"
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/omp-debug"
     - name: Populate OpenMP commit workspace
       run: |
         mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
@@ -177,13 +177,5 @@ jobs:
             "${CACHE_ROOT}/build_omp/tests/young_tableau/unit_tests_young_tableau"
             make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp"
           '
-    - name: Package OpenMP build workspace
-      run: tar -I 'gzip -1' -cf "${RUNNER_TEMP}/similie-omp-workspace.tar.gz" --exclude='*/.git' -C "${CACHE_ROOT}" .
-    - name: Upload OpenMP build workspace
-      uses: actions/upload-artifact@v7
-      with:
-        name: similie-omp-${{ steps.target.outputs.target_sha }}
-        overwrite: true
-        path: ${{ runner.temp }}/similie-omp-workspace.tar.gz
-        compression-level: 0
-        retention-days: 1
+    - name: Tag persistent OMP debug build
+      run: printf '%s\n' "${TARGET_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"

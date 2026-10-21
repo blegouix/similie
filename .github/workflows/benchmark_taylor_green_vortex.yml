@@ -9,23 +9,16 @@ on:
     types: [completed]
   workflow_dispatch:
     inputs:
-      build_run_id:
-        description: Workflow run ID containing the matching compiled artifact
-        required: false
       target_sha:
         description: Full commit SHA with an existing CUDA Docker image
         required: false
   workflow_call:
     inputs:
-      build_run_id:
-        required: false
-        type: string
       target_sha:
         required: true
         type: string
 
 permissions:
-  actions: read
   contents: read
 
 concurrency:
@@ -33,13 +26,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  physics:
+  approve-cuda-environment:
     if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    name: ${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}
     runs-on: [self-hosted, linux]
-    timeout-minutes: 1380
     environment:
       name: taylor_green_vortex-cuda
+    steps:
+    - run: echo "Approved Taylor–Green CUDA benchmark campaign."
+
+  physics:
+    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    needs: approve-cuda-environment
+    name: ${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}
+    runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-cuda-build
+      cancel-in-progress: false
+    timeout-minutes: 1380
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -67,45 +70,13 @@ jobs:
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-cuda-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}" >> "${GITHUB_ENV}"
-        echo "BUILD_ROOT=/tmp/similie-cuda-workspace-${{ steps.artifact-run.outputs.run_id }}-${target_sha}" >> "${GITHUB_ENV}"
-        echo "ARTIFACT_ROOT=${RUNNER_TEMP}/similie-cuda-download-${GITHUB_RUN_ID}-${GITHUB_JOB}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-download-${GITHUB_RUN_ID}-${GITHUB_JOB}"
-    - name: Resolve CUDA build artifact run
-      id: artifact-run
-      uses: actions/github-script@v7
-      env:
-        TARGET_SHA: ${{ steps.target.outputs.target_sha }}
-        BUILD_RUN_ID_INPUT: ${{ inputs.build_run_id }}
-        ARTIFACT_NAME: similie-cuda-${{ steps.target.outputs.target_sha }}
-      with:
-        script: |
-          if (process.env.BUILD_RUN_ID_INPUT) {
-            core.setOutput('run_id', process.env.BUILD_RUN_ID_INPUT);
-          } else if (context.eventName === 'workflow_run') {
-            core.setOutput('run_id', String(context.payload.workflow_run.id));
-          } else if (context.eventName === 'workflow_dispatch') {
-            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
-              ...context.repo, name: process.env.ARTIFACT_NAME, per_page: 100,
-            });
-            const matches = artifacts.filter((artifact) => !artifact.expired &&
-              artifact.name === process.env.ARTIFACT_NAME && artifact.workflow_run);
-            matches.sort((left, right) => right.id - left.id);
-            if (matches.length === 0) core.setFailed(`No CUDA build artifact found for ${process.env.TARGET_SHA}`);
-            else core.setOutput('run_id', String(matches[0].workflow_run.id));
-          } else {
-            core.setOutput('run_id', String(context.runId));
-          }
-    - name: Download CUDA build workspace
-      uses: actions/download-artifact@v8
-      with:
-        name: similie-cuda-${{ steps.target.outputs.target_sha }}
-        path: ${{ runner.temp }}/similie-cuda-download-${{ github.run_id }}-${{ github.job }}
-        run-id: ${{ steps.artifact-run.outputs.run_id }}
-        github-token: ${{ github.token }}
-    - name: Extract CUDA build workspace
+        echo "BUILD_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+    - name: Check persistent CUDA build commit tag
       run: |
-        tar -xzf "${ARTIFACT_ROOT}/similie-cuda-workspace.tar.gz" -C "${ARTIFACT_ROOT}"
-        rm "${ARTIFACT_ROOT}/similie-cuda-workspace.tar.gz"
+        set -euo pipefail
+        test -f "${BUILD_ROOT}/COMMIT_SHA" || { echo "Missing persistent CUDA build at ${BUILD_ROOT}" >&2; exit 1; }
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}" || { echo "CUDA build commit tag does not match ${TARGET_SHA}" >&2; exit 1; }
+        test -x "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex"
     - name: Run benchmark in CUDA Docker
       run: |
         set -euo pipefail
@@ -117,7 +88,7 @@ jobs:
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 \
           -e SIMILIE_SOLVER_QUIET=1 \
           -e PYTHONDONTWRITEBYTECODE=1 \
-          -v "${CI_ROOT}:${CI_ROOT}" -v "${ARTIFACT_ROOT}:${BUILD_ROOT}" \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
           -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
             set -euo pipefail
             mkdir -p "${HOME}"
@@ -139,7 +110,7 @@ jobs:
           -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
           -e PYTHONDONTWRITEBYTECODE=1 \
-          -v "${CI_ROOT}:${CI_ROOT}" -v "${ARTIFACT_ROOT}:${BUILD_ROOT}" \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
           -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
             set -euo pipefail
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
