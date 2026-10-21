@@ -157,12 +157,6 @@ public:
         , m_three("closure", 1, grid.cells)
         , m_edges("transport_edge_values", 3, grid.cells)
     {
-        m_laplacian = make_two_form_laplacian(
-                grid.configuration,
-                tensor<TwoForm>(m_two_output),
-                tensor<TwoForm>(m_two),
-                grid.euclidean_metric(),
-                grid.geometry());
         m_codifferential = std::make_unique<TwoCodifferential>(
                 Kokkos::DefaultExecutionSpace(),
                 tensor<TwoForm>(m_two),
@@ -259,6 +253,15 @@ public:
     }
     void positive_laplacian(Field const& input, Field const& output)
     {
+        // Electromagnetic helpers use the cochain maps without this Laplacian.
+        // Avoid allocating a second full stencil cache for those helpers.
+        if (!m_laplacian)
+            m_laplacian = make_two_form_laplacian(
+                    m_grid.configuration,
+                    tensor<TwoForm>(m_two_output),
+                    tensor<TwoForm>(m_two),
+                    m_grid.euclidean_metric(),
+                    m_grid.geometry());
         pack(input, m_two);
         m_laplacian->apply(tensor<TwoForm>(m_two_output), tensor<TwoForm>(m_two));
         unpack(m_two_output, output);

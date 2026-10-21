@@ -111,32 +111,45 @@ jobs:
         set -euo pipefail
         mkdir -p "${CI_ROOT}/results"
         docker image inspect "similie_env:${TARGET_SHA}" >/dev/null
-        docker run --rm --gpus all --user "$(id -u):$(id -g)" \
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 \
-          -e SIMILIE_TGV_PROGRESS_STRIDE=10 \
+          -e SIMILIE_SOLVER_QUIET=1 \
           -e PYTHONDONTWRITEBYTECODE=1 \
           -v "${CI_ROOT}:${CI_ROOT}" -v "${ARTIFACT_ROOT}:${BUILD_ROOT}" \
-          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" bash -lc '
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
             set -euo pipefail
             mkdir -p "${HOME}"
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
-            nvidia-smi
-            grep "^CMAKE_BUILD_TYPE:STRING=" "${BUILD_ROOT}/build/CMakeCache.txt"
+            nvidia-smi > "${CI_ROOT}/results/hardware.txt"
+            grep "^CMAKE_BUILD_TYPE:STRING=" "${BUILD_ROOT}/build/CMakeCache.txt" > "${CI_ROOT}/results/build-type.txt"
             python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/ci_campaign.py" \
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
-              --transport "${TRANSPORT}" --coupling "${COUPLING}"
+              --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase performance
           '
-    - name: Publish job summary
-      if: always()
+    - name: Validate HD reference trajectories in CUDA Docker
+      if: matrix.coupling == 'hd'
       run: |
-        if [ -f "${CI_ROOT}/results/report.md" ]; then
-          cat "${CI_ROOT}/results/report.md" >> "${GITHUB_STEP_SUMMARY}"
-        fi
+        set -euo pipefail
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
+          -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
+          -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
+          -e PYTHONDONTWRITEBYTECODE=1 \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${ARTIFACT_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/ci_campaign.py" \
+              --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
+              --output "${CI_ROOT}/results" --fluid "${FLUID}" \
+              --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation
+          '
     - name: Upload performance and reference outputs
+      id: results
       if: always()
       uses: actions/upload-artifact@v7
       with:
@@ -145,3 +158,16 @@ jobs:
         if-no-files-found: error
         compression-level: 1
         retention-days: 14
+    - name: Publish job summary
+      if: always()
+      env:
+        ARTIFACT_URL: ${{ steps.results.outputs.artifact-url }}
+      run: |
+        for phase in performance validation; do
+          if [ -f "${CI_ROOT}/results/${phase}/report.md" ]; then
+            cat "${CI_ROOT}/results/${phase}/report.md" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+        done
+        if [ -n "${ARTIFACT_URL}" ]; then
+          echo "[Download all results, HDF5/VTK snapshots and PNG validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
+        fi

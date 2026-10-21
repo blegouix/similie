@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -21,9 +21,12 @@
 #include <utility>
 #include <vector>
 
+#include <ddc/pdi.hpp>
+
 #include <benchmark/benchmark.h>
 
 #include <hdf5.h>
+#include <paraconf.h>
 
 #include "electromagnetic_solver.hpp"
 
@@ -45,6 +48,11 @@ Physics physics = Physics::Incompressible;
 std::filesystem::path output_directory = "taylor_green_vortex_results";
 bool verify = false;
 bool reference_run = false;
+bool strategy_suite = false, reference_suite = false;
+bool benchmark_output_requested = false;
+int strategy_index = 0;
+double reference_final_time = 10;
+std::filesystem::path postprocess_directory;
 bool write_snapshots = true;
 bool benchmark_failed = false;
 
@@ -528,6 +536,22 @@ std::string header(int n, Physics kind)
     return text.str();
 }
 
+// One interpreter and one PDI configuration serve every resolution in a suite.
+// Reinitializing the pycall interpreter between cases is not supported by PDI.
+struct PdiSession
+{
+    PC_tree_t config {};
+    bool initialized = false;
+    ~PdiSession()
+    {
+        if (initialized) {
+            PDI_finalize();
+            PC_tree_destroy(&config);
+        }
+    }
+};
+PdiSession* pdi_session = nullptr;
+
 class Export
 {
     hid_t m_file;
@@ -565,17 +589,23 @@ public:
     }
     ~Export()
     {
-        H5Fclose(m_file);
+        if (m_file >= 0)
+            H5Fclose(m_file);
+    }
+    void final_state(Simulation const& simulation)
+    {
+        auto save = [&](char const* name, Field const& field) {
+            Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const host
+                    = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), field);
+            dataset(m_file, name, {host.extent(0), host.extent(1)}, host.data());
+        };
+        save("final_state", simulation.state);
+        if (simulation.electromagnetic)
+            save("final_electromagnetic_state", simulation.electromagnetic->state);
     }
     void snapshot(Simulation& simulation, double time)
     {
         simulation.compute_pressure();
-        std::string const group_name = "snapshot_" + std::to_string(m_times.size());
-        hid_t const group
-                = H5Gcreate2(m_file, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        if (group < 0)
-            throw std::runtime_error("Cannot create HDF5 snapshot");
-        dataset(group, "time", {1}, &time);
         std::vector<std::pair<char const*, Field>>
                 fields {{"velocity", simulation.velocity},
                         std::pair {"vorticity", simulation.vorticity},
@@ -603,20 +633,77 @@ public:
             if (configuration.coupling == Coupling::EHD)
                 fields.emplace_back("electric_potential", em.potential);
         }
+        // PDI owns each snapshot write, just as in the scalar-field example.
+        // Close our monitor handle while the declarative plugin opens the file.
+        check_hdf(H5Fclose(m_file));
+        m_file = -1;
+        if (!pdi_session->initialized) {
+            std::ostringstream yaml;
+            yaml << "logging: error\nmetadata:\n  N: int\n  export_id: int\n"
+                 << "  file_name_size: size_t\n  file_name: {type: array, subtype: char, size: "
+                    "'$file_name_size'}\ndata:\n"
+                 << "  time: {type: array, subtype: double, size: 1}\n";
+            for (std::pair<char const*, Field> const& item : fields) {
+                yaml << "  " << item.first << ": {type: array, subtype: double, size: ["
+                     << "'$N', '$N', '$N'";
+                if (item.second.extent(0) > 1)
+                    yaml << ", " << item.second.extent(0);
+                yaml << "]}\n";
+            }
+            yaml << "plugins:\n  decl_hdf5:\n    file: '${file_name}'\n"
+                 << "    on_event: export\n    collision_policy: write_into\n    write:\n"
+                 << "      time: {dataset: 'snapshot_${export_id}/time'}\n";
+            for (std::pair<char const*, Field> const& item : fields)
+                yaml << "      " << item.first << ": {dataset: 'snapshot_${export_id}/"
+                     << item.first << "'}\n";
+            yaml << "  pycall:\n    on_event:\n      vtk:\n"
+                 << "        with: {index: $export_id, filename: $file_name}\n        exec: |\n"
+                 << "          import sys\n          sys.path.insert(0, "
+                 << std::quoted(postprocess_directory.string(), '\'') << ")\n"
+                 << "          from post_process import pdi_vtk\n"
+                 << "          pdi_vtk(filename.tobytes().decode(), int(index))\n";
+            pdi_session->config = PC_parse_string(yaml.str().c_str());
+            if (PDI_init(pdi_session->config) != PDI_OK) {
+                PC_tree_destroy(&pdi_session->config);
+                throw std::runtime_error("Cannot initialize Taylor-Green PDI output");
+            }
+            pdi_session->initialized = true;
+        }
+        int export_id = static_cast<int>(m_times.size());
+        std::string const filename = m_base.string() + ".h5";
+        std::size_t const filename_size = filename.size();
+        if (PDI_share("N", &m_n, PDI_OUT) != PDI_OK
+            || PDI_share("file_name_size", &filename_size, PDI_OUT) != PDI_OK
+            || PDI_share("file_name", filename.c_str(), PDI_OUT) != PDI_OK
+            || PDI_share("export_id", &export_id, PDI_OUT) != PDI_OK
+            || PDI_share("time", &time, PDI_OUT) != PDI_OK)
+            throw std::runtime_error("Cannot expose PDI snapshot metadata");
+        std::vector<std::vector<double>> buffers;
+        buffers.reserve(fields.size());
         for (std::pair<char const*, Field> const& item : fields) {
             Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const host
                     = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), item.second);
             int const components = static_cast<int>(host.extent(0));
-            std::vector<double> values(simulation.dec.cells * components);
+            buffers.emplace_back(simulation.dec.cells * components);
+            std::vector<double>& values = buffers.back();
             for (int i = 0; i < simulation.dec.cells; ++i)
                 for (int c = 0; c < components; ++c)
                     values[i * components + c] = host(c, i);
-            std::vector<hsize_t> shape {hsize_t(m_n), hsize_t(m_n), hsize_t(m_n)};
-            if (components > 1)
-                shape.push_back(components);
-            dataset(group, item.first, shape, values.data());
+            if (PDI_share(item.first, values.data(), PDI_OUT) != PDI_OK)
+                throw std::runtime_error("Cannot expose PDI snapshot field");
         }
-        H5Gclose(group);
+        if (PDI_event("export") != PDI_OK || PDI_event("vtk") != PDI_OK)
+            throw std::runtime_error("PDI snapshot export failed");
+        for (std::pair<char const*, Field> const& item : fields)
+            PDI_reclaim(item.first);
+        PDI_reclaim("time");
+        PDI_reclaim("export_id");
+        PDI_reclaim("file_name");
+        PDI_reclaim("file_name_size");
+        PDI_reclaim("N");
+        m_file = H5Fopen((m_base.string() + ".h5").c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+        if (m_file < 0)
+            throw std::runtime_error("Cannot reopen monitor output after PDI export");
         m_times.push_back(time);
         write_xmf();
     }
@@ -954,39 +1041,16 @@ void validate()
               << ", final divergence=" << final.divergence << "\n";
 }
 
-void run_trajectory(benchmark::State* benchmark_state)
+double run_trajectory(benchmark::State* benchmark_state)
 {
     static int invocation = 0;
     try {
-        unsigned int progress_stride = 0;
-        if (char const* const value = std::getenv("SIMILIE_TGV_PROGRESS_STRIDE")) {
-            std::size_t consumed = 0;
-            unsigned long const parsed = std::stoul(value, &consumed);
-            if (consumed != std::string(value).size()
-                || parsed > std::numeric_limits<unsigned int>::max())
-                throw std::runtime_error(
-                        "SIMILIE_TGV_PROGRESS_STRIDE must be an unsigned integer");
-            progress_stride = static_cast<unsigned int>(parsed);
-        }
-        std::int64_t const cells = std::int64_t(nodes) * nodes * nodes;
-        std::cout << "TGV setup: mode=" << (benchmark_state ? "performance" : "reference")
-                  << " configuration=" << configuration.name() << " N=" << nodes
-                  << " cells=" << cells << " Re=1600 Pr=0.71 execution_space="
-                  << Kokkos::DefaultExecutionSpace::name()
-                  << " laplacian=" << (configuration.staged_laplacian ? "staged" : "direct")
-                  << " operators=" << configuration.operator_name()
-                  << " staging=" << configuration.staging_name()
-                  << " snapshots=" << (write_snapshots ? "on" : "off")
-                  << " progress_stride=" << progress_stride << " output=" << output_directory
-                  << std::endl;
         std::filesystem::create_directories(output_directory);
         Clock::time_point const setup_start = Clock::now();
         Simulation simulation(nodes, physics);
         Kokkos::fence("taylor_green_setup_complete");
         double const setup_seconds
                 = std::chrono::duration<double>(Clock::now() - setup_start).count();
-        std::cout << "TGV setup complete: N=" << nodes << " setup_seconds=" << setup_seconds
-                  << std::endl;
         std::string const prefix = std::string("tgv_") + configuration.name() + "_N"
                                    + std::to_string(nodes) + "_run";
         std::filesystem::path base;
@@ -1041,7 +1105,11 @@ void run_trajectory(benchmark::State* benchmark_state)
                     = simulation.electromagnetic ? simulation.electromagnetic->poisson_iterations
                                                  : 0;
             double const target
-                    = time < 8 ? 8.0 : (time < 10 ? 10.0 : std::numeric_limits<double>::infinity());
+                    = reference_run
+                              ? std::min(std::floor(time) + 1, reference_final_time)
+                              : (time < 8 ? 8.0
+                                          : (time < 10 ? 10.0
+                                                       : std::numeric_limits<double>::infinity()));
             double const dt = std::min(simulation.timestep(), target - time);
             if (!(dt > 0) || !std::isfinite(dt) || time + dt == time)
                 throw std::runtime_error("Invalid or non-advancing time step");
@@ -1059,6 +1127,10 @@ void run_trajectory(benchmark::State* benchmark_state)
                 electric_iterations
                         += simulation.electromagnetic->poisson_iterations - electric_before;
             }
+            std::int64_t const optimizer_iterations
+                    = simulation.incompressible
+                              ? simulation.incompressible->total_iterations - cg_before
+                              : 0;
             Kokkos::fence("taylor_green_timing");
             double const seconds = std::chrono::duration<double>(Clock::now() - step_start).count();
             solver_seconds += seconds;
@@ -1076,16 +1148,11 @@ void run_trajectory(benchmark::State* benchmark_state)
                     benchmark_state->ResumeTiming();
                 throw;
             }
-            if (progress_stride != 0
-                && (steps == 1 || steps % progress_stride == 0 || reached
-                    || (benchmark_state && steps == benchmark_state->iterations()))) {
-                std::cout << "TGV progress: mode="
-                          << (benchmark_state ? "performance" : "reference") << " N=" << nodes
-                          << " step=" << steps;
-                if (benchmark_state)
-                    std::cout << "/" << benchmark_state->iterations();
-                std::cout << " time=" << std::setprecision(8) << time << " dt=" << dt
-                          << " step_seconds=" << seconds << std::endl;
+            if (reference_run && (steps % 100 == 0 || time == reference_final_time)) {
+                std::cout << "TGV N=" << nodes << " step=" << steps
+                          << " time=" << std::setprecision(8) << time
+                          << " optimizer_iterations=" << optimizer_iterations
+                          << " duration_seconds=" << seconds << std::endl;
             }
             if (benchmark_state)
                 benchmark_state->ResumeTiming();
@@ -1094,12 +1161,13 @@ void run_trajectory(benchmark::State* benchmark_state)
             for ([[maybe_unused]] auto iteration : *benchmark_state)
                 advance_step();
         } else {
-            while (time < 10)
+            while (time < reference_final_time)
                 advance_step();
         }
         Clock::time_point const finish_export = Clock::now();
         if (write_snapshots && time != last_snapshot_time)
             output->snapshot(simulation, time);
+        output->final_state(simulation);
         output->monitors(monitors);
         output.reset();
         energy.close();
@@ -1115,7 +1183,9 @@ void run_trajectory(benchmark::State* benchmark_state)
                     << (configuration.staged_laplacian ? "staged" : "direct") << "\",\"staging\":\""
                     << configuration.staging_name() << "\",\"operators\":\""
                     << configuration.operator_name() << "\",\"mode\":\""
-                    << (benchmark_state ? "performance" : "reference") << "\",\"N\":" << nodes
+                    << (benchmark_state ? "performance" : "reference")
+                    << "\",\"strategy\":" << strategy_index << ",\"flags\":\""
+                    << configuration.strategy_flags() << "\",\"N\":" << nodes
                     << ",\"steps\":" << steps << ",\"final_time\":" << time
                     << ",\"mean_step_seconds\":" << solver_seconds / steps
                     << ",\"setup_seconds\":" << setup_seconds
@@ -1130,37 +1200,79 @@ void run_trajectory(benchmark::State* benchmark_state)
                     << double(steps) * simulation.dec.cells / solver_seconds << "}\n";
         if (!performance)
             throw std::runtime_error("Cannot write performance output");
-        if (!benchmark_state)
-            return;
-        if (steps != benchmark_state->iterations())
+        if (benchmark_state && steps != benchmark_state->iterations())
             throw std::runtime_error("Google Benchmark iterations and solver steps differ");
-        benchmark_state->counters["steps"] = steps;
-        benchmark_state->counters["simulation_time"] = time;
-        benchmark_state->counters["mean_dt"] = time / steps;
-        benchmark_state->counters["solver_seconds"] = solver_seconds;
-        benchmark_state->counters["setup_seconds"] = setup_seconds;
-        benchmark_state->counters["monitor_seconds"] = monitor_seconds;
-        benchmark_state->counters["export_seconds"] = export_seconds;
-        benchmark_state->counters["wall_seconds"] = wall;
-        benchmark_state->counters["reconstruction_seconds"] = solver_reconstruction_seconds;
-        benchmark_state->counters["reconstruction_iterations"] = solver_reconstruction_iterations;
-        benchmark_state->counters["electromagnetic_seconds"] = electromagnetic_seconds;
-        benchmark_state->counters["electric_poisson_iterations"] = electric_iterations;
-        benchmark_state->counters["cell_updates/s"]
-                = double(steps) * simulation.dec.cells / solver_seconds;
-        benchmark_state->SetItemsProcessed(steps * std::int64_t(simulation.dec.cells));
+        return solver_seconds;
     } catch (std::exception const& error) {
         benchmark_failed = true;
         if (benchmark_state)
             benchmark_state->SkipWithError(error.what());
         else
             throw;
+        return 0;
     }
 }
 
-void run(benchmark::State& state)
+// Keep manual solver timing, but omit its implementation suffix from displayed names.
+class ConsoleReporter : public benchmark::ConsoleReporter
 {
-    run_trajectory(&state);
+    void ReportRuns(std::vector<Run> const& reports) override
+    {
+        std::vector<Run> clean = reports;
+        for (Run& report : clean)
+            report.run_name.time_type.clear();
+        benchmark::ConsoleReporter::ReportRuns(clean);
+    }
+};
+
+class JsonReporter : public benchmark::JSONReporter
+{
+    void ReportRuns(std::vector<Run> const& reports) override
+    {
+        std::vector<Run> clean = reports;
+        for (Run& report : clean)
+            report.run_name.time_type.clear();
+        benchmark::JSONReporter::ReportRuns(clean);
+    }
+};
+
+Configuration select_strategy(Configuration selected, int strategy)
+{
+    selected.levi_civita_continuous_hodge_star = strategy >= 1 && strategy <= 3;
+    selected.weighted_levi_civita_discrete_hodge_star = strategy == 2;
+    selected.staged_weighted_levi_civita_discrete_hodge_star = strategy == 3;
+    selected.diagonal_reduction = strategy == 2 || strategy == 3;
+    selected.diagonal_reconstruction = strategy == 2 || strategy == 3;
+    selected.staged_laplacian = strategy == 4;
+    return selected;
+}
+
+void register_case(Configuration selected, int n, int strategy, std::filesystem::path directory)
+{
+    std::string const name = "TaylorGreen/" + selected.name() + "/N" + std::to_string(n) + "/"
+                             + selected.strategy_flags();
+    benchmark::internal::Benchmark* const registered = benchmark::RegisterBenchmark(
+            name.c_str(),
+            [selected, n, strategy, directory](benchmark::State& state) {
+                configuration = selected;
+                physics = selected.fluid;
+                nodes = n;
+                strategy_index = strategy;
+                output_directory = directory;
+                if (reference_run) {
+                    try {
+                        for ([[maybe_unused]] auto iteration : state)
+                            state.SetIterationTime(run_trajectory(nullptr));
+                    } catch (std::exception const& error) {
+                        benchmark_failed = true;
+                        state.SkipWithError(error.what());
+                    }
+                } else
+                    run_trajectory(&state);
+            });
+    registered->UseManualTime()->Unit(benchmark::kSecond);
+    if (reference_run)
+        registered->Iterations(1)->Repetitions(1);
 }
 } // namespace
 
@@ -1170,6 +1282,8 @@ int main(int argc, char** argv)
         int retained = 1;
         for (int i = 1; i < argc; ++i) {
             std::string const arg = argv[i];
+            if (arg.starts_with("--benchmark_out=") || arg == "--benchmark_out")
+                benchmark_output_requested = true;
             if (arg.starts_with("--N=")) {
                 std::string const value = arg.substr(4);
                 std::size_t consumed = 0;
@@ -1182,6 +1296,12 @@ int main(int argc, char** argv)
                 output_directory = arg.substr(13);
             else if (arg == "--validate")
                 verify = true;
+            else if (arg == "--strategy-suite")
+                strategy_suite = true;
+            else if (arg == "--reference-suite")
+                reference_run = reference_suite = true;
+            else if (arg.starts_with("--reference-final-time="))
+                reference_final_time = std::stod(arg.substr(23));
             else if (arg == "--reference")
                 reference_run = true;
             else if (arg == "--no-snapshots")
@@ -1191,6 +1311,9 @@ int main(int argc, char** argv)
                     std::cout << "Taylor-Green options: --N=64 --incompressible|--compressible "
                                  "--ideal|--resistive --hd|--ehd|--mhd|--fmhd --validate "
                                  "--output-dir=PATH --reference --no-snapshots\n"
+                                 "Suites: --strategy-suite (five strategies at N=64,128); "
+                                 "--reference-suite (staged weighted discrete Hodge star at "
+                                 "N=64,128).\n"
                                  "Staging: --staged-laplacian --staged-discrete-hodge-star "
                                  "--staged-reduction --staged-reconstruction "
                                  "--staged-diagonal-reduction --staged-diagonal-reconstruction\n"
@@ -1236,35 +1359,45 @@ int main(int argc, char** argv)
             throw std::runtime_error(
                     "Cannot reserve the CUDA stack for Taylor-Green DEC operators");
 #endif
+        PdiSession pdi;
+        pdi_session = &pdi;
         if (verify) {
             validate();
             return 0;
         }
-        if (reference_run) {
-            run_trajectory(nullptr);
-            benchmark::Shutdown();
-            return 0;
-        }
-        std::string const name
-                = std::string("TaylorGreen/") + configuration.name() + "/N" + std::to_string(nodes);
+        if (strategy_suite && (reference_run || verify))
+            throw std::runtime_error("--strategy-suite cannot be combined with validation");
+        if (!(reference_final_time > 0) || reference_final_time > 10)
+            throw std::runtime_error("Reference final time must be in (0,10]");
+        postprocess_directory = std::filesystem::absolute(argv[0]).parent_path();
+        // Library diagnostics are optional; campaign stdout is reserved for Google Benchmark.
+        setenv("SIMILIE_SOLVER_QUIET", "1", 1);
+        setenv("SIMILIE_SOLVER_PROGRESS_STRIDE", "0", 1);
         benchmark::AddCustomContext("execution_space", Kokkos::DefaultExecutionSpace::name());
-        benchmark::AddCustomContext("N", std::to_string(nodes));
         benchmark::AddCustomContext("configuration", configuration.name());
-        benchmark::
-                AddCustomContext("laplacian", configuration.staged_laplacian ? "staged" : "direct");
-        benchmark::AddCustomContext("staging", configuration.staging_name());
-        benchmark::AddCustomContext("operators", configuration.operator_name());
         benchmark::AddCustomContext("Re", "1600");
         benchmark::AddCustomContext("Pr", "0.71");
-        benchmark::AddCustomContext(
-                "Mach",
-                physics == Physics::Compressible ? "0.1" : "incompressible");
-        benchmark::AddCustomContext(
-                "timing",
-                "one iteration=one evolving solver step; manual_time=solver; monitors/export "
-                "excluded");
-        benchmark::RegisterBenchmark(name.c_str(), run)->UseManualTime()->Unit(benchmark::kSecond);
-        benchmark::RunSpecifiedBenchmarks();
+        if (strategy_suite) {
+            for (int strategy = 0; strategy < 5; ++strategy)
+                for (int n : {64, 128})
+                    register_case(
+                            select_strategy(configuration, strategy),
+                            n,
+                            strategy,
+                            output_directory / ("strategy-" + std::to_string(strategy + 1))
+                                    / ("N" + std::to_string(n)));
+        } else if (reference_suite) {
+            for (int n : {64, 128})
+                register_case(
+                        select_strategy(configuration, 3),
+                        n,
+                        3,
+                        output_directory / ("N" + std::to_string(n)));
+        } else
+            register_case(configuration, nodes, -1, output_directory);
+        ConsoleReporter console;
+        JsonReporter json;
+        benchmark::RunSpecifiedBenchmarks(&console, benchmark_output_requested ? &json : nullptr);
         benchmark::Shutdown();
         return benchmark_failed ? 1 : 0;
     } catch (std::exception const& error) {

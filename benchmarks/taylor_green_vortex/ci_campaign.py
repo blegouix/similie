@@ -1,387 +1,548 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # AI-GENERATED
-"""Run the fixed reference mesh campaign and report solver performance in CI."""
+"""Run one performance suite or the separate HD reference-validation suite."""
 
 import argparse
+import hashlib
 import json
-import math
-import statistics
+import shutil
 import subprocess
 import sys
+import tarfile
+import urllib.request
 from pathlib import Path
 
 import h5py
 import numpy as np
 from post_process import process
 
-# N=256 is temporarily disabled: the CI GPU cannot allocate its stencil storage.
 MESH_SIZES = (64, 128)
 PERFORMANCE_STEPS = 5
-PERFORMANCE_REPETITIONS = 3
-STRATEGY_MIN_TIME = "0.5"
-LAPLACIAN_STRATEGIES = (
-    ("general", ()),
-    ("levi-civita", ("--levi-civita-continuous-hodge-star",)),
+STRATEGY_RTOL = 1e-7
+STRATEGY_ATOL = 1e-9
+STRATEGIES = (
+    (),
+    ("--levi-civita-continuous-hodge-star",),
     (
-        "levi-civita-diagonal",
-        (
-            "--levi-civita-continuous-hodge-star",
-            "--weighted-levi-civita-discrete-hodge-star",
-            "--diagonal-reduction",
-            "--diagonal-reconstruction",
-        ),
+        "--levi-civita-continuous-hodge-star",
+        "--weighted-levi-civita-discrete-hodge-star",
+        "--diagonal-reduction",
+        "--diagonal-reconstruction",
     ),
-    ("staged-laplacian", ("--staged-laplacian",)),
+    (
+        "--levi-civita-continuous-hodge-star",
+        "--staged-weighted-levi-civita-discrete-hodge-star",
+        "--diagonal-reduction",
+        "--diagonal-reconstruction",
+    ),
+    ("--staged-laplacian",),
 )
+REFERENCE_URL = "https://cfd.ku.edu/hiocfd/data.tgz"
+REFERENCE_FILE = "spectral_Re1600_512.gdiag"
+REFERENCE_SHA256 = "8e01c0024ae2dde20df8dc77a20fa7fb41c3abef2fc528a2ac684afed96d6429"
 
 
-def execute(command, directory, log):
+def execute(command, directory):
+    """Preserve the complete Google Benchmark output without campaign chatter."""
     directory.mkdir(parents=True, exist_ok=True)
-    with log.open("w") as output:
-        output.write("Command: " + " ".join(map(str, command)) + "\n")
-        output.flush()
-        process = subprocess.Popen(
-            command,
+    (directory / "command.json").write_text(
+        json.dumps(list(map(str, command)), indent=2)
+    )
+    with (directory / "run.log").open("w") as log:
+        child = subprocess.Popen(
+            list(map(str, command)),
             cwd=directory,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
         )
-        if process.stdout is None:
-            raise RuntimeError("Could not capture benchmark output")
-        for line in process.stdout:
-            output.write(line)
-            output.flush()
+        for line in child.stdout:
+            log.write(line)
+            log.flush()
             sys.stdout.write(line)
             sys.stdout.flush()
-        return_code = process.wait()
-    if return_code:
-        raise RuntimeError(f"Command failed ({return_code}); see {log}")
+        if child.wait():
+            raise RuntimeError(f"Benchmark failed; see {directory / 'run.log'}")
 
 
-def staged_laplacian_bytes(n):
-    # Radius-two 3D stencil: 37 points. The HD benchmark caches scalar and
-    # three-component two-form Laplacians, each with dense input/output rows.
-    return n**3 * 37 * 8 * (1 + 3 * 3)
-
-
-def validate_results(
-    directory,
-    configuration,
-    n,
-    reference,
-    expected_steps=PERFORMANCE_STEPS,
-    repetitions=PERFORMANCE_REPETITIONS,
-):
-    files = sorted(directory.glob("*.performance.json"))
-    expected = 1 if reference else repetitions
-    if expected is not None and len(files) != expected:
-        raise ValueError(
-            f"Expected {expected} completed trajectories, found {len(files)}"
-        )
-    if not files:
-        raise ValueError("No completed performance trajectories were written")
-    if not reference:
-        benchmark_report = json.loads((directory / "benchmark.json").read_text())
-        measurements = [
-            r
-            for r in benchmark_report["benchmarks"]
-            if r.get("run_type") == "iteration"
-        ]
-        if len(measurements) != (1 if repetitions is None else repetitions):
-            raise ValueError("Incorrect Google Benchmark result count")
-        for measurement in measurements:
-            if measurement.get("error_occurred"):
-                raise ValueError("Google Benchmark reported an error")
-            if expected_steps is None:
-                if measurement["iterations"] <= 0:
-                    raise ValueError("Google Benchmark selected no iterations")
-            elif measurement["iterations"] != expected_steps:
-                raise ValueError("Google Benchmark measured the wrong number of steps")
-            if measurement["steps"] != measurement["iterations"]:
+def validate_trajectory(path, configuration, n, reference=False):
+    record = json.loads(path.read_text())
+    if record["configuration"] != configuration or record["N"] != n:
+        raise ValueError(f"Wrong configuration or resolution: {path}")
+    if record["mode"] != ("reference" if reference else "performance"):
+        raise ValueError(f"Wrong trajectory mode: {path}")
+    if record["steps"] <= 0 or (not reference and record["steps"] != PERFORMANCE_STEPS):
+        raise ValueError(f"Incorrect step count: {path}")
+    for key in (
+        "solver_seconds",
+        "mean_step_seconds",
+        "cell_updates_per_second",
+        "final_time",
+    ):
+        if not np.isfinite(record[key]) or record[key] <= 0:
+            raise ValueError(f"Invalid {key}: {path}")
+    hdf = path.with_name(path.name.removesuffix(".performance.json") + ".h5")
+    with h5py.File(hdf, "r") as data:
+        monitors = data["monitors"][:]
+        if monitors.shape != (record["steps"] + 1, 14) or not np.all(
+            np.isfinite(monitors)
+        ):
+            raise ValueError(f"Invalid monitor history: {hdf}")
+        if monitors[0, 0] != 0 or np.any(np.diff(monitors[:, 0]) <= 0):
+            raise ValueError(f"Time did not advance monotonically: {hdf}")
+        if monitors[-1, 0] != record["final_time"] or np.any(monitors[:, 11:13] <= 0):
+            raise ValueError(f"Invalid final time, density, or pressure: {hdf}")
+        if abs(monitors[0, 1] - 0.125) > 1e-10:
+            raise ValueError(f"Incorrect initial Taylor-Green kinetic energy: {hdf}")
+        if np.max(np.abs(monitors[:, 8] - monitors[0, 8])) > 1e-8:
+            raise ValueError(f"Mass conservation exceeded tolerance: {hdf}")
+        if (
+            configuration.startswith("incompressible")
+            and np.max(monitors[:, 10]) > 1e-8
+        ):
+            raise ValueError(f"Incompressibility constraint exceeded tolerance: {hdf}")
+        constraints = data["reconstruction_monitors"][:]
+        if not np.all(np.isfinite(constraints)) or np.max(constraints[:, 1:]) > 1e-8:
+            raise ValueError(f"Reconstruction constraint exceeded tolerance: {hdf}")
+        if "electromagnetic_monitors" in data:
+            electromagnetic = data["electromagnetic_monitors"][:]
+            if not np.all(np.isfinite(electromagnetic)):
+                raise ValueError(f"Nonfinite electromagnetic monitors: {hdf}")
+            if np.max(electromagnetic[:, 5:7]) > 1e-8:
                 raise ValueError(
-                    "Benchmark iterations do not correspond to solver steps"
+                    f"Gauss or magnetic divergence constraint exceeded tolerance: {hdf}"
                 )
-    selected_steps = expected_steps
-    if not reference and expected_steps is None:
-        selected_steps = measurements[0]["iterations"]
-    if selected_steps is not None:
-        files = [
-            path
-            for path in files
-            if json.loads(path.read_text())["steps"] == selected_steps
-        ]
-    if not reference and repetitions is None and not files:
-        raise ValueError(
-            "No trajectory matches the automatically selected iteration count"
-        )
-    if not reference and repetitions is None:
-        files = files[-1:]
-    records = []
-    for path in files:
-        record = json.loads(path.read_text())
-        if record["configuration"] != configuration or record["N"] != n:
-            raise ValueError("Wrong configuration or resolution in performance output")
-        if record["mode"] != ("reference" if reference else "performance"):
-            raise ValueError("Wrong trajectory mode")
-        if record["steps"] <= 0 or (
-            not reference
-            and selected_steps is not None
-            and record["steps"] != selected_steps
-        ):
-            raise ValueError("Incorrect iteration count")
-        for key in (
-            "solver_seconds",
-            "mean_step_seconds",
-            "cell_updates_per_second",
-            "final_time",
-        ):
-            if not math.isfinite(record[key]) or record[key] <= 0:
-                raise ValueError(f"Invalid {key}")
-        hdf = path.with_name(path.name.removesuffix(".performance.json") + ".h5")
-        with h5py.File(hdf, "r") as data:
-            monitors = data["monitors"][:]
-            if monitors.shape != (record["steps"] + 1, 14) or not np.all(
-                np.isfinite(monitors)
-            ):
-                raise ValueError("Invalid monitor history")
-            if monitors[0, 0] != 0 or np.any(np.diff(monitors[:, 0]) <= 0):
-                raise ValueError("Time did not advance monotonically")
-            if monitors[-1, 0] != record["final_time"] or np.any(
-                monitors[:, 11:13] <= 0
-            ):
-                raise ValueError("Invalid final time, density, or pressure")
-            if abs(monitors[0, 1] - 0.125) > 1e-10:
-                raise ValueError("Initial Taylor-Green kinetic energy is incorrect")
-            if np.max(np.abs(monitors[:, 8] - monitors[0, 8])) > 1e-8:
-                raise ValueError("Mass conservation exceeded tolerance")
-            if (
-                configuration.startswith("incompressible")
-                and np.max(monitors[:, 10]) > 1e-8
-            ):
-                raise ValueError("Incompressibility constraint exceeded tolerance")
-            constraints = data["reconstruction_monitors"][:]
-            if (
-                not np.all(np.isfinite(constraints))
-                or np.max(constraints[:, 1:]) > 1e-8
-            ):
-                raise ValueError("Fluid reconstruction constraint exceeded tolerance")
-            if "electromagnetic_monitors" in data:
-                electromagnetic = data["electromagnetic_monitors"][:]
-                if not np.all(np.isfinite(electromagnetic)):
-                    raise ValueError("Nonfinite electromagnetic monitors")
-                if np.max(electromagnetic[:, 5:7]) > 1e-8:
-                    raise ValueError(
-                        "Gauss or magnetic divergence constraint exceeded tolerance"
-                    )
-                if np.max(np.abs(electromagnetic[:, 8])) > 1e-8:
-                    raise ValueError(
-                        "Field/fluid spatial energy exchange is inconsistent"
-                    )
-            if reference:
-                times = sorted(
-                    float(data[name]["time"][0])
-                    for name in data
-                    if name.startswith("snapshot_")
-                )
-                if record["final_time"] != 10 or times != [0, 8, 10]:
-                    raise ValueError(
-                        "Reference trajectory must finish at t=10 with snapshots 0,8,10"
-                    )
+            if np.max(np.abs(electromagnetic[:, 8])) > 1e-8:
+                raise ValueError(f"Inconsistent field/fluid energy exchange: {hdf}")
         if reference:
-            process(hdf, vtk=False, plots=True)
-        records.append(record)
-    return records
+            times = sorted(
+                float(data[name]["time"][0])
+                for name in data
+                if name.startswith("snapshot_")
+            )
+            if record["final_time"] != 10 or times != list(range(11)):
+                raise ValueError(
+                    f"Reference must finish at t=10 with snapshots every tc: {hdf}"
+                )
+            for index in range(11):
+                if not hdf.with_suffix(f".snapshot_{index}.vtk").is_file():
+                    raise ValueError(f"Missing live PDI VTK export {index}: {hdf}")
+    return record, hdf
 
 
-def write_report(output, manifest):
-    lines = [
-        f"# Taylor–Green: {manifest['configuration']}",
-        "",
-        (
-            "CUDA, Release. One iteration is one evolving SSPRK3 step. "
-            "Strategy rows use automatic iteration counts with a 0.5 s minimum-time target. "
-            "Reference rows are complete t=0→10 HD trajectories."
-        ),
-        "",
-        "| Mode | N | Steps/run | Runs | Final time | Mean step (ms) | Std (ms) | Mcell updates/s | Status |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
-    ]
-    if manifest.get("validation_error"):
-        lines.extend(
-            ["", "N=8 solver validation failed: " + manifest["validation_error"], ""]
+def compare_strategies(baseline, candidate):
+    """Compare complete final states and evolving monitors after all timing stops.
+
+    All cases advance exactly five steps from the same initial state. Compare
+    times as well as fields: different adaptive time steps cannot silently pass.
+    Timing columns and Krylov residuals are deliberately excluded from equality.
+    """
+    results = {}
+    with h5py.File(baseline, "r") as expected, h5py.File(candidate, "r") as actual:
+        names = ["final_state", "monitors"]
+        if "final_electromagnetic_state" in expected:
+            names.extend(("final_electromagnetic_state", "electromagnetic_monitors"))
+        for name in names:
+            left, right = expected[name][:], actual[name][:]
+            if name == "monitors":
+                left, right = left[:, :13], right[:, :13]
+            if left.shape != right.shape or not np.all(np.isfinite(right)):
+                raise ValueError(
+                    f"Invalid strategy comparison dataset {name}: {candidate}"
+                )
+            difference = np.abs(left - right)
+            results[name] = {
+                "max_absolute_error": float(np.max(difference)),
+                "relative_l2_error": float(
+                    np.linalg.norm(difference.ravel())
+                    / max(np.linalg.norm(left.ravel()), STRATEGY_ATOL)
+                ),
+                "passed": bool(
+                    np.all(difference <= STRATEGY_ATOL + STRATEGY_RTOL * np.abs(left))
+                ),
+            }
+    return results
+
+
+def reference_history(directory):
+    """Keep the exact workshop input and its provenance in the artifact."""
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / REFERENCE_FILE
+    if not path.exists():
+        archive_path = directory / "data.tgz"
+        with (
+            urllib.request.urlopen(REFERENCE_URL, timeout=120) as response,
+            archive_path.open("wb") as out,
+        ):
+            while block := response.read(1024 * 1024):
+                out.write(block)
+        with tarfile.open(archive_path) as archive:
+            members = [
+                member
+                for member in archive.getmembers()
+                if Path(member.name).name == REFERENCE_FILE and member.isfile()
+            ]
+            if len(members) != 1:
+                raise ValueError("Workshop archive has an ambiguous reference history")
+            path.write_bytes(archive.extractfile(members[0]).read())
+    checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+    if checksum != REFERENCE_SHA256:
+        raise ValueError("Workshop reference checksum mismatch")
+    (directory / "source.json").write_text(
+        json.dumps(
+            {
+                "url": REFERENCE_URL,
+                "description": "UCL dealiased pseudo-spectral 512^3 reference, HiOCFD C3.5 (previous edition of HOW4 BS1)",
+                "sha256": checksum,
+                "columns": [
+                    "time",
+                    "kinetic_energy",
+                    "positive_dissipation",
+                    "enstrophy",
+                ],
+            },
+            indent=2,
         )
-    for entry in manifest["runs"]:
-        records = entry.get("performance", [])
-        if records:
-            step_times = [r["mean_step_seconds"] * 1000 for r in records]
-            steps = statistics.mean(r["steps"] for r in records)
-            time = statistics.mean(r["final_time"] for r in records)
-            throughput = (
-                statistics.mean(r["cell_updates_per_second"] for r in records) / 1e6
+        + "\n"
+    )
+    return np.loadtxt(path)
+
+
+def text_plot(
+    time, simulation, reference, title, x_label="t", reference_label="UCL512"
+):
+    """A text plot works directly in GitHub logs; PNGs accompany the artifact."""
+    width, height = 60, 10
+    sample_time = np.linspace(time[0], time[-1], width)
+    values = [
+        np.interp(sample_time, time, series) for series in (simulation, reference)
+    ]
+    low, high = min(v.min() for v in values), max(v.max() for v in values)
+    grid = [[" " for _ in range(width)] for _ in range(height)]
+    for symbol, series in zip(("S", "R"), values, strict=True):
+        rows = np.rint((high - series) / max(high - low, 1e-30) * (height - 1)).astype(
+            int
+        )
+        for column, row in enumerate(rows):
+            grid[row][column] = "+" if grid[row][column] != " " else symbol
+    print(f"{title}: S=SimiLie R={reference_label} +=overlap")
+    for row in grid:
+        print("|" + "".join(row) + "|")
+    print(f"{x_label}={time[0]:g}" + " " * 42 + f"{x_label}={time[-1]:g}")
+
+
+def compare_reference(hdf, reference, tolerance=None):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    with h5py.File(hdf, "r") as data:
+        monitors = data["monitors"][:]
+    sample = reference[(reference[:, 0] >= 0) & (reference[:, 0] <= monitors[-1, 0])]
+    metrics = {}
+    figure, axes = plt.subplots(1, 3, figsize=(14, 4), constrained_layout=True)
+    for axis, (name, column, ref_column) in zip(
+        axes,
+        (("kinetic_energy", 1, 1), ("dissipation", 3, 2), ("enstrophy", 4, 3)),
+        strict=True,
+    ):
+        simulation = np.interp(sample[:, 0], monitors[:, 0], monitors[:, column])
+        expected = sample[:, ref_column]
+        error = float(np.linalg.norm(simulation - expected) / np.linalg.norm(expected))
+        metrics[name] = {
+            "relative_l2_error": error,
+            "max_absolute_error": float(np.max(np.abs(simulation - expected))),
+        }
+        if tolerance is not None:
+            metrics[name]["passed"] = error <= tolerance
+        print(
+            f"Reference comparison {hdf.stem}: {name} relative_L2_error={error:.6g}"
+            + (
+                f" tolerance={tolerance:g} {'PASS' if error <= tolerance else 'FAIL'}"
+                if tolerance is not None
+                else " (resolution-study metric)"
             )
-            lines.append(
-                f"| {entry['mode']} | {entry['N']} | {steps:g} | {len(records)} | {time:.6g} | "
-                f"{statistics.mean(step_times):.6g} | {statistics.pstdev(step_times):.3g} | "
-                f"{throughput:.6g} | {entry['status']} |"
-            )
-        else:
-            lines.append(
-                f"| {entry['mode']} | {entry['N']} | — | — | — | — | — | — | {entry['status']} |"
-            )
-        if entry.get("error"):
-            lines.extend(
-                [
-                    "",
-                    f"Failure for {entry['mode']} N={entry['N']}: {entry['error']}",
-                    "",
-                ]
-            )
-        elif entry.get("note"):
-            lines.extend(
-                ["", f"Note for {entry['mode']} N={entry['N']}: {entry['note']}", ""]
-            )
-    lines.extend(
-        [
-            "",
+        )
+        axis.plot(sample[:, 0], expected, label="UCL spectral 512³")
+        axis.plot(monitors[:, 0], monitors[:, column], label="SimiLie")
+        axis.set(xlabel="t/tc", ylabel=name)
+        axis.legend()
+        text_plot(sample[:, 0], simulation, expected, name)
+    figure.savefig(hdf.with_suffix(".reference-comparison.png"), dpi=160)
+    plt.close(figure)
+    hdf.with_suffix(".reference-comparison.json").write_text(
+        json.dumps(metrics, indent=2) + "\n"
+    )
+    return metrics
+
+
+def compare_spectrum(hdf, wave_number, spectrum, reference_directory):
+    """Compare only the resolved, digitized range; never extrapolate the image."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    source = Path(__file__).parent / "reference_data"
+    reference_directory.mkdir(parents=True, exist_ok=True)
+    for path in source.iterdir():
+        if path.is_file():
+            shutil.copyfile(path, reference_directory / path.name)
+    csv = reference_directory / "spectrum_t8.csv"
+    provenance = json.loads((reference_directory / "spectrum_t8.json").read_text())
+    if hashlib.sha256(csv.read_bytes()).hexdigest() != provenance["csv_sha256"]:
+        raise ValueError("Digitized spectrum reference checksum mismatch")
+    reference = np.loadtxt(csv, delimiter=",", skiprows=4)
+    selected = (wave_number >= reference[0, 0]) & (wave_number <= reference[-1, 0])
+    k, energy = wave_number[selected], spectrum[selected]
+    if len(k) < 2 or not np.all(np.isfinite(energy)) or np.any(energy <= 0):
+        raise ValueError("No positive spectrum overlapping the digitized reference")
+    expected = 10 ** np.interp(
+        np.log10(k), np.log10(reference[:, 0]), np.log10(reference[:, 1])
+    )
+    metrics = {
+        "source": provenance["source"],
+        "image_derived_reference": True,
+        "time": 8,
+        "wave_number_range": [float(k[0]), float(k[-1])],
+        "relative_l2_error": float(
+            np.linalg.norm(energy - expected) / np.linalg.norm(expected)
+        ),
+        "rms_log10_error": float(np.sqrt(np.mean(np.log10(energy / expected) ** 2))),
+        "digitization_relative_energy_bound": provenance["relative_energy_bound"],
+        "digitization_relative_wave_number_bound": provenance[
+            "relative_wave_number_bound"
+        ],
+    }
+    np.savetxt(
+        hdf.with_suffix(".spectrum-comparison.csv"),
+        np.column_stack((k, energy, expected, energy / expected)),
+        delimiter=",",
+        header="wave_number,simulation_energy,digitized_reference_energy,ratio",
+        comments="",
+    )
+    hdf.with_suffix(".spectrum-comparison.json").write_text(
+        json.dumps(metrics, indent=2) + "\n"
+    )
+    figure, axis = plt.subplots(figsize=(7, 5), constrained_layout=True)
+    in_range = reference[:, 0] <= wave_number[-1]
+    axis.loglog(
+        reference[in_range, 0],
+        reference[in_range, 1],
+        label="HOW4 Spectral (digitized Figure 3)",
+    )
+    axis.fill_between(
+        reference[in_range, 0],
+        reference[in_range, 4],
+        reference[in_range, 5],
+        alpha=0.25,
+        label="±2-pixel energy bound (about 7%)",
+    )
+    positive = (wave_number > 0) & (spectrum > 0)
+    axis.loglog(wave_number[positive], spectrum[positive], label="SimiLie")
+    axis.set(
+        xlabel="Wave number kL",
+        ylabel="Shell energy / V0²",
+        title="Taylor–Green spectrum at t/tc=8",
+    )
+    axis.legend()
+    figure.savefig(hdf.with_suffix(".spectrum-comparison.png"), dpi=160)
+    plt.close(figure)
+    print(
+        f"Spectrum comparison {hdf.stem}: relative_L2_error={metrics['relative_l2_error']:.6g}, RMS_log10_error={metrics['rms_log10_error']:.6g}; digitized reference energy bound about 7%, k bound about 1.3%"
+    )
+    text_plot(
+        np.log10(k),
+        np.log10(energy),
+        np.log10(expected),
+        "Log10 spectrum at t=8",
+        "log10(kL)",
+        "digitized HOW4 Figure 3",
+    )
+    return metrics
+
+
+def write_report(output, phase, entries, error=None):
+    lines = [
+        f"# Taylor–Green {phase}",
+        "",
+        "Solver timings exclude monitoring, export, strategy comparisons and reference post-processing.",
+        "",
+        "| N | Flags | Steps | Solver step (s) | Mcell updates/s |",
+        "| ---: | --- | ---: | ---: | ---: |",
+    ]
+    for record in entries:
+        lines.append(
+            f"| {record['N']} | `{record['flags']}` | {record['steps']} | {record['mean_step_seconds']:.6g} | {record['cell_updates_per_second'] / 1e6:.6g} |"
+        )
+    if phase == "performance":
+        lines.extend(
             (
-                "Raw Google Benchmark JSON, hardware context, solver/monitor/export "
-                "timings, Krylov counts, logs, and monitor histories are included in the artifact. "
-                "Full HD cases additionally include HDF5/XDMF fields, spectra, and plots."
-            ),
-        ]
-    )
-    (output / "report.md").write_text("\n".join(lines) + "\n")
-    (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-
-
-def campaign(binary, output, fluid, transport, coupling):
-    configuration = f"{fluid}_{transport}_{coupling}"
-    flags = [f"--{fluid}", f"--{transport}", f"--{coupling}"]
-    if coupling == "hd" and transport != "ideal":
-        raise ValueError("Resistive HD is not a supported physics configuration")
-    output.mkdir(parents=True, exist_ok=True)
-    manifest = {"configuration": configuration, "mesh_sizes": MESH_SIZES, "runs": []}
-    write_report(output, manifest)
-    validation_flags = (
-        [
-            "--levi-civita-continuous-hodge-star",
-            "--weighted-levi-civita-discrete-hodge-star",
-            "--diagonal-reduction",
-            "--diagonal-reconstruction",
-        ]
-        if coupling == "hd"
-        else []
-    )
-    if coupling == "hd":
-        manifest["validation"] = "full reference trajectories at N=" + ",".join(
-            map(str, MESH_SIZES)
+                "",
+                f"Final fluid/field states and monitor histories are compared with the default strategy using rtol={STRATEGY_RTOL:g}, atol={STRATEGY_ATOL:g}; see strategy-comparison.json.",
+            )
         )
     else:
-        try:
-            execute(
-                [str(binary), "--N=8", *flags, "--validate"],
-                output,
-                output / "validation.log",
+        lines.extend(
+            (
+                "",
+                "HD accuracy is compared with the UCL 512³ pseudo-spectral workshop history. Relative L2 errors are resolution-study metrics, not a workshop-prescribed acceptance threshold. An explicit --reference-relative-tolerance enables an accuracy gate. See reference-comparison.json and PNG plots. Spectra at t=8 are compared with the Spectral curve digitized from page 3, Figure 3 of the HOW4 BS1 PDF. The CSV, provenance, extraction overlay and pixel uncertainty bounds are included in reference-data; this is an image-derived reference.",
+                "",
+                "Live PDI HDF5/VTK snapshots are saved every convective time unit, including t=0,8,10.",
             )
-            manifest["validation"] = "passed"
-        except RuntimeError as error:
-            manifest["validation"] = "failed"
-            manifest["validation_error"] = str(error)
-            write_report(output, manifest)
-            raise
-    modes = ("performance", "reference") if coupling == "hd" else ("performance",)
-    for mode in modes:
-        for n in MESH_SIZES:
-            directory = output / mode / f"N{n}"
-            directory.mkdir(parents=True, exist_ok=True)
-            entry = {"mode": mode, "N": n, "status": "running"}
-            manifest["runs"].append(entry)
-            write_report(output, manifest)
-            command = [str(binary), f"--N={n}", *flags, f"--output-dir={directory}"]
-            if mode == "reference":
-                command.extend(("--reference", *validation_flags))
-            else:
-                command.extend(
-                    [
-                        "--no-snapshots",
-                        f"--benchmark_min_time={PERFORMANCE_STEPS}x",
-                        f"--benchmark_repetitions={PERFORMANCE_REPETITIONS}",
-                        f"--benchmark_out={directory / 'benchmark.json'}",
-                        "--benchmark_out_format=json",
-                    ]
-                )
-            print(f"Running {configuration}: {mode}, N={n}", flush=True)
-            try:
-                execute(command, directory, directory / "run.log")
-                entry["performance"] = validate_results(
-                    directory, configuration, n, mode == "reference"
-                )
-                entry["status"] = "passed"
-            except (RuntimeError, ValueError, OSError, KeyError) as error:
-                entry["status"] = "failed"
-                entry["error"] = str(error)
-                print(str(error), flush=True)
-            write_report(output, manifest)
-    if coupling == "hd":
-        for strategy, strategy_flags in LAPLACIAN_STRATEGIES:
-            for n in MESH_SIZES:
-                directory = output / "laplacian-strategies" / strategy / f"N{n}"
-                directory.mkdir(parents=True, exist_ok=True)
-                entry = {
-                    "mode": f"strategy-{strategy}",
-                    "strategy": strategy,
-                    "N": n,
-                    "status": "running",
-                }
-                manifest["runs"].append(entry)
-                write_report(output, manifest)
-                if strategy == "staged-laplacian" and n == 256:
-                    required = staged_laplacian_bytes(n)
-                    entry["status"] = "skipped"
-                    entry["note"] = (
-                        f"Estimated staged stencil storage is {required / 1024**3:.2f} GiB; "
-                        "the N=256 staged-Laplacian comparison is skipped because it exceeds "
-                        "the available CI GPU memory."
-                    )
-                    write_report(output, manifest)
-                    continue
-                command = [
-                    str(binary),
-                    f"--N={n}",
-                    *flags,
-                    *strategy_flags,
-                    "--no-snapshots",
-                    f"--output-dir={directory}",
-                    f"--benchmark_min_time={STRATEGY_MIN_TIME}",
-                    f"--benchmark_out={directory / 'benchmark.json'}",
-                    "--benchmark_out_format=json",
-                ]
-                print(
-                    f"Running {configuration}: strategy={strategy}, N={n}", flush=True
-                )
-                try:
-                    execute(command, directory, directory / "run.log")
-                    entry["performance"] = validate_results(
-                        directory,
-                        configuration,
-                        n,
-                        False,
-                        expected_steps=None,
-                        repetitions=None,
-                    )
-                    entry["status"] = "passed"
-                except (RuntimeError, ValueError, OSError, KeyError) as error:
-                    entry["status"] = "failed"
-                    entry["error"] = str(error)
-                    print(str(error), flush=True)
-                write_report(output, manifest)
-    if any(entry["status"] == "failed" for entry in manifest["runs"]):
-        raise RuntimeError(
-            "One or more Taylor–Green CI cases failed; see report.md and logs"
         )
+    if phase == "validation":
+        lines.extend(
+            (
+                "",
+                "| N | Reference observable | Relative L2 error |",
+                "| ---: | --- | ---: |",
+            )
+        )
+        for path in sorted(output.glob("N*/*.reference-comparison.json")):
+            for name, metric in json.loads(path.read_text()).items():
+                lines.append(
+                    f"| {path.parent.name[1:]} | {name} | {metric['relative_l2_error']:.3%} |"
+                )
+        for path in sorted(output.glob("N*/*.spectrum-comparison.json")):
+            metric = json.loads(path.read_text())
+            lines.append(
+                f"| {path.parent.name[1:]} | spectrum at t=8 (digitized) | {metric['relative_l2_error']:.3%} |"
+            )
+    if error:
+        lines.extend(("", f"**FAILED:** {error}"))
+    (output / "report.md").write_text("\n".join(lines) + "\n")
+    (output / "manifest.json").write_text(
+        json.dumps({"phase": phase, "runs": entries, "error": error}, indent=2) + "\n"
+    )
+
+
+def campaign(
+    binary,
+    output,
+    fluid,
+    transport,
+    coupling,
+    phase="performance",
+    reference_relative_tolerance=None,
+):
+    if phase == "validation" and coupling != "hd":
+        raise ValueError("The long workshop validation is only defined for HD")
+    directory = output / phase
+    directory.mkdir(parents=True, exist_ok=True)
+    entries = []
+    configuration = f"{fluid}_{transport}_{coupling}"
+    command = [
+        binary,
+        f"--{fluid}",
+        f"--{transport}",
+        f"--{coupling}",
+        f"--output-dir={directory}",
+        f"--benchmark_out={directory / 'benchmark.json'}",
+        "--benchmark_out_format=json",
+    ]
+    if phase == "performance":
+        command += [
+            "--strategy-suite",
+            "--no-snapshots",
+            f"--benchmark_min_time={PERFORMANCE_STEPS}x",
+            "--benchmark_repetitions=1",
+        ]
+    else:
+        command += ["--reference-suite"]
+    try:
+        if phase == "validation":
+            reference = reference_history(directory / "reference-data")
+        execute(command, directory)
+        benchmark = json.loads((directory / "benchmark.json").read_text())
+        rows = [
+            row
+            for row in benchmark["benchmarks"]
+            if row.get("run_type", "iteration") == "iteration"
+        ]
+        if len(rows) != (10 if phase == "performance" else 2) or any(
+            row.get("error_occurred") or row.get("skipped") for row in rows
+        ):
+            raise ValueError("Incomplete Google Benchmark suite")
+        files = {}
+        for strategy in range(5) if phase == "performance" else (3,):
+            for n in MESH_SIZES:
+                case = (
+                    directory / f"strategy-{strategy + 1}" / f"N{n}"
+                    if phase == "performance"
+                    else directory / f"N{n}"
+                )
+                trajectories = sorted(case.glob("*.performance.json"))
+                if len(trajectories) != 1:
+                    raise ValueError(f"Expected one trajectory in {case}")
+                record, hdf = validate_trajectory(
+                    trajectories[0], configuration, n, phase == "validation"
+                )
+                if record["strategy"] != strategy or record["flags"] != (
+                    "+".join(STRATEGIES[strategy]) or "default"
+                ):
+                    raise ValueError(f"Incorrect operator strategy in {case}")
+                entries.append(record)
+                files[strategy, n] = hdf
+        if phase == "performance":
+            comparisons = {
+                f"strategy-{strategy + 1}/N{n}": compare_strategies(
+                    files[0, n], files[strategy, n]
+                )
+                for strategy in range(1, 5)
+                for n in MESH_SIZES
+            }
+            (directory / "strategy-comparison.json").write_text(
+                json.dumps(
+                    {
+                        "rtol": STRATEGY_RTOL,
+                        "atol": STRATEGY_ATOL,
+                        "comparisons": comparisons,
+                    },
+                    indent=2,
+                )
+                + "\n"
+            )
+            if not all(
+                result["passed"]
+                for comparison in comparisons.values()
+                for result in comparison.values()
+            ):
+                raise ValueError(
+                    "Operator strategies disagree; see strategy-comparison.json"
+                )
+        else:
+            comparisons = {}
+            for n in MESH_SIZES:
+                hdf = files[3, n]
+                _, wave_number, spectrum = process(hdf, vtk=False, plots=True)
+                compare_spectrum(
+                    hdf, wave_number, spectrum, directory / "reference-data"
+                )
+                comparisons[f"N{n}"] = compare_reference(
+                    hdf, reference, reference_relative_tolerance
+                )
+                print(
+                    f"Trajectory checks N={n}: PASS (mass, positivity, reconstruction and incompressibility where applicable)"
+                )
+            (directory / "reference-comparison.json").write_text(
+                json.dumps(comparisons, indent=2) + "\n"
+            )
+            if reference_relative_tolerance is not None and not all(
+                metric["passed"]
+                for comparison in comparisons.values()
+                for metric in comparison.values()
+            ):
+                raise ValueError(
+                    "HD reference accuracy exceeded the requested tolerance"
+                )
+    except Exception as error:
+        write_report(directory, phase, entries, str(error))
+        raise
+    write_report(directory, phase, entries)
 
 
 def main():
@@ -395,13 +556,28 @@ def main():
     parser.add_argument(
         "--coupling", choices=("hd", "ehd", "mhd", "fmhd"), required=True
     )
+    parser.add_argument(
+        "--phase", choices=("performance", "validation"), default="performance"
+    )
+    parser.add_argument(
+        "--reference-relative-tolerance",
+        type=float,
+        help="Optional relative L2 accuracy gate against UCL DNS; no workshop threshold is prescribed",
+    )
     args = parser.parse_args()
+    if args.reference_relative_tolerance is not None and (
+        not np.isfinite(args.reference_relative_tolerance)
+        or args.reference_relative_tolerance <= 0
+    ):
+        parser.error("Reference relative tolerance must be finite and positive")
     campaign(
         args.binary.resolve(),
         args.output.resolve(),
         args.fluid,
         args.transport,
         args.coupling,
+        args.phase,
+        args.reference_relative_tolerance,
     )
 
 

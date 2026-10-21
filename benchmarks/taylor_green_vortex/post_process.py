@@ -92,21 +92,37 @@ def workshop_header(path):
 def write_vtk(path, position, fields, time):
     """Legacy structured grid; VTK expects x to vary fastest."""
     nx, ny, nz, _ = position.shape
-    with path.open("w") as out:
+    with path.open("wb") as out:
         out.write(
-            f"# vtk DataFile Version 3.0\nSimiLie Taylor-Green t={time:.17g}\n"
-            f"ASCII\nDATASET STRUCTURED_GRID\nDIMENSIONS {nx} {ny} {nz}\n"
-            f"POINTS {nx * ny * nz} double\n"
+            (
+                f"# vtk DataFile Version 3.0\nSimiLie Taylor-Green t={time:.17g}\n"
+                f"BINARY\nDATASET STRUCTURED_GRID\nDIMENSIONS {nx} {ny} {nz}\n"
+                f"POINTS {nx * ny * nz} double\n"
+            ).encode()
         )
-        np.savetxt(out, position.transpose(2, 1, 0, 3).reshape(-1, 3), fmt="%.17g")
-        out.write(f"POINT_DATA {nx * ny * nz}\n")
-        out.write(f"FIELD FieldData {len(fields) + 1}\ntime 1 1 double\n{time:.17g}\n")
+        out.write(position.transpose(2, 1, 0, 3).astype(">f8").tobytes())
+        out.write(b"\nFIELD FieldData 1\ntime 1 1 double\n")
+        out.write(np.array([time], dtype=">f8").tobytes() + b"\n")
+        out.write(f"POINT_DATA {nx * ny * nz}\nFIELD Fields {len(fields)}\n".encode())
         for name, field in fields.items():
             components = 3 if field.ndim == 4 else 1
             axes = (2, 1, 0, 3) if components == 3 else (2, 1, 0)
-            values = field.transpose(axes).reshape(-1, components)
-            out.write(f"{name} {components} {nx * ny * nz} double\n")
-            np.savetxt(out, values, fmt="%.17g")
+            out.write(f"{name} {components} {nx * ny * nz} double\n".encode())
+            out.write(field.transpose(axes).astype(">f8").tobytes() + b"\n")
+
+
+def pdi_vtk(filename, index):
+    """PDI pycall hook: export the just-written snapshot before advancing time."""
+    path = Path(filename)
+    with h5py.File(path, "r") as data:
+        snapshot = data[f"snapshot_{index}"]
+        fields = {name: snapshot[name][:] for name in snapshot if name != "time"}
+        write_vtk(
+            path.with_suffix(f".snapshot_{index}.vtk"),
+            data["position"][:],
+            fields,
+            float(snapshot["time"][0]),
+        )
 
 
 def process(path, vtk=True, plots=True):

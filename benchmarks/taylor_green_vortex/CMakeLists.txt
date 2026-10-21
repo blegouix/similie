@@ -15,8 +15,14 @@ add_custom_command(
 add_executable(taylor_green_vortex taylor_green_vortex.cpp
     "${TGV_IDEAL_GAS_HEADER}")
 target_include_directories(taylor_green_vortex PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo)
+target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo DDC::pdi)
+configure_file(post_process.py post_process.py COPYONLY)
 if(BUILD_TESTING)
+    add_test(NAME tgv_campaign_comparison
+        COMMAND "${Python3_EXECUTABLE}"
+            "${PROJECT_SOURCE_DIR}/tests/ai_generated/test_tgv_campaign.py")
+    set_tests_properties(tgv_campaign_comparison PROPERTIES
+        ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1;MPLBACKEND=Agg")
     foreach(fluid incompressible compressible)
         foreach(coupling hd ehd mhd fmhd)
             foreach(transport ideal resistive)

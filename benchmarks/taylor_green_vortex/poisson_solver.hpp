@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <chrono>
-#include <iostream>
 #include <memory>
 
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -53,7 +51,6 @@ public:
         similie::solvers::PreconditionerType const type
                 = similie::solvers::detail::selected_preconditioner(settings);
         if (!m_preconditioner || type != m_type) {
-            std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
             Kokkos::DefaultExecutionSpace exec;
             std::shared_ptr<gko::Executor> const executor = gko::ext::kokkos::create_executor(exec);
             int const n = m_n, cells = n * n * n, rows = cells * m_components;
@@ -100,18 +97,6 @@ public:
             }
             executor->synchronize();
             m_type = type;
-            char const* const algorithm = std::getenv("SIMILIE_SOLVER");
-            std::cout << "TGV Poisson solver: N=" << n << " components=" << m_components
-                      << " algorithm=" << (algorithm ? algorithm : "cg")
-                      << " preconditioner=" << similie::solvers::preconditioner_name(type)
-                      << " warm_start=" << settings.use_initial_guess
-                      << " relative_tolerance=" << settings.relative_tolerance
-                      << " max_iterations=" << settings.max_iterations
-                      << " chebyshev_iterations=" << settings.chebyshev_iterations
-                      << " preconditioner_setup_seconds="
-                      << std::chrono::duration<double>(std::chrono::steady_clock::now() - start)
-                                 .count()
-                      << std::endl;
         }
         settings.generated_preconditioner = m_preconditioner;
         return settings;

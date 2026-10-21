@@ -998,7 +998,9 @@ inline std::shared_ptr<gko::LinOp const> build_preconditioner(
         StrongFormulationSolverSettings const& settings)
 {
     PreconditionerType const preconditioner = selected_preconditioner(settings);
-    std::cout << "SimiLie Ginkgo preconditioner: " << preconditioner_name(preconditioner) << '\n';
+    if (!env_flag_enabled("SIMILIE_SOLVER_QUIET"))
+        std::cout << "SimiLie Ginkgo preconditioner: " << preconditioner_name(preconditioner)
+                  << '\n';
     switch (preconditioner) {
     case PreconditionerType::Multigrid: {
         auto level = gko::multigrid::Pgm<double, gko::int32>::build().with_deterministic(true).on(
@@ -1447,7 +1449,8 @@ std::vector<StrongFormulationSolverDiagnostics> minimize_strong_formulation_resi
     }
     auto const preconditioner = detail::build_preconditioner(executor, matrix, settings);
     settings.use_matrix_free = false;
-    std::cout << "SimiLie linear system mode: assembled tensor stencils" << '\n';
+    if (!detail::env_flag_enabled("SIMILIE_SOLVER_QUIET"))
+        std::cout << "SimiLie linear system mode: assembled tensor stencils" << '\n';
     std::vector<StrongFormulationSolverDiagnostics> diagnostics;
     for (std::size_t i = 0; i < rhs.size(); ++i) {
         if (rhs[i].extent(0) != matrix->get_size()[0] || rhs[i].extent(1) != 1
@@ -1487,8 +1490,9 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                                   ? settings.generated_preconditioner->get_executor()
                                   : gko::ext::kokkos::create_executor(exec_space);
     if constexpr (OperatorModel::IS_LINEAR) {
-        std::cout << "SimiLie linear system mode: "
-                  << (settings.use_matrix_free ? "matrix-free" : "assembled") << '\n';
+        if (!detail::env_flag_enabled("SIMILIE_SOLVER_QUIET"))
+            std::cout << "SimiLie linear system mode: "
+                      << (settings.use_matrix_free ? "matrix-free" : "assembled") << '\n';
         diagnostics.initial_residual_l2 = detail::residual_norm_l2(exec_space, rhs);
         diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
         diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0 ? 0.0 : 1.0;
@@ -1507,8 +1511,9 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 matrix = detail::build_matrix(gko_exec, operator_model);
         } else if (
                 settings.use_matrix_free && preconditioner_type == PreconditionerType::Identity) {
-            std::cout << "SimiLie Ginkgo preconditioner: "
-                      << preconditioner_name(preconditioner_type) << '\n';
+            if (!detail::env_flag_enabled("SIMILIE_SOLVER_QUIET"))
+                std::cout << "SimiLie Ginkgo preconditioner: "
+                          << preconditioner_name(preconditioner_type) << '\n';
             preconditioner = detail::build_identity_preconditioner(gko_exec, operator_model.size());
         } else {
             matrix = detail::build_matrix(gko_exec, operator_model);

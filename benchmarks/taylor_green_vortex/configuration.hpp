@@ -107,6 +107,29 @@ struct Configuration
         return (reduction_mode() + 4 * reconstruction_mode()) * 2
                + int(levi_civita_continuous_hodge_star);
     }
+    std::string strategy_flags() const
+    {
+        std::string result;
+        auto append = [&](bool selected, char const* flag) {
+            if (selected) {
+                if (!result.empty())
+                    result += "+";
+                result += flag;
+            }
+        };
+        append(levi_civita_continuous_hodge_star, "--levi-civita-continuous-hodge-star");
+        append(weighted_levi_civita_discrete_hodge_star,
+               "--weighted-levi-civita-discrete-hodge-star");
+        append(staged_weighted_levi_civita_discrete_hodge_star,
+               "--staged-weighted-levi-civita-discrete-hodge-star");
+        append(diagonal_reduction, "--diagonal-reduction");
+        append(diagonal_reconstruction, "--diagonal-reconstruction");
+        append(staged_laplacian, "--staged-laplacian");
+        append(staged_discrete_hodge_star, "--staged-discrete-hodge-star");
+        append(staged_reduction, "--staged-reduction");
+        append(staged_reconstruction, "--staged-reconstruction");
+        return result.empty() ? "default" : result;
+    }
     std::string staging_name() const
     {
         std::string result;
