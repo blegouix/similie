@@ -26,22 +26,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  approve-cuda-environment:
+  run-taylor-green-vortex-benchmark:
     if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
       name: taylor_green_vortex-cuda
     steps:
-    - run: echo "Approved Taylor–Green CUDA benchmark campaign."
+      - run: echo "Environment approval granted for the Taylor–Green benchmark campaign."
 
   physics:
     if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    needs: approve-cuda-environment
+    needs: run-taylor-green-vortex-benchmark
     name: ${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}
     runs-on: [self-hosted, linux]
-    concurrency:
-      group: similie-persistent-cuda-build
-      cancel-in-progress: false
     timeout-minutes: 1380
     strategy:
       fail-fast: false
