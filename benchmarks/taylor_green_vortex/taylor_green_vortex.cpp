@@ -1099,6 +1099,7 @@ double run_trajectory(benchmark::State* benchmark_state)
         std::int64_t steps = 0, solver_reconstruction_iterations = 0;
         double solver_reconstruction_seconds = 0, electromagnetic_seconds = 0;
         std::int64_t electric_iterations = 0;
+        std::int64_t next_snapshot = 1;
         // A single Google Benchmark iteration advances the existing state once.
         auto advance_step = [&]() {
             Clock::time_point const step_start = Clock::now();
@@ -1115,7 +1116,10 @@ double run_trajectory(benchmark::State* benchmark_state)
                                                  : 0;
             double const target
                     = reference_run
-                              ? std::min(std::floor(time) + 1, reference_final_time)
+                              ? std::min(
+                                        {0.033 * next_snapshot,
+                                         time < 8 ? 8.0 : reference_final_time,
+                                         reference_final_time})
                               : (time < 8 ? 8.0
                                           : (time < 10 ? 10.0
                                                        : std::numeric_limits<double>::infinity()));
@@ -1147,6 +1151,8 @@ double run_trajectory(benchmark::State* benchmark_state)
                 benchmark_state->SetIterationTime(seconds);
             bool const reached = std::isfinite(target) && dt == target - time;
             time = reached ? target : time + dt;
+            if (reference_run && reached && time == 0.033 * next_snapshot)
+                ++next_snapshot;
             ++steps;
             if (benchmark_state)
                 benchmark_state->PauseTiming();

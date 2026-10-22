@@ -17,7 +17,13 @@ import numpy as np
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[2] / "benchmarks/taylor_green_vortex")
 )
-from ci_campaign import STRATEGIES, campaign, compare_spectrum, compare_strategies
+from ci_campaign import (
+    STRATEGIES,
+    campaign,
+    compare_spectrum,
+    compare_strategies,
+    validate_trajectory,
+)
 
 
 class CampaignConfiguration(unittest.TestCase):
@@ -93,6 +99,52 @@ class CampaignConfiguration(unittest.TestCase):
                 "--diagonal-reconstruction",
             ),
         )
+
+
+class ReferenceSnapshots(unittest.TestCase):
+    def test_dense_reference_schedule_and_missing_exports(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "trajectory.performance.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "configuration": "compressible_ideal_hd",
+                        "N": 8,
+                        "mode": "reference",
+                        "steps": 1,
+                        "solver_seconds": 1,
+                        "mean_step_seconds": 1,
+                        "cell_updates_per_second": 512,
+                        "final_time": 10,
+                    }
+                )
+            )
+            hdf = Path(temporary) / "trajectory.h5"
+            times = sorted([i * 0.033 for i in range(304)] + [8.0, 10.0])
+            with h5py.File(hdf, "w") as data:
+                monitors = np.zeros((2, 14))
+                monitors[:, 0] = [0, 10]
+                monitors[:, 1] = 0.125
+                monitors[:, 11:13] = 1
+                data["monitors"] = monitors
+                data["reconstruction_monitors"] = np.zeros((2, 4))
+                for i, time in enumerate(times):
+                    data[f"snapshot_{i}/time"] = [time]
+            xmf = hdf.with_suffix(".xmf")
+            grids = [f'<Grid><Time Value="{time:.17g}"/></Grid>' for time in times]
+            xmf.write_text(
+                "<Xdmf><Domain><Grid>" + "".join(grids) + "</Grid></Domain></Xdmf>"
+            )
+            validate_trajectory(path, "compressible_ideal_hd", 8, reference=True)
+            xmf.write_text(
+                "<Xdmf><Domain><Grid>" + "".join(grids[:-1]) + "</Grid></Domain></Xdmf>"
+            )
+            with self.assertRaisesRegex(ValueError, "XDMF time series is incomplete"):
+                validate_trajectory(path, "compressible_ideal_hd", 8, reference=True)
+            with h5py.File(hdf, "r+") as data:
+                del data["snapshot_1"]
+            with self.assertRaisesRegex(ValueError, "snapshots every 0.033 s"):
+                validate_trajectory(path, "compressible_ideal_hd", 8, reference=True)
 
 
 class StrategyComparison(unittest.TestCase):

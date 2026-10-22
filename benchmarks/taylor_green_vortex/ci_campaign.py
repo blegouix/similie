@@ -124,14 +124,19 @@ def validate_trajectory(path, configuration, n, reference=False):
             if np.max(np.abs(electromagnetic[:, 8])) > 1e-8:
                 raise ValueError(f"Inconsistent field/fluid energy exchange: {hdf}")
         if reference:
+            expected_times = np.sort(np.append(np.arange(0, 10, 0.033), [8, 10]))
             times = sorted(
                 float(data[name]["time"][0])
                 for name in data
                 if name.startswith("snapshot_")
             )
-            if record["final_time"] != 10 or times != list(range(11)):
+            if (
+                record["final_time"] != 10
+                or len(times) != len(expected_times)
+                or not np.allclose(times, expected_times, rtol=0, atol=1e-12)
+            ):
                 raise ValueError(
-                    f"Reference must finish at t=10 with snapshots every tc: {hdf}"
+                    f"Reference must finish at t=10 with snapshots every 0.033 s, including t=8: {hdf}"
                 )
             xmf = hdf.with_suffix(".xmf")
             try:
@@ -141,7 +146,9 @@ def validate_trajectory(path, configuration, n, reference=False):
                     f"Missing or invalid XDMF time series: {xmf}"
                 ) from error
             times = [float(grid.find("Time").attrib["Value"]) for grid in grids]
-            if len(grids) != 11 or times != list(range(11)):
+            if len(times) != len(expected_times) or not np.allclose(
+                times, expected_times, rtol=0, atol=1e-12
+            ):
                 raise ValueError(f"XDMF time series is incomplete: {xmf}")
     return record, hdf
 
@@ -428,7 +435,7 @@ def write_report(output, phase, entries, error=None):
                 "",
                 "HD accuracy is compared with the UCL 512³ pseudo-spectral workshop history. Relative L2 errors are resolution-study metrics, not a workshop-prescribed acceptance threshold. An explicit --reference-relative-tolerance enables an accuracy gate. See reference-comparison.json and PNG plots. Spectra at t=8 are compared with the Spectral curve digitized from page 3, Figure 3 of the HOW4 BS1 PDF. The CSV, provenance, extraction overlay and pixel uncertainty bounds are included in reference-data; this is an image-derived reference.",
                 "",
-                "HDF5 snapshots and their XDMF time series are saved every convective time unit, including t=0,8,10.",
+                "HDF5 snapshots and their XDMF time series are saved every 0.033 seconds of simulation time, with additional snapshots at t=8 and t=10.",
             )
         )
     if phase == "validation":
