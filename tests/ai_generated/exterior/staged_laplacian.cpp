@@ -11,25 +11,28 @@
 #include "exterior.hpp"
 
 namespace {
+KOKKOS_FUNCTION void check_contribution_cancellation(
+        Kokkos::View<double* [4], Kokkos::LayoutRight> results,
+        int i)
+{
+    double const scale = i == 0 ? 1.e-100 : (i == 1 ? 1.0 : 1.e100);
+    results(i, 0) = sil::exterior::detail::laplacian_contribution_sum(
+            scale,
+            -scale * (1.0 - 8.0 * std::numeric_limits<double>::epsilon()));
+    results(i, 1) = sil::exterior::detail::laplacian_contribution_sum(
+            scale,
+            -scale * (1.0 - 1024.0 * std::numeric_limits<double>::epsilon()));
+    results(i, 2) = sil::exterior::detail::laplacian_contribution_sum(scale * 1.e-16, 0.0);
+    results(i, 3) = sil::exterior::detail::laplacian_contribution_sum(scale, 0.5 * scale);
+}
+
 TEST(StagedLaplacian, ContributionCancellationIsRelativeToItsOperands)
 {
     Kokkos::View<double* [4], Kokkos::LayoutRight> results("laplacian_cancellation", 3);
     Kokkos::parallel_for(
             "laplacian_cancellation",
             3,
-            KOKKOS_LAMBDA(int i) {
-                double const scale = i == 0 ? 1.e-100 : (i == 1 ? 1.0 : 1.e100);
-                results(i, 0) = sil::exterior::detail::laplacian_contribution_sum(
-                        scale,
-                        -scale * (1.0 - 8.0 * std::numeric_limits<double>::epsilon()));
-                results(i, 1) = sil::exterior::detail::laplacian_contribution_sum(
-                        scale,
-                        -scale * (1.0 - 1024.0 * std::numeric_limits<double>::epsilon()));
-                results(i, 2)
-                        = sil::exterior::detail::laplacian_contribution_sum(scale * 1.e-16, 0.0);
-                results(i, 3)
-                        = sil::exterior::detail::laplacian_contribution_sum(scale, 0.5 * scale);
-            });
+            KOKKOS_LAMBDA(int i) { check_contribution_cancellation(results, i); });
     Kokkos::View<double* [4], Kokkos::LayoutRight, Kokkos::HostSpace> actual
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), results);
     for (int i = 0; i < 3; ++i) {

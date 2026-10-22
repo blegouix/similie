@@ -538,21 +538,16 @@ struct CodifferentialGeometry
             typename NonSpectatorDimension<Index, typename Tensor::non_indices_domain_t>::type;
     Metric metric;
     Position position;
-    StagedOperator<Hodge<
-            CellComplex::Primal,
-            SourceIndices,
-            DualIndices,
-            Metric,
-            Position,
-            Element>>
+    StagedOperator<
+            Hodge<CellComplex::Primal, SourceIndices, DualIndices, Metric, Position, Element>>
             forward;
-    StagedOperator<Hodge<
-            CellComplex::Primal,
-            tensor::upper_t<InverseSourceIndices>,
-            InverseTargetIndices,
-            Metric,
-            Position,
-            Element>>
+    StagedOperator<
+            Hodge<CellComplex::Primal,
+                  tensor::upper_t<InverseSourceIndices>,
+                  InverseTargetIndices,
+                  Metric,
+                  Position,
+                  Element>>
             inverse;
     StencilChain<DualIndex::rank() + 1, ChainDomain, typename Tensor::memory_space> chain;
     StencilChain<DualIndex::rank(), ChainDomain, typename Tensor::memory_space> lower;
