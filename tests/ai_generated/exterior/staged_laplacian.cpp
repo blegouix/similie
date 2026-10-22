@@ -26,13 +26,18 @@ KOKKOS_FUNCTION void check_contribution_cancellation(
     results(i, 3) = sil::exterior::detail::laplacian_contribution_sum(scale, 0.5 * scale);
 }
 
-TEST(StagedLaplacian, ContributionCancellationIsRelativeToItsOperands)
+void run_contribution_cancellation(Kokkos::View<double* [4], Kokkos::LayoutRight> results)
 {
-    Kokkos::View<double* [4], Kokkos::LayoutRight> results("laplacian_cancellation", 3);
     Kokkos::parallel_for(
             "laplacian_cancellation",
             3,
             KOKKOS_LAMBDA(int i) { check_contribution_cancellation(results, i); });
+}
+
+TEST(StagedLaplacian, ContributionCancellationIsRelativeToItsOperands)
+{
+    Kokkos::View<double* [4], Kokkos::LayoutRight> results("laplacian_cancellation", 3);
+    run_contribution_cancellation(results);
     Kokkos::View<double* [4], Kokkos::LayoutRight, Kokkos::HostSpace> actual
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), results);
     for (int i = 0; i < 3; ++i) {
