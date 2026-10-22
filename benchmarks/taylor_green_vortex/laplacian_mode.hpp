@@ -56,11 +56,10 @@ struct CoefficientStructure
 template <int Mode>
 struct HodgePolicies
 {
-    // Weighted discrete Hodge modes are orthogonal to the reduction,
-    // reconstruction, and continuous Hodge choices. Keep their benchmark
-    // composition aligned with the optimized mode (31).
+    // Specialized discrete Hodge modes use the same policies as mode 31.
+    // Mode 32 retains the general policies for the plain staged operator.
     static constexpr int coefficient_mode
-            = Mode == 34 || Mode == 35 || Mode == 36 || Mode == 37 ? 31 / 2 : Mode / 2;
+            = Mode >= 34 && Mode <= 38 ? 31 / 2 : (Mode == 32 ? 0 : Mode / 2);
     static constexpr int reduction_mode = coefficient_mode % 4;
     static constexpr int reconstruction_mode = coefficient_mode / 4;
 
@@ -98,7 +97,7 @@ struct HodgePolicies
 
     template <class Indices1, class Indices2, class Metric, class Element>
     using Continuous = std::conditional_t<
-            Mode == 34 || Mode == 35 || Mode == 36 || Mode % 2 == 1,
+            Mode == 34 || Mode == 35 || Mode == 36 || Mode == 38 || Mode % 2 == 1,
             sil::exterior::LeviCivitaContinuousHodgeStar<Indices1, Indices2, Metric, Element>,
             sil::exterior::ContinuousHodgeStar<Indices1, Indices2, Metric, Element>>;
 
@@ -129,14 +128,17 @@ struct HodgePolicies
                                     Position,
                                     Element>>,
                     std::conditional_t<
-                            Mode == 32,
+                            Mode == 32 || Mode == 38,
                             sil::exterior::StagedOperator<sil::exterior::DiscreteHodgeStar<
                                     Complex,
                                     Source,
                                     Target,
                                     Metric,
                                     Position,
-                                    Element>>,
+                                    Element,
+                                    Reconstruction,
+                                    Reduction,
+                                    Continuous>>,
                             sil::exterior::DiscreteHodgeStar<
                                     Complex,
                                     Source,
@@ -241,7 +243,7 @@ std::unique_ptr<LaplacianOperator<Tensor>> dispatch(
 {
     if (selected == Mode)
         return detail::make_laplacian_mode<Mode>(output, input, metric, position);
-    if constexpr (Mode < 37)
+    if constexpr (Mode < 38)
         return dispatch<Mode + 1>(selected, output, input, metric, position);
     throw std::invalid_argument("Unknown Taylor-Green Laplacian staging mode");
 }

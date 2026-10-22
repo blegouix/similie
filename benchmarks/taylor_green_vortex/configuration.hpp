@@ -108,6 +108,9 @@ struct Configuration
             return 37;
         if (staged_weighted_levi_civita_discrete_hodge_star)
             return 35;
+        if (staged_discrete_hodge_star && levi_civita_continuous_hodge_star && diagonal_reduction
+            && diagonal_reconstruction)
+            return 38;
         if (staged_discrete_hodge_star)
             return 32;
         if (weighted_levi_civita_discrete_hodge_star)
@@ -131,10 +134,10 @@ struct Configuration
                "--weighted-levi-civita-discrete-hodge-star");
         append(staged_weighted_levi_civita_discrete_hodge_star,
                "--staged-weighted-levi-civita-discrete-hodge-star");
+        append(staged_discrete_hodge_star, "--staged-discrete-hodge-star");
         append(diagonal_reduction, "--diagonal-reduction");
         append(levi_civita_continuous_hodge_star, "--levi-civita-continuous-hodge-star");
         append(diagonal_reconstruction, "--diagonal-reconstruction");
-        append(staged_discrete_hodge_star, "--staged-discrete-hodge-star");
         append(staged_reduction, "--staged-reduction");
         append(staged_reconstruction, "--staged-reconstruction");
         return result.empty() ? "default" : result;

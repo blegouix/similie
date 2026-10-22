@@ -39,6 +39,12 @@ STRATEGIES = (
         "--diagonal-reconstruction",
     ),
     (
+        "--staged-discrete-hodge-star",
+        "--diagonal-reduction",
+        "--levi-civita-continuous-hodge-star",
+        "--diagonal-reconstruction",
+    ),
+    (
         "--staged-codifferential",
         "--weighted-levi-civita-discrete-hodge-star",
         "--diagonal-reduction",

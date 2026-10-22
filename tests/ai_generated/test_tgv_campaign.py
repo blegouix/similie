@@ -28,7 +28,7 @@ from ci_campaign import (
 
 class CampaignConfiguration(unittest.TestCase):
     def test_codifferential_strategy_precedes_the_staged_laplacian(self):
-        self.assertEqual(len(STRATEGIES), 6)
+        self.assertEqual(len(STRATEGIES), 7)
         self.assertEqual(
             STRATEGIES[-2],
             ("--staged-codifferential",) + STRATEGIES[-1][1:],

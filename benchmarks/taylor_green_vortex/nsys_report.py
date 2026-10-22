@@ -166,9 +166,19 @@ def summarize_profile(directory, expected_cases=None):
                 stderr=subprocess.STDOUT,
                 check=True,
             )
-            for row in read_csv(
-                prefix.with_name(prefix.name + "_cuda_gpu_kern_sum.csv")
-            ):
+            # Nsight Systems includes report arguments such as ``nvtx-name:base``
+            # in the CSV filename on some versions. Match the report stem instead
+            # of assuming that only the report's base name is used.
+            kernel_reports = sorted(
+                directory.glob(prefix.name + "_cuda_gpu_kern_sum*.csv")
+            )
+            if len(kernel_reports) != 1:
+                raise FileNotFoundError(
+                    f"Expected one case kernel report for {case}, found "
+                    f"{[path.name for path in kernel_reports]}; see "
+                    f"{directory / 'statistics.log'}"
+                )
+            for row in read_csv(kernel_reports[0]):
                 case_kernels.append(
                     {
                         "case": case,
