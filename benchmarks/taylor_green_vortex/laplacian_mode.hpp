@@ -13,7 +13,6 @@
 
 #include "configuration.hpp"
 #include "grid_types.hpp"
-#include "staged_codifferential_laplacian.hpp"
 
 namespace taylor_green_vortex {
 // Host dispatch selects a compiled operator type once, before solver iterations.
@@ -61,7 +60,7 @@ struct HodgePolicies
     // reconstruction, and continuous Hodge choices. Keep their benchmark
     // composition aligned with the optimized mode (31).
     static constexpr int coefficient_mode
-            = Mode == 34 || Mode == 35 || Mode == 36 ? 31 / 2 : Mode / 2;
+            = Mode == 34 || Mode == 35 || Mode == 36 || Mode == 37 ? 31 / 2 : Mode / 2;
     static constexpr int reduction_mode = coefficient_mode % 4;
     static constexpr int reconstruction_mode = coefficient_mode / 4;
 
@@ -111,7 +110,7 @@ struct HodgePolicies
             class Position,
             class Element>
     using Discrete = std::conditional_t<
-            Mode == 34 || Mode == 36,
+            Mode == 34 || Mode == 36 || Mode == 37,
             sil::exterior::WeightedLeviCivitaDiscreteHodgeStar<
                     Complex,
                     Source,
@@ -175,15 +174,12 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
             HodgePolicies<Mode>::template Discrete>;
     using StagedConfiguredLaplacian = sil::exterior::StagedOperator<ConfiguredLaplacian>;
     using Operation = std::conditional_t<
-            Mode == 37,
-            StagedCodifferentialLaplacian<Tensor, Periodic>,
+            Mode == 33,
+            StagedLaplacian,
             std::conditional_t<
-                    Mode == 33,
-                    StagedLaplacian,
-                    std::conditional_t<
-                            Mode == 36,
-                            StagedConfiguredLaplacian,
-                            ConfiguredLaplacian>>>;
+                    Mode == 36 || Mode == 37,
+                    StagedConfiguredLaplacian,
+                    ConfiguredLaplacian>>;
     Operation m_operation;
 
     static Operation make_operation(

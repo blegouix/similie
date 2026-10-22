@@ -5,9 +5,10 @@
 #include <cmath>
 
 #include <gtest/gtest.h>
+#include <similie/exterior/exterior.hpp>
 
 #include "configuration.hpp"
-#include "staged_codifferential_laplacian.hpp"
+#include "grid_types.hpp"
 
 namespace {
 struct Periodic
@@ -32,7 +33,11 @@ template <class Form>
 void compare()
 {
     using namespace taylor_green_vortex;
-    using Tensor = detail::FormField<Form>;
+    using Tensor = sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<GridX, GridY, GridZ, Form>,
+            Kokkos::layout_right,
+            Field::memory_space>;
     using Index
             = std::conditional_t<Form::rank() == 0, Vector, sil::tensor::Covariant<CurlDirection>>;
     SpatialDomain const
@@ -81,7 +86,16 @@ void compare()
             Kokkos::DefaultExecutionSpace,
             sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>
             direct(Kokkos::DefaultExecutionSpace(), expected, input, metric, position);
-    detail::StagedCodifferentialLaplacian<Tensor, Periodic>
+    using StagedLaplacian = sil::exterior::StagedOperator<sil::exterior::Laplacian<
+            MetricIndex,
+            Index,
+            Form,
+            Tensor,
+            MetricTensor,
+            PositionTensor,
+            Kokkos::DefaultExecutionSpace,
+            sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>>;
+    StagedLaplacian
             staged(Kokkos::DefaultExecutionSpace(),
                    actual,
                    input,
