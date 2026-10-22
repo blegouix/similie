@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import h5py
 import numpy as np
@@ -16,10 +17,71 @@ import numpy as np
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[2] / "benchmarks/taylor_green_vortex")
 )
-from ci_campaign import STRATEGIES, compare_spectrum, compare_strategies
+from ci_campaign import STRATEGIES, campaign, compare_spectrum, compare_strategies
 
 
 class CampaignConfiguration(unittest.TestCase):
+    def test_reference_benchmark_names_include_explicit_iterations_and_repeats(self):
+        for fluid in ("incompressible", "compressible"):
+            for suffix in ("/iterations:1/repeats:1", "/iterations:2/repeats:1"):
+                with (
+                    self.subTest(fluid=fluid, suffix=suffix),
+                    tempfile.TemporaryDirectory() as temporary,
+                ):
+                    output = Path(temporary)
+                    directory = output / "validation"
+                    directory.mkdir()
+                    rows = []
+                    for n in (64, 128):
+                        case = directory / f"N{n}"
+                        case.mkdir()
+                        (case / "trajectory.performance.json").touch()
+                        rows.append(
+                            {
+                                "run_name": f"TaylorGreen/{fluid}_ideal_hd/N{n}/"
+                                + "+".join(STRATEGIES[3])
+                                + suffix,
+                                "repetitions": 1,
+                            }
+                        )
+                    (directory / "benchmark.json").write_text(
+                        json.dumps({"benchmarks": rows})
+                    )
+                    with (
+                        patch("ci_campaign.reference_history"),
+                        patch("ci_campaign.execute"),
+                        patch(
+                            "ci_campaign.validate_trajectory",
+                            side_effect=RuntimeError("Reached trajectory checks"),
+                        ) as validate,
+                    ):
+                        if suffix == "/iterations:1/repeats:1":
+                            with self.assertRaisesRegex(
+                                RuntimeError, "Reached trajectory checks"
+                            ):
+                                campaign(
+                                    Path("unused"),
+                                    output,
+                                    fluid,
+                                    "ideal",
+                                    "hd",
+                                    "validation",
+                                )
+                            validate.assert_called_once()
+                        else:
+                            with self.assertRaisesRegex(
+                                ValueError, "Unexpected or duplicate"
+                            ):
+                                campaign(
+                                    Path("unused"),
+                                    output,
+                                    fluid,
+                                    "ideal",
+                                    "hd",
+                                    "validation",
+                                )
+                            validate.assert_not_called()
+
     def test_last_strategy_has_the_requested_ordered_operator_chain(self):
         self.assertEqual(
             STRATEGIES[-1],

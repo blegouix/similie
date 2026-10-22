@@ -137,7 +137,9 @@ def validate_trajectory(path, configuration, n, reference=False):
             try:
                 grids = ET.parse(xmf).getroot().findall("./Domain/Grid/Grid")
             except (ET.ParseError, OSError) as error:
-                raise ValueError(f"Missing or invalid XDMF time series: {xmf}") from error
+                raise ValueError(
+                    f"Missing or invalid XDMF time series: {xmf}"
+                ) from error
             times = [float(grid.find("Time").attrib["Value"]) for grid in grids]
             if len(grids) != 11 or times != list(range(11)):
                 raise ValueError(f"XDMF time series is incomplete: {xmf}")
@@ -509,7 +511,8 @@ def campaign(
             for n in MESH_SIZES
         ]
         expected_names = {
-            f"TaylorGreen/{configuration}/N{n}/{'+'.join(STRATEGIES[strategy]) or 'default'}": (
+            f"TaylorGreen/{configuration}/N{n}/{'+'.join(STRATEGIES[strategy]) or 'default'}"
+            + ("/iterations:1/repeats:1" if phase == "validation" else ""): (
                 strategy,
                 n,
             )
