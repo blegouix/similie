@@ -10,7 +10,23 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "profiling.hpp"
+
 namespace taylor_green_vortex {
+template <class Operator, class Source, class Solution>
+similie::solvers::StrongFormulationSolverDiagnostics profiled_poisson_solve(
+        std::string const& name,
+        Kokkos::DefaultExecutionSpace const& exec,
+        Operator const& operation,
+        Source const& source,
+        Solution const& solution,
+        similie::solvers::StrongFormulationSolverSettings const& settings)
+{
+    ProfilingRegion const region("optimizer/" + name);
+    return similie::solvers::
+            minimize_strong_formulation_residual(exec, operation, source, solution, settings);
+}
+
 /** Reusable Ginkgo preconditioning for the periodic scalar and vector solves.
  * The seven-point Laplacian plus a unit shift is an SPD approximation used only
  * for preconditioning. The outer Krylov method still applies the native DEC
@@ -51,6 +67,7 @@ public:
         similie::solvers::PreconditionerType const type
                 = similie::solvers::detail::selected_preconditioner(settings);
         if (!m_preconditioner || type != m_type) {
+            ProfilingRegion const region("preconditioner/build");
             Kokkos::DefaultExecutionSpace exec;
             std::shared_ptr<gko::Executor> const executor = gko::ext::kokkos::create_executor(exec);
             int const n = m_n, cells = n * n * n, rows = cells * m_components;

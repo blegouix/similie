@@ -56,6 +56,7 @@ public:
     }
     void rhs(Field const& state, Field const& result)
     {
+        ProfilingRegion const region("equations/compressible-conservation");
         primitives(state);
         for (int c = 1; c < 4; ++c)
             for (int a = 0; a < 3; ++a)
@@ -66,6 +67,7 @@ public:
         int const n = m_dec.n;
         CompressiblePhysics const physics = m_physics;
         for (int axis = 0; axis < 3; ++axis) {
+            ProfilingRegion const axis_region("flux");
             for (int c = 1; c < 5; ++c)
                 m_dec.edge_derivative_component(primitive, c, normal, c - 1, axis);
             Kokkos::parallel_for(
@@ -95,8 +97,13 @@ public:
                             flux(a + 1, i) = values.momentum[a];
                         flux(4, i) = values.total_energy;
                     });
-            for (int c = 0; c < 5; ++c)
+            std::array<char const*, 5> const
+                    equations {"mass", "momentum-x", "momentum-y", "momentum-z", "total-energy"};
+            for (int c = 0; c < 5; ++c) {
+                ProfilingRegion const equation_region(std::string("equation/") + equations[c]);
                 m_dec.negative_face_codifferential(flux, c, divergence, c, axis);
+            }
+            ProfilingRegion const assembly_region("shared-conservation-assembly");
             Kokkos::parallel_for(
                     "navier_stokes_conservation_laws",
                     m_dec.cells,
@@ -245,6 +252,7 @@ public:
             Field const& supplied_vorticity = Field(),
             Field const& acceleration = Field())
     {
+        ProfilingRegion const region("pressure/reconstruction");
         unprojected_rhs(velocity, m_pressure_acceleration, supplied_vorticity);
         if (acceleration.data()) {
             Field const rate = m_pressure_acceleration;
@@ -264,7 +272,8 @@ public:
                 KOKKOS_LAMBDA(int i) { source(i, 0) = -divergence(0, i); });
         similie::solvers::StrongFormulationSolverSettings const settings = m_solver.settings();
         similie::solvers::StrongFormulationSolverDiagnostics const diagnostics
-                = similie::solvers::minimize_strong_formulation_residual(
+                = profiled_poisson_solve(
+                        "pressure",
                         Kokkos::DefaultExecutionSpace(),
                         m_poisson,
                         source,
@@ -409,6 +418,8 @@ public:
     }
     void reconstruct_velocity(Field const& state, Field const& output, bool time_derivative = false)
     {
+        ProfilingRegion const region(
+                time_derivative ? "velocity-rate/reconstruction" : "velocity/reconstruction");
         std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
         // Remove only roundoff-sized harmonic means; a nonzero physical mean
         // vorticity is incompatible with a periodic vector potential.
@@ -438,7 +449,8 @@ public:
         // Monitor solves of dW/dt must not overwrite the state potential history.
         Field const solution = time_derivative ? m_derivative_poisson_solution : m_poisson_solution;
         similie::solvers::StrongFormulationSolverDiagnostics const diagnostics
-                = similie::solvers::minimize_strong_formulation_residual(
+                = profiled_poisson_solve(
+                        time_derivative ? "vector-potential-rate" : "vector-potential",
                         Kokkos::DefaultExecutionSpace(),
                         m_poisson,
                         rhs,
@@ -524,6 +536,7 @@ public:
             Field const& acceleration = Field(),
             bool velocity_reconstructed = false)
     {
+        ProfilingRegion const region("equations/incompressible-vorticity");
         if (!velocity_reconstructed)
             reconstruct_velocity(state, velocity);
         m_dec.axial_nodes(state, vorticity);

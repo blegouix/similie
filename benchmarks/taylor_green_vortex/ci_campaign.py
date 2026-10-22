@@ -17,6 +17,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 from post_process import process
+from nsys_report import profile_command, summarize_profile
 
 MESH_SIZES = (64, 128)
 PERFORMANCE_STEPS = 5
@@ -57,7 +58,7 @@ REFERENCE_FILE = "spectral_Re1600_512.gdiag"
 REFERENCE_SHA256 = "8e01c0024ae2dde20df8dc77a20fa7fb41c3abef2fc528a2ac684afed96d6429"
 
 
-def execute(command, directory):
+def execute(command, directory, environment=None):
     """Preserve the complete Google Benchmark output without campaign chatter."""
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "command.json").write_text(
@@ -67,6 +68,7 @@ def execute(command, directory):
         child = subprocess.Popen(
             list(map(str, command)),
             cwd=directory,
+            env=environment,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -463,6 +465,9 @@ def write_report(output, phase, entries, error=None):
             lines.append(
                 f"| {path.parent.name[1:]} | spectrum at t=8 (digitized) | {metric['relative_l2_error']:.3%} |"
             )
+    profiling_report = output / "nsys" / "report.md"
+    if phase == "performance" and profiling_report.is_file():
+        lines.extend(("", profiling_report.read_text()))
     if error:
         lines.extend(("", f"**FAILED:** {error}"))
     (output / "report.md").write_text("\n".join(lines) + "\n")
@@ -507,7 +512,19 @@ def campaign(
     try:
         if phase == "validation":
             reference = reference_history(directory / "reference-data")
-        execute(command, directory)
+        environment = None
+        if phase == "performance":
+            command, environment = profile_command(command, directory / "nsys")
+        execute(command, directory, environment)
+        if phase == "performance":
+            summarize_profile(
+                directory / "nsys",
+                {
+                    f"TaylorGreen/N={n}/{'+'.join(flags) or 'default'}": PERFORMANCE_STEPS
+                    for n in MESH_SIZES
+                    for flags in STRATEGIES
+                },
+            )
         benchmark = json.loads((directory / "benchmark.json").read_text())
         rows = [
             row

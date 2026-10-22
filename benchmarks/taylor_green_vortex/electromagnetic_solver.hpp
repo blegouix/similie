@@ -71,6 +71,7 @@ public:
     }
     void reconstruct_electrostatic()
     {
+        ProfilingRegion const region("electric-potential/reconstruction");
         Field const charge = charge_density, source = m_poisson_rhs;
         double mean, square;
         Kokkos::parallel_reduce(
@@ -93,13 +94,13 @@ public:
                     source(i, 0) = (charge(0, i) - mean) / ElectromagneticReference::permittivity;
                 });
         similie::solvers::StrongFormulationSolverSettings const settings = m_solver.settings();
-        similie::solvers::StrongFormulationSolverDiagnostics const result
-                = similie::solvers::minimize_strong_formulation_residual(
-                        Kokkos::DefaultExecutionSpace(),
-                        m_poisson,
-                        source,
-                        m_poisson_solution,
-                        settings);
+        similie::solvers::StrongFormulationSolverDiagnostics const result = profiled_poisson_solve(
+                "electric-potential",
+                Kokkos::DefaultExecutionSpace(),
+                m_poisson,
+                source,
+                m_poisson_solution,
+                settings);
         if (!std::isfinite(result.final_relative_residual)
             || result.final_relative_residual > 1e-10)
             throw std::runtime_error("Electrostatic reconstruction did not converge");
@@ -224,6 +225,7 @@ public:
     // Reconstruct geometry-dependent fields, then evaluate exchange and all EM rates.
     void evaluate(Field const& velocity)
     {
+        ProfilingRegion const region("electromagnetic/evaluate");
         std::chrono::steady_clock::time_point const started = std::chrono::steady_clock::now();
         Coupling const coupling = m_configuration.coupling;
         bool const resistive = m_configuration.transport == Transport::Resistive;
@@ -244,6 +246,7 @@ public:
         m_dec.velocity(d, displacement);
         Field const ampere = m_ampere;
         if (magnetic()) {
+            ProfilingRegion const equation_region("equation/ampere");
             m_dec.codifferential(b, ampere);
             Kokkos::parallel_for(
                     "magnetic_field_curl",
@@ -384,11 +387,18 @@ public:
                     power(0, i) = energy;
                     heating(0, i) = heat;
                 });
-        m_dec.negative_codifferential_one_form(j, m_work);
-        if (magnetic())
-            m_dec.derivative_one_form(e, m_curl);
-        else
-            Kokkos::deep_copy(m_curl, 0.0);
+        {
+            ProfilingRegion const equation_region("equation/charge-continuity");
+            m_dec.negative_codifferential_one_form(j, m_work);
+        }
+        {
+            ProfilingRegion const equation_region("equation/faraday");
+            if (magnetic())
+                m_dec.derivative_one_form(e, m_curl);
+            else
+                Kokkos::deep_copy(m_curl, 0.0);
+        }
+        ProfilingRegion assembly_region("shared-electromagnetic-assembly");
         Field const rate = m_rate, div = m_work, curl = m_curl;
         Kokkos::parallel_for(
                 "electromagnetic_evolution",
@@ -408,6 +418,8 @@ public:
                         rate(a + 4, i) = update.induction[a];
                     }
                 });
+        assembly_region.end();
+        ProfilingRegion const constraint_region("gauss-constraint");
         m_dec.negative_codifferential_one_form(d, gauss_error);
         Field const residual = gauss_error;
         Kokkos::parallel_for(
@@ -425,6 +437,7 @@ public:
     }
     void advance_stage(int step, double dt)
     {
+        ProfilingRegion const region("electromagnetic/ssprk3-update");
         Field const q = state, initial = m_initial, rate = m_rate, stage = m_stage;
         double const weight = step == 0 ? 0 : (step == 1 ? 0.75 : 1.0 / 3.0);
         Kokkos::parallel_for(

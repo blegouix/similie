@@ -39,6 +39,7 @@ using taylor_green_vortex::ElectromagneticSolver;
 using taylor_green_vortex::Field;
 using taylor_green_vortex::IncompressibleSolver;
 using taylor_green_vortex::Physics;
+using taylor_green_vortex::ProfilingRegion;
 using taylor_green_vortex::Reference;
 using taylor_green_vortex::StructuredGrid;
 using Clock = std::chrono::steady_clock;
@@ -193,6 +194,7 @@ public:
     }
     void evaluate(Field const& q, Field const& result, bool reconstruct_pressure = false)
     {
+        ProfilingRegion const region("rhs");
         Field acceleration;
         if (electromagnetic) {
             if (incompressible) {
@@ -269,6 +271,7 @@ public:
     }
     double timestep()
     {
+        ProfilingRegion const region("timestep");
         bool const gas = kind == Physics::Compressible;
         if (!gas)
             incompressible->reconstruct_velocity(state, velocity);
@@ -341,6 +344,7 @@ public:
     }
     void advance(double dt)
     {
+        ProfilingRegion const region("evolution");
         Kokkos::deep_copy(initial, state);
         if (electromagnetic)
             electromagnetic->begin_step();
@@ -349,6 +353,7 @@ public:
         Field const q = state, q0 = initial, s = stage, f = rhs;
         int const count = components;
         for (int step = 0; step < 3; ++step) {
+            ProfilingRegion const stage_region("ssprk3-stage");
             evaluate(q, f);
             double const a = step == 0 ? 0.0 : (step == 1 ? 0.75 : 1.0 / 3.0);
             Kokkos::parallel_for(
@@ -769,12 +774,11 @@ public:
         for (std::size_t i = 0; i < m_times.size(); ++i) {
             out << "   <Grid Name=\"snapshot_" << i << "\" GridType=\"Uniform\">\n"
                 << "    <Time Value=\"" << m_times[i] << "\"/>\n"
-                << "    <Topology TopologyType=\"3DSMesh\" Dimensions=\"" << dimensions
-                << "\"/>\n"
+                << "    <Topology TopologyType=\"3DSMesh\" Dimensions=\"" << dimensions << "\"/>\n"
                 << "    <Geometry GeometryType=\"XYZ\">\n"
                 << "     <DataItem Dimensions=\"" << dimensions
-                << " 3\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n      "
-                << file << ":/position\n"
+                << " 3\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n      " << file
+                << ":/position\n"
                 << R"XMF(     </DataItem>
     </Geometry>
 )XMF";
@@ -809,9 +813,8 @@ public:
                     << (vector ? "Vector" : "Scalar")
                     << "\" Center=\"Node\">\n     <DataItem Dimensions=\"" << dimensions
                     << (vector ? " 3" : "")
-                    << "\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n      "
-                    << file << ":/snapshot_" << i << "/" << name
-                    << R"XMF(
+                    << "\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n      " << file
+                    << ":/snapshot_" << i << "/" << name << R"XMF(
      </DataItem>
     </Attribute>
 )XMF";
@@ -1054,6 +1057,9 @@ double run_trajectory(benchmark::State* benchmark_state)
 {
     static int invocation = 0;
     try {
+        ProfilingRegion const case_region(
+                "N=" + std::to_string(nodes) + "/" + configuration.strategy_flags());
+        ProfilingRegion setup_region("setup");
         std::filesystem::create_directories(output_directory);
         Clock::time_point const setup_start = Clock::now();
         Simulation simulation(nodes, physics);
@@ -1077,10 +1083,13 @@ double run_trajectory(benchmark::State* benchmark_state)
         double last_snapshot_time = 0;
         auto sample = [&](double time, double step_seconds, bool snapshot) {
             Clock::time_point begin = Clock::now();
+            ProfilingRegion monitor_region("monitoring");
             Monitor const m = simulation.monitor(time, step_seconds);
+            monitor_region.end();
             monitor_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
             monitors.push_back(m);
             begin = Clock::now();
+            ProfilingRegion const export_region("export");
             energy << m.time << " " << m.energy << " " << m.derivative << " " << m.dissipation
                    << "\n";
             if (snapshot && write_snapshots) {
@@ -1094,6 +1103,7 @@ double run_trajectory(benchmark::State* benchmark_state)
         export_seconds += std::chrono::duration<double>(Clock::now() - export_start).count();
         sample(0, 0, true);
         setup_seconds = std::chrono::duration<double>(Clock::now() - setup_start).count();
+        setup_region.end();
         Clock::time_point progress_start = Clock::now();
         double time = 0;
         std::int64_t steps = 0, solver_reconstruction_iterations = 0;
@@ -1102,6 +1112,8 @@ double run_trajectory(benchmark::State* benchmark_state)
         std::int64_t next_snapshot = 1;
         // A single Google Benchmark iteration advances the existing state once.
         auto advance_step = [&]() {
+            ProfilingRegion const iteration_region("iteration");
+            ProfilingRegion solver_region("solver");
             Clock::time_point const step_start = Clock::now();
             std::int64_t const cg_before
                     = simulation.incompressible ? simulation.incompressible->total_iterations : 0;
@@ -1146,6 +1158,7 @@ double run_trajectory(benchmark::State* benchmark_state)
                               : 0;
             Kokkos::fence("taylor_green_timing");
             double const seconds = std::chrono::duration<double>(Clock::now() - step_start).count();
+            solver_region.end();
             solver_seconds += seconds;
             if (benchmark_state)
                 benchmark_state->SetIterationTime(seconds);
@@ -1188,6 +1201,7 @@ double run_trajectory(benchmark::State* benchmark_state)
             while (time < reference_final_time)
                 advance_step();
         }
+        ProfilingRegion const finalization_region("finalization");
         Clock::time_point const finish_export = Clock::now();
         if (write_snapshots && time != last_snapshot_time)
             output->snapshot(simulation, time);

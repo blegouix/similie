@@ -74,7 +74,7 @@ jobs:
         test -f "${BUILD_ROOT}/COMMIT_SHA" || { echo "Missing persistent CUDA build at ${BUILD_ROOT}" >&2; exit 1; }
         test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}" || { echo "CUDA build commit tag does not match ${TARGET_SHA}" >&2; exit 1; }
         test -x "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex"
-    - name: Run benchmark in CUDA Docker
+    - name: Profile all benchmark cases with Nsight Systems in CUDA Docker
       run: |
         set -euo pipefail
         mkdir -p "${CI_ROOT}/results"
@@ -116,7 +116,7 @@ jobs:
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation
           '
-    - name: Upload performance and reference outputs
+    - name: Upload Nsight timelines, operation and kernel tables, and reference outputs
       id: results
       if: always()
       uses: actions/upload-artifact@v7
@@ -137,5 +137,5 @@ jobs:
           fi
         done
         if [ -n "${ARTIFACT_URL}" ]; then
-          echo "[Download all results, HDF5/XDMF snapshots and PNG validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
+          echo "[Download Nsight timelines and full timing tables, results, snapshots and validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
         fi
