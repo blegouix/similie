@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <type_traits>
@@ -22,6 +23,20 @@ struct IndexForCodifferentialOfCoboundaryInLaplacian : T
 
 
 namespace detail {
+
+// Stencil probes sum delta d and d delta after evaluating each contribution.
+// Allow for roundoff in those compositions, relative to their pre-cancellation
+// scale. A small coefficient without cancellation is therefore retained.
+KOKKOS_FORCEINLINE_FUNCTION double laplacian_contribution_sum(double first, double second)
+{
+    double const sum = first + second;
+    double const scale = Kokkos::max(Kokkos::abs(first), Kokkos::abs(second));
+    return Kokkos::isfinite(sum)
+                           && Kokkos::abs(sum)
+                                      <= 128.0 * std::numeric_limits<double>::epsilon() * scale
+                   ? 0.0
+                   : sum;
+}
 
 template <std::size_t Rank, class Domain, class Memory>
 using LaplacianChains = StencilChains<Rank, Domain, Memory>;
@@ -771,7 +786,8 @@ public:
             auto result = detail::laplacian_derivative<
                     Index>(codifferentials, primal, element, staged.chains);
             ddc::device_for_each(output.domain(), [&](auto component) {
-                output.mem(component) += result.mem(component);
+                output.mem(component) = detail::
+                        laplacian_contribution_sum(output.mem(component), result.mem(component));
             });
         }
         return output;
