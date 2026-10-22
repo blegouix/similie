@@ -27,6 +27,13 @@ from ci_campaign import (
 
 
 class CampaignConfiguration(unittest.TestCase):
+    def test_codifferential_strategy_precedes_the_staged_laplacian(self):
+        self.assertEqual(len(STRATEGIES), 6)
+        self.assertEqual(
+            STRATEGIES[-2],
+            ("--staged-codifferential",) + STRATEGIES[-1][1:],
+        )
+
     def test_reference_benchmark_names_include_explicit_iterations_and_repeats(self):
         for fluid in ("incompressible", "compressible"):
             for suffix in ("/iterations:1/repeats:1", "/iterations:2/repeats:1"):
@@ -93,7 +100,7 @@ class CampaignConfiguration(unittest.TestCase):
             STRATEGIES[-1],
             (
                 "--staged-laplacian",
-                "--levi-civita-discrete-hodge-star",
+                "--weighted-levi-civita-discrete-hodge-star",
                 "--diagonal-reduction",
                 "--levi-civita-continuous-hodge-star",
                 "--diagonal-reconstruction",

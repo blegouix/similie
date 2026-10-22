@@ -38,8 +38,15 @@ STRATEGIES = (
         "--diagonal-reconstruction",
     ),
     (
+        "--staged-codifferential",
+        "--weighted-levi-civita-discrete-hodge-star",
+        "--diagonal-reduction",
+        "--levi-civita-continuous-hodge-star",
+        "--diagonal-reconstruction",
+    ),
+    (
         "--staged-laplacian",
-        "--levi-civita-discrete-hodge-star",
+        "--weighted-levi-civita-discrete-hodge-star",
         "--diagonal-reduction",
         "--levi-civita-continuous-hodge-star",
         "--diagonal-reconstruction",
@@ -507,14 +514,16 @@ def campaign(
             for row in benchmark["benchmarks"]
             if row.get("run_type", "iteration") == "iteration"
         ]
-        if len(rows) != (10 if phase == "performance" else 2) or any(
-            row.get("error_occurred") or row.get("skipped") for row in rows
-        ):
+        if len(rows) != (
+            len(STRATEGIES) * len(MESH_SIZES)
+            if phase == "performance"
+            else len(MESH_SIZES)
+        ) or any(row.get("error_occurred") or row.get("skipped") for row in rows):
             raise ValueError("Incomplete Google Benchmark suite")
         benchmark_rows = {}
         expected_cases = [
             (strategy, n)
-            for strategy in (range(5) if phase == "performance" else (3,))
+            for strategy in (range(len(STRATEGIES)) if phase == "performance" else (3,))
             for n in MESH_SIZES
         ]
         expected_names = {
@@ -545,7 +554,7 @@ def campaign(
                 "Google Benchmark suite does not contain the expected cases"
             )
         files = {}
-        for strategy in range(5) if phase == "performance" else (3,):
+        for strategy in range(len(STRATEGIES)) if phase == "performance" else (3,):
             for n in MESH_SIZES:
                 case = (
                     directory / f"strategy-{strategy + 1}" / f"N{n}"
@@ -574,7 +583,7 @@ def campaign(
                 f"strategy-{strategy + 1}/N{n}": compare_strategies(
                     files[0, n], files[strategy, n]
                 )
-                for strategy in range(1, 5)
+                for strategy in range(1, len(STRATEGIES))
                 for n in MESH_SIZES
             }
             equivalence_passed = all(

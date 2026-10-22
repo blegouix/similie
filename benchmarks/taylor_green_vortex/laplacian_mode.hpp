@@ -13,6 +13,7 @@
 
 #include "configuration.hpp"
 #include "grid_types.hpp"
+#include "staged_codifferential_laplacian.hpp"
 
 namespace taylor_green_vortex {
 // Host dispatch selects a compiled operator type once, before solver iterations.
@@ -174,9 +175,15 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
             HodgePolicies<Mode>::template Discrete>;
     using StagedConfiguredLaplacian = sil::exterior::StagedOperator<ConfiguredLaplacian>;
     using Operation = std::conditional_t<
-            Mode == 33,
-            StagedLaplacian,
-            std::conditional_t<Mode == 36, StagedConfiguredLaplacian, ConfiguredLaplacian>>;
+            Mode == 37,
+            StagedCodifferentialLaplacian<Tensor, Periodic>,
+            std::conditional_t<
+                    Mode == 33,
+                    StagedLaplacian,
+                    std::conditional_t<
+                            Mode == 36,
+                            StagedConfiguredLaplacian,
+                            ConfiguredLaplacian>>>;
     Operation m_operation;
 
     static Operation make_operation(
@@ -185,7 +192,7 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
             MetricTensor const& metric,
             PositionTensor const& position)
     {
-        if constexpr (Mode == 33 || Mode == 36)
+        if constexpr (Mode == 33 || Mode == 36 || Mode == 37)
             return Operation(
                     Kokkos::DefaultExecutionSpace(),
                     output,
@@ -209,7 +216,7 @@ public:
     }
     void apply(Tensor const& output, Tensor const& input) override
     {
-        if constexpr (Mode == 33 || Mode == 36)
+        if constexpr (Mode == 33 || Mode == 36 || Mode == 37)
             m_operation(output, input);
         else
             m_operation(output, input, Periodic {}, Periodic {});
@@ -238,7 +245,7 @@ std::unique_ptr<LaplacianOperator<Tensor>> dispatch(
 {
     if (selected == Mode)
         return detail::make_laplacian_mode<Mode>(output, input, metric, position);
-    if constexpr (Mode < 36)
+    if constexpr (Mode < 37)
         return dispatch<Mode + 1>(selected, output, input, metric, position);
     throw std::invalid_argument("Unknown Taylor-Green Laplacian staging mode");
 }

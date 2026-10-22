@@ -1266,18 +1266,13 @@ class JsonReporter : public benchmark::JSONReporter
 
 Configuration select_strategy(Configuration selected, int strategy)
 {
-    selected.levi_civita_continuous_hodge_star = strategy >= 1 && strategy <= 3;
-    selected.weighted_levi_civita_discrete_hodge_star = strategy == 2;
+    selected.levi_civita_continuous_hodge_star = strategy >= 1 && strategy <= 5;
+    selected.weighted_levi_civita_discrete_hodge_star = strategy == 2 || strategy >= 4;
     selected.staged_weighted_levi_civita_discrete_hodge_star = strategy == 3;
-    selected.diagonal_reduction = strategy == 2 || strategy == 3;
-    selected.diagonal_reconstruction = strategy == 2 || strategy == 3;
-    selected.staged_laplacian = strategy == 4;
-    selected.levi_civita_discrete_hodge_star = strategy == 4;
-    if (strategy == 4) {
-        selected.levi_civita_continuous_hodge_star = true;
-        selected.diagonal_reduction = true;
-        selected.diagonal_reconstruction = true;
-    }
+    selected.diagonal_reduction = strategy >= 2;
+    selected.diagonal_reconstruction = strategy >= 2;
+    selected.staged_codifferential = strategy == 4;
+    selected.staged_laplacian = strategy == 5;
     return selected;
 }
 
@@ -1346,10 +1341,11 @@ int main(int argc, char** argv)
                     std::cout << "Taylor-Green options: --N=64 --incompressible|--compressible "
                                  "--ideal|--resistive --hd|--ehd|--mhd|--fmhd --validate "
                                  "--output-dir=PATH --reference --no-snapshots\n"
-                                 "Suites: --strategy-suite (five strategies at N=64,128); "
+                                 "Suites: --strategy-suite (six strategies at N=64,128); "
                                  "--reference-suite (staged weighted discrete Hodge star at "
                                  "N=64,128).\n"
-                                 "Staging: --staged-laplacian --staged-discrete-hodge-star "
+                                 "Staging: --staged-laplacian --staged-codifferential "
+                                 "--staged-discrete-hodge-star "
                                  "--staged-reduction --staged-reconstruction "
                                  "--staged-diagonal-reduction --staged-diagonal-reconstruction\n"
                                  "Operator choices: --weighted-levi-civita-discrete-hodge-star "
@@ -1357,6 +1353,8 @@ int main(int argc, char** argv)
                                  "--levi-civita-continuous-hodge-star "
                                  "--diagonal-reduction --diagonal-reconstruction\n"
                                  "Flags can be combined; outer caches supersede inner stages. "
+                                 "--staged-codifferential requires "
+                                 "--weighted-levi-civita-discrete-hodge-star. "
                                  "Plain diagonal flags select non-staged operators; the "
                                  "--staged-diagonal-* flags select staged diagonal caches. "
                                  "--staged aliases "
@@ -1412,7 +1410,7 @@ int main(int argc, char** argv)
         benchmark::AddCustomContext("Re", "1600");
         benchmark::AddCustomContext("Pr", "0.71");
         if (strategy_suite) {
-            for (int strategy = 0; strategy < 5; ++strategy)
+            for (int strategy = 0; strategy < 6; ++strategy)
                 for (int n : {64, 128})
                     register_case(
                             select_strategy(configuration, strategy),

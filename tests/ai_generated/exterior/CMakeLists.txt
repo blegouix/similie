@@ -14,6 +14,12 @@ add_executable(unit_tests_staged_laplacian staged_laplacian.cpp ../../main.cpp)
 target_link_libraries(unit_tests_staged_laplacian PUBLIC GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_staged_laplacian DISCOVERY_MODE PRE_TEST)
 
+add_executable(unit_tests_tgv_staged_codifferential tgv_staged_codifferential.cpp ../../main.cpp)
+target_include_directories(unit_tests_tgv_staged_codifferential
+    PRIVATE "${PROJECT_SOURCE_DIR}/benchmarks/taylor_green_vortex")
+target_link_libraries(unit_tests_tgv_staged_codifferential PUBLIC GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_tgv_staged_codifferential DISCOVERY_MODE PRE_TEST)
+
 add_executable(unit_tests_reconstruction_application reconstruction_application.cpp ../../main.cpp)
 target_link_libraries(unit_tests_reconstruction_application PUBLIC GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_reconstruction_application DISCOVERY_MODE PRE_TEST)

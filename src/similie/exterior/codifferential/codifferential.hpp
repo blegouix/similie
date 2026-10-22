@@ -345,7 +345,13 @@ struct Codifferential<TagToRemoveFromCochain, CochainTag>
 };
 
 namespace detail {
-template <class Index, class Cochain, class Tensor, class Metric, class Position>
+template <
+        class Index,
+        class Cochain,
+        class Tensor,
+        class Metric,
+        class Position,
+        template <CellComplex, class, class, class, class, class> class Hodge = DiscreteHodgeStar>
 struct CodifferentialGeometry;
 } // namespace detail
 
@@ -511,7 +517,13 @@ struct Codifferential<
 
 namespace detail {
 
-template <class Index, class Cochain, class Tensor, class Metric, class Position>
+template <
+        class Index,
+        class Cochain,
+        class Tensor,
+        class Metric,
+        class Position,
+        template <CellComplex, class, class, class, class, class> class Hodge>
 struct CodifferentialGeometry
 {
     using SourceIndices = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<Cochain>>>;
@@ -526,7 +538,7 @@ struct CodifferentialGeometry
             typename NonSpectatorDimension<Index, typename Tensor::non_indices_domain_t>::type;
     Metric metric;
     Position position;
-    StagedOperator<DiscreteHodgeStar<
+    StagedOperator<Hodge<
             CellComplex::Primal,
             SourceIndices,
             DualIndices,
@@ -534,7 +546,7 @@ struct CodifferentialGeometry
             Position,
             Element>>
             forward;
-    StagedOperator<DiscreteHodgeStar<
+    StagedOperator<Hodge<
             CellComplex::Primal,
             tensor::upper_t<InverseSourceIndices>,
             InverseTargetIndices,
