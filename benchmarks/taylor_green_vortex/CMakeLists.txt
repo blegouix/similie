@@ -23,6 +23,11 @@ if(BUILD_TESTING)
             "${PROJECT_SOURCE_DIR}/tests/ai_generated/test_tgv_campaign.py")
     set_tests_properties(tgv_campaign_comparison PROPERTIES
         ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1;MPLBACKEND=Agg")
+    add_test(NAME tgv_nsight_report
+        COMMAND "${Python3_EXECUTABLE}"
+            "${PROJECT_SOURCE_DIR}/tests/ai_generated/test_nsight_report.py")
+    set_tests_properties(tgv_nsight_report PROPERTIES
+        ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1;MPLBACKEND=Agg")
     foreach(fluid incompressible compressible)
         foreach(coupling hd ehd mhd fmhd)
             foreach(transport ideal resistive)

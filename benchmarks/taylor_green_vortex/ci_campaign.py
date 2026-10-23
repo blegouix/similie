@@ -471,9 +471,6 @@ def write_report(output, phase, entries, error=None):
             lines.append(
                 f"| {path.parent.name[1:]} | spectrum at t=8 (digitized) | {metric['relative_l2_error']:.3%} |"
             )
-    profiling_report = output / "nsys" / "report.md"
-    if phase == "performance" and profiling_report.is_file():
-        lines.extend(("", profiling_report.read_text()))
     if error:
         lines.extend(("", f"**FAILED:** {error}"))
     (output / "report.md").write_text("\n".join(lines) + "\n")
@@ -522,15 +519,6 @@ def campaign(
         if phase == "performance":
             command, environment = profile_command(command, directory / "nsys")
         execute(command, directory, environment)
-        if phase == "performance":
-            summarize_profile(
-                directory / "nsys",
-                {
-                    f"TaylorGreen/N={n}/{'+'.join(flags) or 'default'}": PERFORMANCE_STEPS
-                    for n in MESH_SIZES
-                    for flags in STRATEGIES
-                },
-            )
         benchmark = json.loads((directory / "benchmark.json").read_text())
         rows = [
             row
@@ -643,6 +631,14 @@ def campaign(
             print(
                 f"Overall strategy equivalence: {'PASS' if equivalence_passed else 'FAIL'}",
                 flush=True,
+            )
+            summarize_profile(
+                directory / "nsys",
+                {
+                    f"TaylorGreen/N={n}/{'+'.join(flags) or 'default'}": PERFORMANCE_STEPS
+                    for n in MESH_SIZES
+                    for flags in STRATEGIES
+                },
             )
             if not equivalence_passed:
                 raise ValueError(

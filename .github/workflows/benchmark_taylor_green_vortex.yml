@@ -74,9 +74,16 @@ jobs:
         test -f "${BUILD_ROOT}/COMMIT_SHA" || { echo "Missing persistent CUDA build at ${BUILD_ROOT}" >&2; exit 1; }
         test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}" || { echo "CUDA build commit tag does not match ${TARGET_SHA}" >&2; exit 1; }
         test -x "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex"
-    - name: Profile all benchmark cases with Nsight Systems in CUDA Docker
+    - name: Run benchmarks, compare strategies, and collect Nsight Systems timings
+      id: benchmark
       run: |
         set -euo pipefail
+        publish_performance_report() {
+          if [ -f "${CI_ROOT}/results/performance/report.md" ]; then
+            cat "${CI_ROOT}/results/performance/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
+          fi
+        }
+        trap publish_performance_report EXIT
         mkdir -p "${CI_ROOT}/results"
         docker image inspect "similie_env:${TARGET_SHA}" >/dev/null
         docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
@@ -98,6 +105,43 @@ jobs:
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase performance
           '
+    - name: Collect first-invocation Nsight Compute diagnostics for every case
+      run: |
+        set -euo pipefail
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
+          -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
+          -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
+          -e PYTHONDONTWRITEBYTECODE=1 \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
+            set -euo pipefail
+            mkdir -p "${HOME}"
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            nvidia-smi
+            python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/nsight_report.py" compute \
+              --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
+              --output "${CI_ROOT}/results" --fluid "${FLUID}" \
+              --transport "${TRANSPORT}" --coupling "${COUPLING}"
+          '
+    - name: Report combined Nsight Systems and Compute tables for all 14 cases
+      if: ${{ !cancelled() && steps.benchmark.outcome != 'skipped' }}
+      run: |
+        set -euo pipefail
+        publish_nsight_report() {
+          if [ -f "${CI_ROOT}/results/nsight/report.md" ]; then
+            cat "${CI_ROOT}/results/nsight/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
+          fi
+        }
+        trap publish_nsight_report EXIT
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e BUILD_ROOT -e PYTHONDONTWRITEBYTECODE=1 \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
+            set -euo pipefail
+            python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/nsight_report.py" report \
+              --output "${CI_ROOT}/results"
+          '
     - name: Validate HD reference trajectories in CUDA Docker
       if: matrix.coupling == 'hd'
       run: |
@@ -116,7 +160,7 @@ jobs:
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation
           '
-    - name: Upload Nsight timelines, operation and kernel tables, and reference outputs
+    - name: Upload Nsight timelines, Compute reports, combined tables, and reference outputs
       id: results
       if: always()
       uses: actions/upload-artifact@v7
@@ -131,11 +175,9 @@ jobs:
       env:
         ARTIFACT_URL: ${{ steps.results.outputs.artifact-url }}
       run: |
-        for phase in performance validation; do
-          if [ -f "${CI_ROOT}/results/${phase}/report.md" ]; then
-            cat "${CI_ROOT}/results/${phase}/report.md" >> "${GITHUB_STEP_SUMMARY}"
-          fi
-        done
+        if [ -f "${CI_ROOT}/results/validation/report.md" ]; then
+          cat "${CI_ROOT}/results/validation/report.md" >> "${GITHUB_STEP_SUMMARY}"
+        fi
         if [ -n "${ARTIFACT_URL}" ]; then
-          echo "[Download Nsight timelines and full timing tables, results, snapshots and validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
+          echo "[Download Nsight timelines, Compute reports, combined tables, results and validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
         fi

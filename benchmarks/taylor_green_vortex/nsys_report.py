@@ -13,8 +13,7 @@ from pathlib import Path
 import subprocess
 
 
-def profile_command(command, directory):
-    directory.mkdir(parents=True, exist_ok=True)
+def profiling_environment():
     connector = Path(
         os.environ.get(
             "SIMILIE_KOKKOS_NVTX_CONNECTOR", "/usr/local/lib/libkp_nvtx_connector.so"
@@ -26,6 +25,11 @@ def profile_command(command, directory):
     environment["KOKKOS_TOOLS_LIBS"] = str(connector)
     # GPU attribution uses CUDA launch correlation, without adding global fences.
     environment["KOKKOS_TOOLS_GLOBALFENCES"] = "0"
+    return environment
+
+
+def profile_command(command, directory):
+    directory.mkdir(parents=True, exist_ok=True)
     return [
         "nsys",
         "profile",
@@ -35,7 +39,7 @@ def profile_command(command, directory):
         "--force-overwrite=true",
         f"--output={directory / 'tgv'}",
         *map(str, command),
-    ], environment
+    ], profiling_environment()
 
 
 def number(row, label):
@@ -55,6 +59,49 @@ def region_name(row, column):
 def read_csv(path):
     with path.open(newline="") as source:
         return list(csv.DictReader(source))
+
+
+def read_statistics(prefix, report):
+    # Report arguments are included in filenames by recent Nsight versions.
+    paths = sorted(
+        prefix.parent.glob(prefix.name + "_" + report.split(":")[0] + "*.csv")
+    )
+    if len(paths) != 1:
+        raise FileNotFoundError(
+            f"Expected one {report} CSV for {prefix}, found "
+            f"{[path.name for path in paths]}; see {prefix.parent / 'statistics.log'}"
+        )
+    return read_csv(paths[0])
+
+
+def summarize_regions(rows):
+    regions = {}
+    for row in rows["nvtx_pushpop_sum"]:
+        name = row["Range"].removeprefix(":")
+        region = regions.setdefault(
+            name,
+            dict(
+                name=name,
+                calls=0,
+                host_ns=0,
+                gpu_span_ns=0,
+                kernel_ns=0,
+                kernel_calls=0,
+            ),
+        )
+        region["calls"] += int(number(row, "Instances"))
+        region["host_ns"] += number(row, "Total Time")
+    for row in rows["nvtx_gpu_proj_sum"]:
+        name = row["Range"].removeprefix(":")
+        if name in regions:
+            regions[name]["gpu_span_ns"] += number(row, "Total Proj Time")
+    for row in rows["nvtx_kern_sum:mangled"]:
+        name = row["NVTX Range"].removeprefix(":")
+        if name in regions:
+            region = regions[name]
+            region["kernel_ns"] += number(row, "Total Time")
+            region["kernel_calls"] += int(number(row, "Kern Inst"))
+    return list(regions.values())
 
 
 def markdown(value):
@@ -144,10 +191,19 @@ def summarize_profile(directory, expected_cases=None):
                     )
                 if operation["gpu_span_ns"] <= 0 or operation["kernel_calls"] <= 0:
                     raise ValueError(f"No GPU timings for {case}/{suffix}")
-    # Kokkos' innermost NVTX ranges provide readable kernel labels. Restrict each
-    # report to its case so identical kernel labels from different strategies
-    # cannot be merged. Keep full symbols in the operation/kernel CSV above.
+    # Collect every region within each case, including Kokkos kernel labels.
+    # Mangled symbols preserve template specializations for the Compute join.
     case_kernels = []
+    case_regions = []
+    case_reports = (
+        "nvtx_pushpop_sum",
+        "nvtx_gpu_proj_sum",
+        "nvtx_kern_sum:mangled",
+        "cuda_gpu_kern_sum:mangled",
+    )
+    # Reuse the first export directly; checking .nsys-rep/SQLite timestamps on
+    # every stats call can otherwise reject an export as older than its capture.
+    database = report.with_suffix(".sqlite")
     with (directory / "statistics.log").open("a") as log:
         for index, case in enumerate(cases):
             prefix = directory / f"case-{index + 1}"
@@ -156,35 +212,33 @@ def summarize_profile(directory, expected_cases=None):
                     "nsys",
                     "stats",
                     "--force-overwrite=true",
-                    "--report=cuda_gpu_kern_sum:nvtx-name:base",
+                    "--report=" + ",".join(case_reports),
                     "--format=csv",
                     f"--filter-nvtx={case}",
                     f"--output={prefix}",
-                    str(report),
+                    str(database),
                 ],
                 stdout=log,
                 stderr=subprocess.STDOUT,
                 check=True,
             )
-            # Nsight Systems includes report arguments such as ``nvtx-name:base``
-            # in the CSV filename on some versions. Match the report stem instead
-            # of assuming that only the report's base name is used.
-            kernel_reports = sorted(
-                directory.glob(prefix.name + "_cuda_gpu_kern_sum*.csv")
+            case_rows = {name: read_statistics(prefix, name) for name in case_reports}
+            case_regions.extend(
+                dict(region, case=case) for region in summarize_regions(case_rows)
             )
-            if len(kernel_reports) != 1:
-                raise FileNotFoundError(
-                    f"Expected one case kernel report for {case}, found "
-                    f"{[path.name for path in kernel_reports]}; see "
-                    f"{directory / 'statistics.log'}"
-                )
-            for row in read_csv(kernel_reports[0]):
+            labels = {}
+            for row in case_rows["nvtx_kern_sum:mangled"]:
+                name = row["NVTX Range"].removeprefix(":")
+                if not name.startswith(case):
+                    labels.setdefault(row["Kernel Name"], set()).add(name)
+            for row in case_rows["cuda_gpu_kern_sum:mangled"]:
                 case_kernels.append(
                     {
                         "case": case,
                         "kernel": row["Name"],
                         "calls": int(number(row, "Instances")),
                         "total_ns": number(row, "Total Time"),
+                        "labels": sorted(labels.get(row["Name"], ())),
                     }
                 )
             if not any(kernel["case"] == case for kernel in case_kernels):
@@ -193,69 +247,9 @@ def summarize_profile(directory, expected_cases=None):
         "operations": list(operations.values()),
         "kernels": kernels,
         "case_kernels": case_kernels,
+        "case_regions": case_regions,
     }
     (directory / "timings.json").write_text(json.dumps(data, indent=2) + "\n")
-    lines = [
-        "## Nsight Systems operation timings",
-        "",
-        "Host time is the NVTX range duration. GPU span runs from the first to the last "
-        "GPU operation launched within the range, including gaps. Kernel time sums actual "
-        "kernel execution durations. All three are inclusive: nested rows overlap and "
-        "must not be added. No profiling fences are inserted.",
-        "",
-        "Equation regions measure their differential operators. Shared flux and state "
-        "assembly kernels remain fused and appear in their enclosing/shared regions.",
-        "",
-        "The artifact contains the full `.nsys-rep` timeline, all CSV statistics, "
-        "and `nsys/timings.json` with every operation/kernel pair. "
-        "Tables below show every TGV operation and the 20 most expensive kernels per case.",
-    ]
-    for case in cases:
-        lines += [
-            "",
-            f"<details><summary>{markdown(case.removeprefix('TaylorGreen/'))}</summary>",
-            "",
-            "| Operation | Calls | Host (ms) | GPU span (ms) | Kernels (ms) | Launches |",
-            "| --- | ---: | ---: | ---: | ---: | ---: |",
-        ]
-        selected = sorted(
-            (
-                value
-                for name, value in operations.items()
-                if name.startswith(case + "/")
-            ),
-            key=lambda value: value["name"],
-        )
-        for value in selected:
-            operation = value["name"][len(case) + 1 :]
-            lines.append(
-                f"| {markdown(operation)} | {value['calls']} | "
-                f"{value['host_ns'] / 1e6:.3f} | {value['gpu_span_ns'] / 1e6:.3f} | "
-                f"{value['kernel_ns'] / 1e6:.3f} | {value['kernel_calls']} |"
-            )
-        # Case-filtered summaries count kernels once, unlike nested operation rows.
-        selected_kernels = sorted(
-            (value for value in case_kernels if value["case"] == case),
-            key=lambda value: value["total_ns"],
-            reverse=True,
-        )
-        lines += [
-            "",
-            "| CUDA kernel | Launches | Total (ms) | Mean (µs) |",
-            "| --- | ---: | ---: | ---: |",
-        ]
-        for kernel in selected_kernels[:20]:
-            label = kernel["kernel"].replace(case + "/", "")
-            if len(label) > 180:
-                label = label[:177] + "..."
-            lines.append(
-                f"| {markdown(label)} | {kernel['calls']} | "
-                f"{kernel['total_ns'] / 1e6:.3f} | "
-                f"{kernel['total_ns'] / kernel['calls'] / 1e3:.3f} |"
-            )
-        lines += ["", "</details>"]
-    text = "\n".join(lines) + "\n"
-    (directory / "report.md").write_text(text)
     return data
 
 
