@@ -1,148 +1,278 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # AI-GENERATED
-"""Check symbol joins, complete case tables and missing profiling data."""
+"""Check region-specific sampling, timing attribution and compact reports."""
 
+import copy
 import csv
 import json
 import os
 from pathlib import Path
-import sys
+import sqlite3
 import subprocess
+import sys
 import tempfile
 import textwrap
+from types import SimpleNamespace
 import unittest
 
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[2] / "benchmarks/taylor_green_vortex")
 )
-from nsight_report import METRICS, case_specs, write_combined_report
-from nsys_report import summarize_regions
+from nsight_report import (
+    METRICS,
+    case_specs,
+    read_compute_report,
+    write_combined_report,
+)
+from nsys_report import iteration_profiles
+
+CASE = "TaylorGreen/N=64/default"
+SYMBOL = "_Zprobe_full_symbol"
+
+
+def capture_fixture(path):
+    tid = (1 << 24) + 7
+    with sqlite3.connect(path) as connection:
+        connection.executescript("""
+            CREATE TABLE StringIds(id INTEGER PRIMARY KEY,value TEXT);
+            CREATE TABLE NVTX_EVENTS(start INTEGER,end INTEGER,eventType INTEGER,text TEXT,globalTid INTEGER,textId INTEGER,domainId INTEGER);
+            CREATE TABLE CUPTI_ACTIVITY_KIND_RUNTIME(start INTEGER,end INTEGER,globalTid INTEGER,correlationId INTEGER);
+            CREATE TABLE CUPTI_ACTIVITY_KIND_KERNEL(start INTEGER,end INTEGER,deviceId INTEGER,correlationId INTEGER,globalPid INTEGER,mangledName INTEGER,demangledName INTEGER);
+        """)
+        connection.executemany(
+            "INSERT INTO StringIds VALUES(?,?)",
+            [(1, SYMBOL), (2, "void Kokkos::generic_kernel()")],
+        )
+        correlation = 0
+
+        def region(start, end, name):
+            connection.execute(
+                "INSERT INTO NVTX_EVENTS VALUES(?,?,59,?,?,NULL,0)",
+                (start, end, name, tid),
+            )
+
+        def launch(host, start, end):
+            nonlocal correlation
+            correlation += 1
+            connection.execute(
+                "INSERT INTO CUPTI_ACTIVITY_KIND_RUNTIME VALUES(?,?,?,?)",
+                (host, host + 1, tid, correlation),
+            )
+            connection.execute(
+                "INSERT INTO CUPTI_ACTIVITY_KIND_KERNEL VALUES(?,?,0,?,?,1,2)",
+                (start, end, correlation, 1 << 24),
+            )
+
+        region(0, 90, CASE + "/setup")
+        region(10, 40, "similie_setup")
+        launch(20, 50, 60)
+        for base, gpu in ((100, 1000), (500, 2000)):
+            region(base, base + 300, CASE + "/iteration")
+            region(base + 10, base + 100, CASE + "/iteration/A")
+            region(base + 20, base + 40, "similie_probe")
+            launch(base + 25, gpu, gpu + 10)
+            if base == 100:
+                region(base + 50, base + 70, "similie_probe")
+                launch(base + 55, gpu + 5, gpu + 15)
+                region(base + 80, base + 90, "library_probe")
+                launch(base + 85, gpu + 15, gpu + 25)
+            region(base + 110, base + 200, CASE + "/iteration/B")
+            region(base + 120, base + 140, "similie_probe")
+            launch(
+                base + 125,
+                gpu + 30 if base == 100 else gpu + 20,
+                gpu + 40 if base == 100 else gpu + 30,
+            )
+    return iteration_profiles(path)
+
+
+class IterationAttribution(unittest.TestCase):
+    def test_library_launch_nested_in_similie_scope_remains_others(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "capture.sqlite"
+            capture_fixture(path)
+            with sqlite3.connect(path) as connection:
+                connection.execute(
+                    "INSERT INTO NVTX_EVENTS VALUES(175,195,59,'similie_outer',?,NULL,0)",
+                    ((1 << 24) + 7,),
+                )
+            profile = iteration_profiles(path)[CASE]
+            region = next(
+                row for row in profile["regions"] if row["name"].endswith("/A")
+            )
+            self.assertEqual(region["kernels"][0]["calls"], 3)
+            self.assertEqual(len(region["kernels"]), 1)
+            self.assertEqual(region["others_ns"], 10)
+            self.assertEqual(profile["sample_ranges"], [1, 4])
+
+    def test_same_label_keeps_different_kernel_specializations(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "capture.sqlite"
+            capture_fixture(path)
+            with sqlite3.connect(path) as connection:
+                connection.execute(
+                    "INSERT INTO StringIds VALUES(3,'_Zother_specialization')"
+                )
+                connection.execute(
+                    "UPDATE CUPTI_ACTIVITY_KIND_KERNEL SET mangledName=3 WHERE correlationId=3"
+                )
+            profile = iteration_profiles(path)[CASE]
+            region = next(
+                row for row in profile["regions"] if row["name"].endswith("/A")
+            )
+            self.assertEqual(len(region["kernels"]), 2)
+            self.assertEqual(profile["sample_ranges"], [1, 2, 3])
+
+    def test_setup_library_calls_and_overlap_do_not_corrupt_region_timings(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            profiles = capture_fixture(Path(temporary) / "capture.sqlite")
+        profile = profiles[CASE]
+        self.assertEqual(profile["sample_ranges"], [1, 3])
+        self.assertEqual(len(profile["targets"]), 3)
+        regions = {region["name"]: region for region in profile["regions"]}
+        self.assertEqual(
+            set(regions),
+            {CASE + "/iteration", CASE + "/iteration/A", CASE + "/iteration/B"},
+        )
+        root = regions[CASE + "/iteration"]
+        self.assertEqual(root["calls"], 2)
+        self.assertEqual(root["host_ns"], 600)
+        self.assertEqual(root["gpu_ns"], 70)
+        self.assertEqual(root["others_ns"], 25)
+        self.assertEqual(root["others_host_ns"], 600)
+        self.assertEqual(root["kernels"][0]["calls"], 5)
+        a = regions[CASE + "/iteration/A"]
+        self.assertEqual(a["others_ns"], 10)
+        self.assertEqual(a["gpu_ns"], 35)
+        self.assertEqual(
+            a["kernels"],
+            [dict(label="similie_probe", symbol=SYMBOL, calls=3, total_ns=30)],
+        )
+
+    def test_same_symbol_keeps_distinct_compute_samples_in_sibling_regions(self):
+        def action(region, value):
+            domain = SimpleNamespace(
+                name=lambda: "<default domain>",
+                push_pop_ranges=lambda: (CASE + "/iteration", region, "similie_probe"),
+            )
+            state = SimpleNamespace(domains=lambda: (0,), domain_by_id=lambda _: domain)
+
+            def metric(name):
+                number = float("nan") if "registers" in name else value
+                return SimpleNamespace(has_value=lambda: True, as_double=lambda: number)
+
+            return SimpleNamespace(
+                name=lambda _: SYMBOL,
+                nvtx_state=lambda: state,
+                metric_by_name=metric,
+                rule_results=lambda: (),
+            )
+
+        actions = [
+            action(CASE + "/iteration/A", 10),
+            action(CASE + "/iteration/B", 90),
+            action(CASE + "/iteration/A", 30),
+        ]
+        section = SimpleNamespace(
+            num_actions=lambda: len(actions), action_by_idx=lambda index: actions[index]
+        )
+        report = SimpleNamespace(num_ranges=lambda: 1, range_by_idx=lambda _: section)
+        api = SimpleNamespace(
+            load_report=lambda _: report, IAction=SimpleNamespace(NameBase_MANGLED=1)
+        )
+        samples = read_compute_report(Path("unused"), api)
+        by_region = {sample["region"]: sample for sample in samples}
+        self.assertEqual(len(by_region), 3)
+        self.assertEqual(by_region[CASE + "/iteration"]["metrics"]["SM (%)"], 10)
+        self.assertEqual(by_region[CASE + "/iteration/A"]["metrics"]["SM (%)"], 10)
+        self.assertEqual(by_region[CASE + "/iteration/B"]["metrics"]["SM (%)"], 90)
+        self.assertIsNone(
+            by_region[CASE + "/iteration/A"]["metrics"]["Registers/thread"]
+        )
 
 
 class CombinedReport(unittest.TestCase):
-    def test_full_symbols_keep_specializations_separate_and_preserve_every_row(self):
+    def test_tables_use_systems_timings_and_region_specific_compute_metrics(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
-            cases = list(case_specs())
-            self.assertEqual(len(cases), 14)
-            symbols = [f"_Zkernel_specialization_{index}" for index in range(25)]
-            regions = []
-            kernels = []
+            template = capture_fixture(output / "capture.sqlite")[CASE]
+            profiles = {}
             samples = {}
-            for case, _, _, _ in cases:
-                regions.append(
+            for case, _, _, _ in case_specs():
+                profile = copy.deepcopy(template)
+                for region in profile["regions"]:
+                    region["name"] = region["name"].replace(CASE, case)
+                profiles[case] = profile
+                samples[case] = [
                     dict(
-                        case=case,
-                        name=case + "/iteration",
-                        calls=5,
-                        host_ns=2000,
-                        gpu_span_ns=1500,
-                        kernel_ns=1000,
-                        kernel_calls=25,
-                    )
-                )
-                # Kokkos ranges do not necessarily start with TaylorGreen/.
-                regions.append(
-                    dict(
-                        case=case,
-                        name="Kokkos|<kernel>",
-                        calls=25,
-                        host_ns=1000,
-                        gpu_span_ns=500,
-                        kernel_ns=250,
-                        kernel_calls=25,
-                    )
-                )
-                kernels.extend(
-                    dict(case=case, kernel=symbol, calls=10, total_ns=1000 + index)
-                    for index, symbol in enumerate(symbols)
-                )
-                samples[case] = {
-                    symbols[0]: dict(
-                        display_name="kernel<int>",
-                        metrics={label: 10 for label in METRICS},
+                        region=region["name"],
+                        label="similie_probe",
+                        symbol=SYMBOL,
+                        metrics={
+                            label: 90 if region["name"].endswith("/B") else 10
+                            for label in METRICS
+                        },
                         rules=[
                             dict(
                                 name="Bottleneck",
                                 section="SpeedOfLight",
-                                title="Small Grid",
-                                message="Underutilized | <device>. See @section:LaunchStats:Launch Statistics@.",
+                                title="Latency",
+                                message="Long diagnostic detail that belongs only in artifacts.",
                             )
                         ],
-                    ),
-                    symbols[1]: dict(
-                        display_name="kernel<double>",
-                        metrics={label: 90 for label in METRICS},
-                        rules=[],
-                    ),
-                }
+                    )
+                    for region in profile["regions"]
+                ]
             (output / "performance/nsys").mkdir(parents=True)
             (output / "ncu").mkdir()
             (output / "performance/nsys/timings.json").write_text(
-                json.dumps(dict(case_regions=regions, case_kernels=kernels))
+                json.dumps(dict(cases=profiles))
             )
             (output / "ncu/results.json").write_text(
                 json.dumps(dict(cases=samples, errors=[]))
             )
             self.assertEqual(write_combined_report(output), [])
             report = (output / "nsight/report.md").read_text()
-            self.assertEqual(report.count("| Kind |"), 14)
-            self.assertEqual(report.count("| Kernel |"), 14 * 25)
-            self.assertEqual(report.count("| Region |"), 14 * 2)
-            self.assertIn("Kokkos&#124;&lt;kernel&gt;", report)
-            self.assertIn("Underutilized &#124; &lt;device&gt;", report)
-            self.assertIn("See Launch Statistics.", report)
-            self.assertNotIn("@section:", report)
-            self.assertIn("Not sampled", report)
+            self.assertEqual(report.count("| Region | Kernel |"), 14)
+            self.assertEqual(report.count("|  | similie_probe |"), 14 * 3)
+            self.assertEqual(report.count("|  | Others |"), 14 * 3)
+            self.assertNotIn("similie_setup", report)
+            self.assertNotIn("library_probe", report)
+            self.assertNotIn(SYMBOL, report)
+            self.assertNotIn("Long diagnostic detail", report)
             records = json.loads((output / "nsight/report.json").read_text())["rows"]
-            selected = [
-                row
+            kernels = {
+                row["region"]: row
                 for row in records
-                if row["case"] == cases[0][0] and row["kind"] == "Kernel"
-            ]
-            by_symbol = {row["name"]: row for row in selected}
-            self.assertEqual(by_symbol[symbols[0]]["SM (%)"], 10)
-            self.assertEqual(by_symbol[symbols[1]]["SM (%)"], 90)
-            self.assertEqual(by_symbol[symbols[0]]["calls"], 10)
-            self.assertEqual(by_symbol[symbols[0]]["mean_us"], 0.1)
-            self.assertNotIn("SM (%)", by_symbol[symbols[2]])
+                if row["case"] == CASE and row["kind"] == "kernel"
+            }
+            self.assertEqual(kernels[CASE + "/iteration/A"]["calls"], 3)
+            self.assertEqual(kernels[CASE + "/iteration/A"]["mean_ns"], 10)
+            self.assertEqual(kernels[CASE + "/iteration/A"]["total_ns"], 30)
+            self.assertEqual(kernels[CASE + "/iteration/A"]["metrics"]["SM (%)"], 10)
+            self.assertEqual(kernels[CASE + "/iteration/B"]["metrics"]["SM (%)"], 90)
+            self.assertIn(
+                "Long diagnostic detail",
+                kernels[CASE + "/iteration/A"]["rules"][0]["message"],
+            )
             with (output / "nsight/report.csv").open() as source:
-                self.assertEqual(len(list(csv.DictReader(source))), 14 * 27)
+                self.assertEqual(len(list(csv.DictReader(source))), 14 * 9)
 
-    def test_missing_compute_data_still_reports_all_systems_cases(self):
+    def test_missing_compute_data_still_reports_systems_times(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
+            profiles = capture_fixture(output / "capture.sqlite")
             (output / "performance/nsys").mkdir(parents=True)
             (output / "performance/nsys/timings.json").write_text(
-                json.dumps(dict(case_regions=[], case_kernels=[]))
+                json.dumps(dict(cases=profiles))
             )
             errors = write_combined_report(output)
             self.assertIn("Missing Nsight Compute diagnostics", errors)
             report = (output / "nsight/report.md").read_text()
-            self.assertEqual(report.count("| Kind |"), 14)
-            self.assertEqual(report.count("| Unavailable |"), 14)
-
-
-class RegionAggregation(unittest.TestCase):
-    def test_regions_include_all_threads_and_inclusive_kernel_counts(self):
-        rows = {
-            "nvtx_pushpop_sum": [
-                {"Range": "region", "Instances": "2", "Total Time (ns)": "20"},
-                {"Range": "region", "Instances": "3", "Total Time (ns)": "30"},
-            ],
-            "nvtx_gpu_proj_sum": [{"Range": "region", "Total Proj Time (ns)": "40"}],
-            "nvtx_kern_sum:mangled": [
-                {"NVTX Range": "region", "Total Time (ns)": "7", "Kern Inst": "4"},
-                {"NVTX Range": "region", "Total Time (ns)": "8", "Kern Inst": "5"},
-            ],
-        }
-        (region,) = summarize_regions(rows)
-        self.assertEqual(region["calls"], 5)
-        self.assertEqual(region["host_ns"], 50)
-        self.assertEqual(region["gpu_span_ns"], 40)
-        self.assertEqual(region["kernel_ns"], 15)
-        self.assertEqual(region["kernel_calls"], 9)
+            self.assertEqual(report.count("| Region | Kernel |"), 14)
+            self.assertEqual(report.count("No iteration data"), 13)
+            self.assertIn("Not sampled", report)
 
 
 class WorkflowPublication(unittest.TestCase):

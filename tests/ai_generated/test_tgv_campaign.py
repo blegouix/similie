@@ -23,10 +23,19 @@ from ci_campaign import (
     compare_spectrum,
     compare_strategies,
     validate_trajectory,
+    write_report,
 )
 
 
 class CampaignConfiguration(unittest.TestCase):
+    def test_summary_omits_the_solver_timing_table(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            write_report(output, "performance", [])
+            report = (output / "report.md").read_text()
+            self.assertNotIn("Solver timings exclude", report)
+            self.assertNotIn("| N | Flags | Steps |", report)
+
     def test_codifferential_strategy_precedes_the_staged_laplacian(self):
         self.assertEqual(len(STRATEGIES), 7)
         self.assertEqual(

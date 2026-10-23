@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 from ci_campaign import MESH_SIZES, STRATEGIES, execute
-from nsys_report import markdown, profiling_environment
+from nsys_report import iteration_case, markdown, profiling_environment
 
 
 METRICS = {
@@ -41,12 +41,13 @@ def case_specs():
 
 
 def nvtx_filter(case):
-    # Slashes and '+' are literal characters in our full NVTX range names.
-    name = case + "/iteration"
-    return "".join("\\" + char if char in "@,[]/*+" else char for char in name) + "/"
+    name = re.escape(case + "/iteration").replace("/", r"\/")
+    return "regex:" + name + "/*/similie_.*]"
 
 
-def compute_command(binary, directory, case, n, flags, fluid, transport, coupling):
+def compute_command(
+    binary, directory, case, n, flags, fluid, transport, coupling, sample_ranges
+):
     return [
         "ncu",
         "--nvtx",
@@ -54,7 +55,7 @@ def compute_command(binary, directory, case, n, flags, fluid, transport, couplin
         "--filter-mode=global",
         "--kernel-name-base=mangled",
         "--rename-kernels=off",
-        "--kernel-id=::regex:.*:1",
+        "--range-filter=::^(" + "|".join(map(str, sample_ranges)) + ")$",
         "--section=SpeedOfLight",
         "--section=LaunchStats",
         "--section=Occupancy",
@@ -110,8 +111,17 @@ def read_compute_report(path, api):
         for action_index in range(section.num_actions()):
             action = section.action_by_idx(action_index)
             symbol = action.name(api.IAction.NameBase_MANGLED)
-            if symbol in kernels:
-                raise ValueError(f"Compute sampled a kernel more than once: {symbol}")
+            state = action.nvtx_state()
+            stack = []
+            if state is not None:
+                for domain_id in state.domains():
+                    domain = state.domain_by_id(domain_id)
+                    if domain.name() in ("", "<default domain>"):
+                        stack = list(domain.push_pop_ranges())
+            labels = [name for name in stack if name.startswith("similie_")]
+            regions = [name for name in stack if iteration_case(name)]
+            if not labels or not regions or not stack[-1].startswith("similie_"):
+                continue
             metrics = {}
             for label, name in METRICS.items():
                 metric = action.metric_by_name(name)
@@ -131,16 +141,24 @@ def read_compute_report(path, api):
                             message=message["message"],
                         )
                     )
-            kernels[symbol] = dict(
-                display_name=action.name(api.IAction.NameBase_DEMANGLED),
-                metrics=metrics,
-                rules=rules,
-            )
+            for region in regions:
+                # Shared ancestors retain their first sample; sibling regions
+                # retain distinct samples even when they execute the same symbol.
+                kernels.setdefault(
+                    (region, labels[-1], symbol),
+                    dict(
+                        region=region,
+                        label=labels[-1],
+                        symbol=symbol,
+                        metrics=metrics,
+                        rules=rules,
+                    ),
+                )
     if not kernels:
         raise ValueError(
             f"Compute captured no kernels inside the iteration NVTX region: {path}"
         )
-    return kernels
+    return list(kernels.values())
 
 
 def profile_cases(binary, output, fluid, transport, coupling):
@@ -150,10 +168,17 @@ def profile_cases(binary, output, fluid, transport, coupling):
     try:
         api = report_api(directory)
         environment = profiling_environment()
+        systems = json.loads((output / "performance/nsys/timings.json").read_text())[
+            "cases"
+        ]
         for case, relative, n, flags in case_specs():
             case_directory = directory / relative
             case_directory.mkdir(parents=True, exist_ok=True)
             try:
+                plan = systems[case]
+                if not plan["sample_ranges"]:
+                    results["cases"][case] = []
+                    continue
                 print(f"\nNsight Compute: {case}", flush=True)
                 execute(
                     compute_command(
@@ -165,6 +190,7 @@ def profile_cases(binary, output, fluid, transport, coupling):
                         fluid,
                         transport,
                         coupling,
+                        plan["sample_ranges"],
                     ),
                     case_directory,
                     environment,
@@ -195,6 +221,15 @@ def profile_cases(binary, output, fluid, transport, coupling):
                         f"Expected one Compute report in {case_directory}"
                     )
                 results["cases"][case] = read_compute_report(reports[0], api)
+                sampled = {
+                    (row["region"], row["label"], row["symbol"])
+                    for row in results["cases"][case]
+                }
+                missing = set(map(tuple, plan["targets"])) - sampled
+                if missing:
+                    raise ValueError(
+                        f"Missing Compute samples for {len(missing)} first-iteration region/kernel pairs"
+                    )
             except Exception as error:
                 results["errors"].append(f"{case}: {error}")
                 print(results["errors"][-1], flush=True)
@@ -215,19 +250,77 @@ def profile_cases(binary, output, fluid, transport, coupling):
 
 def diagnostic_text(sample):
     if sample is None:
-        return "Not sampled in the single-iteration Compute run"
-    messages = []
-    for rule in sample["rules"]:
-        # Nsight's internal report links have no target in a GitHub table.
-        text = re.sub(r"@section:[^:]+:([^@]+)@", r"\1", rule["message"])
-        text = re.sub(r"@url:([^:]+):[^@]+@", r"\1", text)
-        title = rule["title"] or rule["name"]
-        messages.append(f"{title}: {text}")
-    return "\n".join(messages) or "No Nsight Compute rule messages"
+        return "Not sampled"
+    return (
+        "; ".join(
+            dict.fromkeys(
+                rule["title"] or rule["name"]
+                for rule in sample["rules"]
+                if rule["section"] == "SpeedOfLight"
+            )
+        )
+        or "—"
+    )
 
 
 def format_number(value, scale=1):
     return "—" if value is None else f"{value / scale:.6g}"
+
+
+def combined_rows(case, profile, samples):
+    indexed = {(row["region"], row["label"], row["symbol"]): row for row in samples}
+    for region in profile.get("regions", []):
+        common = dict(case=case, region=region["name"])
+        yield dict(
+            **common,
+            kind="region",
+            label="Total",
+            symbol="",
+            calls=region["calls"],
+            nvtx_ns=region["host_ns"],
+            total_ns=region["gpu_ns"],
+            mean_ns=None,
+            metrics={},
+            rules=[],
+            analysis="—",
+        )
+        counts = {}
+        indices = {}
+        for kernel in region["kernels"]:
+            counts[kernel["label"]] = counts.get(kernel["label"], 0) + 1
+        for kernel in region["kernels"]:
+            sample = indexed.get((region["name"], kernel["label"], kernel["symbol"]))
+            indices[kernel["label"]] = indices.get(kernel["label"], 0) + 1
+            display_label = kernel["label"]
+            if counts[kernel["label"]] > 1:
+                display_label += f" [{indices[kernel['label']]}]"
+            yield dict(
+                **common,
+                kind="kernel",
+                label=kernel["label"],
+                display_label=display_label,
+                symbol=kernel["symbol"],
+                calls=kernel["calls"],
+                nvtx_ns=None,
+                total_ns=kernel["total_ns"],
+                mean_ns=kernel["total_ns"] / kernel["calls"],
+                metrics=sample["metrics"] if sample else {},
+                rules=sample["rules"] if sample else [],
+                analysis=diagnostic_text(sample),
+            )
+        yield dict(
+            **common,
+            kind="others",
+            label="Others",
+            symbol="",
+            calls=None,
+            nvtx_ns=region["others_host_ns"],
+            total_ns=region["others_ns"],
+            mean_ns=None,
+            metrics={},
+            rules=[],
+            analysis="—",
+        )
 
 
 def write_combined_report(output):
@@ -241,146 +334,72 @@ def write_combined_report(output):
     if not compute:
         errors.append("Missing Nsight Compute diagnostics")
     lines = [
-        "# Taylor–Green Nsight Systems and Compute report",
+        "# SimiLie iteration profiles",
         "",
-        "Times and call counts come from the Systems performance run, including setup. "
-        "Region host time and projected GPU span are inclusive; nested regions overlap "
-        "and must not be added. Region kernel time sums contained kernel executions. "
-        "Kernel rows aggregate each full kernel symbol once per case.",
-        "",
-        "Compute metrics and rule messages describe the first eligible invocation of each "
-        "full kernel symbol within the iteration region of a separate one-iteration run. "
-        "They are diagnostic samples, not averages over the Systems run. Setup-only kernels "
-        "have no Compute sample. The artifact retains full symbols, metrics, messages, "
-        "CSV/JSON tables, the Systems timeline and each Compute report. "
-        "SM and Memory percentages measure throughput relative to peak sustained throughput.",
+        "Systems supplies all timings/counts; Compute supplies only metrics. "
+        "NVTX durations are host times; GPU totals span each region's first to last GPU activity. "
+        "Regions include nested scopes. Others is uncovered time on each timeline; overlaps count once. "
+        "Full symbols, metrics and diagnostic messages are in the artifacts.",
     ]
     if compute.get("configuration"):
-        lines.insert(2, "Configuration: " + markdown(compute["configuration"]) + "\n")
+        lines += ["", markdown(compute["configuration"])]
     if errors:
         lines += ["", "Collection errors: " + markdown("; ".join(errors))]
+    visible_metrics = {
+        "SM SOL (%)": "SM (%)",
+        "Mem SOL (%)": "Memory (%)",
+        "Occupancy (%)": "Achieved occupancy (%)",
+        "Warps/SM": "Active warps/SM",
+    }
     columns = [
-        "Kind",
-        "NVTX region / kernel",
+        "Region",
+        "Kernel",
         "Calls",
-        "Host (ms)",
-        "GPU span (ms)",
-        "Kernel time (ms)",
-        "Contained kernel calls",
-        "Mean host/kernel (µs)",
-        *METRICS,
-        "Nsight Compute analysis",
+        "NVTX (ms)",
+        "GPU total (ms)",
+        "Mean kernel (µs)",
+        *visible_metrics,
+        "Analysis",
     ]
     records = []
     for case, _, _, _ in case_specs():
         lines += [
             "",
-            f"## {markdown(case.removeprefix('TaylorGreen/'))}",
+            "## " + markdown(case.removeprefix("TaylorGreen/")),
             "",
             "| " + " | ".join(columns) + " |",
             "| " + " | ".join("---" for _ in columns) + " |",
         ]
-        regions = sorted(
-            (row for row in systems.get("case_regions", []) if row["case"] == case),
-            key=lambda row: row["name"],
-        )
-        kernels = sorted(
-            (row for row in systems.get("case_kernels", []) if row["case"] == case),
-            key=lambda row: row["total_ns"],
-            reverse=True,
-        )
-        samples = compute.get("cases", {}).get(case, {})
-        rows = []
-        for index, region in enumerate(regions, 1):
-            rows.append(
-                dict(
-                    case=case,
-                    kind="Region",
-                    name=region["name"],
-                    display_name=f"R{index}: "
-                    + region["name"].removeprefix(case + "/"),
-                    calls=region["calls"],
-                    host_ns=region["host_ns"],
-                    gpu_span_ns=region["gpu_span_ns"],
-                    kernel_ns=region["kernel_ns"],
-                    kernel_calls=region["kernel_calls"],
-                    mean_us=region["host_ns"] / region["calls"] / 1e3
-                    if region["calls"]
-                    else None,
-                    sample=None,
-                    analysis="—",
-                )
-            )
-        symbols = {kernel["kernel"] for kernel in kernels}
-        for symbol in sorted(set(samples) - symbols):
-            kernels.append(dict(kernel=symbol, calls=None, total_ns=None))
-        for index, kernel in enumerate(kernels, 1):
-            symbol = kernel["kernel"]
-            sample = samples.get(symbol)
-            rows.append(
-                dict(
-                    case=case,
-                    kind="Kernel",
-                    name=symbol,
-                    display_name=f"K{index}: "
-                    + (
-                        "; ".join(kernel["labels"])
-                        if kernel.get("labels")
-                        else (sample["display_name"] if sample else symbol)
-                    ),
-                    calls=kernel["calls"],
-                    host_ns=None,
-                    gpu_span_ns=None,
-                    kernel_ns=kernel["total_ns"],
-                    kernel_calls=None,
-                    mean_us=kernel["total_ns"] / kernel["calls"] / 1e3
-                    if kernel["calls"]
-                    else None,
-                    sample=sample,
-                    analysis=diagnostic_text(sample),
-                )
-            )
+        profile = systems.get("cases", {}).get(case, {})
+        samples = compute.get("cases", {}).get(case, [])
+        rows = list(combined_rows(case, profile, samples))
         if not rows:
             lines.append(
                 "| "
-                + " | ".join(
-                    ["Unavailable", "No collected data"] + ["—"] * (len(columns) - 2)
-                )
+                + " | ".join(["No iteration data"] + ["—"] * (len(columns) - 1))
                 + " |"
             )
         for row in rows:
-            label = row.get("display_name", row["name"]).removeprefix(case + "/")
-            if len(label) > 160:
-                label = label[:157] + "..."
+            region = (
+                row["region"].removeprefix(case + "/")
+                if row["kind"] == "region"
+                else ""
+            )
             cells = [
-                row["kind"],
-                label,
+                region,
+                row.get("display_label", row["label"]),
                 format_number(row["calls"]),
-                format_number(row["host_ns"], 1e6),
-                format_number(row["gpu_span_ns"], 1e6),
-                format_number(row["kernel_ns"], 1e6),
-                format_number(row["kernel_calls"]),
-                format_number(row["mean_us"]),
+                format_number(row["nvtx_ns"], 1e6),
+                format_number(row["total_ns"], 1e6),
+                format_number(row["mean_ns"], 1e3),
             ]
             cells += [
-                format_number(row["sample"]["metrics"].get(metric))
-                if row["sample"]
-                else "—"
-                for metric in METRICS
+                format_number(row["metrics"].get(name))
+                for name in visible_metrics.values()
             ]
             cells += [row["analysis"]]
-            lines.append(
-                "| "
-                + " | ".join(
-                    "<br>".join(markdown(part) for part in cell.split("\n"))
-                    for cell in cells
-                )
-                + " |"
-            )
-            record = {key: value for key, value in row.items() if key != "sample"}
-            record.update(row["sample"]["metrics"] if row["sample"] else {})
-            record["rules"] = row["sample"]["rules"] if row["sample"] else []
-            records.append(record)
+            lines.append("| " + " | ".join(markdown(cell) for cell in cells) + " |")
+        records.extend(rows)
     directory = output / "nsight"
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "report.md").write_text("\n".join(lines) + "\n")
@@ -392,22 +411,25 @@ def write_combined_report(output):
             destination,
             fieldnames=[
                 "case",
+                "region",
                 "kind",
-                "name",
-                "display_name",
+                "label",
+                "symbol",
                 "calls",
-                "host_ns",
-                "gpu_span_ns",
-                "kernel_ns",
-                "kernel_calls",
-                "mean_us",
+                "nvtx_ns",
+                "total_ns",
+                "mean_ns",
                 *METRICS,
                 "analysis",
+                "rules",
             ],
             extrasaction="ignore",
         )
         writer.writeheader()
-        writer.writerows(records)
+        writer.writerows(
+            dict(row, **row["metrics"], rules=json.dumps(row["rules"]))
+            for row in records
+        )
     return errors
 
 

@@ -10,6 +10,7 @@ import json
 import math
 import os
 from pathlib import Path
+import sqlite3
 import subprocess
 
 
@@ -61,47 +62,206 @@ def read_csv(path):
         return list(csv.DictReader(source))
 
 
-def read_statistics(prefix, report):
-    # Report arguments are included in filenames by recent Nsight versions.
-    paths = sorted(
-        prefix.parent.glob(prefix.name + "_" + report.split(":")[0] + "*.csv")
-    )
-    if len(paths) != 1:
-        raise FileNotFoundError(
-            f"Expected one {report} CSV for {prefix}, found "
-            f"{[path.name for path in paths]}; see {prefix.parent / 'statistics.log'}"
-        )
-    return read_csv(paths[0])
+def iteration_case(name):
+    parts = name.split("/")
+    if len(parts) >= 4 and parts[0] == "TaylorGreen" and parts[3] == "iteration":
+        return "/".join(parts[:3])
+    return None
 
 
-def summarize_regions(rows):
-    regions = {}
-    for row in rows["nvtx_pushpop_sum"]:
-        name = row["Range"].removeprefix(":")
-        region = regions.setdefault(
-            name,
-            dict(
-                name=name,
-                calls=0,
-                host_ns=0,
-                gpu_span_ns=0,
-                kernel_ns=0,
-                kernel_calls=0,
-            ),
+def covered_duration(intervals):
+    end = None
+    duration = 0
+    for start, stop in sorted(intervals):
+        duration += max(0, stop - max(start, end if end is not None else start))
+        end = max(stop, end if end is not None else stop)
+    return duration
+
+
+def iteration_profiles(database):
+    """Correlate GPU executions with the host NVTX stack at their launch.
+
+    Region totals include nested scopes. Others uses the union of SimiLie GPU
+    intervals, so overlapping kernels never produce a negative remainder.
+    """
+    with sqlite3.connect(database) as connection:
+        connection.row_factory = sqlite3.Row
+        tables = {
+            row[0]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+        ranges = {}
+        threads = {}
+        cases = {}
+        first_iterations = {}
+        ordinals = {}
+        for row in connection.execute("""
+            SELECT n.rowid AS id, n.start, n.end, n.globalTid AS tid,
+                   coalesce(s.value, n.text, '') AS name
+            FROM NVTX_EVENTS n LEFT JOIN StringIds s ON s.id=n.textId
+            WHERE n.eventType IN (59,70) AND n.end IS NOT NULL
+              AND coalesce(n.domainId,0)=0
+            ORDER BY n.globalTid,n.start,n.end DESC
+        """):
+            scope = dict(row)
+            ranges[scope["id"]] = scope
+            state = threads.setdefault(scope["tid"], dict(ranges=[], stack=[]))
+            stack = state["stack"]
+            while stack and stack[-1]["end"] <= scope["start"]:
+                stack.pop()
+            case = iteration_case(scope["name"])
+            if case and scope["name"] == case + "/iteration":
+                scope["iteration"] = scope["id"]
+                first_iterations.setdefault(case, scope["id"])
+            elif stack:
+                scope["iteration"] = stack[-1].get("iteration")
+            if scope.get("iteration"):
+                root = ranges[scope["iteration"]]
+                scope["case"] = iteration_case(root["name"])
+                profile = cases.setdefault(
+                    scope["case"], dict(regions={}, sample_ranges=set(), targets=set())
+                )
+                if case:
+                    scope["devices"] = {}
+                    region = profile["regions"].setdefault(
+                        scope["name"],
+                        dict(
+                            name=scope["name"],
+                            calls=0,
+                            host_ns=0,
+                            gpu_ns=0,
+                            others_ns=0,
+                            others_host_ns=0,
+                            kernels={},
+                        ),
+                    )
+                    region["calls"] += 1
+                    region["host_ns"] += scope["end"] - scope["start"]
+                if scope["name"].startswith("similie_"):
+                    root_id = scope["iteration"]
+                    ordinals[root_id] = ordinals.get(root_id, 0) + 1
+                    scope["ordinal"] = ordinals[root_id]
+            stack.append(scope)
+            state["ranges"].append(scope)
+        api_tables = [
+            name
+            for name in ("CUPTI_ACTIVITY_KIND_RUNTIME", "CUPTI_ACTIVITY_KIND_DRIVER")
+            if name in tables
+        ]
+        api_query = " UNION ALL ".join(
+            f"SELECT start,globalTid,correlationId FROM {name}" for name in api_tables
         )
-        region["calls"] += int(number(row, "Instances"))
-        region["host_ns"] += number(row, "Total Time")
-    for row in rows["nvtx_gpu_proj_sum"]:
-        name = row["Range"].removeprefix(":")
-        if name in regions:
-            regions[name]["gpu_span_ns"] += number(row, "Total Proj Time")
-    for row in rows["nvtx_kern_sum:mangled"]:
-        name = row["NVTX Range"].removeprefix(":")
-        if name in regions:
-            region = regions[name]
-            region["kernel_ns"] += number(row, "Total Time")
-            region["kernel_calls"] += int(number(row, "Kern Inst"))
-    return list(regions.values())
+        gpu_queries = []
+        for table in (
+            "CUPTI_ACTIVITY_KIND_KERNEL",
+            "CUPTI_ACTIVITY_KIND_MEMCPY",
+            "CUPTI_ACTIVITY_KIND_MEMSET",
+        ):
+            if table not in tables:
+                continue
+            symbol = "coalesce(m.value,d.value)" if table.endswith("KERNEL") else "NULL"
+            names = (
+                "LEFT JOIN StringIds m ON m.id=g.mangledName LEFT JOIN StringIds d ON d.id=g.demangledName"
+                if table.endswith("KERNEL")
+                else ""
+            )
+            gpu_queries.append(f"""
+                SELECT a.start AS launch, a.globalTid AS tid, g.start, g.end,
+                       g.deviceId AS device, {symbol} AS symbol
+                FROM {table} g JOIN apis a ON a.correlationId=g.correlationId
+                  AND (a.globalTid & -16777216)=g.globalPid AND a.rank=1
+                {names}
+            """)
+        if not api_query or not gpu_queries:
+            raise ValueError("Systems export has no CUDA launch correlation data")
+        query = (
+            "WITH apis AS (SELECT *,row_number() OVER (PARTITION BY correlationId,(globalTid & -16777216) ORDER BY start DESC) AS rank FROM ("
+            + api_query
+            + ")) "
+            + " UNION ALL ".join(gpu_queries)
+            + " ORDER BY tid,launch"
+        )
+        for state in threads.values():
+            state.update(position=0, active=[])
+        for activity in connection.execute(query):
+            state = threads.get(activity["tid"])
+            if state is None:
+                continue
+            scopes = state["ranges"]
+            active = state["active"]
+            while (
+                state["position"] < len(scopes)
+                and scopes[state["position"]]["start"] <= activity["launch"]
+            ):
+                scope = scopes[state["position"]]
+                while active and active[-1]["end"] <= scope["start"]:
+                    active.pop()
+                active.append(scope)
+                state["position"] += 1
+            while active and active[-1]["end"] <= activity["launch"]:
+                active.pop()
+            if not active or not active[-1].get("case"):
+                continue
+            profile = cases[active[-1]["case"]]
+            # Mirror Compute's top-of-stack label filter. A library launch
+            # nested in a SimiLie scope must still contribute to Others.
+            label = active[-1] if active[-1]["name"].startswith("similie_") else None
+            for scope in active:
+                if "devices" not in scope:
+                    continue
+                device = scope["devices"].setdefault(
+                    activity["device"],
+                    dict(start=activity["start"], end=activity["end"], similie=[]),
+                )
+                device["start"] = min(device["start"], activity["start"])
+                device["end"] = max(device["end"], activity["end"])
+                if label is None or activity["symbol"] is None:
+                    continue
+                device["similie"].append((activity["start"], activity["end"]))
+                region = profile["regions"][scope["name"]]
+                key = (label["name"], activity["symbol"])
+                kernel = region["kernels"].setdefault(
+                    key, dict(label=key[0], symbol=key[1], calls=0, total_ns=0)
+                )
+                kernel["calls"] += 1
+                kernel["total_ns"] += activity["end"] - activity["start"]
+                if label["iteration"] == first_iterations[label["case"]]:
+                    target = (scope["name"], *key)
+                    if target not in profile["targets"]:
+                        profile["sample_ranges"].add(label["ordinal"])
+                        profile["targets"].add(target)
+        for scope in ranges.values():
+            if "devices" not in scope:
+                continue
+            region = cases[scope["case"]]["regions"][scope["name"]]
+            host_intervals = []
+            for device in scope["devices"].values():
+                duration = device["end"] - device["start"]
+                region["gpu_ns"] += duration
+                region["others_ns"] += duration - covered_duration(device["similie"])
+                host_intervals.extend(
+                    (max(start, scope["start"]), min(end, scope["end"]))
+                    for start, end in device["similie"]
+                    if end > scope["start"] and start < scope["end"]
+                )
+            region["others_host_ns"] += (
+                scope["end"] - scope["start"] - covered_duration(host_intervals)
+            )
+        for profile in cases.values():
+            profile["regions"] = sorted(
+                profile["regions"].values(), key=lambda region: region["name"]
+            )
+            profile["sample_ranges"] = sorted(profile["sample_ranges"])
+            profile["targets"] = sorted(profile["targets"])
+            for region in profile["regions"]:
+                region["kernels"] = sorted(
+                    region["kernels"].values(),
+                    key=lambda kernel: kernel["total_ns"],
+                    reverse=True,
+                )
+        return cases
 
 
 def markdown(value):
@@ -191,64 +351,7 @@ def summarize_profile(directory, expected_cases=None):
                     )
                 if operation["gpu_span_ns"] <= 0 or operation["kernel_calls"] <= 0:
                     raise ValueError(f"No GPU timings for {case}/{suffix}")
-    # Collect every region within each case, including Kokkos kernel labels.
-    # Mangled symbols preserve template specializations for the Compute join.
-    case_kernels = []
-    case_regions = []
-    case_reports = (
-        "nvtx_pushpop_sum",
-        "nvtx_gpu_proj_sum",
-        "nvtx_kern_sum:mangled",
-        "cuda_gpu_kern_sum:mangled",
-    )
-    # Reuse the first export directly; checking .nsys-rep/SQLite timestamps on
-    # every stats call can otherwise reject an export as older than its capture.
-    database = report.with_suffix(".sqlite")
-    with (directory / "statistics.log").open("a") as log:
-        for index, case in enumerate(cases):
-            prefix = directory / f"case-{index + 1}"
-            subprocess.run(
-                [
-                    "nsys",
-                    "stats",
-                    "--force-overwrite=true",
-                    "--report=" + ",".join(case_reports),
-                    "--format=csv",
-                    f"--filter-nvtx={case}",
-                    f"--output={prefix}",
-                    str(database),
-                ],
-                stdout=log,
-                stderr=subprocess.STDOUT,
-                check=True,
-            )
-            case_rows = {name: read_statistics(prefix, name) for name in case_reports}
-            case_regions.extend(
-                dict(region, case=case) for region in summarize_regions(case_rows)
-            )
-            labels = {}
-            for row in case_rows["nvtx_kern_sum:mangled"]:
-                name = row["NVTX Range"].removeprefix(":")
-                if not name.startswith(case):
-                    labels.setdefault(row["Kernel Name"], set()).add(name)
-            for row in case_rows["cuda_gpu_kern_sum:mangled"]:
-                case_kernels.append(
-                    {
-                        "case": case,
-                        "kernel": row["Name"],
-                        "calls": int(number(row, "Instances")),
-                        "total_ns": number(row, "Total Time"),
-                        "labels": sorted(labels.get(row["Name"], ())),
-                    }
-                )
-            if not any(kernel["case"] == case for kernel in case_kernels):
-                raise ValueError(f"No labeled CUDA kernels for {case}")
-    data = {
-        "operations": list(operations.values()),
-        "kernels": kernels,
-        "case_kernels": case_kernels,
-        "case_regions": case_regions,
-    }
+    data = dict(cases=iteration_profiles(report.with_suffix(".sqlite")))
     (directory / "timings.json").write_text(json.dumps(data, indent=2) + "\n")
     return data
 

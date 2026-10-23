@@ -404,16 +404,7 @@ def compare_spectrum(hdf, wave_number, spectrum, reference_directory):
 def write_report(output, phase, entries, error=None):
     lines = [
         f"# Taylor–Green {phase}",
-        "",
-        "Solver timings exclude monitoring, export, strategy comparisons and reference post-processing.",
-        "",
-        "| N | Flags | Steps | Repeats | Setup (s) | Solver step (s) | Mcell updates/s |",
-        "| ---: | --- | ---: | ---: | ---: | ---: | ---: |",
     ]
-    for record in entries:
-        lines.append(
-            f"| {record['N']} | `{record['flags']}` | {record['steps']} | {record['repeats']} | {record['setup_seconds']:.6g} | {record['mean_step_seconds']:.6g} | {record['cell_updates_per_second'] / 1e6:.6g} |"
-        )
     if phase == "performance":
         lines.extend(
             (
