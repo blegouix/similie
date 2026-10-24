@@ -25,6 +25,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 ## Run examples
 - Running `free_scalar_field` example in Debug mode on CPU can be very long (on GPU this can be ok though). By default (no particular contradictory instruction), if you have to run it on CPU, first recompile in Release mode.
 
+## General organization  & programming model
+- The library should contain all the algorithms, numerical methods etc. Examples can consume them as they want but should never reimplement ad-hoc numerical scheme. If SimiLie does not provide some canonical operator to compute a quantity of interest, it means something is missing in the construction and it should be reported. If an example has to instantiate a complicated logic to build some common numerical simulation code, it may be that some systematic, general system to do it is missing in the library. Human should decide if it can be made ad-hoc in the example or if the library needs to be changed.
+- Several classes are API-standardized, which mean they are interoperable (some other classe can be template by them, and instanciated with different variant of it as template parameter). This is particularly useful for GPU programming where virtual classes are unavailable. The correctnes of the API is checked using Concepts. The Concepts classes which standardize the API are of particular importance, and any change should be validated by human. This is the core programming model followed by SimiLie.
+
 ## Coding
 - `clang-format` is used to format C++, `ruff format` is used to format python.
 - Classes with an associated Concept and static assertion are API-standardized and must not expose additional public members.
