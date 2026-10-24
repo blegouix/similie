@@ -63,6 +63,7 @@ jobs:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
         fetch-depth: 0
+        lfs: true
     - name: Clear persistent CUDA build
       run: |
         set -euo pipefail
