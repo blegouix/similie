@@ -84,6 +84,17 @@ SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
 path = [
+    "benchmarks/taylor_green_vortex/reference_data/read_and_plot_w.py",
+    "benchmarks/taylor_green_vortex/reference_data/spectral_Re1600_512.gdiag",
+    "benchmarks/taylor_green_vortex/reference_data/wn_slice_x0_08000.out",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "NOASSERTION"
+SPDX-License-Identifier = "LicenseRef-HiOCFD-Reference-Data-Unlicensed"
+SPDX-FileComment = "Downloaded from https://cfd.ku.edu/hiocfd/data.tgz. No copyright holder or license statement was found in the archive or the C3.5 reference description."
+
+[[annotations]]
+path = [
     ".gitattributes",
     "docs/similie_talk/.gitignore",
     "docs/similie_talk/imgs/2d_laplacian.png",
