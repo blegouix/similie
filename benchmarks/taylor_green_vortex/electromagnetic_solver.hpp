@@ -48,10 +48,10 @@ struct ElectromagneticReference
 class ElectromagneticSolver
 {
     StructuredGrid& m_grid;
-    VorticityDEC m_dec;
+    VorticityDEC& m_dec;
     ScalarPoissonOperator m_poisson;
     PoissonSolver m_solver;
-    Configuration const m_configuration;
+    Configuration const& m_configuration;
     Field m_initial, m_stage, m_rate, m_b, m_d, m_j, m_e, m_curl, m_ampere, m_work, m_motional,
             m_edges, m_current_edges, m_electric_edges, m_motional_edges, m_displacement_edges,
             m_magnetic_faces, m_poisson_rhs, m_poisson_solution;
@@ -134,12 +134,12 @@ public:
             fluid_power, joule_heating, gauss_error;
     std::int64_t poisson_iterations = 0;
     double evaluation_seconds = 0;
-    explicit ElectromagneticSolver(StructuredGrid& grid, Configuration configuration)
+    ElectromagneticSolver(StructuredGrid& grid, VorticityDEC& forms)
         : m_grid(grid)
-        , m_dec(grid)
+        , m_dec(forms)
         , m_poisson(grid)
         , m_solver(grid.n, 1, grid.h)
-        , m_configuration(configuration)
+        , m_configuration(grid.configuration)
         , m_initial("initial_em", 7, grid.cells)
         , m_stage("stage_em", 7, grid.cells)
         , m_rate("rate_em", 7, grid.cells)

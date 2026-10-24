@@ -138,6 +138,7 @@ jobs:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
         fetch-depth: 0
+        lfs: true
     - name: Clear persistent OMP debug build
       run: |
         set -euo pipefail

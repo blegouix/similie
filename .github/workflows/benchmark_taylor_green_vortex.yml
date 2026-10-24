@@ -78,15 +78,21 @@ jobs:
       id: benchmark
       run: |
         set -euo pipefail
+        container_name="similie-tgv-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}-performance"
         publish_performance_report() {
+          if [ -n "${container_name:-}" ]; then
+            docker rm -f "${container_name}" >/dev/null 2>&1 || true
+          fi
           if [ -f "${CI_ROOT}/results/performance/report.md" ]; then
             cat "${CI_ROOT}/results/performance/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
           fi
         }
         trap publish_performance_report EXIT
+        trap 'exit 130' INT
+        trap 'exit 143' TERM
         mkdir -p "${CI_ROOT}/results"
         docker image inspect "similie_env:${TARGET_SHA}" >/dev/null
-        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" --name "${container_name}" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 \
@@ -104,11 +110,19 @@ jobs:
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase performance
-          '
+          ' &
+        wait $!
     - name: Collect first kernel invocations in each iteration region
       run: |
         set -euo pipefail
-        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+        container_name="similie-tgv-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}-compute"
+        cleanup_compute() {
+          docker rm -f "${container_name}" >/dev/null 2>&1 || true
+        }
+        trap cleanup_compute EXIT
+        trap 'exit 130' INT
+        trap 'exit 143' TERM
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" --name "${container_name}" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
@@ -123,7 +137,8 @@ jobs:
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}"
-          '
+          ' &
+        wait $!
     - name: Report iteration regions and all kernel performance for all 14 cases
       if: ${{ !cancelled() && steps.benchmark.outcome != 'skipped' }}
       run: |
@@ -151,13 +166,19 @@ jobs:
       if: matrix.coupling == 'hd'
       run: |
         set -euo pipefail
+        container_name="similie-tgv-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}-validation"
         publish_validation_report() {
+          if [ -n "${container_name:-}" ]; then
+            docker rm -f "${container_name}" >/dev/null 2>&1 || true
+          fi
           if [ -f "${CI_ROOT}/results/validation/report.md" ]; then
             cat "${CI_ROOT}/results/validation/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
           fi
         }
         trap publish_validation_report EXIT
-        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+        trap 'exit 130' INT
+        trap 'exit 143' TERM
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" --name "${container_name}" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
@@ -170,7 +191,8 @@ jobs:
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation
-          '
+          ' &
+        wait $!
     - name: Upload Nsight timelines, Compute reports, combined tables, and reference outputs
       id: results
       if: always()

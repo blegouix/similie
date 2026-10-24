@@ -14,6 +14,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 from ci_campaign import MESH_SIZES, STRATEGIES, execute
 from nsys_report import iteration_case, markdown, profiling_environment
@@ -203,7 +204,8 @@ def profile_cases(binary, output, fluid, transport, coupling):
                     for group in groups
                 )
                 print(
-                    f"\nNsight Compute: {case}: {count} first kernel calls in {len(groups)} bounded batches",
+                    f"\nNsight Compute: {case}: {count} first kernel calls; "
+                    f"{len(groups)} profiler processes (each repeats application setup)",
                     flush=True,
                 )
                 results["cases"][case] = []
@@ -211,9 +213,11 @@ def profile_cases(binary, output, fluid, transport, coupling):
                     batch_directory = case_directory / f"batch-{index}"
                     expected = len(group["symbols"]) * len(group["invocations"])
                     print(
-                        f"  Batch {index}/{len(groups)}: capture at most {expected} launches, then stop",
+                        f"  Profiler process {index}/{len(groups)}: "
+                        f"capture {expected} launches, then stop",
                         flush=True,
                     )
+                    started = time.monotonic()
                     execute(
                         compute_command(
                             binary,
@@ -229,6 +233,11 @@ def profile_cases(binary, output, fluid, transport, coupling):
                         ),
                         batch_directory,
                         environment,
+                    )
+                    print(
+                        f"  Profiler process {index}/{len(groups)} finished in "
+                        f"{time.monotonic() - started:.1f} s",
+                        flush=True,
                     )
                     # --kill ends the diagnostic as soon as all requested calls
                     # are captured. No timings or completed trajectory are used.

@@ -8,11 +8,13 @@ import csv
 import json
 import os
 from pathlib import Path
+import signal
 import sqlite3
 import subprocess
 import sys
 import tempfile
 import textwrap
+import time
 from types import SimpleNamespace
 import unittest
 
@@ -502,6 +504,67 @@ class CombinedReport(unittest.TestCase):
 
 
 class WorkflowPublication(unittest.TestCase):
+    def test_cancellation_stops_the_compute_container(self):
+        workflow = (
+            Path(__file__).resolve().parents[2]
+            / ".github/workflows/benchmark_taylor_green_vortex.yml"
+        ).read_text()
+        start = workflow.index("    - name: Collect first kernel invocations")
+        start = workflow.index("        set -euo pipefail", start)
+        end = workflow.index("    - name:", start)
+        script = textwrap.dedent(workflow[start:end])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            docker = root / "docker"
+            docker.write_text(
+                "#!/bin/bash\n"
+                'if [ "$1" = run ]; then\n'
+                '  echo $$ > "${CI_ROOT}/started"\n'
+                "  trap '' TERM\n"
+                "  while :; do sleep 1; done\n"
+                "else\n"
+                '  echo "$*" > "${CI_ROOT}/cleanup"\n'
+                '  kill -KILL "$(cat "${CI_ROOT}/started")"\n'
+                "fi\n"
+            )
+            docker.chmod(0o755)
+            child = subprocess.Popen(
+                ["bash", "-c", script],
+                env=dict(
+                    os.environ,
+                    PATH=str(root) + os.pathsep + os.environ["PATH"],
+                    CI_ROOT=str(root),
+                    BUILD_ROOT=str(root),
+                    TARGET_SHA="test",
+                    GITHUB_RUN_ID="123",
+                    GITHUB_RUN_ATTEMPT="2",
+                    FLUID="incompressible",
+                    TRANSPORT="ideal",
+                    COUPLING="hd",
+                ),
+                start_new_session=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                deadline = time.monotonic() + 5
+                while not (root / "started").exists():
+                    if child.poll() is not None or time.monotonic() > deadline:
+                        self.fail("Mock Compute container did not start")
+                    time.sleep(0.01)
+                os.killpg(child.pid, signal.SIGTERM)
+                child.communicate(timeout=5)
+                self.assertEqual(child.returncode, 143)
+                self.assertEqual(
+                    (root / "cleanup").read_text().strip(),
+                    "rm -f similie-tgv-123-2-incompressible-ideal-hd-compute",
+                )
+            finally:
+                if child.poll() is None:
+                    os.killpg(child.pid, signal.SIGKILL)
+                    child.communicate(timeout=5)
+
     def test_exit_traps_publish_reports_without_hiding_step_failure(self):
         workflow = (
             Path(__file__).resolve().parents[2]

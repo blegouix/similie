@@ -34,6 +34,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 ## Coding
 - `clang-format` is used to format C++, `ruff format` is used to format python.
 - Classes with an associated Concept and static assertion are API-standardized and must not expose additional public members.
+- Except if copy-pass or move-pass is relevant, prefer passing variables to functions by reference except very primitive type like `int`, `float` etc. Annotate them `const` if never mutated. Do not specify any name if unused (ie. unused variable passed to a particular member function of a standardized-API class).
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except if explicity asked. In general, if such an alias is used only once it should not be declared and inlined.
 - Whenever possible, avoid using `auto`, `decltype`, etc...
 - Try to mimic the coding style of human-made code in the project as much as possible.

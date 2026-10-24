@@ -138,7 +138,8 @@ public:
         return m_grid.cells;
     }
     template <class Input, class Output>
-    void apply(Kokkos::DefaultExecutionSpace exec, Input const& source, Output const& target) const
+    void apply(Kokkos::DefaultExecutionSpace const& exec, Input const& source, Output const& target)
+            const
     {
         Field const input = m_input, output = m_output;
         Kokkos::parallel_for(
@@ -164,7 +165,7 @@ public:
 class PressureReconstruction
 {
     StructuredGrid& m_dec;
-    VorticityDEC m_forms;
+    VorticityDEC& m_forms;
     ScalarPoissonOperator m_poisson;
     PoissonSolver m_solver;
     similie::physics::fluid::IncompressibleNavierStokes const m_physics;
@@ -231,9 +232,9 @@ public:
 
     Field pressure;
     std::int64_t total_iterations = 0;
-    explicit PressureReconstruction(StructuredGrid& dec)
+    PressureReconstruction(StructuredGrid& dec, VorticityDEC& forms)
         : m_dec(dec)
-        , m_forms(dec)
+        , m_forms(forms)
         , m_poisson(dec)
         , m_solver(dec.n, 1, dec.h)
         , m_physics(1.0, Reference::viscosity)
@@ -263,8 +264,7 @@ public:
         ProfilingRegion const region("pressure/reconstruction");
         unprojected_rhs(velocity, m_pressure_acceleration, supplied_vorticity);
         if (acceleration.data()) {
-            Field const rate = m_pressure_acceleration, m_cochain, m_curl, m_form_diffusion,
-                        m_divergence;
+            Field const rate = m_pressure_acceleration;
             Kokkos::parallel_for(
                     "pressure_external_force",
                     m_dec.cells,
@@ -337,7 +337,8 @@ public:
         return 3 * std::size_t(m_cells);
     }
     template <class Input, class Output>
-    void apply(Kokkos::DefaultExecutionSpace exec, Input const& source, Output const& target) const
+    void apply(Kokkos::DefaultExecutionSpace const& exec, Input const& source, Output const& target)
+            const
     {
         Field const input = m_input, output = m_output;
         int const cells = m_cells;
@@ -367,7 +368,7 @@ public:
 class IncompressibleSolver
 {
     StructuredGrid& m_grid;
-    VorticityDEC m_dec;
+    VorticityDEC& m_dec;
     VorticityPoissonOperator m_poisson;
     PoissonSolver m_solver;
     PressureReconstruction m_pressure;
@@ -381,12 +382,12 @@ public:
     double reconstruction_seconds = 0, last_relative_residual = 0;
     double gauge_rms = 0, vorticity_divergence_rms = 0, curl_residual_rms = 0;
     std::array<double, 3> mean_velocity {}, mean_rate {};
-    explicit IncompressibleSolver(StructuredGrid& grid)
+    IncompressibleSolver(StructuredGrid& grid, VorticityDEC& forms)
         : m_grid(grid)
-        , m_dec(grid)
+        , m_dec(forms)
         , m_poisson(m_dec, grid.cells)
         , m_solver(grid.n, 3, grid.h)
-        , m_pressure(grid)
+        , m_pressure(grid, m_dec)
         , m_physics(1, Reference::viscosity)
         , m_potential("dual_vector_potential", 3, grid.cells)
         , m_one("velocity_cochain", 3, grid.cells)

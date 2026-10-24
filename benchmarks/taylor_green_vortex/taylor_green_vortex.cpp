@@ -45,6 +45,7 @@ using taylor_green_vortex::Physics;
 using taylor_green_vortex::ProfilingRegion;
 using taylor_green_vortex::Reference;
 using taylor_green_vortex::StructuredGrid;
+using taylor_green_vortex::VorticityDEC;
 using Clock = std::chrono::steady_clock;
 int nodes = 64;
 Configuration configuration;
@@ -116,6 +117,7 @@ class Simulation
 {
 public:
     StructuredGrid dec;
+    std::unique_ptr<VorticityDEC> forms;
     Physics const kind;
     int const components;
     Field state, initial, stage, rhs, velocity, gradient, vorticity, density, pressure, temperature,
@@ -126,6 +128,9 @@ public:
     std::unique_ptr<ElectromagneticSolver> electromagnetic;
     explicit Simulation(int n, Physics selected)
         : dec(n, configuration)
+        , forms(selected == Physics::Incompressible || configuration.coupling != Coupling::HD
+                        ? std::make_unique<VorticityDEC>(dec)
+                        : nullptr)
         , kind(selected)
         , components(selected == Physics::Compressible ? 5 : 3)
         , state("state", components, dec.cells)
@@ -150,15 +155,16 @@ public:
         , stress_contraction("viscous_stress_contraction", 1, dec.cells)
         , cfl_speed("velocity_l1_norm", 1, dec.cells)
         , incompressible(
-                  selected == Physics::Incompressible ? std::make_unique<IncompressibleSolver>(dec)
-                                                      : nullptr)
+                  selected == Physics::Incompressible
+                          ? std::make_unique<IncompressibleSolver>(dec, *forms)
+                          : nullptr)
         , compressible(
                   selected == Physics::Compressible ? std::make_unique<CompressibleSolver>(dec)
                                                     : nullptr)
         , electromagnetic(
                   configuration.coupling == Coupling::HD
                           ? nullptr
-                          : std::make_unique<ElectromagneticSolver>(dec, configuration))
+                          : std::make_unique<ElectromagneticSolver>(dec, *forms))
     {
         if (selected != Physics::Incompressible && selected != Physics::Compressible)
             throw std::runtime_error("Selected physics is not implemented");
@@ -1314,7 +1320,11 @@ Configuration select_strategy(Configuration selected, int strategy)
     return selected;
 }
 
-void register_case(Configuration selected, int n, int strategy, std::filesystem::path directory)
+void register_case(
+        Configuration const& selected,
+        int n,
+        int strategy,
+        std::filesystem::path const& directory)
 {
     std::string const name = "TaylorGreen/" + selected.name() + "/N" + std::to_string(n) + "/"
                              + selected.strategy_flags();
