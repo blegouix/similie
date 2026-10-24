@@ -426,8 +426,23 @@ int main(int argc, char** argv)
     ddc::Chunk spatial_moments_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
 
-    auto spatial_moments_host = ddc::
-            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
+    // The constitutive law and exported vectors use physical components, not edge integrals.
+    ddc::Chunk
+            reconstructed_spatial_moments_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor reconstructed_spatial_moments(reconstructed_spatial_moments_alloc);
+    sil::exterior::StagedOperator<sil::exterior::Reconstruction<
+            ddc::TypeSeq<AlphaLow>,
+            decltype(position),
+            ddc::DiscreteElement<DDimX, DDimY>>>
+            reconstruct_spatial_moments(
+                    Kokkos::DefaultExecutionSpace(),
+                    reconstructed_spatial_moments,
+                    spatial_moments,
+                    position);
+
+    auto spatial_moments_host = ddc::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace(),
+            reconstructed_spatial_moments);
 
     // Minus spatial moments divergence
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> minus_spatial_moments_div_accessor;
@@ -552,10 +567,6 @@ int main(int argc, char** argv)
 
         // For this scalar model, the spatial moments cochain is exactly dphi.
         ddc::parallel_deepcopy(spatial_moments, potential_grad);
-        if (i % nb_iter_between_exports == 0) {
-            ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
-        }
-
         // Compute minus the divergence \delta \pi of the spatial moments
         // The dual closure prescribes zero exterior flux on all four sides.
         codifferential(minus_spatial_moments_div, spatial_moments);
@@ -594,6 +605,8 @@ int main(int argc, char** argv)
                 });
 
         if (i % nb_iter_between_exports == 0) {
+            reconstruct_spatial_moments(reconstructed_spatial_moments, spatial_moments);
+            ddc::parallel_deepcopy(spatial_moments_host, reconstructed_spatial_moments);
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
             ddc::parallel_deepcopy(h_minus_spatial_moments_div, minus_spatial_moments_div);
@@ -604,8 +617,12 @@ int main(int argc, char** argv)
                     KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                         std::array<double, 3> pi
                                 = {temporal_moment(elem, ddc::DiscreteElement<DummyIndex>()),
-                                   spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
-                                   spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
+                                   reconstructed_spatial_moments(
+                                           elem,
+                                           ddc::DiscreteElement<AlphaLow>(0)),
+                                   reconstructed_spatial_moments(
+                                           elem,
+                                           ddc::DiscreteElement<AlphaLow>(1))};
                         Hamiltonian::State const
                                 state {{potential(elem, ddc::DiscreteElement<DummyIndex>())}, pi};
                         hamiltonian(elem) = hamiltonian_model.hamiltonian(state, elem);

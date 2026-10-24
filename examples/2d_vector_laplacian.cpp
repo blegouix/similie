@@ -230,6 +230,16 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
+    // Exterior operators act on cochains, while the analytic field above is a one-form.
+    ddc::Chunk potential_cochain_alloc(potential_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor potential_cochain(potential_cochain_alloc);
+    sil::exterior::StagedOperator<sil::exterior::Reduction<
+            ddc::TypeSeq<MuLow>,
+            decltype(position),
+            ddc::DiscreteElement<DDimX, DDimY>>>
+            reduction(Kokkos::DefaultExecutionSpace(), potential_cochain, potential, position);
+    reduction(potential_cochain, potential);
+
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> laplacian_dom(
@@ -237,10 +247,12 @@ int main(int argc, char** argv)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
+    ddc::Chunk laplacian_cochain_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor laplacian_cochain(laplacian_cochain_alloc);
     auto laplacian = sil::exterior::make_laplacian<MetricIndex, MuLow, MuLow, CachedHodgeStar>(
             Kokkos::DefaultExecutionSpace(),
-            laplacian_tensor,
-            potential,
+            laplacian_cochain,
+            potential_cochain,
             metric,
             position);
     // Pairs follow the (DDimX, DDimY) domain order, with lower then upper side.
@@ -251,7 +263,21 @@ int main(int argc, char** argv)
             std::
                     pair {sil::tensor::NaturalScalarExtrapolationRule {},
                           sil::tensor::NaturalScalarExtrapolationRule {}});
-    laplacian(laplacian_tensor, potential, primal_rules, sil::tensor::ZeroExtrapolationRule {});
+    laplacian(
+            laplacian_cochain,
+            potential_cochain,
+            primal_rules,
+            sil::tensor::ZeroExtrapolationRule {});
+    sil::exterior::StagedOperator<sil::exterior::Reconstruction<
+            ddc::TypeSeq<MuLow>,
+            decltype(position),
+            ddc::DiscreteElement<DDimX, DDimY>>>
+            reconstruction(
+                    Kokkos::DefaultExecutionSpace(),
+                    laplacian_tensor,
+                    laplacian_cochain,
+                    position);
+    reconstruction(laplacian_tensor, laplacian_cochain);
     Kokkos::fence();
 
     auto position_host
