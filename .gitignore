@@ -36,3 +36,6 @@
 *.exe
 *.out
 *.app
+
+# Original numerical TGV reference data
+!benchmarks/taylor_green_vortex/reference_data/wn_slice_x0_08000.out

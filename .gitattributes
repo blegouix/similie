@@ -1,3 +1,4 @@
 docs/similie_talk/imgs/** filter=lfs diff=lfs merge=lfs -text
 docs/similie_talk/slides.pdf filter=lfs diff=lfs merge=lfs -text
 benchmarks/taylor_green_vortex/BS1_TaylorGreenVortexRe1600_0.pdf filter=lfs diff=lfs merge=lfs -text
+benchmarks/taylor_green_vortex/reference_data/** filter=lfs diff=lfs merge=lfs -text
