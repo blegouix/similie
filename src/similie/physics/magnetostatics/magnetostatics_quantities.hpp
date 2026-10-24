@@ -6,7 +6,7 @@
 
 #include <type_traits>
 
-#include <similie/exterior/coboundary.hpp>
+#include <similie/exterior/coboundary/coboundary.hpp>
 #include <similie/tensor/tensor.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -50,8 +50,8 @@ struct ElementSpatialDomain<ddc::DiscreteElement<Tags...>>
 
 template <class CochainIndex, class VectorStencil, class Elem>
 [[nodiscard]] KOKKOS_FUNCTION auto project_to_scalar_potential_stencil(
-        VectorStencil vector_stencil,
-        Elem elem,
+        VectorStencil const& vector_stencil,
+        Elem const& elem,
         ddc::DiscreteElement<CochainIndex> selected_potential_component)
 {
     using spatial_domain_type = typename ElementSpatialDomain<Elem>::type;
@@ -99,7 +99,7 @@ class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
 
 public:
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem const& elem)
     {
         static_assert(
                 std::is_same_v<Index, ddc::type_seq_element_t<0, SpatialIndexSeq>>
@@ -121,11 +121,11 @@ public:
 
     template <class TensorType, class Evaluator, class ChainType, class LowerChainType, class Elem>
     KOKKOS_FUNCTION static void forward(
-            TensorType magnetic_induction,
-            Evaluator evaluator,
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem)
+            TensorType const& magnetic_induction,
+            Evaluator const& evaluator,
+            ChainType const& chain,
+            LowerChainType const& lower_chain,
+            Elem const& elem)
     {
         sil::exterior::Coboundary<
                 sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<SpatialIndex...>>,
@@ -169,7 +169,7 @@ public:
     using magnetic_induction_index = MagneticInductionIndex;
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem const& elem)
     {
         static_assert(
                 std::is_same_v<Index, ddc::type_seq_element_t<0, SpatialIndexSeq>>
@@ -191,18 +191,18 @@ public:
 
     template <class TensorType, class Evaluator, class ChainType, class LowerChainType, class Elem>
     KOKKOS_FUNCTION static void forward(
-            TensorType magnetic_induction,
-            Evaluator evaluator,
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem)
+            TensorType const& magnetic_induction,
+            Evaluator const& evaluator,
+            ChainType const& chain,
+            LowerChainType const& lower_chain,
+            Elem const& elem)
     {
         sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::
         operator()(magnetic_induction, evaluator, chain, lower_chain, elem);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto scalar_forward_value(Elem elem)
+    [[nodiscard]] KOKKOS_FUNCTION static auto scalar_forward_value(Elem const& elem)
     {
         auto stencil = forward_value<Index>(elem);
         [[maybe_unused]] sil::tensor::TensorAccessor<VectorPotentialIndex> potential_accessor;

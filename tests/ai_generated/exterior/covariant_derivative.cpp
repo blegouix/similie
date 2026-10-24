@@ -3,7 +3,7 @@
 // AI-GENERATED
 
 #include <gtest/gtest.h>
-#include <similie/exterior/covariant_derivative.hpp>
+#include <similie/exterior/covariant_derivative/covariant_derivative.hpp>
 
 namespace {
 struct X

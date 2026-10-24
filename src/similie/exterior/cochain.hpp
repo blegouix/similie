@@ -7,7 +7,7 @@
 
 #include <similie/misc/are_all_same.hpp>
 #include <similie/misc/specialization.hpp>
-#include <similie/tensor/antisymmetric_tensor.hpp>
+#include <similie/tensor/tensor_indices/antisymmetric_tensor.hpp>
 
 #include "chain.hpp"
 #include "cosimplex.hpp"
@@ -85,7 +85,7 @@ public:
                     element_type,
                     ddc::DiscreteDomain<Index>,
                     ddc::detail::kokkos_to_mdspan_layout_t<LayoutStridedPolicy>,
-                    memory_space> tensor) noexcept
+                    memory_space> const& tensor) noexcept
         : m_chain(std::move(chain))
         , m_values(tensor.allocation_kokkos_view())
     {

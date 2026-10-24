@@ -1,0 +1,191 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# AI-GENERATED
+
+name: benchmark_taylor_green_vortex
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Full commit SHA with an existing CUDA Docker image
+        required: false
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tgv-ci-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  run-taylor-green-vortex-benchmark:
+    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, linux]
+    environment:
+      name: taylor_green_vortex-cuda
+    steps:
+      - run: echo "Environment approval granted for the Taylor–Green benchmark campaign."
+
+  physics:
+    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    needs: run-taylor-green-vortex-benchmark
+    name: ${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 1380
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        fluid: [incompressible, compressible]
+        transport: [ideal, resistive]
+        coupling: [hd, ehd, mhd, fmhd]
+        exclude:
+        - transport: resistive
+          coupling: hd
+    env:
+      FLUID: ${{ matrix.fluid }}
+      TRANSPORT: ${{ matrix.transport }}
+      COUPLING: ${{ matrix.coupling }}
+    steps:
+    - name: Select target commit and isolated output path
+      id: target
+      env:
+        INPUT_SHA: ${{ inputs.target_sha }}
+        UPSTREAM_SHA: ${{ github.event.workflow_run.head_sha }}
+      run: |
+        set -euo pipefail
+        target_sha="${INPUT_SHA:-${UPSTREAM_SHA:-${GITHUB_SHA}}}"
+        [[ "${target_sha}" =~ ^[0-9a-f]{40}$ ]]
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-cuda-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}" >> "${GITHUB_ENV}"
+        echo "BUILD_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+    - name: Check persistent CUDA build commit tag
+      run: |
+        set -euo pipefail
+        test -f "${BUILD_ROOT}/COMMIT_SHA" || { echo "Missing persistent CUDA build at ${BUILD_ROOT}" >&2; exit 1; }
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}" || { echo "CUDA build commit tag does not match ${TARGET_SHA}" >&2; exit 1; }
+        test -x "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex"
+    - name: Run benchmarks, compare strategies, and collect Nsight Systems timings
+      id: benchmark
+      run: |
+        set -euo pipefail
+        publish_performance_report() {
+          if [ -f "${CI_ROOT}/results/performance/report.md" ]; then
+            cat "${CI_ROOT}/results/performance/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
+          fi
+        }
+        trap publish_performance_report EXIT
+        mkdir -p "${CI_ROOT}/results"
+        docker image inspect "similie_env:${TARGET_SHA}" >/dev/null
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
+          -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
+          -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 \
+          -e SIMILIE_SOLVER_QUIET=1 \
+          -e PYTHONDONTWRITEBYTECODE=1 \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
+            set -euo pipefail
+            mkdir -p "${HOME}"
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi > "${CI_ROOT}/results/hardware.txt"
+            grep "^CMAKE_BUILD_TYPE:STRING=" "${BUILD_ROOT}/build/CMakeCache.txt" > "${CI_ROOT}/results/build-type.txt"
+            python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/ci_campaign.py" \
+              --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
+              --output "${CI_ROOT}/results" --fluid "${FLUID}" \
+              --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase performance
+          '
+    - name: Collect first kernel invocations in each iteration region
+      run: |
+        set -euo pipefail
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
+          -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
+          -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
+          -e PYTHONDONTWRITEBYTECODE=1 \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
+            set -euo pipefail
+            mkdir -p "${HOME}"
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            nvidia-smi
+            python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/nsight_report.py" compute \
+              --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
+              --output "${CI_ROOT}/results" --fluid "${FLUID}" \
+              --transport "${TRANSPORT}" --coupling "${COUPLING}"
+          '
+    - name: Report iteration regions and all kernel performance for all 14 cases
+      if: ${{ !cancelled() && steps.benchmark.outcome != 'skipped' }}
+      run: |
+        set -euo pipefail
+        publish_nsight_report() {
+          if [ -f "${CI_ROOT}/results/nsight/report.md" ]; then
+            cat "${CI_ROOT}/results/nsight/report.md" >> "${GITHUB_STEP_SUMMARY}"
+            if [ -f "${CI_ROOT}/results/nsight/report.ansi" ]; then
+              cat "${CI_ROOT}/results/nsight/report.ansi"
+            else
+              cat "${CI_ROOT}/results/nsight/report.md"
+            fi
+          fi
+        }
+        trap publish_nsight_report EXIT
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e BUILD_ROOT -e PYTHONDONTWRITEBYTECODE=1 \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
+            set -euo pipefail
+            python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/nsight_report.py" report \
+              --output "${CI_ROOT}/results"
+          '
+    - name: Validate HD histories and t=8 vorticity against numerical UCL data
+      if: matrix.coupling == 'hd'
+      run: |
+        set -euo pipefail
+        publish_validation_report() {
+          if [ -f "${CI_ROOT}/results/validation/report.md" ]; then
+            cat "${CI_ROOT}/results/validation/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
+          fi
+        }
+        trap publish_validation_report EXIT
+        docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
+          -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
+          -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
+          -e PYTHONDONTWRITEBYTECODE=1 \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${BUILD_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" "similie_env:${TARGET_SHA}" -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/ci_campaign.py" \
+              --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
+              --output "${CI_ROOT}/results" --fluid "${FLUID}" \
+              --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation
+          '
+    - name: Upload Nsight timelines, Compute reports, combined tables, and reference outputs
+      id: results
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: tgv-cuda-${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}-${{ steps.target.outputs.target_sha }}
+        path: ${{ env.CI_ROOT }}/results/
+        if-no-files-found: error
+        compression-level: 1
+        retention-days: 14
+    - name: Publish job summary
+      if: always()
+      env:
+        ARTIFACT_URL: ${{ steps.results.outputs.artifact-url }}
+      run: |
+        if [ -n "${ARTIFACT_URL}" ]; then
+          echo "[Download Nsight timelines, Compute reports, combined tables, results and validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
+        fi

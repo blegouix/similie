@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 name: example_onelab_elasticity
+permissions:
+  actions: read
+  contents: read
 on:
   workflow_run:
     workflows: [ build ]
@@ -68,17 +71,16 @@ jobs:
         fi
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
-    - name: Set build paths
+    - name: Require matching persistent CUDA build
       run: |
+        set -euo pipefail
+        BUILD_ROOT="${RUNNER_WORKSPACE}/builds/cuda"
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
-    - name: Restore commit workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
-        fail-on-cache-miss: true
+        echo "BUILD_ROOT=${BUILD_ROOT}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${BUILD_ROOT}" >> "${GITHUB_ENV}"
+        test -f "${BUILD_ROOT}/COMMIT_SHA" || { echo "Missing persistent build at ${BUILD_ROOT}" >&2; exit 1; }
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}" || { echo "Build commit tag does not match ${TARGET_SHA}" >&2; exit 1; }
+        test -d "${BUILD_ROOT}/build"
     - name: Run ONELAB elasticity ${{ matrix.case.name }} on GPU
       shell: bash
       run: |
@@ -86,18 +88,18 @@ jobs:
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -e HOME="${BUILD_ROOT}/home" \
+          -e CACHE_ROOT="${BUILD_ROOT}" \
           -v "${CACHE_ROOT}:/similie-ci" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/build" \
+          -v "${CACHE_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
-            cmake --build . --parallel 8 --target similie_onelab
 
             export HOME=/similie-ci/home
             mkdir -p "${HOME}"
@@ -113,10 +115,11 @@ jobs:
           ' 2>&1 | tee -a "${EXAMPLE_LOG}"
     - name: Upload example outputs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: example-onelab_elasticity-${{ matrix.case.name }}
         overwrite: true
+        retention-days: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')) && 15 || 0 }}
         if-no-files-found: error
         path: |
           ${{ env.EXAMPLE_LOG }}

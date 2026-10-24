@@ -6,6 +6,22 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(SIMILIE_GENERATED_PHYSICS_DIR "${PROJECT_BINARY_DIR}/src/similie/physics")
 
+set(ELECTROMAGNETIC_COUPLING_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/coupling/electromagnetic_coupling.py")
+set(ELECTRIC_COUPLING_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/coupling/electric_coupling_physics.hpp")
+set(MAGNETIC_COUPLING_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/coupling/magnetic_coupling_physics.hpp")
+add_custom_command(
+    OUTPUT "${ELECTRIC_COUPLING_HEADER}" "${MAGNETIC_COUPLING_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${ELECTROMAGNETIC_COUPLING_GENERATOR}"
+            --output-directory "${SIMILIE_GENERATED_PHYSICS_DIR}/coupling"
+    DEPENDS "${ELECTROMAGNETIC_COUPLING_GENERATOR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/coupling/electromagnetic_coupling.hpp.in"
+    COMMENT "Generating electric and magnetic exchange from minimal Hamiltonian coupling"
+    VERBATIM
+)
+
 set(SCALAR_FIELD_GENERATOR
     "${CMAKE_CURRENT_SOURCE_DIR}/scalar_field/scalar_field.py")
 set(GENERIC_HAMILTONIAN_GENERATOR
@@ -154,14 +170,87 @@ add_custom_command(
     VERBATIM
 )
 
+set(NAVIER_STOKES_FOURIER_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/fluid/navier_stokes_fourier.py")
+set(NAVIER_STOKES_FOURIER_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/fluid/navier_stokes_fourier_generated.hpp")
+add_custom_command(
+    OUTPUT "${NAVIER_STOKES_FOURIER_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${NAVIER_STOKES_FOURIER_GENERATOR}"
+            --output "${NAVIER_STOKES_FOURIER_HEADER}"
+    DEPENDS "${NAVIER_STOKES_FOURIER_GENERATOR}"
+    COMMENT "Generating explicit Navier-Stokes-Fourier physics from SymPy"
+    VERBATIM
+)
+
+set(MAGNETODYNAMICS_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics/magnetodynamics.py")
+set(MAGNETODYNAMICS_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetodynamics/magnetodynamics_hamiltonian.hpp")
+set(MAGNETODYNAMICS_MODEL_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetodynamics/magnetodynamics.hpp")
+add_custom_command(
+    OUTPUT "${MAGNETODYNAMICS_HEADER}" "${MAGNETODYNAMICS_MODEL_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${MAGNETODYNAMICS_GENERATOR}"
+            --output "${MAGNETODYNAMICS_HEADER}"
+            --model-output "${MAGNETODYNAMICS_MODEL_HEADER}"
+    DEPENDS "${MAGNETODYNAMICS_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/generate_cpp_field_model.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics/magnetodynamics.hpp.in"
+    COMMENT "Generating magnetodynamics Hamiltonian from SymPy"
+    VERBATIM
+)
+
+set(ELECTRODYNAMICS_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/electrodynamics/electrodynamics.py")
+set(ELECTRODYNAMICS_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/electrodynamics/electrodynamics_hamiltonian.hpp")
+set(ELECTRODYNAMICS_MODEL_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/electrodynamics/electrodynamics.hpp")
+add_custom_command(
+    OUTPUT "${ELECTRODYNAMICS_HEADER}" "${ELECTRODYNAMICS_MODEL_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${ELECTRODYNAMICS_GENERATOR}"
+            --output "${ELECTRODYNAMICS_HEADER}"
+            --model-output "${ELECTRODYNAMICS_MODEL_HEADER}"
+    DEPENDS "${ELECTRODYNAMICS_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/generate_cpp_field_model.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/electrodynamics/electrodynamics.hpp.in"
+    COMMENT "Generating electric-only Hamiltonian from SymPy"
+    VERBATIM
+)
+
+set(ELECTROMAGNETISM_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/electromagnetism/electromagnetism.hpp")
+add_custom_command(
+    OUTPUT "${ELECTROMAGNETISM_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B
+            "${CMAKE_CURRENT_SOURCE_DIR}/electromagnetism/electromagnetism.py"
+            --model-output "${ELECTROMAGNETISM_HEADER}"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/electromagnetism/electromagnetism.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/electromagnetism/electromagnetism.hpp.in"
+            "${CMAKE_CURRENT_SOURCE_DIR}/electrodynamics/electrodynamics.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics/magnetodynamics.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/generate_cpp_field_model.py"
+    COMMENT "Generating full Maxwell field model from its SymPy Hamiltonian"
+    VERBATIM
+)
+
 add_custom_target(similie_physics_generated
     DEPENDS
+        "${ELECTRIC_COUPLING_HEADER}"
+        "${MAGNETIC_COUPLING_HEADER}"
         "${SCALAR_FIELD_HEADER}"
         "${LINEAR_MAGNETOSTATICS_HEADER}"
         "${LINEAR_MAGNETOSTATICS_CONSTITUTIVE_LAW_HEADER}"
         "${NONLINEAR_MAGNETOSTATICS_HEADER}"
         "${LINEAR_ELASTICITY_HEADER}"
         "${LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER}"
+        "${NAVIER_STOKES_FOURIER_HEADER}"
+        "${MAGNETODYNAMICS_HEADER}"
+        "${MAGNETODYNAMICS_MODEL_HEADER}"
+        "${ELECTRODYNAMICS_HEADER}"
+        "${ELECTRODYNAMICS_MODEL_HEADER}"
+        "${ELECTROMAGNETISM_HEADER}"
 )
 
 add_library(physics INTERFACE)

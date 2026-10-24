@@ -15,13 +15,13 @@ template <class Head, class... Tail>
 inline constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
 
 template <class Head, class... Tail>
-KOKKOS_FUNCTION inline constexpr bool are_all_equal(Head head, Tail... tail)
+KOKKOS_FUNCTION inline constexpr bool are_all_equal(Head const& head, Tail const&... tail)
 {
     return ((head == tail) && ...);
 }
 
 template <misc::Specialization<std::vector> T>
-inline constexpr bool are_all_equal(T t)
+inline constexpr bool are_all_equal(T const& t)
 {
     return std::all_of(t.begin(), t.end(), [&](const std::size_t i) { return i == *t.begin(); });
 }

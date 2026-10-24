@@ -10,6 +10,18 @@
 #include <similie/multidomains/laplacian.hpp>
 
 namespace {
+template <
+        sil::exterior::CellComplex Complex,
+        class Source,
+        class Target,
+        class Metric,
+        class Position,
+        class Element>
+using CachedHodgeStar = sil::exterior::StagedOperator<
+        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
+}
+
+namespace {
 namespace md = sil::multidomains;
 namespace solvers = similie::solvers;
 using sil::tensor::BoundarySide;
@@ -43,8 +55,8 @@ md::Topology<1> split_graph()
 
 void apply_matrix(
         std::shared_ptr<gko::matrix::Csr<double, gko::int32>> const& matrix,
-        Kokkos::View<double**> input,
-        Kokkos::View<double**> output)
+        Kokkos::View<double**> const& input,
+        Kokkos::View<double**> const& output)
 {
     auto source = solvers::detail::to_gko_dense(matrix->get_executor(), input);
     auto target = solvers::detail::to_gko_dense(matrix->get_executor(), output);
@@ -57,7 +69,7 @@ template <class Field>
 struct SampledField : Field
 {
     Kokkos::View<double**> values;
-    KOKKOS_FUNCTION SampledField(Field field, Kokkos::View<double**> data)
+    KOKKOS_FUNCTION SampledField(Field const& field, Kokkos::View<double**> const& data)
         : Field(field)
         , values(data)
     {
@@ -72,10 +84,10 @@ struct SampledField : Field
 template <class Direction, class Field, class Flux, class DualRules>
 void evaluate_rows(
         Kokkos::DefaultExecutionSpace const& exec,
-        Field field,
-        Flux flux,
-        DualRules dual,
-        Kokkos::View<double**> output)
+        Field const& field,
+        Flux const& flux,
+        DualRules const& dual,
+        Kokkos::View<double**> const& output)
 {
     ddc::parallel_for_each(
             "evaluate_dec_rows",
@@ -362,7 +374,10 @@ TEST(MultidomainsDifferentialOperator, RectangularCoboundaryAcrossInterface)
     }
 }
 
-void launch_value(Kokkos::DefaultExecutionSpace const& exec, Kokkos::View<int*> values, int index)
+void launch_value(
+        Kokkos::DefaultExecutionSpace const& exec,
+        Kokkos::View<int*> const& values,
+        int index)
 {
     Kokkos::parallel_for(
             "domain_stream_value",
@@ -400,8 +415,8 @@ struct ScaledDomainOperator
     }
     void operator()(
             Kokkos::DefaultExecutionSpace const& exec,
-            Kokkos::View<int*> output,
-            Kokkos::View<int*> input) const
+            Kokkos::View<int*> const& output,
+            Kokkos::View<int*> const& input) const
     {
         int const factor = scale;
         Kokkos::parallel_for(
@@ -540,7 +555,7 @@ void check_2d(
     Kokkos::deep_copy(input, input_host);
     apply_matrix(system.matrix, input, applied);
     auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
-    auto staged = sil::exterior::make_staged_laplacian<Metric, Direction, Scalar>(
+    auto staged = sil::exterior::make_laplacian<Metric, Direction, Scalar, CachedHodgeStar>(
             Kokkos::DefaultExecutionSpace {},
             sil::tensor::Tensor(output),
             sil::tensor::Tensor(device_potential),
@@ -686,7 +701,7 @@ TEST(MultidomainsLaplacian, DecAxialStencilAndDirichlet)
 {
     check_2d(0.0, 0.0);
 }
-TEST(MultidomainsLaplacian, MappedDecAgreesWithStagedLaplacian)
+TEST(MultidomainsLaplacian, MappedDecAgreesWithStagedHodgeLaplacian)
 {
     check_2d(0.3, 0.0);
 }

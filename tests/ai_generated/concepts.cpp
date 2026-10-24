@@ -3,9 +3,9 @@
 // AI-GENERATED
 
 // Include each standardized family so its inline assertions run in every test build.
-#include <similie/exterior/codifferential.hpp>
-#include <similie/exterior/hodge_star.hpp>
-#include <similie/exterior/laplacian.hpp>
+#include <similie/exterior/codifferential/codifferential.hpp>
+#include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
+#include <similie/exterior/laplacian/laplacian.hpp>
 #include <similie/physics/dedonder_weyl_equations.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>
@@ -16,7 +16,7 @@
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/tensor/tensor.hpp>
 
-namespace {
+namespace concept_test {
 
 struct MissingInterface
 {
@@ -81,4 +81,4 @@ static_assert(!similie::physics::PhysicsConcept<WrongPhysicsMetadata>);
 static_assert(!similie::physics::PhysicsConcept<MissingInterface>);
 static_assert(!similie::physics::HamiltonianPhysicsConcept<MissingInterface, int>);
 
-} // namespace
+} // namespace concept_test

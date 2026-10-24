@@ -9,15 +9,14 @@
 #include <similie/misc/small_matrix.hpp>
 #include <similie/misc/type_seq_ext.hpp>
 #include <similie/misc/unsecure_parallel_deepcopy.hpp>
-
-#include "character.hpp"
-#include "diagonal_tensor.hpp"
-#include "identity_tensor.hpp"
-#include "lorentzian_sign_tensor.hpp"
-#include "prime.hpp"
-#include "relabelization.hpp"
-#include "symmetric_tensor.hpp"
-#include "tensor_prod.hpp"
+#include <similie/tensor/tensor_indices/character.hpp>
+#include <similie/tensor/tensor_indices/diagonal_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/lorentzian_sign_tensor.hpp>
+#include <similie/tensor/tensor_indices/prime.hpp>
+#include <similie/tensor/tensor_indices/relabelization.hpp>
+#include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
+#include <similie/tensor/tensor_prod/tensor_prod.hpp>
 
 namespace sil {
 
@@ -104,7 +103,7 @@ using relabelize_metric_t = relabelize_indices_of_t<
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization<Tensor> TensorType>
 KOKKOS_FUNCTION constexpr relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(
-        TensorType tensor)
+        TensorType const& tensor)
 {
     return relabelize_indices_of<
             ddc::TypeSeq<
@@ -209,7 +208,10 @@ struct MetricProdValue<
         ddc::TypeSeq<HeadIndex1, TailIndex1...>,
         ddc::TypeSeq<HeadIndex2, TailIndex2...>>
 {
-    KOKKOS_FUNCTION static double operator()(MetricType metric, BatchElem elem, auto natural_elem)
+    KOKKOS_FUNCTION static double operator()(
+            MetricType const& metric,
+            BatchElem elem,
+            auto natural_elem)
     {
         auto const relabeled_metric = relabelize_metric<HeadIndex1, HeadIndex2>(metric);
         using metric_natural_elem_type = typename decltype(relabeled_metric)::accessor_t::
@@ -252,7 +254,7 @@ struct MetricProd
     template <misc::Specialization<Tensor> MetricProdType_>
     KOKKOS_FUNCTION static void operator()(
             MetricProdType_ metric_prod,
-            MetricType metric,
+            MetricType const& metric,
             BatchElem elem)
     {
         ddc::device_for_each(metric_prod.domain(), [&](auto mem_elem) {
@@ -261,7 +263,7 @@ struct MetricProd
         });
     }
 
-    KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
+    KOKKOS_FUNCTION static double value(MetricType const& metric, BatchElem elem, auto natural_elem)
     {
         return detail::MetricProdValue<MetricType, BatchElem, Indices1, Indices2>::
         operator()(metric, elem, natural_elem);
@@ -290,7 +292,7 @@ fill_metric_prod(
                 Indices2,
                 typename MetricType::layout_type,
                 typename MetricType::memory_space> metric_prod,
-        MetricType metric)
+        MetricType const& metric)
 {
     SIMILIE_DEBUG_LOG("similie_compute_metric_prod");
     ddc::parallel_for_each(
@@ -322,7 +324,10 @@ relabelize_indices_of_t<
         TensorType,
         swap_character_t<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
         detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
-inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType metric_prod)
+inplace_apply_metric(
+        ExecSpace const& exec_space,
+        TensorType const& tensor,
+        MetricType const& metric_prod)
 {
     ddc::Chunk result_alloc(
             relabelize_indices_in<
@@ -369,7 +374,10 @@ relabelize_indices_of_t<
         TensorType,
         swap_character_t<ddc::TypeSeq<Index1...>>,
         ddc::TypeSeq<Index1...>>
-inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType metric)
+inplace_apply_metric(
+        ExecSpace const& exec_space,
+        TensorType const& tensor,
+        MetricType const& metric)
 {
     tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<
             MetricIndex,
@@ -410,7 +418,7 @@ struct InverseMetric
     template <misc::Specialization<Tensor> OutputTensorType>
     KOKKOS_FUNCTION static void operator()(
             OutputTensorType inv_metric,
-            MetricType metric,
+            MetricType const& metric,
             BatchElem elem)
     {
         if constexpr (
@@ -460,7 +468,7 @@ struct InverseMetric
         }
     }
 
-    KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
+    KOKKOS_FUNCTION static double value(MetricType const& metric, BatchElem elem, auto natural_elem)
     {
         if constexpr (misc::Specialization<MetricIndex, TensorIdentityIndex>) {
             auto const ids = ddc::detail::array(natural_elem);
@@ -500,7 +508,7 @@ template <TensorIndex MetricIndex, misc::Specialization<Tensor> MetricType, clas
 invert_metric_t<MetricType> fill_inverse_metric(
         ExecSpace const& exec_space,
         invert_metric_t<MetricType> inv_metric,
-        MetricType metric)
+        MetricType const& metric)
 {
     SIMILIE_DEBUG_LOG("similie_invert_metric");
     ddc::parallel_for_each(

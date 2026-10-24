@@ -22,7 +22,7 @@ template <class... DDim>
 struct IsInDomain<ddc::TypeSeq<DDim...>>
 {
     static KOKKOS_FUNCTION bool operator()(
-            ddc::DiscreteDomain<DDim...> dom,
+            ddc::DiscreteDomain<DDim...> const& dom,
             ddc::DiscreteElement<DDim...> elem)
     {
         return ((elem.template uid<DDim>() >= dom.front().template uid<DDim>()) && ...)
@@ -34,7 +34,7 @@ struct IsInDomain<ddc::TypeSeq<DDim...>>
 
 template <class... DDim, class... ODDim>
 KOKKOS_FUNCTION bool domain_contains(
-        ddc::DiscreteDomain<DDim...> dom,
+        ddc::DiscreteDomain<DDim...> const& dom,
         ddc::DiscreteElement<ODDim...> elem)
 {
     return detail::IsInDomain<
@@ -49,7 +49,7 @@ KOKKOS_FUNCTION bool domain_contains(
 
 template <class... DDim, class... ODDim>
 KOKKOS_FUNCTION bool domain_contains(
-        ddc::DiscreteDomain<DDim...> dom,
+        ddc::DiscreteDomain<DDim...> const& dom,
         SignedDiscreteElement<ODDim...> elem)
 {
     return [&]<class... CommonDDim>(ddc::TypeSeq<CommonDDim...>) {

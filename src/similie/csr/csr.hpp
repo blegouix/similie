@@ -50,10 +50,10 @@ private:
 
 public:
     KOKKOS_FUNCTION constexpr Csr(
-            ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain,
-            std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx,
-            std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx,
-            std::array<double, N> values)
+            ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> const& domain,
+            std::array<std::size_t, HeadTensorIndex::mem_size() + 1> const& coalesc_idx,
+            std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> const& idx,
+            std::array<double, N> const& values)
         : m_domain(domain)
         , m_coalesc_idx(coalesc_idx)
         , m_idx(idx)
@@ -61,7 +61,7 @@ public:
     {
     }
 
-    Csr(CsrDynamic<HeadTensorIndex, TailTensorIndex...> csr_dyn) : m_domain(csr_dyn.domain())
+    Csr(CsrDynamic<HeadTensorIndex, TailTensorIndex...> const& csr_dyn) : m_domain(csr_dyn.domain())
     {
         std::
                 copy_n(csr_dyn.coalesc_idx().begin(),
@@ -114,13 +114,13 @@ tensor_prod(
                 double,
                 ddc::DiscreteDomain<TailTensorIndex...>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> prod,
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& prod,
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<HeadTensorIndex>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> dense,
-        Csr<N, HeadTensorIndex, TailTensorIndex...> csr)
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& dense,
+        Csr<N, HeadTensorIndex, TailTensorIndex...> const& csr)
 {
     SIMILIE_DEBUG_LOG("similie_compute_vector_dense_multiplication");
     ddc::host_for_each(prod.domain(), [&](const ddc::DiscreteElement<TailTensorIndex...> elem) {
@@ -158,13 +158,13 @@ tensor_prod(
                 double,
                 ddc::DiscreteDomain<HeadTensorIndex>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> prod,
-        Csr<N, HeadTensorIndex, TailTensorIndex...> csr,
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& prod,
+        Csr<N, HeadTensorIndex, TailTensorIndex...> const& csr,
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<TailTensorIndex...>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> dense)
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& dense)
 {
     SIMILIE_DEBUG_LOG("similie_compute_csr_dense_multiplication");
     ddc::host_for_each(prod.domain(), [&](const ddc::DiscreteElement<HeadTensorIndex> elem) {

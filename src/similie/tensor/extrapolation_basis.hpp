@@ -14,7 +14,7 @@
 namespace sil::tensor {
 namespace detail {
 template <class Domain, class Memory, class Evaluate>
-KOKKOS_FUNCTION auto pointwise_tensor(Evaluate evaluate)
+KOKKOS_FUNCTION auto pointwise_tensor(Evaluate const& evaluate)
 {
     using Accessor = tensor_accessor_for_domain_t<Domain>;
     std::array<double, Accessor::domain().size()> storage {};
@@ -31,7 +31,7 @@ KOKKOS_FUNCTION auto pointwise_tensor(Evaluate evaluate)
 }
 
 template <class Field, class Evaluate>
-KOKKOS_FUNCTION auto pointwise_tensor(Evaluate evaluate)
+KOKKOS_FUNCTION auto pointwise_tensor(Evaluate const& evaluate)
 {
     return pointwise_tensor<typename Field::indices_domain_t, typename Field::memory_space>(
             evaluate);
@@ -47,7 +47,7 @@ struct ExtrapolationSource
 };
 
 template <class Domain, class Element>
-KOKKOS_FUNCTION auto extrapolation_sample(Domain domain, Element element)
+KOKKOS_FUNCTION auto extrapolation_sample(Domain const& domain, Element element)
 {
     misc::convert_type_seq_to_t<misc::SignedDiscreteElement, ddc::to_type_seq_t<Domain>> const
             sample(element);
@@ -55,7 +55,9 @@ KOKKOS_FUNCTION auto extrapolation_sample(Domain domain, Element element)
 }
 
 template <std::size_t Sources = 2, class... Grid>
-KOKKOS_FUNCTION auto make_extrapolation_basis(ddc::DiscreteDomain<Grid...> domain, auto element)
+KOKKOS_FUNCTION auto make_extrapolation_basis(
+        ddc::DiscreteDomain<Grid...> const& domain,
+        auto element)
 {
     typename ddc::DiscreteDomain<Grid...>::discrete_element_type front
             = extrapolation_sample(domain, element);

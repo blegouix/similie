@@ -38,8 +38,8 @@ struct PotentialFlowSamples
 template <class ExecSpace, class Field>
 void fill_potential_patch(
         ExecSpace const& exec,
-        Field field,
-        Kokkos::View<double*> potential,
+        Field const& field,
+        Kokkos::View<double*> const& potential,
         std::size_t ring_nodes)
 {
     ddc::parallel_for_each(
@@ -55,13 +55,13 @@ void fill_potential_patch(
 template <class ExecSpace, class Field, class Gradient, class Rules>
 void reconstruct_potential_patch(
         ExecSpace const& exec,
-        Field field,
-        Gradient gradient,
-        Rules rules,
+        Field const& field,
+        Gradient const& gradient,
+        Rules const& rules,
         std::size_t ring_nodes,
         std::size_t radial_nodes,
-        Kokkos::View<double* [2]> differences,
-        Kokkos::View<double* [4]> cells)
+        Kokkos::View<double* [2]> const& differences,
+        Kokkos::View<double* [4]> const& cells)
 {
     sil::exterior::deriv<GradientIndex, PotentialIndex>(exec, gradient, field, rules);
     ddc::parallel_for_each(
@@ -108,7 +108,7 @@ PotentialFlowSamples sample_potential_flow_field(
         std::size_t radial_nodes,
         std::vector<std::size_t> const& starts,
         std::vector<std::size_t> const& cells,
-        BindDomains bind_domains)
+        BindDomains const& bind_domains)
 {
     if (potential.size() != ring_nodes * radial_nodes || radial_nodes < 2
         || starts.size() != cells.size() || starts.empty())

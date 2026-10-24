@@ -48,7 +48,7 @@ public:
     }
 
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element elem) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element elem) const
     {
         switch (m_kind) {
         case Kind::Zero:

@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include <similie/exterior/covariant_derivative.hpp>
+#include <similie/exterior/covariant_derivative/covariant_derivative.hpp>
 
 #include "elasticity_quantities.hpp"
 
@@ -34,7 +34,7 @@ private:
 
 public:
     template <class StressLaw>
-    ElasticMaterialHodge2D(Positions const& positions, StressLaw stress_law)
+    ElasticMaterialHodge2D(Positions const& positions, StressLaw const& stress_law)
     {
         double const signed_area
                 = 0.5

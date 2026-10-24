@@ -27,10 +27,10 @@
 #include <vector>
 
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/exterior/coboundary.hpp>
-#include <similie/exterior/codifferential.hpp>
-#include <similie/exterior/hodge_star.hpp>
-#include <similie/exterior/reduction_and_reconstruction.hpp>
+#include <similie/exterior/coboundary/coboundary.hpp>
+#include <similie/exterior/codifferential/codifferential.hpp>
+#include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
+#include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
@@ -1064,9 +1064,9 @@ public:
     static constexpr bool IS_LINEAR = false;
 
     MaterialMagnetostaticsHamiltonian(
-            LinearPermeabilityTensor linear_permeability,
-            FerromagneticMaterialTensor ferromagnetic_material,
-            Curve nonlinear_bh_curve)
+            LinearPermeabilityTensor const& linear_permeability,
+            FerromagneticMaterialTensor const& ferromagnetic_material,
+            Curve const& nonlinear_bh_curve)
         : m_linear_permeability(linear_permeability)
         , m_ferromagnetic_material(ferromagnetic_material)
         , m_nonlinear_hamiltonian(nonlinear_bh_curve)
@@ -1368,7 +1368,7 @@ public:
     }
 
     template <class ExecSpace, class InputView, class OutputView>
-    void apply(ExecSpace exec_space, InputView input, OutputView output) const
+    void apply(ExecSpace const& exec_space, InputView input, OutputView output) const
     {
         std::size_t const nx = m_nx;
         std::size_t const ny = m_ny;
@@ -2223,7 +2223,7 @@ public:
     }
 
     template <class ExecSpace>
-    MatrixFreeWorkspace<ExecSpace> create_matrix_free_workspace(ExecSpace exec_space) const
+    MatrixFreeWorkspace<ExecSpace> create_matrix_free_workspace(ExecSpace const& exec_space) const
     {
         using allocator_type = ddc::KokkosAllocator<double, MemorySpace>;
         ddc::DiscreteDomain<DDimX, DDimY, DDimZ> node_domain(
@@ -2419,7 +2419,7 @@ public:
     }
 
     template <class ExecSpace, class InputView, class OutputView>
-    void apply(ExecSpace exec_space, InputView input, OutputView output) const
+    void apply(ExecSpace const& exec_space, InputView input, OutputView output) const
     {
         if (!m_has_precomputed_stencils) {
             throw std::logic_error("3D matrix-free apply requires an explicit MatrixFreeWorkspace");
@@ -2429,7 +2429,7 @@ public:
 
     template <class ExecSpace, class InputView, class OutputView>
     void apply(
-            ExecSpace exec_space,
+            ExecSpace const& exec_space,
             InputView input,
             OutputView output,
             MatrixFreeWorkspace<ExecSpace>& workspace) const
@@ -2443,8 +2443,10 @@ public:
 
 public:
     template <class ExecSpace, class InputView, class OutputView>
-    void apply_with_precomputed_stencils(ExecSpace exec_space, InputView input, OutputView output)
-            const
+    void apply_with_precomputed_stencils(
+            ExecSpace const& exec_space,
+            InputView input,
+            OutputView output) const
     {
         std::size_t const nx = m_nx;
         std::size_t const ny = m_ny;
@@ -2612,7 +2614,7 @@ public:
 
     template <class ExecSpace, class InputView, class OutputView>
     void apply_with_library_operators(
-            ExecSpace exec_space,
+            ExecSpace const& exec_space,
             InputView input,
             OutputView output,
             MatrixFreeWorkspace<ExecSpace>& workspace) const
@@ -2999,7 +3001,7 @@ private:
             Columns columns,
             Coefficients coefficients,
             Counts counts,
-            View values,
+            View const& values,
             std::size_t moment_row)
     {
         double moment = 0.0;
@@ -3020,12 +3022,12 @@ template <
         class InputView,
         class OutputView>
 void apply_jacobian(
-        ExecSpace exec_space,
+        ExecSpace const& exec_space,
         MagnetostaticsOperator2D<
                 MemorySpace,
                 Equations,
                 MagneticVectorPotentialToMagneticInduction> const& operator_model,
-        StateView state,
+        StateView const& state,
         InputView input,
         OutputView output)
 {
@@ -3161,12 +3163,12 @@ template <
         class InputView,
         class OutputView>
 void apply_jacobian(
-        ExecSpace exec_space,
+        ExecSpace const& exec_space,
         MagnetostaticsOperator3D<
                 MemorySpace,
                 Equations,
                 MagneticVectorPotentialToMagneticInduction> const& operator_model,
-        StateView state,
+        StateView const& state,
         InputView input,
         OutputView output)
 {
@@ -3377,7 +3379,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                 MemorySpace,
                 Equations,
                 MagneticVectorPotentialToMagneticInduction> const& operator_model,
-        StateView state)
+        StateView const& state)
 {
     if (!operator_model.has_precomputed_stencils()) {
         auto const stencil_operator = MagnetostaticsOperator3D<
@@ -3873,7 +3875,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                 MemorySpace,
                 Equations,
                 MagneticVectorPotentialToMagneticInduction> const& operator_model,
-        StateView state)
+        StateView const& state)
 {
     std::size_t const size = operator_model.size();
     Kokkos::DefaultExecutionSpace exec_space;

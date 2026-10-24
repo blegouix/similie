@@ -86,8 +86,8 @@ struct TensorNaturalIndex
     template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
-            Tensor tensor,
-            Elem elem)
+            Tensor const& tensor,
+            Elem const& elem)
     {
         return access(tensor, elem);
     }
@@ -412,7 +412,7 @@ TensorAccessor<Index...>::canonical_natural_element(ddc::DiscreteElement<MemInde
     auto it = ids.begin();
     (
             [&]() {
-                auto i = MemIndex::mem_id_to_canonical_natural_ids(
+                auto const i = MemIndex::mem_id_to_canonical_natural_ids(
                         mem_elem.template uid<MemIndex>());
                 misc::detail::copy(i.begin(), i.end(), it);
                 it += i.size();
@@ -444,7 +444,7 @@ struct Access<TensorField, Element, ddc::TypeSeq<IndexHead...>, IndexInterest, I
 {
     template <class Elem>
     KOKKOS_FUNCTION static TensorField::element_type operator()(
-            TensorField tensor_field,
+            TensorField const& tensor_field,
             Elem const& elem)
     {
         /*
@@ -456,7 +456,7 @@ struct Access<TensorField, Element, ddc::TypeSeq<IndexHead...>, IndexInterest, I
         if constexpr (sizeof...(IndexTail) > 0) {
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                        KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
+                        KOKKOS_LAMBDA(TensorField const& tensor_field_, Elem const& elem_)
                                 ->TensorField::element_type {
                                     return Access<
                                             TensorField,
@@ -476,7 +476,7 @@ struct Access<TensorField, Element, ddc::TypeSeq<IndexHead...>, IndexInterest, I
         } else {
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                        KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
+                        KOKKOS_LAMBDA(TensorField const& tensor_field_, Elem const& elem_)
                                 ->TensorField::element_type {
                                     double tensor_field_value = 0;
                                     if constexpr (IndexInterest::is_explicitely_stored_tensor) {
@@ -848,15 +848,15 @@ struct NaturalTensorProd<
             Tensor<ElementType,
                    ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
                    LayoutStridedPolicy,
-                   MemorySpace> prod_tensor,
+                   MemorySpace> const& prod_tensor,
             Tensor<ElementType,
                    ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
                    LayoutStridedPolicy,
-                   MemorySpace> tensor1,
+                   MemorySpace> const& tensor1,
             Tensor<ElementType,
                    ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
                    LayoutStridedPolicy,
-                   MemorySpace> tensor2)
+                   MemorySpace> const& tensor2)
     {
         ddc::device_for_each(
                 prod_tensor.domain(),
@@ -884,11 +884,13 @@ template <
         class LayoutStridedPolicy,
         class MemorySpace>
 Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace> tensor_prod(
-        Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
-                prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
+        Tensor<ElementType,
+               ddc::DiscreteDomain<ProdDDim...>,
+               LayoutStridedPolicy,
+               MemorySpace> const& prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace> const&
                 tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
+        Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace> const&
                 tensor2)
 {
     static_assert(std::is_same_v<

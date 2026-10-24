@@ -1,0 +1,4 @@
+This reference data archive and its accompanying script are unlicensed: no
+license or permission grant was provided with the material or on its source
+page. This identifier records that status and does not grant permission to
+use, modify, or redistribute the material.

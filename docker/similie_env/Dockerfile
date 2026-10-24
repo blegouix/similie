@@ -16,7 +16,7 @@ FROM $BASE_IMAGE
 # cmake -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
 # for cuda:
 # cmake -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
-# cmake --build similie/build -j 8
+# cmake --build similie/build
 # ctest --test-dir similie/build
 
 # ----------------
@@ -176,6 +176,15 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
     fi
 RUN cmake --build /opt/kokkos/build && cmake --install /opt/kokkos/build
 
+# Kokkos Tools
+RUN git clone https://github.com/kokkos/kokkos-tools.git /opt/kokkos-tools \
+ && git -C /opt/kokkos-tools checkout --detach 39aae965c5158ed41433336ff65af6465aa2ad02 \
+ && cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_LIBDIR=lib \
+      -B /opt/kokkos-tools/build -S /opt/kokkos-tools \
+ && cmake --build /opt/kokkos-tools/build \
+ && cmake --install /opt/kokkos-tools/build
+
 # Kokkos FFT
 RUN git clone --depth 1 --branch v1.1.0 https://github.com/kokkos/kokkos-fft.git /opt/kokkos-fft \
  && cmake -DCMAKE_CXX_COMPILER=$(if [ "${BACKEND}" = "cpu" ]; then echo g++; else echo /usr/local/bin/nvcc_wrapper; fi) \
@@ -196,4 +205,4 @@ RUN git clone --depth 1 --branch 5.2.2 https://github.com/kokkos/kokkos-kernels.
 # ------------------------------
 
 # Python packages
-RUN apt install -y python3-sympy python3-h5py
+RUN apt install -y python3-sympy python3-h5py python3-matplotlib
