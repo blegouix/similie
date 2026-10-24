@@ -142,10 +142,16 @@ jobs:
             python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/nsight_report.py" report \
               --output "${CI_ROOT}/results"
           '
-    - name: Validate HD reference trajectories in CUDA Docker
+    - name: Validate HD histories and t=8 vorticity against numerical UCL data
       if: matrix.coupling == 'hd'
       run: |
         set -euo pipefail
+        publish_validation_report() {
+          if [ -f "${CI_ROOT}/results/validation/report.md" ]; then
+            cat "${CI_ROOT}/results/validation/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
+          fi
+        }
+        trap publish_validation_report EXIT
         docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e TARGET_SHA -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
@@ -175,9 +181,6 @@ jobs:
       env:
         ARTIFACT_URL: ${{ steps.results.outputs.artifact-url }}
       run: |
-        if [ -f "${CI_ROOT}/results/validation/report.md" ]; then
-          cat "${CI_ROOT}/results/validation/report.md" >> "${GITHUB_STEP_SUMMARY}"
-        fi
         if [ -n "${ARTIFACT_URL}" ]; then
           echo "[Download Nsight timelines, Compute reports, combined tables, results and validation plots](${ARTIFACT_URL})" >> "${GITHUB_STEP_SUMMARY}"
         fi

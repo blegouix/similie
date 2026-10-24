@@ -9,8 +9,6 @@ import json
 import shutil
 import subprocess
 import sys
-import tarfile
-import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -61,7 +59,12 @@ STRATEGIES = (
 )
 REFERENCE_URL = "https://cfd.ku.edu/hiocfd/data.tgz"
 REFERENCE_FILE = "spectral_Re1600_512.gdiag"
-REFERENCE_SHA256 = "8e01c0024ae2dde20df8dc77a20fa7fb41c3abef2fc528a2ac684afed96d6429"
+REFERENCE_SLICE = "wn_slice_x0_08000.out"
+REFERENCE_CHECKSUMS = {
+    REFERENCE_FILE: "8e01c0024ae2dde20df8dc77a20fa7fb41c3abef2fc528a2ac684afed96d6429",
+    REFERENCE_SLICE: "a350f7627ecb6bd80caa03832d057227be43cbd0dbd67a7f85c8ffbbdbc094a4",
+    "read_and_plot_w.py": "7d8112dfb171e71a5b9e9e05857466f31c5db6863ea6057aff42f0395714e557",
+}
 
 
 def execute(command, directory, environment=None):
@@ -203,47 +206,52 @@ def compare_strategies(baseline, candidate):
 
 
 def reference_history(directory):
-    """Keep the exact workshop input and its provenance in the artifact."""
+    """Use the checked-in workshop inputs and keep their provenance in artifacts."""
     directory.mkdir(parents=True, exist_ok=True)
-    path = directory / REFERENCE_FILE
-    if not path.exists():
-        archive_path = directory / "data.tgz"
-        with (
-            urllib.request.urlopen(REFERENCE_URL, timeout=120) as response,
-            archive_path.open("wb") as out,
-        ):
-            while block := response.read(1024 * 1024):
-                out.write(block)
-        with tarfile.open(archive_path) as archive:
-            members = [
-                member
-                for member in archive.getmembers()
-                if Path(member.name).name == REFERENCE_FILE and member.isfile()
-            ]
-            if len(members) != 1:
-                raise ValueError("Workshop archive has an ambiguous reference history")
-            path.write_bytes(archive.extractfile(members[0]).read())
-    checksum = hashlib.sha256(path.read_bytes()).hexdigest()
-    if checksum != REFERENCE_SHA256:
-        raise ValueError("Workshop reference checksum mismatch")
+    source = Path(__file__).parent / "reference_data"
+    for name, expected in REFERENCE_CHECKSUMS.items():
+        path = source / name
+        if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise ValueError(f"Workshop reference checksum mismatch: {name}")
+        shutil.copyfile(path, directory / name)
     (directory / "source.json").write_text(
         json.dumps(
             {
                 "url": REFERENCE_URL,
                 "description": "UCL dealiased pseudo-spectral 512^3 reference, HiOCFD C3.5 (previous edition of HOW4 BS1)",
-                "sha256": checksum,
+                "sha256": REFERENCE_CHECKSUMS,
                 "columns": [
                     "time",
                     "kinetic_energy",
                     "positive_dissipation",
                     "enstrophy",
                 ],
+                "vorticity_slice": {
+                    "file": REFERENCE_SLICE,
+                    "time": 8,
+                    "plane": "x/L=-pi",
+                    "shape": [512, 512],
+                    "dtype": "little-endian float64",
+                    "storage_axes": ["y", "z"],
+                    "grid": "-pi + 2*pi*i/512, i=0,...,511; periodic endpoint excluded",
+                    "quantity": "vorticity norm * L/V0",
+                },
             },
             indent=2,
         )
         + "\n"
     )
-    return np.loadtxt(path)
+    history = np.loadtxt(directory / REFERENCE_FILE)
+    if (
+        history.ndim != 2
+        or history.shape[1] != 4
+        or not np.all(np.isfinite(history))
+        or history[0, 0] != 0
+        or history[-1, 0] < 10
+        or np.any(np.diff(history[:, 0]) <= 0)
+    ):
+        raise ValueError("Invalid workshop reference history")
+    return history
 
 
 def text_plot(
@@ -315,88 +323,125 @@ def compare_reference(hdf, reference, tolerance=None):
     return metrics
 
 
-def compare_spectrum(hdf, wave_number, spectrum, reference_directory):
-    """Compare only the resolved, digitized range; never extrapolate the image."""
+def compare_vorticity_slice(hdf, reference_directory, tolerance=None):
+    """Compare the t=8 periodic-face norm at the simulation's matching nodes."""
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    source = Path(__file__).parent / "reference_data"
-    reference_directory.mkdir(parents=True, exist_ok=True)
-    for path in source.iterdir():
-        if path.is_file():
-            shutil.copyfile(path, reference_directory / path.name)
-    csv = reference_directory / "spectrum_t8.csv"
-    provenance = json.loads((reference_directory / "spectrum_t8.json").read_text())
-    if hashlib.sha256(csv.read_bytes()).hexdigest() != provenance["csv_sha256"]:
-        raise ValueError("Digitized spectrum reference checksum mismatch")
-    reference = np.loadtxt(csv, delimiter=",", skiprows=4)
-    selected = (wave_number >= reference[0, 0]) & (wave_number <= reference[-1, 0])
-    k, energy = wave_number[selected], spectrum[selected]
-    if len(k) < 2 or not np.all(np.isfinite(energy)) or np.any(energy <= 0):
-        raise ValueError("No positive spectrum overlapping the digitized reference")
-    expected = 10 ** np.interp(
-        np.log10(k), np.log10(reference[:, 0]), np.log10(reference[:, 1])
-    )
+    reference = np.fromfile(reference_directory / REFERENCE_SLICE, dtype="<f8")
+    if (
+        reference.size != 512 * 512
+        or not np.all(np.isfinite(reference))
+        or np.any(reference < 0)
+    ):
+        raise ValueError("Invalid workshop vorticity slice")
+    # The supplied reader loops over its first coordinate outside its second.
+    # These are y and z on the x=-pi face; z is contiguous in the binary file.
+    reference = reference.reshape(512, 512)
+    with h5py.File(hdf, "r") as data:
+        snapshots = [
+            data[name]
+            for name in data
+            if name.startswith("snapshot_")
+            and np.isclose(float(data[name]["time"][0]), 8, rtol=0, atol=1e-12)
+        ]
+        if len(snapshots) != 1:
+            raise ValueError(
+                "Expected exactly one t=8 snapshot for vorticity comparison"
+            )
+        simulation = np.linalg.norm(snapshots[0]["vorticity"][0], axis=-1)
+        position = data["position"][0]
+    n = simulation.shape[0]
+    coordinates = -np.pi + np.arange(n) * (2 * np.pi / n)
+    if (
+        simulation.shape != (n, n)
+        or not np.all(np.isfinite(simulation))
+        or n > 512
+        or 512 % n
+        or position.shape != (n, n, 3)
+        or not np.allclose(position[..., 0], -np.pi, rtol=0, atol=1e-12)
+        or not np.allclose(position[..., 1], coordinates[:, None], rtol=0, atol=1e-12)
+        or not np.allclose(position[..., 2], coordinates[None, :], rtol=0, atol=1e-12)
+    ):
+        raise ValueError(
+            "Vorticity comparison requires a matching periodic grid dividing 512"
+        )
+    # N=64 and N=128 are exact subsets of the 512-node reference: no
+    # interpolation or axis rotation is needed to compare the same points.
+    expected = reference[:: 512 // n, :: 512 // n]
+    difference = simulation - expected
     metrics = {
-        "source": provenance["source"],
-        "image_derived_reference": True,
+        "source": REFERENCE_URL,
+        "file": REFERENCE_SLICE,
         "time": 8,
-        "wave_number_range": [float(k[0]), float(k[-1])],
+        "plane": "x/L=-pi",
+        "samples": int(simulation.size),
         "relative_l2_error": float(
-            np.linalg.norm(energy - expected) / np.linalg.norm(expected)
+            np.linalg.norm(difference) / np.linalg.norm(expected)
         ),
-        "rms_log10_error": float(np.sqrt(np.mean(np.log10(energy / expected) ** 2))),
-        "digitization_relative_energy_bound": provenance["relative_energy_bound"],
-        "digitization_relative_wave_number_bound": provenance[
-            "relative_wave_number_bound"
-        ],
+        "max_absolute_error": float(np.max(np.abs(difference))),
+        "rms_absolute_error": float(np.sqrt(np.mean(difference**2))),
     }
+    if tolerance is not None:
+        metrics["passed"] = metrics["relative_l2_error"] <= tolerance
     np.savetxt(
-        hdf.with_suffix(".spectrum-comparison.csv"),
-        np.column_stack((k, energy, expected, energy / expected)),
+        hdf.with_suffix(".vorticity-comparison.csv"),
+        np.column_stack(
+            (
+                position[..., 1].ravel(),
+                position[..., 2].ravel(),
+                simulation.ravel(),
+                expected.ravel(),
+                difference.ravel(),
+            )
+        ),
         delimiter=",",
-        header="wave_number,simulation_energy,digitized_reference_energy,ratio",
+        header="y,z,simulation_vorticity_norm,reference_vorticity_norm,error",
         comments="",
     )
-    hdf.with_suffix(".spectrum-comparison.json").write_text(
+    hdf.with_suffix(".vorticity-comparison.json").write_text(
         json.dumps(metrics, indent=2) + "\n"
     )
-    figure, axis = plt.subplots(figsize=(7, 5), constrained_layout=True)
-    in_range = reference[:, 0] <= wave_number[-1]
-    axis.loglog(
-        reference[in_range, 0],
-        reference[in_range, 1],
-        label="HOW4 Spectral (digitized Figure 3)",
+    figure, axes = plt.subplots(1, 3, figsize=(15, 4), constrained_layout=True)
+    reference_coordinates = -np.pi + np.arange(512) * (2 * np.pi / 512)
+    maximum = max(float(reference.max()), float(simulation.max()))
+    for axis, grid, norm, label in (
+        (axes[0], reference_coordinates, reference, "UCL spectral 512³"),
+        (axes[1], coordinates, simulation, f"SimiLie N={n}"),
+    ):
+        image = axis.pcolormesh(
+            grid, grid, norm.T, shading="auto", vmin=0, vmax=maximum
+        )
+        levels = [
+            level for level in (1, 5, 10, 20, 30) if norm.min() < level < norm.max()
+        ]
+        if levels:
+            axis.contour(
+                grid, grid, norm.T, levels=levels, colors="black", linewidths=0.4
+            )
+        axis.set(title=label, xlabel="y/L", ylabel="z/L", aspect="equal")
+    figure.colorbar(image, ax=axes[:2], label="Vorticity norm * L/V0")
+    bound = max(metrics["max_absolute_error"], 1e-15)
+    image = axes[2].pcolormesh(
+        coordinates,
+        coordinates,
+        difference.T,
+        shading="auto",
+        cmap="coolwarm",
+        vmin=-bound,
+        vmax=bound,
     )
-    axis.fill_between(
-        reference[in_range, 0],
-        reference[in_range, 4],
-        reference[in_range, 5],
-        alpha=0.25,
-        label="±2-pixel energy bound (about 7%)",
+    axes[2].set(
+        title="SimiLie minus reference", xlabel="y/L", ylabel="z/L", aspect="equal"
     )
-    positive = (wave_number > 0) & (spectrum > 0)
-    axis.loglog(wave_number[positive], spectrum[positive], label="SimiLie")
-    axis.set(
-        xlabel="Wave number kL",
-        ylabel="Shell energy / V0²",
-        title="Taylor–Green spectrum at t/tc=8",
-    )
-    axis.legend()
-    figure.savefig(hdf.with_suffix(".spectrum-comparison.png"), dpi=160)
+    figure.colorbar(image, ax=axes[2], label="Vorticity norm error")
+    figure.suptitle("Taylor–Green: x/L=-pi, t/tc=8")
+    figure.savefig(hdf.with_suffix(".vorticity-comparison.png"), dpi=160)
     plt.close(figure)
     print(
-        f"Spectrum comparison {hdf.stem}: relative_L2_error={metrics['relative_l2_error']:.6g}, RMS_log10_error={metrics['rms_log10_error']:.6g}; digitized reference energy bound about 7%, k bound about 1.3%"
-    )
-    text_plot(
-        np.log10(k),
-        np.log10(energy),
-        np.log10(expected),
-        "Log10 spectrum at t=8",
-        "log10(kL)",
-        "digitized HOW4 Figure 3",
+        f"Vorticity slice comparison {hdf.stem}: relative_L2_error={metrics['relative_l2_error']:.6g}, max_absolute_error={metrics['max_absolute_error']:.6g}"
     )
     return metrics
 
@@ -439,7 +484,7 @@ def write_report(output, phase, entries, error=None):
         lines.extend(
             (
                 "",
-                "HD accuracy is compared with the UCL 512³ pseudo-spectral workshop history. Relative L2 errors are resolution-study metrics, not a workshop-prescribed acceptance threshold. An explicit --reference-relative-tolerance enables an accuracy gate. See reference-comparison.json and PNG plots. Spectra at t=8 are compared with the Spectral curve digitized from page 3, Figure 3 of the HOW4 BS1 PDF. The CSV, provenance, extraction overlay and pixel uncertainty bounds are included in reference-data; this is an image-derived reference.",
+                "HD accuracy uses the original UCL 512³ pseudo-spectral data from https://cfd.ku.edu/hiocfd/data.tgz: kinetic energy, dissipation and enstrophy histories, plus the vorticity norm on x/L=-pi at t/tc=8. Slice errors compare matching nodes of the 512² reference and the simulation grid. Inputs and SHA-256 provenance are included in reference-data; comparison CSVs and PNGs accompany the results. Relative L2 errors are resolution-study metrics; --reference-relative-tolerance optionally gates all four observables.",
                 "",
                 "HDF5 snapshots and their XDMF time series are saved every 0.033 seconds of simulation time, with additional snapshots at t=8 and t=10.",
             )
@@ -448,19 +493,19 @@ def write_report(output, phase, entries, error=None):
         lines.extend(
             (
                 "",
-                "| N | Reference observable | Relative L2 error |",
-                "| ---: | --- | ---: |",
+                "| N | Reference observable | Relative L2 error | Max absolute error |",
+                "| ---: | --- | ---: | ---: |",
             )
         )
         for path in sorted(output.glob("N*/*.reference-comparison.json")):
             for name, metric in json.loads(path.read_text()).items():
                 lines.append(
-                    f"| {path.parent.name[1:]} | {name} | {metric['relative_l2_error']:.3%} |"
+                    f"| {path.parent.name[1:]} | {name} | {metric['relative_l2_error']:.3%} | {metric['max_absolute_error']:.6g} |"
                 )
-        for path in sorted(output.glob("N*/*.spectrum-comparison.json")):
+        for path in sorted(output.glob("N*/*.vorticity-comparison.json")):
             metric = json.loads(path.read_text())
             lines.append(
-                f"| {path.parent.name[1:]} | spectrum at t=8 (digitized) | {metric['relative_l2_error']:.3%} |"
+                f"| {path.parent.name[1:]} | vorticity norm at t=8, x/L=-pi | {metric['relative_l2_error']:.3%} | {metric['max_absolute_error']:.6g} |"
             )
     if error:
         lines.extend(("", f"**FAILED:** {error}"))
@@ -605,24 +650,6 @@ def campaign(
                 )
                 + "\n"
             )
-            print(
-                f"\nStrategy equivalence (against default at matching N): rtol={STRATEGY_RTOL:g}, atol={STRATEGY_ATOL:g}"
-            )
-            print(
-                "N  Strategy  Dataset                      Max abs error   Relative L2   Result"
-            )
-            for case, datasets in comparisons.items():
-                strategy = int(case.split("/")[0].split("-")[-1])
-                n = int(case.rsplit("N", 1)[-1])
-                for name, metric in datasets.items():
-                    print(
-                        f"{n:<3} {strategy:<9} {name:<29} {metric['max_absolute_error']:.6e} {metric['relative_l2_error']:.6e} {'PASS' if metric['passed'] else 'FAIL'}",
-                        flush=True,
-                    )
-            print(
-                f"Overall strategy equivalence: {'PASS' if equivalence_passed else 'FAIL'}",
-                flush=True,
-            )
             summarize_profile(
                 directory / "nsys",
                 {
@@ -639,12 +666,12 @@ def campaign(
             comparisons = {}
             for n in MESH_SIZES:
                 hdf = files[3, n]
-                _, wave_number, spectrum = process(hdf, plots=True)
-                compare_spectrum(
-                    hdf, wave_number, spectrum, directory / "reference-data"
-                )
+                process(hdf, plots=True)
                 comparisons[f"N{n}"] = compare_reference(
                     hdf, reference, reference_relative_tolerance
+                )
+                comparisons[f"N{n}"]["vorticity_norm_t8"] = compare_vorticity_slice(
+                    hdf, directory / "reference-data", reference_relative_tolerance
                 )
                 print(
                     f"Trajectory checks N={n}: PASS (mass, positivity, reconstruction and incompressibility where applicable)"

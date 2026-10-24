@@ -46,8 +46,11 @@ def nvtx_filter(case):
 
 
 def compute_command(
-    binary, directory, case, n, flags, fluid, transport, coupling, sample_ranges
+    binary, directory, case, n, flags, fluid, transport, coupling, sample_ranges, group
 ):
+    symbols = "|".join(re.escape(symbol) for symbol in group["symbols"])
+    invocations = "|".join(map(str, group["invocations"]))
+    count = len(group["symbols"]) * len(group["invocations"])
     return [
         "ncu",
         "--nvtx",
@@ -56,6 +59,10 @@ def compute_command(
         "--kernel-name-base=mangled",
         "--rename-kernels=off",
         "--range-filter=::^(" + "|".join(map(str, sample_ranges)) + ")$",
+        f"--kernel-id=::regex:^({symbols})$:^({invocations})$",
+        f"--launch-count={count}",
+        "--kill=yes",
+        "--replay-mode=kernel",
         "--section=SpeedOfLight",
         "--section=LaunchStats",
         "--section=Occupancy",
@@ -103,9 +110,10 @@ def report_api(directory):
     )
 
 
-def read_compute_report(path, api):
+def read_compute_report(path, api, expected_launches=None):
     report = api.load_report(str(path))
     kernels = {}
+    launches = 0
     for index in range(report.num_ranges()):
         section = report.range_by_idx(index)
         for action_index in range(section.num_actions()):
@@ -122,6 +130,7 @@ def read_compute_report(path, api):
             regions = [name for name in stack if iteration_case(name)]
             if not labels or not regions or not stack[-1].startswith("similie_"):
                 continue
+            launches += 1
             metrics = {}
             for label, name in METRICS.items():
                 metric = action.metric_by_name(name)
@@ -154,6 +163,10 @@ def read_compute_report(path, api):
                         rules=rules,
                     ),
                 )
+    if expected_launches is not None and launches != expected_launches:
+        raise ValueError(
+            f"Compute captured {launches} launches; expected {expected_launches} first invocations: {path}"
+        )
     if not kernels:
         raise ValueError(
             f"Compute captured no kernels inside the iteration NVTX region: {path}"
@@ -179,48 +192,56 @@ def profile_cases(binary, output, fluid, transport, coupling):
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                print(f"\nNsight Compute: {case}", flush=True)
-                execute(
-                    compute_command(
-                        binary,
-                        case_directory,
-                        case,
-                        n,
-                        flags,
-                        fluid,
-                        transport,
-                        coupling,
-                        plan["sample_ranges"],
-                    ),
-                    case_directory,
-                    environment,
+                groups = plan["sample_groups"]
+                count = sum(
+                    len(group["symbols"]) * len(group["invocations"])
+                    for group in groups
                 )
-                benchmark = json.loads((case_directory / "benchmark.json").read_text())
-                rows = [
-                    row
-                    for row in benchmark["benchmarks"]
-                    if row.get("run_type", "iteration") == "iteration"
-                ]
-                if (
-                    len(rows) != 1
-                    or rows[0].get("iterations") != 1
-                    or rows[0].get("error_occurred")
-                    or rows[0].get("skipped")
-                ):
-                    raise ValueError(
-                        "Compute diagnostic must execute exactly one benchmark iteration"
+                print(
+                    f"\nNsight Compute: {case}: {count} first kernel calls in {len(groups)} bounded batches",
+                    flush=True,
+                )
+                results["cases"][case] = []
+                for index, group in enumerate(groups, 1):
+                    batch_directory = case_directory / f"batch-{index}"
+                    expected = len(group["symbols"]) * len(group["invocations"])
+                    print(
+                        f"  Batch {index}/{len(groups)}: capture at most {expected} launches, then stop",
+                        flush=True,
                     )
-                # Recent releases default to compressed .ncu-repz reports.
-                reports = [
-                    path
-                    for path in case_directory.glob("kernels.ncu-rep*")
-                    if path.suffix in (".ncu-rep", ".ncu-repz")
-                ]
-                if len(reports) != 1:
-                    raise FileNotFoundError(
-                        f"Expected one Compute report in {case_directory}"
+                    execute(
+                        compute_command(
+                            binary,
+                            batch_directory,
+                            case,
+                            n,
+                            flags,
+                            fluid,
+                            transport,
+                            coupling,
+                            plan["sample_ranges"],
+                            group,
+                        ),
+                        batch_directory,
+                        environment,
                     )
-                results["cases"][case] = read_compute_report(reports[0], api)
+                    # --kill ends the diagnostic as soon as all requested calls
+                    # are captured. No timings or completed trajectory are used.
+                    reports = [
+                        path
+                        for path in batch_directory.glob("kernels.ncu-rep*")
+                        if path.suffix in (".ncu-rep", ".ncu-repz")
+                    ]
+                    if len(reports) != 1:
+                        raise FileNotFoundError(
+                            f"Expected one Compute report in {batch_directory}"
+                        )
+                    results["cases"][case].extend(
+                        read_compute_report(reports[0], api, expected)
+                    )
+                    (directory / "results.json").write_text(
+                        json.dumps(results, indent=2) + "\n"
+                    )
                 sampled = {
                     (row["region"], row["label"], row["symbol"])
                     for row in results["cases"][case]
@@ -244,23 +265,23 @@ def profile_cases(binary, output, fluid, transport, coupling):
         (directory / "results.json").write_text(json.dumps(results, indent=2) + "\n")
     if results["errors"]:
         raise RuntimeError(
-            "Some Compute cases failed; see ncu/results.json and per-case run.log"
+            "Some Compute cases failed; see ncu/results.json and per-batch run.log"
         )
 
 
 def diagnostic_text(sample):
     if sample is None:
         return "Not sampled"
-    return (
-        "; ".join(
-            dict.fromkeys(
-                rule["title"] or rule["name"]
-                for rule in sample["rules"]
-                if rule["section"] == "SpeedOfLight"
-            )
-        )
-        or "—"
-    )
+    diagnostics = []
+    seen = set()
+    for rule in sample["rules"]:
+        title = rule["title"] or rule["name"]
+        detail = rule["message"].strip()
+        diagnostic = f"{title}: {detail}" if detail else title
+        if diagnostic not in seen:
+            diagnostics.append(diagnostic)
+            seen.add(diagnostic)
+    return "\n".join(diagnostics) or "—"
 
 
 def format_number(value, scale=1):
@@ -339,7 +360,7 @@ def write_combined_report(output):
         "Systems supplies all timings/counts; Compute supplies only metrics. "
         "NVTX durations are host times; GPU totals span each region's first to last GPU activity. "
         "Regions include nested scopes. Others is uncovered time on each timeline; overlaps count once. "
-        "Full symbols, metrics and diagnostic messages are in the artifacts.",
+        "Nsight Compute rule analysis is shown per kernel; full symbols and metrics are in the artifacts.",
     ]
     if compute.get("configuration"):
         lines += ["", markdown(compute["configuration"])]
@@ -354,9 +375,8 @@ def write_combined_report(output):
     columns = [
         "Region",
         "Kernel",
-        "Calls",
-        "NVTX (ms)",
         "GPU total (ms)",
+        "Calls",
         "Mean kernel (µs)",
         *visible_metrics,
         "Analysis",
@@ -379,7 +399,12 @@ def write_combined_report(output):
                 + " | ".join(["No iteration data"] + ["—"] * (len(columns) - 1))
                 + " |"
             )
+        last_region = None
         for row in rows:
+            if row["kind"] == "region" and last_region is not None:
+                # An empty row gives each NVTX section visual breathing room
+                # while keeping one table per benchmark case.
+                lines.append("| " + " | ".join("" for _ in columns) + " |")
             region = (
                 row["region"].removeprefix(case + "/")
                 if row["kind"] == "region"
@@ -388,9 +413,8 @@ def write_combined_report(output):
             cells = [
                 region,
                 row.get("display_label", row["label"]),
-                format_number(row["calls"]),
-                format_number(row["nvtx_ns"], 1e6),
                 format_number(row["total_ns"], 1e6),
+                format_number(row["calls"]),
                 format_number(row["mean_ns"], 1e3),
             ]
             cells += [
@@ -399,6 +423,8 @@ def write_combined_report(output):
             ]
             cells += [row["analysis"]]
             lines.append("| " + " | ".join(markdown(cell) for cell in cells) + " |")
+            if row["kind"] == "region":
+                last_region = row["region"]
         records.extend(rows)
     directory = output / "nsight"
     directory.mkdir(parents=True, exist_ok=True)

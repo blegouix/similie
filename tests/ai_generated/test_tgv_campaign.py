@@ -20,7 +20,8 @@ sys.path.insert(
 from ci_campaign import (
     STRATEGIES,
     campaign,
-    compare_spectrum,
+    compare_vorticity_slice,
+    reference_history,
     compare_strategies,
     validate_trajectory,
     write_report,
@@ -207,37 +208,66 @@ class StrategyComparison(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare_strategies(self.baseline, self.candidate)
 
-    def test_image_reference_is_not_extrapolated_to_unshown_low_modes(self):
+
+class NumericalReference(unittest.TestCase):
+    def test_original_inputs_and_matching_periodic_slice_nodes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reference_directory = root / "reference"
+            history = reference_history(reference_directory)
+            self.assertEqual(history.shape, (2000, 4))
+            self.assertEqual(history[0, 1], 0.125)
+            self.assertEqual(history[0, 3], 0.375)
+            self.assertEqual(len(list(reference_directory.iterdir())), 4)
+            reference = np.fromfile(
+                reference_directory / "wn_slice_x0_08000.out", dtype="<f8"
+            ).reshape(512, 512)
+            # Use a deliberately asymmetric reference to detect a mistaken
+            # transpose in the binary storage/coordinate interpretation.
+            reference = reference + np.arange(512)[:, None] / 512
+            reference.astype("<f8").tofile(
+                reference_directory / "wn_slice_x0_08000.out"
+            )
+            n = 8
+            grid = -np.pi + np.arange(n) * (2 * np.pi / n)
+            position = np.zeros((1, n, n, 3))
+            position[..., 0] = -np.pi
+            position[0, ..., 1] = grid[:, None]
+            position[0, ..., 2] = grid[None, :]
+            vorticity = np.zeros((1, n, n, 3))
+            vorticity[0, ..., 0] = reference[::64, ::64]
+            hdf = root / "trajectory.h5"
+            with h5py.File(hdf, "w") as data:
+                data["position"] = position
+                data["snapshot_0/time"] = [8.0]
+                data["snapshot_0/vorticity"] = vorticity
+            metrics = compare_vorticity_slice(hdf, reference_directory, tolerance=0.01)
+            self.assertEqual(metrics["relative_l2_error"], 0)
+            self.assertTrue(metrics["passed"])
+            self.assertEqual(metrics["samples"], n * n)
+            self.assertTrue(hdf.with_suffix(".vorticity-comparison.png").is_file())
+            with h5py.File(hdf, "r+") as data:
+                data["snapshot_0/vorticity"][0, 1, 3, 0] += 50
+            metrics = compare_vorticity_slice(hdf, reference_directory, tolerance=0.01)
+            self.assertFalse(metrics["passed"])
+            self.assertEqual(metrics["max_absolute_error"], 50)
+            with h5py.File(hdf, "r+") as data:
+                data["snapshot_0/time"][0] = 7.9999
+            with self.assertRaisesRegex(ValueError, "exactly one t=8"):
+                compare_vorticity_slice(hdf, reference_directory)
+
+    def test_reference_checksum_rejects_changed_original_data(self):
         source = (
             Path(__file__).resolve().parents[2]
             / "benchmarks/taylor_green_vortex/reference_data"
         )
-        reference = np.loadtxt(source / "spectrum_t8.csv", delimiter=",", skiprows=4)
-        wave_number = np.arange(33)
-        spectrum = np.ones(33)
-        selected = wave_number >= reference[0, 0]
-        spectrum[selected] = 10 ** np.interp(
-            np.log10(wave_number[selected]),
-            np.log10(reference[:, 0]),
-            np.log10(reference[:, 1]),
-        )
-        # These low modes are not present in the PDF and must not affect its error.
-        spectrum[:5] = 1e20
-        metrics = compare_spectrum(
-            self.baseline,
-            wave_number,
-            spectrum,
-            Path(self.directory.name) / "reference",
-        )
-        self.assertEqual(metrics["wave_number_range"], [5, 32])
-        self.assertLess(metrics["relative_l2_error"], 1e-12)
-        self.assertTrue(self.baseline.with_suffix(".spectrum-comparison.png").is_file())
-        self.assertEqual(
-            json.loads(
-                self.baseline.with_suffix(".spectrum-comparison.json").read_text()
-            )["time"],
-            8,
-        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            shutil.copytree(source, root / "reference_data")
+            (root / "reference_data/spectral_Re1600_512.gdiag").write_text("corrupted")
+            with patch("ci_campaign.__file__", str(root / "ci_campaign.py")):
+                with self.assertRaisesRegex(ValueError, "checksum mismatch"):
+                    reference_history(root / "artifact")
 
 
 if __name__ == "__main__":

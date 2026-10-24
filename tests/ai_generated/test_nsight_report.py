@@ -22,6 +22,7 @@ sys.path.insert(
 from nsight_report import (
     METRICS,
     case_specs,
+    compute_command,
     read_compute_report,
     write_combined_report,
 )
@@ -88,6 +89,48 @@ def capture_fixture(path):
 
 
 class IterationAttribution(unittest.TestCase):
+    def test_repeated_launches_in_one_nvtx_range_are_sampled_only_once(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "capture.sqlite"
+            capture_fixture(path)
+            with sqlite3.connect(path) as connection:
+                connection.execute("INSERT INTO StringIds VALUES(3,'_Zother_kernel')")
+                for correlation, host, symbol in ((100, 126, 1), (101, 127, 3)):
+                    connection.execute(
+                        "INSERT INTO CUPTI_ACTIVITY_KIND_RUNTIME VALUES(?,?,?,?)",
+                        (host, host + 1, (1 << 24) + 7, correlation),
+                    )
+                    connection.execute(
+                        "INSERT INTO CUPTI_ACTIVITY_KIND_KERNEL VALUES(1002,1008,0,?,?,?,2)",
+                        (correlation, 1 << 24, symbol),
+                    )
+            profile = iteration_profiles(path)[CASE]
+            self.assertEqual(profile["sample_ranges"], [1, 3])
+            groups = {
+                tuple(group["invocations"]): group["symbols"]
+                for group in profile["sample_groups"]
+            }
+            # Setup, unselected A's second range and the library launch do
+            # not increment Compute's counter. A's repeated launch inside
+            # the selected first range increments it but is not sampled.
+            self.assertEqual(groups, {(1,): ["_Zother_kernel"], (1, 3): [SYMBOL]})
+            group = dict(symbols=[SYMBOL], invocations=[1, 3])
+            command = compute_command(
+                Path("binary"),
+                Path(temporary),
+                CASE,
+                64,
+                (),
+                "incompressible",
+                "ideal",
+                "ehd",
+                profile["sample_ranges"],
+                group,
+            )
+            self.assertIn(f"--kernel-id=::regex:^({SYMBOL})$:^(1|3)$", command)
+            self.assertIn("--launch-count=2", command)
+            self.assertIn("--kill=yes", command)
+
     def test_library_launch_nested_in_similie_scope_remains_others(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "capture.sqlite"
@@ -182,6 +225,8 @@ class IterationAttribution(unittest.TestCase):
             load_report=lambda _: report, IAction=SimpleNamespace(NameBase_MANGLED=1)
         )
         samples = read_compute_report(Path("unused"), api)
+        with self.assertRaisesRegex(ValueError, "captured 3 launches; expected 2"):
+            read_compute_report(Path("unused"), api, expected_launches=2)
         by_region = {sample["region"]: sample for sample in samples}
         self.assertEqual(len(by_region), 3)
         self.assertEqual(by_region[CASE + "/iteration"]["metrics"]["SM (%)"], 10)
@@ -219,7 +264,13 @@ class CombinedReport(unittest.TestCase):
                                 section="SpeedOfLight",
                                 title="Latency",
                                 message="Long diagnostic detail that belongs only in artifacts.",
-                            )
+                            ),
+                            dict(
+                                name="Occupancy",
+                                section="Occupancy",
+                                title="Occupancy analysis",
+                                message="The original Nsight rule explanation.",
+                            ),
                         ],
                     )
                     for region in profile["regions"]
@@ -234,13 +285,24 @@ class CombinedReport(unittest.TestCase):
             )
             self.assertEqual(write_combined_report(output), [])
             report = (output / "nsight/report.md").read_text()
-            self.assertEqual(report.count("| Region | Kernel |"), 14)
+            self.assertEqual(
+                report.count(
+                    "| Region | Kernel | GPU total (ms) | Calls | Mean kernel (µs) |"
+                ),
+                14,
+            )
+            self.assertNotIn("NVTX (ms)", report)
             self.assertEqual(report.count("|  | similie_probe |"), 14 * 3)
             self.assertEqual(report.count("|  | Others |"), 14 * 3)
             self.assertNotIn("similie_setup", report)
             self.assertNotIn("library_probe", report)
             self.assertNotIn(SYMBOL, report)
-            self.assertNotIn("Long diagnostic detail", report)
+            self.assertIn("Latency: Long diagnostic detail", report)
+            self.assertIn(
+                "Occupancy analysis: The original Nsight rule explanation.", report
+            )
+            self.assertIn("<br>", report)
+            self.assertIn("|  |  |  |  |  |  |  |  |  |", report)
             records = json.loads((output / "nsight/report.json").read_text())["rows"]
             kernels = {
                 row["region"]: row
@@ -270,7 +332,7 @@ class CombinedReport(unittest.TestCase):
             errors = write_combined_report(output)
             self.assertIn("Missing Nsight Compute diagnostics", errors)
             report = (output / "nsight/report.md").read_text()
-            self.assertEqual(report.count("| Region | Kernel |"), 14)
+            self.assertEqual(report.count("| Region | Kernel | GPU total (ms) |"), 14)
             self.assertEqual(report.count("No iteration data"), 13)
             self.assertIn("Not sampled", report)
 
@@ -284,6 +346,7 @@ class WorkflowPublication(unittest.TestCase):
         for name, phase in (
             ("publish_performance_report", "performance"),
             ("publish_nsight_report", "nsight"),
+            ("publish_validation_report", "validation"),
         ):
             start = workflow.index(f"        {name}()")
             end = workflow.index(f"        trap {name} EXIT", start) + len(

@@ -97,6 +97,7 @@ def iteration_profiles(database):
         cases = {}
         first_iterations = {}
         ordinals = {}
+        launches = {}
         for row in connection.execute("""
             SELECT n.rowid AS id, n.start, n.end, n.globalTid AS tid,
                    coalesce(s.value, n.text, '') AS name
@@ -121,7 +122,12 @@ def iteration_profiles(database):
                 root = ranges[scope["iteration"]]
                 scope["case"] = iteration_case(root["name"])
                 profile = cases.setdefault(
-                    scope["case"], dict(regions={}, sample_ranges=set(), targets=set())
+                    scope["case"],
+                    dict(
+                        regions={},
+                        sample_ranges=set(),
+                        targets=set(),
+                    ),
                 )
                 if case:
                     scope["devices"] = {}
@@ -208,6 +214,7 @@ def iteration_profiles(database):
             # Mirror Compute's top-of-stack label filter. A library launch
             # nested in a SimiLie scope must still contribute to Others.
             label = active[-1] if active[-1]["name"].startswith("similie_") else None
+            sample = False
             for scope in active:
                 if "devices" not in scope:
                     continue
@@ -232,6 +239,15 @@ def iteration_profiles(database):
                     if target not in profile["targets"]:
                         profile["sample_ranges"].add(label["ordinal"])
                         profile["targets"].add(target)
+                        sample = True
+            if (
+                label is not None
+                and activity["symbol"] is not None
+                and label["iteration"] == first_iterations[label["case"]]
+            ):
+                launches.setdefault(label["case"], []).append(
+                    (label["ordinal"], activity["symbol"], sample)
+                )
         for scope in ranges.values():
             if "devices" not in scope:
                 continue
@@ -249,7 +265,27 @@ def iteration_profiles(database):
             region["others_host_ns"] += (
                 scope["end"] - scope["start"] - covered_duration(host_intervals)
             )
-        for profile in cases.values():
+        for case, profile in cases.items():
+            invocations = {}
+            samples = {}
+            # Compute numbers each symbol's invocations after NVTX/range
+            # filtering. A selected NVTX instance may contain repeated CUDA
+            # launches; retain only the launch that first supplied a target.
+            for ordinal, symbol, sample in launches.get(case, []):
+                if ordinal not in profile["sample_ranges"]:
+                    continue
+                invocations[symbol] = invocations.get(symbol, 0) + 1
+                if sample:
+                    samples.setdefault(symbol, []).append(invocations[symbol])
+            groups = {}
+            # NCU accepts one invocation pattern per run. Group symbols with
+            # the same indices to minimize the number of application launches.
+            for symbol, indices in samples.items():
+                groups.setdefault(tuple(indices), []).append(symbol)
+            profile["sample_groups"] = [
+                dict(symbols=sorted(symbols), invocations=list(indices))
+                for indices, symbols in sorted(groups.items())
+            ]
             profile["regions"] = sorted(
                 profile["regions"].values(), key=lambda region: region["name"]
             )
@@ -266,7 +302,9 @@ def iteration_profiles(database):
 
 def markdown(value):
     return (
-        html.escape(str(value), quote=False).replace("|", "&#124;").replace("\n", " ")
+        html.escape(str(value), quote=False)
+        .replace("|", "&#124;")
+        .replace("\n", "<br>")
     )
 
 
