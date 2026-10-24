@@ -22,6 +22,9 @@ from nsys_report import iteration_case, markdown, profiling_environment
 METRICS = {
     "SM (%)": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
     "Memory (%)": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+    "L1/TEX (%)": "l1tex__throughput.avg.pct_of_peak_sustained_elapsed",
+    "L2 (%)": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+    "DRAM (%)": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
     "Achieved occupancy (%)": "sm__warps_active.avg.pct_of_peak_sustained_active",
     "Theoretical occupancy (%)": "sm__maximum_warps_per_active_cycle_pct",
     "Active warps/SM": "sm__warps_active.avg.per_cycle_active",
@@ -42,7 +45,7 @@ def case_specs():
 
 def nvtx_filter(case):
     name = re.escape(case + "/iteration").replace("/", r"\/")
-    return "regex:" + name + "/*/similie_.*]"
+    return "regex:^" + name + "$/"
 
 
 def compute_command(
@@ -66,6 +69,8 @@ def compute_command(
         "--section=SpeedOfLight",
         "--section=LaunchStats",
         "--section=Occupancy",
+        "--metrics="
+        + ",".join(METRICS[name] for name in ("L1/TEX (%)", "L2 (%)", "DRAM (%)")),
         "--apply-rules=yes",
         "--force-overwrite",
         f"--export={directory / 'kernels'}",
@@ -126,16 +131,16 @@ def read_compute_report(path, api, expected_launches=None):
                     domain = state.domain_by_id(domain_id)
                     if domain.name() in ("", "<default domain>"):
                         stack = list(domain.push_pop_ranges())
-            labels = [name for name in stack if name.startswith("similie_")]
             regions = [name for name in stack if iteration_case(name)]
-            if not labels or not regions or not stack[-1].startswith("similie_"):
+            if not regions:
                 continue
+            label = "" if iteration_case(stack[-1]) else stack[-1]
             launches += 1
             metrics = {}
-            for label, name in METRICS.items():
+            for metric_label, name in METRICS.items():
                 metric = action.metric_by_name(name)
                 value = metric.as_double() if metric and metric.has_value() else None
-                metrics[label] = (
+                metrics[metric_label] = (
                     value if value is not None and math.isfinite(value) else None
                 )
             rules = []
@@ -154,10 +159,10 @@ def read_compute_report(path, api, expected_launches=None):
                 # Shared ancestors retain their first sample; sibling regions
                 # retain distinct samples even when they execute the same symbol.
                 kernels.setdefault(
-                    (region, labels[-1], symbol),
+                    (region, label, symbol),
                     dict(
                         region=region,
-                        label=labels[-1],
+                        label=label,
                         symbol=symbol,
                         metrics=metrics,
                         rules=rules,
@@ -288,6 +293,29 @@ def format_number(value, scale=1):
     return "—" if value is None else f"{value / scale:.6g}"
 
 
+def kernel_display_label(kernel):
+    label = kernel["label"]
+    if label.startswith("similie_"):
+        return label
+    name = kernel.get("name") or kernel["symbol"]
+    return f"{name} ({label})" if label else name
+
+
+def limiting_metrics(metrics):
+    """Highlight near-peak throughput, without inferring limits from occupancy."""
+    values = {
+        name: metrics[name]
+        for name in ("SM (%)", "L1/TEX (%)", "L2 (%)", "DRAM (%)")
+        if metrics.get(name) is not None
+    }
+    peak = max(values.values(), default=0)
+    return {
+        name: 32 if name == "SM (%)" else 31
+        for name, value in values.items()
+        if value >= 85 and peak - value <= 5
+    }
+
+
 def combined_rows(case, profile, samples):
     indexed = {(row["region"], row["label"], row["symbol"]): row for row in samples}
     for region in profile.get("regions", []):
@@ -307,14 +335,19 @@ def combined_rows(case, profile, samples):
         )
         counts = {}
         indices = {}
-        for kernel in region["kernels"]:
-            counts[kernel["label"]] = counts.get(kernel["label"], 0) + 1
-        for kernel in region["kernels"]:
+        kernels = sorted(
+            region["kernels"], key=lambda kernel: kernel["total_ns"], reverse=True
+        )
+        for kernel in kernels:
+            label = kernel_display_label(kernel)
+            counts[label] = counts.get(label, 0) + 1
+        for kernel in kernels:
             sample = indexed.get((region["name"], kernel["label"], kernel["symbol"]))
-            indices[kernel["label"]] = indices.get(kernel["label"], 0) + 1
-            display_label = kernel["label"]
-            if counts[kernel["label"]] > 1:
-                display_label += f" [{indices[kernel['label']]}]"
+            label = kernel_display_label(kernel)
+            indices[label] = indices.get(label, 0) + 1
+            display_label = label
+            if counts[label] > 1:
+                display_label += f" [{indices[label]}]"
             yield dict(
                 **common,
                 kind="kernel",
@@ -355,11 +388,15 @@ def write_combined_report(output):
     if not compute:
         errors.append("Missing Nsight Compute diagnostics")
     lines = [
-        "# SimiLie iteration profiles",
+        "# TGV iteration profiles",
         "",
         "Systems supplies all timings/counts; Compute supplies only metrics. "
         "NVTX durations are host times; GPU totals span each region's first to last GPU activity. "
-        "Regions include nested scopes. Others is uncovered time on each timeline; overlaps count once. "
+        "Regions include nested scopes and all CUDA kernels, including library kernels. "
+        "Others is time outside all reported kernels, including transfers and gaps; overlaps count once. "
+        "L1/TEX, L2 and DRAM SOL are throughput percentages of each unit's sustained peak, not cache hit rates. "
+        "Near-peak values (at least 85%, within 5 percentage points of the highest SM/memory throughput) "
+        "are bold in the summary and colored in the logs: red for memory, green for SM. "
         "Nsight Compute rule analysis is shown per kernel; full symbols and metrics are in the artifacts.",
     ]
     if compute.get("configuration"):
@@ -368,7 +405,9 @@ def write_combined_report(output):
         lines += ["", "Collection errors: " + markdown("; ".join(errors))]
     visible_metrics = {
         "SM SOL (%)": "SM (%)",
-        "Mem SOL (%)": "Memory (%)",
+        "L1/TEX SOL (%)": "L1/TEX (%)",
+        "L2 SOL (%)": "L2 (%)",
+        "DRAM SOL (%)": "DRAM (%)",
         "Occupancy (%)": "Achieved occupancy (%)",
         "Warps/SM": "Active warps/SM",
     }
@@ -382,6 +421,7 @@ def write_combined_report(output):
         "Analysis",
     ]
     records = []
+    ansi_rows = {}
     for case, _, _, _ in case_specs():
         lines += [
             "",
@@ -422,13 +462,26 @@ def write_combined_report(output):
                 for name in visible_metrics.values()
             ]
             cells += [row["analysis"]]
-            lines.append("| " + " | ".join(markdown(cell) for cell in cells) + " |")
+            cells = [markdown(cell) for cell in cells]
+            ansi_cells = cells.copy()
+            highlights = limiting_metrics(row["metrics"])
+            for index, name in enumerate(visible_metrics.values(), 5):
+                if name in highlights:
+                    ansi_cells[index] = (
+                        f"\x1b[1;{highlights[name]}m{cells[index]}\x1b[0m"
+                    )
+                    cells[index] = f"**{cells[index]}**"
+            ansi_rows[len(lines)] = "| " + " | ".join(ansi_cells) + " |"
+            lines.append("| " + " | ".join(cells) + " |")
             if row["kind"] == "region":
                 last_region = row["region"]
         records.extend(rows)
     directory = output / "nsight"
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "report.md").write_text("\n".join(lines) + "\n")
+    (directory / "report.ansi").write_text(
+        "\n".join(ansi_rows.get(index, line) for index, line in enumerate(lines)) + "\n"
+    )
     (directory / "report.json").write_text(
         json.dumps(dict(rows=records, errors=errors), indent=2) + "\n"
     )

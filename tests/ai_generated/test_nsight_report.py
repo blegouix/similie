@@ -22,7 +22,9 @@ sys.path.insert(
 from nsight_report import (
     METRICS,
     case_specs,
+    combined_rows,
     compute_command,
+    limiting_metrics,
     read_compute_report,
     write_combined_report,
 )
@@ -89,6 +91,95 @@ def capture_fixture(path):
 
 
 class IterationAttribution(unittest.TestCase):
+    def test_library_and_unlabelled_kernels_join_compute_metrics(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "capture.sqlite"
+            capture_fixture(path)
+            with sqlite3.connect(path) as connection:
+                connection.executescript("""
+                    INSERT INTO StringIds VALUES(3,'generic_kernel');
+                    ALTER TABLE CUPTI_ACTIVITY_KIND_KERNEL ADD COLUMN shortName INTEGER;
+                    UPDATE CUPTI_ACTIVITY_KIND_KERNEL SET shortName=3;
+                """)
+                connection.execute(
+                    "INSERT INTO CUPTI_ACTIVITY_KIND_RUNTIME VALUES(175,176,?,100)",
+                    ((1 << 24) + 7,),
+                )
+                connection.execute(
+                    "INSERT INTO CUPTI_ACTIVITY_KIND_KERNEL VALUES(1025,1030,0,100,?,1,2,3)",
+                    (1 << 24,),
+                )
+            profile = iteration_profiles(path)[CASE]
+
+        def action(stack):
+            domain = SimpleNamespace(
+                name=lambda: "<default domain>", push_pop_ranges=lambda: stack
+            )
+            state = SimpleNamespace(domains=lambda: (0,), domain_by_id=lambda _: domain)
+            values = {
+                METRICS[key]: value
+                for key, value in (("L1/TEX (%)", 11), ("L2 (%)", 22), ("DRAM (%)", 33))
+            }
+
+            def metric(name):
+                if name not in values:
+                    return None
+                return SimpleNamespace(
+                    has_value=lambda: True, as_double=lambda: values[name]
+                )
+
+            return SimpleNamespace(
+                name=lambda _: SYMBOL,
+                nvtx_state=lambda: state,
+                metric_by_name=metric,
+                rule_results=lambda: (),
+            )
+
+        actions = [
+            action(stack)
+            for stack in (
+                (CASE + "/setup", "library_probe"),
+                (CASE + "/iteration", CASE + "/iteration/A"),
+                (CASE + "/iteration", CASE + "/iteration/A", "library_probe"),
+            )
+        ]
+        section = SimpleNamespace(
+            num_actions=lambda: len(actions), action_by_idx=lambda i: actions[i]
+        )
+        report = SimpleNamespace(num_ranges=lambda: 1, range_by_idx=lambda _: section)
+        api = SimpleNamespace(
+            load_report=lambda _: report, IAction=SimpleNamespace(NameBase_MANGLED=1)
+        )
+        samples = read_compute_report(Path("unused"), api, expected_launches=2)
+        self.assertEqual(len(samples), 4)
+        rows = list(combined_rows(CASE, profile, samples))
+        direct = next(
+            row
+            for row in rows
+            if row["kind"] == "kernel"
+            and row["label"] == ""
+            and row["region"].endswith("/A")
+        )
+        library = next(
+            row
+            for row in rows
+            if row["kind"] == "kernel"
+            and row["label"] == "library_probe"
+            and row["region"].endswith("/A")
+        )
+        self.assertEqual(direct["display_label"], "generic_kernel")
+        self.assertEqual(direct["calls"], 1)
+        self.assertEqual(direct["total_ns"], 5)
+        self.assertEqual(library["display_label"], "generic_kernel (library_probe)")
+        for row in (direct, library):
+            self.assertEqual(
+                [row["metrics"][key] for key in ("L1/TEX (%)", "L2 (%)", "DRAM (%)")],
+                [11, 22, 33],
+            )
+        self.assertEqual(
+            profile["sample_groups"], [dict(symbols=[SYMBOL], invocations=[1, 3, 4, 5])]
+        )
+
     def test_repeated_launches_in_one_nvtx_range_are_sampled_only_once(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "capture.sqlite"
@@ -105,16 +196,16 @@ class IterationAttribution(unittest.TestCase):
                         (correlation, 1 << 24, symbol),
                     )
             profile = iteration_profiles(path)[CASE]
-            self.assertEqual(profile["sample_ranges"], [1, 3])
+            self.assertEqual(profile["sample_ranges"], [1])
             groups = {
                 tuple(group["invocations"]): group["symbols"]
                 for group in profile["sample_groups"]
             }
-            # Setup, unselected A's second range and the library launch do
-            # not increment Compute's counter. A's repeated launch inside
-            # the selected first range increments it but is not sampled.
-            self.assertEqual(groups, {(1,): ["_Zother_kernel"], (1, 3): [SYMBOL]})
-            group = dict(symbols=[SYMBOL], invocations=[1, 3])
+            # Every first-iteration call advances the symbol's counter.
+            # Repeats stay unselected; the library and sibling B retain
+            # their first samples. Setup never advances these counters.
+            self.assertEqual(groups, {(1,): ["_Zother_kernel"], (1, 4, 5): [SYMBOL]})
+            group = dict(symbols=[SYMBOL], invocations=[1, 4, 5])
             command = compute_command(
                 Path("binary"),
                 Path(temporary),
@@ -127,11 +218,23 @@ class IterationAttribution(unittest.TestCase):
                 profile["sample_ranges"],
                 group,
             )
-            self.assertIn(f"--kernel-id=::regex:^({SYMBOL})$:^(1|3)$", command)
-            self.assertIn("--launch-count=2", command)
+            self.assertIn(f"--kernel-id=::regex:^({SYMBOL})$:^(1|4|5)$", command)
+            self.assertIn("--range-filter=::^(1)$", command)
+            self.assertIn(
+                "--nvtx-include=regex:^TaylorGreen\\/N=64\\/default\\/iteration$/",
+                command,
+            )
+            self.assertIn("--launch-count=3", command)
             self.assertIn("--kill=yes", command)
+            self.assertIn(
+                "--metrics="
+                + ",".join(
+                    METRICS[key] for key in ("L1/TEX (%)", "L2 (%)", "DRAM (%)")
+                ),
+                command,
+            )
 
-    def test_library_launch_nested_in_similie_scope_remains_others(self):
+    def test_library_launch_nested_in_similie_scope_is_reported_separately(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "capture.sqlite"
             capture_fixture(path)
@@ -145,9 +248,10 @@ class IterationAttribution(unittest.TestCase):
                 row for row in profile["regions"] if row["name"].endswith("/A")
             )
             self.assertEqual(region["kernels"][0]["calls"], 3)
-            self.assertEqual(len(region["kernels"]), 1)
-            self.assertEqual(region["others_ns"], 10)
-            self.assertEqual(profile["sample_ranges"], [1, 4])
+            self.assertEqual(len(region["kernels"]), 2)
+            self.assertEqual(region["kernels"][1]["label"], "library_probe")
+            self.assertEqual(region["others_ns"], 0)
+            self.assertEqual(profile["sample_ranges"], [1])
 
     def test_same_label_keeps_different_kernel_specializations(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -164,15 +268,15 @@ class IterationAttribution(unittest.TestCase):
             region = next(
                 row for row in profile["regions"] if row["name"].endswith("/A")
             )
-            self.assertEqual(len(region["kernels"]), 2)
-            self.assertEqual(profile["sample_ranges"], [1, 2, 3])
+            self.assertEqual(len(region["kernels"]), 3)
+            self.assertEqual(profile["sample_ranges"], [1])
 
     def test_setup_library_calls_and_overlap_do_not_corrupt_region_timings(self):
         with tempfile.TemporaryDirectory() as temporary:
             profiles = capture_fixture(Path(temporary) / "capture.sqlite")
         profile = profiles[CASE]
-        self.assertEqual(profile["sample_ranges"], [1, 3])
-        self.assertEqual(len(profile["targets"]), 3)
+        self.assertEqual(profile["sample_ranges"], [1])
+        self.assertEqual(len(profile["targets"]), 5)
         regions = {region["name"]: region for region in profile["regions"]}
         self.assertEqual(
             set(regions),
@@ -182,15 +286,30 @@ class IterationAttribution(unittest.TestCase):
         self.assertEqual(root["calls"], 2)
         self.assertEqual(root["host_ns"], 600)
         self.assertEqual(root["gpu_ns"], 70)
-        self.assertEqual(root["others_ns"], 25)
+        self.assertEqual(root["others_ns"], 15)
         self.assertEqual(root["others_host_ns"], 600)
         self.assertEqual(root["kernels"][0]["calls"], 5)
         a = regions[CASE + "/iteration/A"]
-        self.assertEqual(a["others_ns"], 10)
+        self.assertEqual(a["others_ns"], 0)
         self.assertEqual(a["gpu_ns"], 35)
         self.assertEqual(
             a["kernels"],
-            [dict(label="similie_probe", symbol=SYMBOL, calls=3, total_ns=30)],
+            [
+                dict(
+                    label="similie_probe",
+                    symbol=SYMBOL,
+                    name="void Kokkos::generic_kernel()",
+                    calls=3,
+                    total_ns=30,
+                ),
+                dict(
+                    label="library_probe",
+                    symbol=SYMBOL,
+                    name="void Kokkos::generic_kernel()",
+                    calls=1,
+                    total_ns=10,
+                ),
+            ],
         )
 
     def test_same_symbol_keeps_distinct_compute_samples_in_sibling_regions(self):
@@ -238,6 +357,26 @@ class IterationAttribution(unittest.TestCase):
 
 
 class CombinedReport(unittest.TestCase):
+    def test_only_near_peak_competing_throughputs_are_highlighted(self):
+        self.assertEqual(limiting_metrics({}), {})
+        self.assertEqual(limiting_metrics({"SM (%)": 40, "DRAM (%)": 70}), {})
+        self.assertEqual(
+            limiting_metrics(
+                {"SM (%)": 35, "L1/TEX (%)": 96, "L2 (%)": 85, "DRAM (%)": 93}
+            ),
+            {"L1/TEX (%)": 31, "DRAM (%)": 31},
+        )
+        self.assertEqual(
+            limiting_metrics({"SM (%)": 98, "DRAM (%)": 90}), {"SM (%)": 32}
+        )
+        self.assertEqual(
+            limiting_metrics({"SM (%)": 90, "L2 (%)": 95, "DRAM (%)": None}),
+            {"SM (%)": 32, "L2 (%)": 31},
+        )
+        self.assertEqual(
+            limiting_metrics({"Achieved occupancy (%)": 20, "SM (%)": 84}), {}
+        )
+
     def test_tables_use_systems_timings_and_region_specific_compute_metrics(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
@@ -248,12 +387,13 @@ class CombinedReport(unittest.TestCase):
                 profile = copy.deepcopy(template)
                 for region in profile["regions"]:
                     region["name"] = region["name"].replace(CASE, case)
+                    region["kernels"].reverse()
                 profiles[case] = profile
                 samples[case] = [
                     dict(
                         region=region["name"],
-                        label="similie_probe",
-                        symbol=SYMBOL,
+                        label=kernel["label"],
+                        symbol=kernel["symbol"],
                         metrics={
                             label: 90 if region["name"].endswith("/B") else 10
                             for label in METRICS
@@ -274,6 +414,7 @@ class CombinedReport(unittest.TestCase):
                         ],
                     )
                     for region in profile["regions"]
+                    for kernel in region["kernels"]
                 ]
             (output / "performance/nsys").mkdir(parents=True)
             (output / "ncu").mkdir()
@@ -285,6 +426,12 @@ class CombinedReport(unittest.TestCase):
             )
             self.assertEqual(write_combined_report(output), [])
             report = (output / "nsight/report.md").read_text()
+            ansi = (output / "nsight/report.ansi").read_text()
+            self.assertNotIn("\x1b", report)
+            self.assertIn("**90**", report)
+            self.assertIn("\x1b[1;31m90\x1b[0m", ansi)
+            self.assertIn("\x1b[1;32m90\x1b[0m", ansi)
+            self.assertNotIn("**90**", ansi)
             self.assertEqual(
                 report.count(
                     "| Region | Kernel | GPU total (ms) | Calls | Mean kernel (µs) |"
@@ -295,7 +442,13 @@ class CombinedReport(unittest.TestCase):
             self.assertEqual(report.count("|  | similie_probe |"), 14 * 3)
             self.assertEqual(report.count("|  | Others |"), 14 * 3)
             self.assertNotIn("similie_setup", report)
-            self.assertNotIn("library_probe", report)
+            self.assertEqual(
+                report.count("|  | void Kokkos::generic_kernel() (library_probe) |"),
+                14 * 2,
+            )
+            for column in ("L1/TEX SOL (%)", "L2 SOL (%)", "DRAM SOL (%)"):
+                self.assertIn(column, report)
+            self.assertNotIn("Mem SOL (%)", report)
             self.assertNotIn(SYMBOL, report)
             self.assertIn("Latency: Long diagnostic detail", report)
             self.assertIn(
@@ -304,10 +457,21 @@ class CombinedReport(unittest.TestCase):
             self.assertIn("<br>", report)
             self.assertIn("|  |  |  |  |  |  |  |  |  |", report)
             records = json.loads((output / "nsight/report.json").read_text())["rows"]
+            for region in profiles[CASE]["regions"]:
+                durations = [
+                    row["total_ns"]
+                    for row in records
+                    if row["case"] == CASE
+                    and row["region"] == region["name"]
+                    and row["kind"] == "kernel"
+                ]
+                self.assertEqual(durations, sorted(durations, reverse=True))
             kernels = {
                 row["region"]: row
                 for row in records
-                if row["case"] == CASE and row["kind"] == "kernel"
+                if row["case"] == CASE
+                and row["kind"] == "kernel"
+                and row["label"] == "similie_probe"
             }
             self.assertEqual(kernels[CASE + "/iteration/A"]["calls"], 3)
             self.assertEqual(kernels[CASE + "/iteration/A"]["mean_ns"], 10)
@@ -319,7 +483,7 @@ class CombinedReport(unittest.TestCase):
                 kernels[CASE + "/iteration/A"]["rules"][0]["message"],
             )
             with (output / "nsight/report.csv").open() as source:
-                self.assertEqual(len(list(csv.DictReader(source))), 14 * 9)
+                self.assertEqual(len(list(csv.DictReader(source))), 14 * 11)
 
     def test_missing_compute_data_still_reports_systems_times(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -353,7 +517,12 @@ class WorkflowPublication(unittest.TestCase):
                 f"        trap {name} EXIT"
             )
             script = "set -euo pipefail\n" + textwrap.dedent(workflow[start:end])
-            for status, report_exists in ((0, True), (7, True), (7, False)):
+            for status, report_exists, colored in (
+                (0, True, False),
+                (7, True, False),
+                (7, False, False),
+                (7, True, True),
+            ):
                 with (
                     self.subTest(name=name, status=status, report_exists=report_exists),
                     tempfile.TemporaryDirectory() as temporary,
@@ -364,6 +533,9 @@ class WorkflowPublication(unittest.TestCase):
                     if report_exists:
                         report.parent.mkdir(parents=True)
                         report.write_text("Collected report\n")
+                    colored_report = "\x1b[1;31m95\x1b[0m\n"
+                    if report_exists and colored and phase == "nsight":
+                        report.with_suffix(".ansi").write_text(colored_report)
                     result = subprocess.run(
                         ["bash", "-c", script + f"\nexit {status}\n"],
                         env=dict(
@@ -377,7 +549,12 @@ class WorkflowPublication(unittest.TestCase):
                     self.assertEqual(result.returncode, status, result.stderr)
                     if report_exists:
                         self.assertEqual(summary.read_text(), "Collected report\n")
-                        self.assertEqual(result.stdout, "Collected report\n")
+                        self.assertEqual(
+                            result.stdout,
+                            colored_report
+                            if colored and phase == "nsight"
+                            else "Collected report\n",
+                        )
                     else:
                         self.assertFalse(summary.exists())
 

@@ -105,7 +105,7 @@ jobs:
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase performance
           '
-    - name: Collect first SimiLie kernel invocations in each iteration region
+    - name: Collect first kernel invocations in each iteration region
       run: |
         set -euo pipefail
         docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" \
@@ -124,13 +124,18 @@ jobs:
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}"
           '
-    - name: Report iteration regions and SimiLie kernel performance for all 14 cases
+    - name: Report iteration regions and all kernel performance for all 14 cases
       if: ${{ !cancelled() && steps.benchmark.outcome != 'skipped' }}
       run: |
         set -euo pipefail
         publish_nsight_report() {
           if [ -f "${CI_ROOT}/results/nsight/report.md" ]; then
-            cat "${CI_ROOT}/results/nsight/report.md" | tee -a "${GITHUB_STEP_SUMMARY}"
+            cat "${CI_ROOT}/results/nsight/report.md" >> "${GITHUB_STEP_SUMMARY}"
+            if [ -f "${CI_ROOT}/results/nsight/report.ansi" ]; then
+              cat "${CI_ROOT}/results/nsight/report.ansi"
+            else
+              cat "${CI_ROOT}/results/nsight/report.md"
+            fi
           fi
         }
         trap publish_nsight_report EXIT

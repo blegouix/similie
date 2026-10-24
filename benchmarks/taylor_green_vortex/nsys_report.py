@@ -81,7 +81,7 @@ def covered_duration(intervals):
 def iteration_profiles(database):
     """Correlate GPU executions with the host NVTX stack at their launch.
 
-    Region totals include nested scopes. Others uses the union of SimiLie GPU
+    Region totals include nested scopes. Others uses the union of all kernel
     intervals, so overlapping kernels never produce a negative remainder.
     """
     with sqlite3.connect(database) as connection:
@@ -96,7 +96,6 @@ def iteration_profiles(database):
         threads = {}
         cases = {}
         first_iterations = {}
-        ordinals = {}
         launches = {}
         for row in connection.execute("""
             SELECT n.rowid AS id, n.start, n.end, n.globalTid AS tid,
@@ -145,10 +144,6 @@ def iteration_profiles(database):
                     )
                     region["calls"] += 1
                     region["host_ns"] += scope["end"] - scope["start"]
-                if scope["name"].startswith("similie_"):
-                    root_id = scope["iteration"]
-                    ordinals[root_id] = ordinals.get(root_id, 0) + 1
-                    scope["ordinal"] = ordinals[root_id]
             stack.append(scope)
             state["ranges"].append(scope)
         api_tables = [
@@ -167,15 +162,27 @@ def iteration_profiles(database):
         ):
             if table not in tables:
                 continue
-            symbol = "coalesce(m.value,d.value)" if table.endswith("KERNEL") else "NULL"
+            is_kernel = table.endswith("KERNEL")
+            symbol = "coalesce(m.value,d.value)" if is_kernel else "NULL"
+            kernel_name = "NULL"
             names = (
                 "LEFT JOIN StringIds m ON m.id=g.mangledName LEFT JOIN StringIds d ON d.id=g.demangledName"
-                if table.endswith("KERNEL")
+                if is_kernel
                 else ""
             )
+            if is_kernel:
+                columns = {
+                    row["name"]
+                    for row in connection.execute(f"PRAGMA table_info({table})")
+                }
+                if "shortName" in columns:
+                    names += " LEFT JOIN StringIds short ON short.id=g.shortName"
+                    kernel_name = "coalesce(short.value,d.value,m.value)"
+                else:
+                    kernel_name = "coalesce(d.value,m.value)"
             gpu_queries.append(f"""
                 SELECT a.start AS launch, a.globalTid AS tid, g.start, g.end,
-                       g.deviceId AS device, {symbol} AS symbol
+                       g.deviceId AS device, {symbol} AS symbol, {kernel_name} AS name
                 FROM {table} g JOIN apis a ON a.correlationId=g.correlationId
                   AND (a.globalTid & -16777216)=g.globalPid AND a.rank=1
                 {names}
@@ -211,42 +218,46 @@ def iteration_profiles(database):
             if not active or not active[-1].get("case"):
                 continue
             profile = cases[active[-1]["case"]]
-            # Mirror Compute's top-of-stack label filter. A library launch
-            # nested in a SimiLie scope must still contribute to Others.
-            label = active[-1] if active[-1]["name"].startswith("similie_") else None
+            # Preserve the innermost operation label, including library scopes.
+            # Kernels launched directly in a TGV region use their CUDA name.
+            label = "" if iteration_case(active[-1]["name"]) else active[-1]["name"]
+            first = active[-1]["iteration"] == first_iterations[active[-1]["case"]]
             sample = False
             for scope in active:
                 if "devices" not in scope:
                     continue
                 device = scope["devices"].setdefault(
                     activity["device"],
-                    dict(start=activity["start"], end=activity["end"], similie=[]),
+                    dict(start=activity["start"], end=activity["end"], kernels=[]),
                 )
                 device["start"] = min(device["start"], activity["start"])
                 device["end"] = max(device["end"], activity["end"])
-                if label is None or activity["symbol"] is None:
+                if activity["symbol"] is None:
                     continue
-                device["similie"].append((activity["start"], activity["end"]))
+                device["kernels"].append((activity["start"], activity["end"]))
                 region = profile["regions"][scope["name"]]
-                key = (label["name"], activity["symbol"])
+                key = (label, activity["symbol"])
                 kernel = region["kernels"].setdefault(
-                    key, dict(label=key[0], symbol=key[1], calls=0, total_ns=0)
+                    key,
+                    dict(
+                        label=key[0],
+                        symbol=key[1],
+                        name=activity["name"],
+                        calls=0,
+                        total_ns=0,
+                    ),
                 )
                 kernel["calls"] += 1
                 kernel["total_ns"] += activity["end"] - activity["start"]
-                if label["iteration"] == first_iterations[label["case"]]:
+                if first:
                     target = (scope["name"], *key)
                     if target not in profile["targets"]:
-                        profile["sample_ranges"].add(label["ordinal"])
+                        profile["sample_ranges"].add(1)
                         profile["targets"].add(target)
                         sample = True
-            if (
-                label is not None
-                and activity["symbol"] is not None
-                and label["iteration"] == first_iterations[label["case"]]
-            ):
-                launches.setdefault(label["case"], []).append(
-                    (label["ordinal"], activity["symbol"], sample)
+            if activity["symbol"] is not None and first:
+                launches.setdefault(active[-1]["case"], []).append(
+                    (activity["symbol"], sample)
                 )
         for scope in ranges.values():
             if "devices" not in scope:
@@ -256,10 +267,10 @@ def iteration_profiles(database):
             for device in scope["devices"].values():
                 duration = device["end"] - device["start"]
                 region["gpu_ns"] += duration
-                region["others_ns"] += duration - covered_duration(device["similie"])
+                region["others_ns"] += duration - covered_duration(device["kernels"])
                 host_intervals.extend(
                     (max(start, scope["start"]), min(end, scope["end"]))
-                    for start, end in device["similie"]
+                    for start, end in device["kernels"]
                     if end > scope["start"] and start < scope["end"]
                 )
             region["others_host_ns"] += (
@@ -268,12 +279,9 @@ def iteration_profiles(database):
         for case, profile in cases.items():
             invocations = {}
             samples = {}
-            # Compute numbers each symbol's invocations after NVTX/range
-            # filtering. A selected NVTX instance may contain repeated CUDA
-            # launches; retain only the launch that first supplied a target.
-            for ordinal, symbol, sample in launches.get(case, []):
-                if ordinal not in profile["sample_ranges"]:
-                    continue
+            # Both profilers count every symbol's calls inside the first
+            # iteration, including library launches and repeated operations.
+            for symbol, sample in launches.get(case, []):
                 invocations[symbol] = invocations.get(symbol, 0) + 1
                 if sample:
                     samples.setdefault(symbol, []).append(invocations[symbol])
