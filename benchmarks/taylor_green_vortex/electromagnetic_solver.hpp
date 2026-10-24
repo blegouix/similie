@@ -3,7 +3,6 @@
 // AI-GENERATED
 
 #pragma once
-
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -17,6 +16,10 @@
 #include <similie/physics/electrodynamics/resistive_electrodynamics.hpp>
 #include <similie/physics/electromagnetism/resistive_electromagnetism.hpp>
 #include <similie/physics/magnetodynamics/resistive_magnetodynamics.hpp>
+
+#include <KokkosBlas1_axpby.hpp>
+#include <KokkosBlas1_dot.hpp>
+#include <KokkosBlas1_scal.hpp>
 
 #include "configuration.hpp"
 #include "solvers.hpp"
@@ -57,8 +60,7 @@ public:
     // NVCC requires methods enclosing extended device lambdas to be public.
     void potential_displacement()
     {
-        for (int a = 0; a < 3; ++a)
-            m_grid.edge_derivative_component(potential, 0, m_edges, a, a);
+        m_grid.gradient(potential, m_edges);
         Field const edges = m_edges;
         Kokkos::parallel_for(
                 "electric_potential_gradient",
@@ -67,7 +69,7 @@ public:
                     for (int a = 0; a < 3; ++a)
                         edges(a, i) *= -ElectromagneticReference::permittivity;
                 });
-        m_dec.reduce_edges(edges, m_d);
+        m_dec.reduce_one_form(edges, m_d);
     }
     void reconstruct_electrostatic()
     {
@@ -197,14 +199,26 @@ public:
                     double const y = -std::numbers::pi + ((i / n) % n) * h;
                     double const z = -std::numbers::pi + (i % n) * h;
                     double const amplitude = ElectromagneticReference::magnetic_amplitude;
-                    faces(0, i) = amplitude * sin(x) * cos(y + h / 2) * sin(z + h / 2);
-                    faces(1, i) = -amplitude * cos(x + h / 2) * sin(y) * sin(z + h / 2);
-                    faces(2, i) = ElectromagneticReference::guide_field;
+                    faces(0, i) = 0;
+                    faces(1, i) = 0;
+                    faces(2, i) = amplitude * sin(x) * sin(y) * sin(z);
                     phi(0, i) = ElectromagneticReference::potential_amplitude * cos(x) * cos(y)
                                 * cos(z);
                 });
-        if (magnetic())
-            m_dec.reduce_faces(faces, m_b);
+        if (magnetic()) {
+            m_dec.reduce_one_form(faces, m_e);
+            m_dec.derivative_one_form(m_e, m_b);
+            Kokkos::parallel_for(
+                    "magnetic_harmonic_coefficient",
+                    m_grid.cells,
+                    KOKKOS_LAMBDA(int i) {
+                        faces(0, i) = 0;
+                        faces(1, i) = 0;
+                        faces(2, i) = ElectromagneticReference::guide_field;
+                    });
+            m_dec.reduce_two_form(faces, m_curl);
+            KokkosBlas::axpby(1.0, m_curl, 1.0, m_b);
+        }
         if (electric()) {
             potential_displacement();
             m_dec.negative_codifferential_one_form(m_d, charge_density);
@@ -242,8 +256,8 @@ public:
                 });
         if (coupling == Coupling::EHD)
             reconstruct_electrostatic();
-        m_dec.axial_nodes(b, induction);
-        m_dec.velocity(d, displacement);
+        m_dec.reconstruct_two_form(b, induction);
+        m_dec.reconstruct_one_form(d, displacement);
         Field const ampere = m_ampere;
         if (magnetic()) {
             ProfilingRegion const equation_region("equation/ampere");
@@ -259,7 +273,7 @@ public:
             Kokkos::deep_copy(ampere, 0.0);
         Field const j = m_j, e = m_e, motion = m_motional, work = m_edges;
         Field const bn = induction, dn = displacement;
-        // Reuse sector constitutive laws; resistive terms below retain native edge placement.
+        // Evaluate sector laws on reconstructed coefficient fields.
         Kokkos::parallel_for(
                 "electromagnetic_transport",
                 m_grid.cells,
@@ -284,7 +298,7 @@ public:
                         work(a, i) = advected[a];
                     }
                 });
-        m_dec.reduce_nodes(motion, m_motional);
+        m_dec.reduce_one_form(motion, m_motional);
         // Keep the motional cochain for the rest-frame Ohm law and heating.
         Kokkos::deep_copy(e, m_motional);
         if (coupling == Coupling::MHD) {
@@ -303,7 +317,7 @@ public:
                                 e(a, i) += conduction[a];
                     });
         } else {
-            m_dec.reduce_nodes(work, j);
+            m_dec.reduce_one_form(work, j);
             Kokkos::parallel_for(
                     "electric_ohm_law",
                     m_grid.cells,
@@ -329,8 +343,8 @@ public:
                         }
                     });
         }
-        m_dec.velocity(j, current);
-        m_dec.velocity(e, electric_field);
+        m_dec.reconstruct_one_form(j, current);
+        m_dec.reconstruct_one_form(e, electric_field);
         Field const jn = current, acceleration = force;
         Kokkos::parallel_for(
                 "lorentz_force",
@@ -355,38 +369,24 @@ public:
                     for (int a = 0; a < 3; ++a)
                         acceleration(a, i) = force_value[a];
                 });
-        m_dec.edge_values(j, m_current_edges);
-        m_dec.edge_values(e, m_electric_edges);
-        m_dec.edge_values(m_motional, m_motional_edges);
+        m_dec.reconstruct_one_form(j, m_current_edges);
+        m_dec.reconstruct_one_form(e, m_electric_edges);
+        m_dec.reconstruct_one_form(m_motional, m_motional_edges);
         Field const je = m_current_edges, ee = m_electric_edges, me = m_motional_edges,
                     power = fluid_power, heating = joule_heating;
-        int const n = m_grid.n;
-        Kokkos::parallel_for(
-                "compatible_electric_work",
-                m_grid.cells,
-                KOKKOS_LAMBDA(int i) {
-                    double energy = 0, heat = 0;
-                    for (int a = 0; a < 3; ++a) {
-                        int const previous = StructuredGrid::neighbor(i, a, -1, n);
-                        energy += 0.5 * (je(a, i) * ee(a, i) + je(a, previous) * ee(a, previous));
-                        if (resistive) {
-                            if (coupling == Coupling::MHD)
-                                heat += 0.5 * ElectromagneticReference::magnetic_resistivity
-                                        * (je(a, i) * je(a, i) + je(a, previous) * je(a, previous));
-                            else {
-                                double const rest
-                                        = ee(a, i) + (coupling == Coupling::FMHD ? me(a, i) : 0);
-                                double const rest_previous
-                                        = ee(a, previous)
-                                          + (coupling == Coupling::FMHD ? me(a, previous) : 0);
-                                heat += 0.5 * (rest * rest + rest_previous * rest_previous)
-                                        / ElectromagneticReference::electric_resistivity;
-                            }
-                        }
-                    }
-                    power(0, i) = energy;
-                    heating(0, i) = heat;
-                });
+        KokkosBlas::dot(Kokkos::subview(power, 0, Kokkos::ALL), je, ee);
+        if (!resistive)
+            Kokkos::deep_copy(heating, 0.0);
+        else if (coupling == Coupling::MHD) {
+            KokkosBlas::dot(Kokkos::subview(heating, 0, Kokkos::ALL), je, je);
+            KokkosBlas::scal(heating, ElectromagneticReference::magnetic_resistivity, heating);
+        } else {
+            // Joule heating uses the electric field in the material rest frame.
+            KokkosBlas::axpby(coupling == Coupling::FMHD ? 1.0 : 0.0, me, 1.0, ee);
+            KokkosBlas::dot(Kokkos::subview(heating, 0, Kokkos::ALL), ee, ee);
+            KokkosBlas::
+                    scal(heating, 1.0 / ElectromagneticReference::electric_resistivity, heating);
+        }
         {
             ProfilingRegion const equation_region("equation/charge-continuity");
             m_dec.negative_codifferential_one_form(j, m_work);
@@ -495,32 +495,36 @@ public:
                         magnetic_rate(a, i) = rate(a + 4, i);
                     }
                 });
-        m_dec.edge_values(electric_rate, m_motional_edges);
-        m_dec.face_values(magnetic_rate, m_current_edges);
+        m_dec.reconstruct_one_form(electric_rate, m_motional_edges);
+        m_dec.reconstruct_two_form(magnetic_rate, m_current_edges);
         Field const d = m_displacement_edges, b = m_magnetic_faces, ddot = m_motional_edges,
                     bdot = m_current_edges;
-        double value;
-        Kokkos::parallel_reduce(
-                "maxwell_magnetic_energy_rate",
-                m_grid.cells,
-                KOKKOS_LAMBDA(int i, double& sum) {
-                    for (int a = 0; a < 3; ++a)
-                        sum += d(a, i) * ddot(a, i) / ElectromagneticReference::permittivity
-                               + b(a, i) * bdot(a, i) / ElectromagneticReference::permeability;
-                },
-                value);
-        return value / m_grid.cells;
+        using FlatField = Kokkos::
+                View<double*, Field::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        return (KokkosBlas::dot(FlatField(d.data(), d.size()), FlatField(ddot.data(), ddot.size()))
+                        / ElectromagneticReference::permittivity
+                + KokkosBlas::
+                                  dot(FlatField(b.data(), b.size()),
+                                      FlatField(bdot.data(), bdot.size()))
+                          / ElectromagneticReference::permeability)
+               / m_grid.cells;
     }
 
     // time, magnetic energy, electric energy, J.E, heat, divB, Gauss, charge, energy exchange residual.
     std::array<double, 9> monitor(double time)
     {
-        m_dec.edge_values(m_d, m_displacement_edges);
-        m_dec.face_values(m_b, m_magnetic_faces);
+        m_dec.reconstruct_one_form(m_d, m_displacement_edges);
+        m_dec.reconstruct_two_form(m_b, m_magnetic_faces);
         Field const d = m_displacement_edges, b = m_magnetic_faces, power = fluid_power,
                     heat = joule_heating, gauss = gauss_error, charge = charge_density;
+        using FlatField = Kokkos::
+                View<double*, Field::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         std::array<double, 9> values {time};
-        for (int diagnostic = 1; diagnostic < 8; ++diagnostic) {
+        values[1] = KokkosBlas::dot(FlatField(b.data(), b.size()), FlatField(b.data(), b.size()))
+                    / (2 * ElectromagneticReference::permeability * m_grid.cells);
+        values[2] = KokkosBlas::dot(FlatField(d.data(), d.size()), FlatField(d.data(), d.size()))
+                    / (2 * ElectromagneticReference::permittivity * m_grid.cells);
+        for (int diagnostic = 3; diagnostic < 8; ++diagnostic) {
             if (diagnostic == 5) {
                 values[5] = m_dec.closure_rms(m_b);
                 continue;
@@ -530,17 +534,7 @@ public:
                     "electromagnetic_monitors",
                     m_grid.cells,
                     KOKKOS_LAMBDA(int i, double& value) {
-                        if (diagnostic == 1 || diagnostic == 2) {
-                            for (int a = 0; a < 3; ++a)
-                                value += diagnostic == 1 ? b(a, i) * b(a, i)
-                                                                   / (2
-                                                                      * ElectromagneticReference::
-                                                                              permeability)
-                                                         : d(a, i) * d(a, i)
-                                                                   / (2
-                                                                      * ElectromagneticReference::
-                                                                              permittivity);
-                        } else if (diagnostic == 3)
+                        if (diagnostic == 3)
                             value += power(0, i);
                         else if (diagnostic == 4)
                             value += heat(0, i);

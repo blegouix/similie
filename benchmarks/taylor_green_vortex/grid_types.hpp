@@ -42,6 +42,13 @@ struct Direction : sil::tensor::TensorNaturalIndex<X, Y, Z>
 struct CurlDirection : sil::tensor::TensorNaturalIndex<X, Y, Z>
 {
 };
+struct VolumeDirection : sil::tensor::TensorNaturalIndex<X, Y, Z>
+{
+};
+struct VelocityDirection : sil::tensor::TensorNaturalIndex<X, Y, Z>
+{
+};
+using VelocityComponent = sil::tensor::Contravariant<VelocityDirection>;
 using Vector = sil::tensor::Covariant<Direction>;
 using TwoForm
         = sil::tensor::TensorAntisymmetricIndex<sil::tensor::Covariant<CurlDirection>, Vector>;

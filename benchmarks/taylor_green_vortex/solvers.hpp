@@ -10,6 +10,8 @@
 #include <similie/physics/fluid/incompressible_navier_stokes.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
+#include <KokkosBlas1_axpby.hpp>
+
 #include "parameters.hpp"
 #include "poisson_solver.hpp"
 #include "vorticity_dec.hpp"
@@ -25,7 +27,7 @@ class CompressibleSolver
 {
     StructuredGrid& m_dec;
     CompressiblePhysics const m_physics;
-    Field m_primitive, m_gradient, m_normal_gradient, m_flux, m_divergence;
+    Field m_primitive, m_gradient, m_temperature_gradient, m_flux, m_divergence;
 
 public:
     explicit CompressibleSolver(StructuredGrid& dec)
@@ -33,7 +35,7 @@ public:
         , m_physics(Reference::model())
         , m_primitive("primitive", 5, dec.cells)
         , m_gradient("gradient", 9, dec.cells)
-        , m_normal_gradient("face_normal_gradient", 4, dec.cells)
+        , m_temperature_gradient("temperature_gradient", 3, dec.cells)
         , m_flux("flux", 5, dec.cells)
         , m_divergence("flux_divergence", 5, dec.cells)
     {
@@ -58,18 +60,15 @@ public:
     {
         ProfilingRegion const region("equations/compressible-conservation");
         primitives(state);
-        for (int c = 1; c < 4; ++c)
-            for (int a = 0; a < 3; ++a)
-                m_dec.nodal_derivative_component(m_primitive, c, m_gradient, 3 * (c - 1) + a, a);
+        m_dec.velocity_gradient(m_primitive, m_gradient, 1);
+        m_dec.gradient(m_primitive, m_temperature_gradient, 4);
         Kokkos::deep_copy(result, 0.0);
-        Field const primitive = m_primitive, gradient = m_gradient, normal = m_normal_gradient,
-                    flux = m_flux, divergence = m_divergence;
+        Field const gradient = m_gradient, normal = m_temperature_gradient, flux = m_flux,
+                    divergence = m_divergence;
         int const n = m_dec.n;
         CompressiblePhysics const physics = m_physics;
         for (int axis = 0; axis < 3; ++axis) {
             ProfilingRegion const axis_region("flux");
-            for (int c = 1; c < 5; ++c)
-                m_dec.edge_derivative_component(primitive, c, normal, c - 1, axis);
             Kokkos::parallel_for(
                     "navier_stokes_face_flux",
                     m_dec.cells,
@@ -80,12 +79,9 @@ public:
                         CompressiblePhysics::VelocityGradient strain {};
                         for (int a = 0; a < 3; ++a)
                             for (int b = 0; b < 3; ++b)
-                                strain[a][b] = b == axis ? normal(a, i)
-                                                         : 0.5
-                                                                   * (gradient(3 * a + b, i)
-                                                                      + gradient(3 * a + b, j));
-                        std::array<double, 3> temperature_gradient {};
-                        temperature_gradient[axis] = normal(3, i);
+                                strain[a][b] = gradient(3 * a + b, i);
+                        std::array<double, 3> const
+                                temperature_gradient {normal(0, i), normal(1, i), normal(2, i)};
                         CompressiblePhysics::Flux const values = physics.two_point_flux(
                                 left,
                                 right,
@@ -168,10 +164,12 @@ public:
 class PressureReconstruction
 {
     StructuredGrid& m_dec;
+    VorticityDEC m_forms;
     ScalarPoissonOperator m_poisson;
     PoissonSolver m_solver;
     similie::physics::fluid::IncompressibleNavierStokes const m_physics;
-    Field m_vorticity, m_lap, m_phi, m_r, m_rhs, m_solution, m_pressure_acceleration;
+    Field m_vorticity, m_lap, m_phi, m_r, m_rhs, m_solution, m_pressure_acceleration, m_cochain,
+            m_curl, m_form_diffusion, m_divergence;
 
 public:
     // NVCC requires methods enclosing extended device lambdas to be public.
@@ -184,8 +182,13 @@ public:
             Kokkos::deep_copy(m_vorticity, supplied_vorticity);
         else
             m_dec.reconstructed_derivative_one_form(velocity, m_vorticity);
-        for (int c = 0; c < 3; ++c)
-            m_dec.laplacian(velocity, c, m_lap, c);
+        m_forms.reduce_one_form(velocity, m_cochain);
+        m_forms.derivative_one_form(m_cochain, m_curl);
+        m_forms.codifferential(m_curl, m_form_diffusion);
+        m_forms.reconstruct_one_form(m_form_diffusion, m_lap);
+        m_forms.negative_codifferential_one_form(m_cochain, m_divergence);
+        m_dec.gradient(m_divergence, m_form_diffusion);
+        KokkosBlas::axpby(1.0, m_form_diffusion, -1.0, m_lap);
         Field const rotation = m_vorticity, lap = m_lap;
         similie::physics::fluid::IncompressibleNavierStokes const physics = m_physics;
         Kokkos::parallel_for(
@@ -230,6 +233,7 @@ public:
     std::int64_t total_iterations = 0;
     explicit PressureReconstruction(StructuredGrid& dec)
         : m_dec(dec)
+        , m_forms(dec)
         , m_poisson(dec)
         , m_solver(dec.n, 1, dec.h)
         , m_physics(1.0, Reference::viscosity)
@@ -240,6 +244,10 @@ public:
         , m_rhs("pressure_poisson_rhs", dec.cells, 1)
         , m_solution("pressure_poisson_solution", dec.cells, 1)
         , m_pressure_acceleration("pressure_reconstruction_acceleration", 3, dec.cells)
+        , m_cochain("pressure_velocity_cochain", 3, dec.cells)
+        , m_curl("pressure_velocity_coboundary", 3, dec.cells)
+        , m_form_diffusion("pressure_velocity_diffusion", 3, dec.cells)
+        , m_divergence("pressure_velocity_divergence", 1, dec.cells)
         , pressure("pressure", 1, dec.cells)
     {
         Kokkos::deep_copy(pressure, 0.0);
@@ -255,7 +263,8 @@ public:
         ProfilingRegion const region("pressure/reconstruction");
         unprojected_rhs(velocity, m_pressure_acceleration, supplied_vorticity);
         if (acceleration.data()) {
-            Field const rate = m_pressure_acceleration;
+            Field const rate = m_pressure_acceleration, m_cochain, m_curl, m_form_diffusion,
+                        m_divergence;
             Kokkos::parallel_for(
                     "pressure_external_force",
                     m_dec.cells,
@@ -397,23 +406,26 @@ public:
 
     void initialize(Field const& state)
     {
-        // This edge representation reconstructs the prescribed nodal velocity
-        // exactly; it is closed under native codifferential on the uniform grid.
+        // The analytic vector potential A_z=sin(x) sin(y) cos(z) gives the
+        // Taylor-Green velocity. Reduce *A, then initialize U=delta(*A) and W=dU.
+        // This preserves both discrete constraints without shifted samples or
+        // mesh-dependent amplitude corrections.
         int const n = m_grid.n;
-        double const h = m_grid.h, scale = 1 / std::cos(h / 2);
-        Field const edges = m_transport;
+        double const h = m_grid.h;
+        Field const potential = m_transport;
         Kokkos::parallel_for(
-                "initial_velocity_edges",
+                "initial_velocity_potential",
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) {
                     double const x = -std::numbers::pi + (i / (n * n)) * h;
                     double const y = -std::numbers::pi + ((i / n) % n) * h;
                     double const z = -std::numbers::pi + (i % n) * h;
-                    edges(0, i) = scale * sin(x + h / 2) * cos(y) * cos(z);
-                    edges(1, i) = -scale * cos(x) * sin(y + h / 2) * cos(z);
-                    edges(2, i) = 0;
+                    potential(0, i) = 0;
+                    potential(1, i) = 0;
+                    potential(2, i) = sin(x) * sin(y) * cos(z);
                 });
-        m_dec.reduce_edges(edges, m_one);
+        m_dec.reduce_two_form(potential, m_potential);
+        m_dec.codifferential(m_potential, m_one);
         m_dec.derivative_one_form(m_one, state);
     }
     void reconstruct_velocity(Field const& state, Field const& output, bool time_derivative = false)
@@ -516,7 +528,7 @@ public:
             || last_relative_residual > 10 * settings.relative_tolerance)
             throw std::runtime_error("Vector-potential true DEC residual is too large");
         m_dec.codifferential(m_potential, m_one);
-        m_dec.velocity(m_one, output);
+        m_dec.reconstruct_one_form(m_one, output);
         std::array<double, 3> const harmonic = time_derivative ? mean_rate : mean_velocity;
         Kokkos::parallel_for(
                 "velocity_harmonic",
@@ -539,7 +551,7 @@ public:
         ProfilingRegion const region("equations/incompressible-vorticity");
         if (!velocity_reconstructed)
             reconstruct_velocity(state, velocity);
-        m_dec.axial_nodes(state, vorticity);
+        m_dec.reconstruct_two_form(state, vorticity);
         Field const u = velocity, w = vorticity, transport = m_transport;
         similie::physics::fluid::IncompressibleNavierStokes const physics = m_physics;
         Kokkos::parallel_for(
@@ -553,7 +565,7 @@ public:
                         transport(a, i)
                                 = values[a] + (acceleration.data() ? acceleration(a, i) : 0);
                 });
-        m_dec.reduce_nodes(m_transport, m_transport_one);
+        m_dec.reduce_one_form(m_transport, m_transport_one);
         m_dec.derivative_one_form(m_transport_one, result);
         m_dec.positive_laplacian(state, m_lap);
         Field const lap = m_lap;
@@ -576,7 +588,7 @@ public:
             Field const& acceleration = Field())
     {
         reconstruct_velocity(state, velocity);
-        m_dec.axial_nodes(state, vorticity);
+        m_dec.reconstruct_two_form(state, vorticity);
         m_pressure.compute_pressure(velocity, output, mean_pressure, vorticity, acceleration);
     }
     void divergence(Field const& output)
@@ -587,7 +599,7 @@ public:
     {
         vorticity_divergence_rms = m_dec.closure_rms(state);
         gauge_rms = m_dec.closure_rms(m_potential);
-        m_dec.axial_nodes(m_potential, vector_potential);
+        m_dec.reconstruct_two_form(m_potential, vector_potential);
         m_dec.derivative_one_form(m_one, m_check);
         Field const check = m_check;
         double sum;

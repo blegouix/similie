@@ -25,6 +25,9 @@
 
 #include <benchmark/benchmark.h>
 
+#include <KokkosBlas1_dot.hpp>
+#include <KokkosBlas1_nrm1.hpp>
+#include <KokkosBlas1_scal.hpp>
 #include <hdf5.h>
 #include <paraconf.h>
 
@@ -116,7 +119,8 @@ public:
     Physics const kind;
     int const components;
     Field state, initial, stage, rhs, velocity, gradient, vorticity, density, pressure, temperature,
-            heat_flux, velocity_divergence, velocity_rate, vector_potential;
+            heat_flux, velocity_divergence, velocity_rate, vector_potential, inverse_density,
+            speed_squared, vorticity_squared, kinetic_rate, stress, stress_contraction, cfl_speed;
     std::unique_ptr<IncompressibleSolver> incompressible;
     std::unique_ptr<CompressibleSolver> compressible;
     std::unique_ptr<ElectromagneticSolver> electromagnetic;
@@ -138,6 +142,13 @@ public:
         , velocity_divergence("velocity_divergence", 1, dec.cells)
         , velocity_rate("reconstructed_velocity_rate", 3, dec.cells)
         , vector_potential("export_vector_potential", 3, dec.cells)
+        , inverse_density("inverse_density", 1, dec.cells)
+        , speed_squared("speed_squared", 1, dec.cells)
+        , vorticity_squared("vorticity_squared", 1, dec.cells)
+        , kinetic_rate("kinetic_rate", 1, dec.cells)
+        , stress("viscous_stress", 9, dec.cells)
+        , stress_contraction("viscous_stress_contraction", 1, dec.cells)
+        , cfl_speed("velocity_l1_norm", 1, dec.cells)
         , incompressible(
                   selected == Physics::Incompressible ? std::make_unique<IncompressibleSolver>(dec)
                                                       : nullptr)
@@ -192,6 +203,18 @@ public:
         if (!gas)
             incompressible->initialize(state);
     }
+    void gas_velocity(Field const& q, Field const& output)
+    {
+        Field const inverse = inverse_density;
+        Kokkos::parallel_for(
+                "inverse_fluid_density",
+                dec.cells,
+                KOKKOS_LAMBDA(int i) { inverse(0, i) = 1.0 / q(0, i); });
+        KokkosBlas::
+                scal(output,
+                     Kokkos::subview(inverse, 0, Kokkos::ALL),
+                     Kokkos::subview(q, std::pair<int, int>(1, 4), Kokkos::ALL));
+    }
     void evaluate(Field const& q, Field const& result, bool reconstruct_pressure = false)
     {
         ProfilingRegion const region("rhs");
@@ -200,16 +223,8 @@ public:
             if (incompressible) {
                 incompressible->reconstruct_velocity(q, incompressible->velocity);
                 Kokkos::deep_copy(velocity, incompressible->velocity);
-            } else {
-                Field const u = velocity;
-                Kokkos::parallel_for(
-                        "coupled_velocity",
-                        dec.cells,
-                        KOKKOS_LAMBDA(int i) {
-                            for (int a = 0; a < 3; ++a)
-                                u(a, i) = q(a + 1, i) / q(0, i);
-                        });
-            }
+            } else
+                gas_velocity(q, velocity);
             electromagnetic->evaluate(velocity);
             acceleration = electromagnetic->force;
             if (incompressible)
@@ -276,46 +291,34 @@ public:
         if (!gas)
             incompressible->reconstruct_velocity(state, velocity);
         if (electromagnetic) {
-            if (gas) {
-                Field const fluid = state, u = velocity;
-                Kokkos::parallel_for(
-                        "cfl_coupled_velocity",
-                        dec.cells,
-                        KOKKOS_LAMBDA(int i) {
-                            for (int a = 0; a < 3; ++a)
-                                u(a, i) = fluid(a + 1, i) / fluid(0, i);
-                        });
-            }
+            if (gas)
+                gas_velocity(state, velocity);
             electromagnetic->evaluate(velocity);
         }
-        Field const q = gas ? state : velocity;
-        Field const magnetic = electromagnetic ? electromagnetic->induction : Field();
+        if (gas && !electromagnetic)
+            gas_velocity(state, velocity);
+        Field const q = state, speeds = cfl_speed, magnetic_squared = vorticity_squared;
         bool const has_magnetic = electromagnetic && electromagnetic->magnetic();
+        KokkosBlas::nrm1(Kokkos::subview(speeds, 0, Kokkos::ALL), velocity);
+        if (has_magnetic)
+            KokkosBlas::
+                    dot(Kokkos::subview(magnetic_squared, 0, Kokkos::ALL),
+                        electromagnetic->induction,
+                        electromagnetic->induction);
+        else
+            Kokkos::deep_copy(magnetic_squared, 0.0);
         double maximum;
         Kokkos::parallel_reduce(
                 "cfl_speed",
                 dec.cells,
                 KOKKOS_LAMBDA(int i, double& value) {
-                    double speed = 0;
-                    if (gas) {
-                        double alfven_squared = 0;
-                        if (has_magnetic)
-                            for (int a = 0; a < 3; ++a)
-                                alfven_squared += magnetic(a, i) * magnetic(a, i) / q(0, i);
-                        double const sound = sqrt(
-                                Reference::model().sound_speed_squared(Reference::state(q, i))
-                                + alfven_squared);
-                        for (int a = 0; a < 3; ++a)
-                            speed += fabs(q(a + 1, i) / q(0, i)) + sound;
-                    } else
-                        for (int a = 0; a < 3; ++a)
-                            speed += fabs(q(a, i));
-                    if (!gas && has_magnetic) {
-                        double alfven_squared = 0;
-                        for (int a = 0; a < 3; ++a)
-                            alfven_squared += magnetic(a, i) * magnetic(a, i);
-                        speed += 3 * sqrt(alfven_squared);
-                    }
+                    double const density = gas ? q(0, i) : 1.0;
+                    double const acoustic_squared
+                            = gas ? Reference::model().sound_speed_squared(Reference::state(q, i))
+                                  : 0.0;
+                    double const speed
+                            = speeds(0, i)
+                              + 3 * sqrt(acoustic_squared + magnetic_squared(0, i) / density);
                     value = fmax(value, speed);
                 },
                 Kokkos::Max<double>(maximum));
@@ -390,24 +393,22 @@ public:
             incompressible->reconstruct_velocity(rhs, velocity_rate, true);
         }
         Field const q = state, u = velocity, rho = density, p = pressure, t = temperature,
-                    g = gradient, w = vorticity, f = gas ? rhs : velocity_rate;
+                    g = gradient, w = vorticity;
         Field const projected_pressure = gas ? pressure : incompressible->pressure;
         Kokkos::parallel_for(
                 "monitor_primitives",
                 dec.cells,
                 KOKKOS_LAMBDA(int i) {
                     rho(0, i) = gas ? q(0, i) : 1.0;
-                    for (int a = 0; a < 3; ++a)
-                        u(a, i) = gas ? q(a + 1, i) / q(0, i) : u(a, i);
                     p(0, i) = gas ? Reference::pressure(q, i)
                                   : Reference::reference_pressure + projected_pressure(0, i);
                     t(0,
                       i) = gas ? Reference::model().primitives(Reference::state(q, i)).temperature
                                : Reference::reference_pressure / Reference::gas_constant;
                 });
-        for (int a = 0; a < 3; ++a)
-            for (int b = 0; b < 3; ++b)
-                dec.nodal_derivative_component(u, a, g, 3 * a + b, b);
+        if (gas)
+            gas_velocity(q, u);
+        dec.velocity_gradient(u, g);
         if (gas) {
             dec.reconstructed_derivative_one_form(u, w);
             dec.negative_reduced_codifferential(u, velocity_divergence);
@@ -416,8 +417,7 @@ public:
         CompressiblePhysics const physical_model = Reference::model();
         if (gas) {
             Field const heat = heat_flux;
-            for (int a = 0; a < 3; ++a)
-                dec.nodal_derivative_component(t, 0, heat, a, a);
+            dec.gradient(t, heat);
             Kokkos::parallel_for(
                     "fourier_heat_flux",
                     dec.cells,
@@ -430,6 +430,34 @@ public:
                     });
         } else
             Kokkos::deep_copy(heat_flux, 0.0);
+        Field const speed2 = speed_squared, omega2 = vorticity_squared, rate = kinetic_rate,
+                    stress_values = stress, viscous_work = stress_contraction;
+        KokkosBlas::dot(Kokkos::subview(speed2, 0, Kokkos::ALL), u, u);
+        KokkosBlas::dot(Kokkos::subview(omega2, 0, Kokkos::ALL), w, w);
+        if (gas)
+            KokkosBlas::
+                    dot(Kokkos::subview(rate, 0, Kokkos::ALL),
+                        u,
+                        Kokkos::subview(rhs, std::pair<int, int>(1, 4), Kokkos::ALL));
+        else
+            KokkosBlas::dot(Kokkos::subview(rate, 0, Kokkos::ALL), u, velocity_rate);
+        Kokkos::parallel_for(
+                "constitutive_viscous_stress",
+                dec.cells,
+                KOKKOS_LAMBDA(int i) {
+                    CompressiblePhysics::VelocityGradient const gradient
+                            = {{{g(0, i), g(1, i), g(2, i)},
+                                {g(3, i), g(4, i), g(5, i)},
+                                {g(6, i), g(7, i), g(8, i)}}};
+                    CompressiblePhysics::VelocityGradient const values
+                            = physical_model.stress(gradient);
+                    // Pack the existing constitutive-law array result into the tensor field.
+                    for (int row = 0; row < 3; ++row)
+                        for (int column = 0; column < 3; ++column)
+                            stress_values(3 * row + column, i) = values[row][column];
+                });
+        KokkosBlas::dot(Kokkos::subview(viscous_work, 0, Kokkos::ALL), stress_values, g);
+        Field const rates = rhs;
         double sums[8] = {};
         // Independent reductions keep the diagnostic definition explicit.
         for (int diagnostic = 0; diagnostic < 8; ++diagnostic) {
@@ -438,39 +466,23 @@ public:
                     "taylor_green_monitor",
                     dec.cells,
                     KOKKOS_LAMBDA(int i, double& sum) {
-                        double speed2 = 0, omega2 = 0, rate = 0;
-                        for (int a = 0; a < 3; ++a) {
-                            speed2 += u(a, i) * u(a, i);
-                            omega2 += w(a, i) * w(a, i);
-                            rate += u(a, i) * f(gas ? a + 1 : a, i);
-                        }
-                        if (gas)
-                            rate -= 0.5 * speed2 * f(0, i);
+                        double const kinetic_derivative
+                                = rate(0, i) - (gas ? 0.5 * speed2(0, i) * rates(0, i) : 0.0);
                         double const div = div_field(0, i);
-                        CompressiblePhysics::VelocityGradient grad {};
-                        for (int a = 0; a < 3; ++a)
-                            for (int b = 0; b < 3; ++b)
-                                grad[a][b] = g(3 * a + b, i);
-                        CompressiblePhysics::VelocityGradient const tau
-                                = physical_model.stress(grad);
-                        double stress_work = 0;
-                        for (int a = 0; a < 3; ++a)
-                            for (int b = 0; b < 3; ++b)
-                                stress_work += tau[a][b] * grad[a][b];
                         if (diagnostic == 0)
-                            sum += 0.5 * rho(0, i) * speed2;
+                            sum += 0.5 * rho(0, i) * speed2(0, i);
                         else if (diagnostic == 1)
-                            sum += rate;
+                            sum += kinetic_derivative;
                         else if (diagnostic == 2)
-                            sum += 0.5 * rho(0, i) * omega2;
+                            sum += 0.5 * rho(0, i) * omega2(0, i);
                         else if (diagnostic == 3)
                             sum += p(0, i) * div;
                         else if (diagnostic == 4)
-                            sum += stress_work;
+                            sum += viscous_work(0, i);
                         else if (diagnostic == 5)
                             sum += rho(0, i);
                         else if (diagnostic == 6)
-                            sum += gas ? q(4, i) : 0.5 * speed2;
+                            sum += gas ? q(4, i) : 0.5 * speed2(0, i);
                         else
                             sum += div * div;
                     },
@@ -528,8 +540,8 @@ std::string header(int n, Physics kind)
          << " " << n << "\n# discretization: native Cartesian DEC, "
          << (kind == Physics::Compressible ? "centered kinetic-energy-preserving flux"
                                            : "vorticity with Coulomb-gauge vector potential")
-         << "\n# order of convergence: " << 2
-         << " spatial; SSPRK3 temporal\n# mesh file name: implicit periodic Cartesian grid\n# "
+         << "\n# temporal integration: SSPRK3"
+         << "\n# mesh file name: implicit periodic Cartesian grid\n# "
             "density: 1\n# velocity: 1\n# dynamic viscosity: 0.000625\n# reference length: 1\n";
     text << "# configuration: " << configuration.name() << "\n";
     if (configuration.coupling != Coupling::HD)
@@ -753,7 +765,8 @@ public:
                     "magnetic_divergence_rms,gauss_rms,mean_charge,energy_exchange_residual");
         }
         std::string const names
-                = "time,kinetic_energy,dEk_dt,kinetic_dissipation,enstrophy,enstrophy_dissipation,"
+                = "time,kinetic_energy,dEk_dt,kinetic_dissipation,enstrophy,enstrophy_"
+                  "dissipation,"
                   "pressure_dilatation,viscous_dissipation,mass,total_energy,divergence_rms,"
                   "density_min,pressure_min,step_seconds";
         string_attribute(m_file, "monitor_columns", names);
@@ -834,13 +847,15 @@ void validate()
 {
     Simulation simulation(nodes, physics);
     Monitor const initial = simulation.monitor(0);
-    double const expected = 0.125;
-    if (std::abs(initial.energy - expected) > 1e-10 || initial.divergence > 1e-10)
+    double const symbol = 2 * std::sin(simulation.dec.h / 2) / simulation.dec.h;
+    double const expected = physics == Physics::Incompressible ? 0.125 * symbol * symbol : 0.125;
+    if (std::abs(initial.energy - expected) > 1e-10
+        || (physics == Physics::Incompressible && initial.divergence > 1e-10))
         throw std::runtime_error("Initial kinetic energy or periodic divergence is incorrect");
-    double const symbol = std::sin(simulation.dec.h) / simulation.dec.h;
     if (physics == Physics::Incompressible
-        && std::abs(initial.enstrophy - 0.375 * symbol * symbol) > 1e-10)
+        && std::abs(initial.enstrophy - 0.375 * std::pow(symbol, 4)) > 1e-10)
         throw std::runtime_error("Initial DEC enstrophy is incorrect");
+    double initial_velocity_rms = 0;
     Field constant("constant", 1, simulation.dec.cells), lap("lap", 1, simulation.dec.cells);
     Kokkos::deep_copy(constant, 1.0);
     simulation.dec.laplacian(constant, 0, lap, 0);
@@ -854,7 +869,7 @@ void validate()
         throw std::runtime_error("Periodic DEC Laplacian of constant is nonzero");
 
     Field wave("periodic_fourier_mode", 1, simulation.dec.cells);
-    Field derivative("periodic_fourier_derivative", 1, simulation.dec.cells);
+    Field derivative("periodic_fourier_derivative", 3, simulation.dec.cells);
     int const n = simulation.dec.n;
     double const h = simulation.dec.h;
     for (int axis = 0; axis < 3; ++axis) {
@@ -865,7 +880,7 @@ void validate()
                     int const stride = axis == 0 ? n * n : (axis == 1 ? n : 1);
                     wave(0, i) = sin(-std::numbers::pi + ((i / stride) % n) * h);
                 });
-        simulation.dec.nodal_derivative_component(wave, 0, derivative, 0, axis);
+        simulation.dec.gradient(wave, derivative);
         simulation.dec.laplacian(wave, 0, lap, 0);
         Kokkos::parallel_reduce(
                 "periodic_fourier_symbols",
@@ -873,7 +888,7 @@ void validate()
                 KOKKOS_LAMBDA(int i, double& sum) {
                     int const stride = axis == 0 ? n * n : (axis == 1 ? n : 1);
                     double const x = -std::numbers::pi + ((i / stride) % n) * h;
-                    double const gradient_error = derivative(0, i) - sin(h) / h * cos(x);
+                    double const gradient_error = derivative(axis, i) - (sin(x + h) - sin(x)) / h;
                     double const laplacian_error
                             = lap(0, i) + 4 * sin(h / 2) * sin(h / 2) / (h * h) * sin(x);
                     sum += gradient_error * gradient_error + laplacian_error * laplacian_error;
@@ -905,17 +920,23 @@ void validate()
                     double const du = u(0, i) - sin(x) * cos(y) * cos(z);
                     double const dv = u(1, i) + cos(x) * sin(y) * cos(z);
                     sum += du * du + dv * dv + u(2, i) * u(2, i);
-                    for (int c = 0; c < 3; ++c) {
-                        double const change = q(c, i) - saved(c, i);
-                        sum += change * change;
-                    }
                 },
                 error);
-        if (error / simulation.dec.cells > 1e-18
+        initial_velocity_rms = std::sqrt(error / simulation.dec.cells);
+        if (initial_velocity_rms > h
             || std::abs(mean_pressure / simulation.dec.cells - Reference::reference_pressure)
                        > 1e-10)
-            throw std::runtime_error(
-                    "Velocity reconstruction, pressure gauge, or unchanged vorticity check failed");
+            throw std::runtime_error("Velocity consistency or pressure gauge check failed");
+        Kokkos::parallel_reduce(
+                "unchanged_vorticity",
+                Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {3, simulation.dec.cells}),
+                KOKKOS_LAMBDA(int component, int i, double& sum) {
+                    double const change = q(component, i) - saved(component, i);
+                    sum += change * change;
+                },
+                error);
+        if (error != 0)
+            throw std::runtime_error("Diagnostic reconstruction changed the vorticity state");
         Field zero("zero_vorticity", 3, simulation.dec.cells);
         Field uniform_pressure("uniform_pressure", 1, simulation.dec.cells);
         Kokkos::deep_copy(zero, 0.0);
@@ -955,8 +976,8 @@ void validate()
                 simulation.dec.cells,
                 KOKKOS_LAMBDA(int i, double& sum) {
                     double const x = -std::numbers::pi + (i / (n * n)) * h;
-                    double const expected = Reference::reference_pressure
-                                            - h * cos(h / 2) / (2 * sin(h / 2)) * cos(x);
+                    double const expected
+                            = Reference::reference_pressure - h / (2 * sin(h / 2)) * cos(x - h / 2);
                     double const difference = uniform_pressure(0, i) - expected;
                     sum += difference * difference;
                 },
@@ -1050,7 +1071,8 @@ void validate()
             throw std::runtime_error("Coupled total energy drift exceeds short-run tolerance");
     }
     std::cout << "Validation passed: N=" << nodes << ", initial Ek=" << initial.energy
-              << ", final divergence=" << final.divergence << "\n";
+              << ", final divergence=" << final.divergence
+              << ", initial_velocity_rms=" << initial_velocity_rms << "\n";
 }
 
 double run_trajectory(benchmark::State* benchmark_state)

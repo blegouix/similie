@@ -12,12 +12,25 @@ add_custom_command(
     COMMENT "Generating Taylor-Green ideal-gas closure from SymPy"
     VERBATIM
 )
-add_executable(taylor_green_vortex taylor_green_vortex.cpp
+add_executable(taylor_green_vortex
+    laplacian_mode.cpp
+    laplacian_modes_0_7.cpp
+    laplacian_modes_8_15.cpp
+    laplacian_modes_16_23.cpp
+    laplacian_modes_24_31.cpp
+    laplacian_modes_32_38.cpp
+    taylor_green_vortex.cpp
     "${TGV_IDEAL_GAS_HEADER}")
 target_include_directories(taylor_green_vortex PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo DDC::pdi)
 configure_file(post_process.py post_process.py COPYONLY)
 if(BUILD_TESTING)
+    add_test(NAME tgv_initial_velocity_convergence
+        COMMAND "${Python3_EXECUTABLE}" -B
+            "${PROJECT_SOURCE_DIR}/tests/ai_generated/test_tgv_initial_convergence.py"
+            "$<TARGET_FILE:taylor_green_vortex>")
+    set_tests_properties(tgv_initial_velocity_convergence PROPERTIES
+        ENVIRONMENT "OMP_NUM_THREADS=2;OMP_PROC_BIND=false")
     add_test(NAME tgv_campaign_comparison
         COMMAND "${Python3_EXECUTABLE}"
             "${PROJECT_SOURCE_DIR}/tests/ai_generated/test_tgv_campaign.py")

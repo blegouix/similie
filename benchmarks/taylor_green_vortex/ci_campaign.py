@@ -119,7 +119,15 @@ def validate_trajectory(path, configuration, n, reference=False):
             raise ValueError(f"Time did not advance monotonically: {hdf}")
         if monitors[-1, 0] != record["final_time"] or np.any(monitors[:, 11:13] <= 0):
             raise ValueError(f"Invalid final time, density, or pressure: {hdf}")
-        if abs(monitors[0, 1] - 0.125) > 1e-10:
+        # The incompressible velocity is a discrete curl of the analytic
+        # potential. Its unscaled difference symbol converges to the analytic
+        # derivative; the compressible velocity is prescribed directly.
+        initial_energy = (
+            0.125 * np.sinc(1 / n) ** 2
+            if configuration.startswith("incompressible")
+            else 0.125
+        )
+        if abs(monitors[0, 1] - initial_energy) > 1e-10:
             raise ValueError(f"Incorrect initial Taylor-Green kinetic energy: {hdf}")
         if np.max(np.abs(monitors[:, 8] - monitors[0, 8])) > 1e-8:
             raise ValueError(f"Mass conservation exceeded tolerance: {hdf}")

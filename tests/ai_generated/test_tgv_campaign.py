@@ -118,6 +118,50 @@ class CampaignConfiguration(unittest.TestCase):
         )
 
 
+class InitialDiscretization(unittest.TestCase):
+    def test_potential_based_energy_without_resolution_compensation(self):
+        for fluid in ("incompressible", "compressible"):
+            for n in (8, 16):
+                with (
+                    self.subTest(fluid=fluid, n=n),
+                    tempfile.TemporaryDirectory() as temporary,
+                ):
+                    path = Path(temporary) / "trajectory.performance.json"
+                    configuration = f"{fluid}_ideal_hd"
+                    path.write_text(
+                        json.dumps(
+                            {
+                                "configuration": configuration,
+                                "N": n,
+                                "mode": "performance",
+                                "steps": 5,
+                                "solver_seconds": 1,
+                                "mean_step_seconds": 1,
+                                "cell_updates_per_second": n**3,
+                                "final_time": 1,
+                            }
+                        )
+                    )
+                    h = 2 * np.pi / n
+                    expected = (
+                        0.125 * (np.sin(h / 2) / (h / 2)) ** 2
+                        if fluid == "incompressible"
+                        else 0.125
+                    )
+                    with h5py.File(path.with_name("trajectory.h5"), "w") as data:
+                        monitors = np.zeros((6, 14))
+                        monitors[:, 0] = np.linspace(0, 1, 6)
+                        monitors[:, 1] = expected
+                        monitors[:, 11:13] = 1
+                        data["monitors"] = monitors
+                        data["reconstruction_monitors"] = np.zeros((6, 4))
+                    validate_trajectory(path, configuration, n)
+                    with h5py.File(path.with_name("trajectory.h5"), "r+") as data:
+                        data["monitors"][0, 1] = expected + 0.001
+                    with self.assertRaisesRegex(ValueError, "Incorrect initial"):
+                        validate_trajectory(path, configuration, n)
+
+
 class ReferenceSnapshots(unittest.TestCase):
     def test_dense_reference_schedule_and_missing_exports(self):
         with tempfile.TemporaryDirectory() as temporary:

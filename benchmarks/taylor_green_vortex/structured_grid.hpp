@@ -11,6 +11,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/exterior.hpp>
+#include <similie/tensor/periodic_extrapolation_rule.hpp>
 #include <similie/tensor/scalar_extrapolation_rules.hpp>
 #include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
@@ -22,8 +23,8 @@ namespace taylor_green_vortex {
 /** Benchmark storage and field placement, delegating all differential operators.
  * Geometry and Hodge stars are computed by exterior, never supplied as h powers.
  * Periodic cochain samples wrap; geometry is unwrapped, including a halo, so the
- * seam never becomes an edge of length 2*pi-h. Node/edge/face arithmetic averages
- * are field-placement operations, not alternative differential stencils.
+ * seam never becomes an edge of length 2*pi-h. Cochains and cell-local physical
+ * coefficients are connected only by the library reduction/reconstruction maps.
  * \important This operator and documentation is fully AI-generated.
  */
 class StructuredGrid
@@ -74,7 +75,8 @@ class StructuredGrid
             Coefficients>>;
     SpatialDomain m_domain;
     SpatialDomain m_geometry_domain;
-    Field m_position, m_metric, m_oneform, m_pointwise, m_twoform, m_face_pointwise, m_scalar;
+    Field m_position, m_metric, m_oneform, m_pointwise, m_twoform, m_face_pointwise, m_scalar,
+            m_gradient_cochains, m_gradient_coefficients;
     std::unique_ptr<LaplacianOperator<ScalarTensor>> m_laplacian;
     std::unique_ptr<VectorCodifferential> m_codifferential;
     std::unique_ptr<OneReconstruction<>> m_one_reconstruction;
@@ -88,28 +90,6 @@ class StructuredGrid
     std::unique_ptr<TwoReduction<>> m_two_reduction;
     std::unique_ptr<TwoReduction<sil::tensor::TensorDiagonalIndex>> m_two_diagonal_reduction;
 
-public:
-    // Device lambda instantiations in exterior must be able to name this type.
-    struct Periodic
-    {
-        template <class Tensor, class Element>
-        KOKKOS_FUNCTION auto operator()(Tensor const& field, Element element) const
-        {
-            SpatialDomain const domain(field.non_indices_domain());
-            std::ptrdiff_t const n = domain.extents().template get<GridX>();
-            ddc::DiscreteElement<GridX, GridY, GridZ> const
-                    wrapped((static_cast<std::ptrdiff_t>(element.template uid<GridX>()) - 1 + n) % n
-                                    + 1,
-                            (static_cast<std::ptrdiff_t>(element.template uid<GridY>()) - 1 + n) % n
-                                    + 1,
-                            (static_cast<std::ptrdiff_t>(element.template uid<GridZ>()) - 1 + n) % n
-                                    + 1);
-            return sil::tensor::detail::pointwise_tensor<Tensor>(
-                    [&](auto component) { return field.mem(wrapped, component); });
-        }
-    };
-
-private:
     PositionTensor position() const
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> accessor;
@@ -156,20 +136,7 @@ private:
                         Kokkos::layout_right,
                         Field::memory_space>(field.data(), domain));
     }
-    KOKKOS_FUNCTION static double face_curl(
-            TwoFormTensor const& field,
-            int index,
-            int component,
-            int nodes)
-    {
-        SpatialDomain::discrete_element_type const
-                elem(index / (nodes * nodes) + 1, (index / nodes) % nodes + 1, index % nodes + 1);
-        if (component == 0)
-            return field(elem, field.accessor().template access_element<Y, Z>());
-        if (component == 1)
-            return -field(elem, field.accessor().template access_element<X, Z>());
-        return field(elem, field.accessor().template access_element<X, Y>());
-    }
+
 
 public:
     // NVCC requires methods enclosing extended device lambdas to be public.
@@ -194,7 +161,7 @@ public:
                 Kokkos::DefaultExecutionSpace(),
                 cochain,
                 scalar(input, component),
-                Periodic {});
+                sil::tensor::PeriodicExtrapolationRule {});
         reconstruct(pointwise, cochain);
     }
 
@@ -227,6 +194,8 @@ public:
         , m_twoform("two_cochain", 1, 3 * nodes * nodes * nodes)
         , m_face_pointwise("reconstructed_two_form", 1, 3 * nodes * nodes * nodes)
         , m_scalar("scalar_operator_workspace", 1, nodes * nodes * nodes)
+        , m_gradient_cochains("velocity_gradient_cochains", 1, 9 * nodes * nodes * nodes)
+        , m_gradient_coefficients("velocity_gradient_coefficients", 1, 9 * nodes * nodes * nodes)
         , configuration(selected)
         , n(nodes)
         , cells(nodes * nodes * nodes)
@@ -295,7 +264,7 @@ public:
                 vector(m_oneform),
                 metric(),
                 geometry,
-                Periodic {});
+                sil::tensor::PeriodicExtrapolationRule {});
     }
     // An extended device lambda must also be enclosed by an addressable function.
     void initialize_geometry()
@@ -329,37 +298,52 @@ public:
                         Kokkos::layout_right,
                         Field::memory_space>(field.data() + component * cells, domain));
     }
-    void reconstruct(VectorTensor const& output, VectorTensor const& input) const
+    template <class Operation, class Output, class Input>
+    void reconstruct_batch(Operation const& operation, Output const& output, Input const& input)
+            const
+    {
+        PositionTensor const geometry = position();
+        using BatchDomain = decltype(ddc::remove_dims_of<Vector>(output.domain()));
+        ddc::parallel_for_each(
+                sil::misc::Specialization<Operation, sil::exterior::StagedOperator>
+                        ? "similie_apply_staged_local_operator"
+                        : "tgv_direct_reconstruction",
+                Kokkos::DefaultExecutionSpace(),
+                ddc::remove_dims_of<Vector>(output.domain()),
+                KOKKOS_LAMBDA(typename BatchDomain::discrete_element_type element) {
+                    operation(
+                            output[element],
+                            input[element],
+                            geometry,
+                            SpatialDomain::discrete_element_type(element));
+                });
+    }
+
+    template <class Output, class Input>
+    void reconstruct(Output const& output, Input const& input) const
     {
         if (m_one_diagonal_reconstruction)
-            (*m_one_diagonal_reconstruction)(output, input);
+            reconstruct_batch(*m_one_diagonal_reconstruction, output, input);
         else if (m_one_reconstruction)
-            (*m_one_reconstruction)(output, input);
-        else {
-            PositionTensor const geometry = position();
-            bool const diagonal = configuration.diagonal_reconstruction;
-            ddc::parallel_for_each(
-                    "tgv_direct_reconstruction",
-                    Kokkos::DefaultExecutionSpace(),
-                    m_domain,
-                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
-                        if (diagonal) {
-                            sil::exterior::Reconstruction<
-                                    ddc::TypeSeq<Vector>,
-                                    PositionTensor,
-                                    SpatialDomain::discrete_element_type,
-                                    sil::exterior::CellComplex::Primal,
-                                    sil::tensor::TensorDiagonalIndex>::
-                            operator()(output[element], input[element], geometry, element);
-                        } else {
-                            sil::exterior::Reconstruction<
-                                    ddc::TypeSeq<Vector>,
-                                    PositionTensor,
-                                    SpatialDomain::discrete_element_type>::
-                            operator()(output[element], input[element], geometry, element);
-                        }
-                    });
-        }
+            reconstruct_batch(*m_one_reconstruction, output, input);
+        else if (configuration.diagonal_reconstruction)
+            reconstruct_batch(
+                    sil::exterior::Reconstruction<
+                            ddc::TypeSeq<Vector>,
+                            PositionTensor,
+                            SpatialDomain::discrete_element_type,
+                            sil::exterior::CellComplex::Primal,
+                            sil::tensor::TensorDiagonalIndex> {},
+                    output,
+                    input);
+        else
+            reconstruct_batch(
+                    sil::exterior::Reconstruction<
+                            ddc::TypeSeq<Vector>,
+                            PositionTensor,
+                            SpatialDomain::discrete_element_type> {},
+                    output,
+                    input);
     }
     void reduce(VectorTensor const& output, VectorTensor const& input) const
     {
@@ -463,37 +447,63 @@ public:
         int const coordinate = (index / stride) % nodes;
         return index + (((coordinate + offset + nodes) % nodes) - coordinate) * stride;
     }
-    void edge_derivative_component(
-            Field const& input,
-            int component,
-            Field const& output,
-            int out_component,
-            int axis)
+
+    void gradient(Field const& input, Field const& output, int component = 0)
     {
         reconstruct_gradient(input, component);
-        Field const gradient = m_pointwise;
+        Field const coefficients = m_pointwise;
         Kokkos::parallel_for(
-                "sample_native_edge_gradient",
-                cells,
-                KOKKOS_LAMBDA(int i) { output(out_component, i) = gradient(0, 3 * i + axis); });
+                "unpack_gradient_coefficients",
+                Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {cells, 3}),
+                KOKKOS_LAMBDA(int i, int direction) {
+                    output(direction, i) = coefficients(0, 3 * i + direction);
+                });
     }
-    void nodal_derivative_component(
-            Field const& input,
-            int component,
-            Field const& output,
-            int out_component,
-            int axis)
+
+    // A velocity is a vector-valued zero-form. Its vector index is a spectator
+    // of the exterior derivative, which acts on the complete field at once.
+    void velocity_gradient(Field const& input, Field const& output, int first_component = 0)
     {
-        reconstruct_gradient(input, component);
-        Field const gradient = m_pointwise;
-        int const nodes = n;
+        ddc::DiscreteDomain<VelocityComponent, GridX, GridY, GridZ, Scalar> const input_domain(
+                sil::tensor::TensorAccessor<VelocityComponent>::domain(),
+                m_domain,
+                sil::tensor::TensorAccessor<Scalar>::domain());
+        ddc::DiscreteDomain<VelocityComponent, GridX, GridY, GridZ, Vector> const gradient_domain(
+                sil::tensor::TensorAccessor<VelocityComponent>::domain(),
+                m_domain,
+                sil::tensor::TensorAccessor<Vector>::domain());
+        sil::tensor::Tensor const values(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<VelocityComponent, GridX, GridY, GridZ, Scalar>,
+                        Kokkos::layout_right,
+                        Field::memory_space>(input.data() + first_component * cells, input_domain));
+        sil::tensor::Tensor const cochains(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<VelocityComponent, GridX, GridY, GridZ, Vector>,
+                        Kokkos::layout_right,
+                        Field::memory_space>(m_gradient_cochains.data(), gradient_domain));
+        sil::tensor::Tensor const coefficients(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<VelocityComponent, GridX, GridY, GridZ, Vector>,
+                        Kokkos::layout_right,
+                        Field::memory_space>(m_gradient_coefficients.data(), gradient_domain));
+        sil::exterior::deriv<Vector, Scalar>(
+                Kokkos::DefaultExecutionSpace(),
+                cochains,
+                values,
+                sil::tensor::PeriodicExtrapolationRule {});
+        reconstruct(coefficients, cochains);
+        Field const storage = m_gradient_coefficients;
+        int const count = cells;
         Kokkos::parallel_for(
-                "edge_gradient_to_node",
-                cells,
-                KOKKOS_LAMBDA(int i) {
-                    int const previous = neighbor(i, axis, -1, nodes);
-                    output(out_component, i)
-                            = 0.5 * (gradient(0, 3 * i + axis) + gradient(0, 3 * previous + axis));
+                "unpack_velocity_gradient",
+                Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0, 0, 0}, {3, cells, 3}),
+                KOKKOS_LAMBDA(int component, int i, int direction) {
+                    output(3 * component + direction, i)
+                            = storage(0, 3 * (component * count + i) + direction);
                 });
     }
     void negative_face_codifferential(
@@ -516,14 +526,11 @@ public:
     void negative_reduced_codifferential(Field const& velocity, Field const& output)
     {
         Field const placed = m_pointwise;
-        int const nodes = n;
         Kokkos::parallel_for(
-                "velocity_to_dual_faces",
-                cells,
-                KOKKOS_LAMBDA(int i) {
-                    for (int a = 0; a < 3; ++a)
-                        placed(0, 3 * i + a)
-                                = 0.5 * (velocity(a, i) + velocity(a, neighbor(i, a, 1, nodes)));
+                "pack_one_form_coefficients",
+                Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {cells, 3}),
+                KOKKOS_LAMBDA(int i, int component) {
+                    placed(0, 3 * i + component) = velocity(component, i);
                 });
         negative_reduced_codifferential(output, 0);
     }
@@ -540,37 +547,57 @@ public:
     void reconstructed_derivative_one_form(Field const& velocity, Field const& output)
     {
         Field const placed = m_pointwise;
-        int const nodes = n;
         Kokkos::parallel_for(
-                "velocity_to_edges",
-                cells,
-                KOKKOS_LAMBDA(int i) {
-                    for (int a = 0; a < 3; ++a)
-                        placed(0, 3 * i + a)
-                                = 0.5 * (velocity(a, i) + velocity(a, neighbor(i, a, 1, nodes)));
+                "pack_velocity_coefficients",
+                Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {cells, 3}),
+                KOKKOS_LAMBDA(int i, int component) {
+                    placed(0, 3 * i + component) = velocity(component, i);
                 });
         reduce_one_form();
         VectorTensor const cochain = vector(m_oneform);
         TwoFormTensor const rotation = twoform(m_twoform),
                             reconstructed = twoform(m_face_pointwise);
-        sil::exterior::deriv<
-                sil::tensor::Covariant<CurlDirection>,
-                Vector>(Kokkos::DefaultExecutionSpace(), rotation, cochain, Periodic {});
+        sil::exterior::deriv<sil::tensor::Covariant<CurlDirection>, Vector>(
+                Kokkos::DefaultExecutionSpace(),
+                rotation,
+                cochain,
+                sil::tensor::PeriodicExtrapolationRule {});
         reconstruct(reconstructed, rotation);
+        ddc::DiscreteDomain<GridX, GridY, GridZ, sil::tensor::Covariant<VolumeDirection>> const
+                axial_domain(
+                        m_domain,
+                        sil::tensor::TensorAccessor<
+                                sil::tensor::Covariant<VolumeDirection>>::domain());
+        sil::tensor::Tensor const axial(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<
+                                GridX,
+                                GridY,
+                                GridZ,
+                                sil::tensor::Covariant<VolumeDirection>>,
+                        Kokkos::layout_right,
+                        Field::memory_space>(placed.data(), axial_domain));
+        MetricTensor const metric = euclidean_metric();
+        ddc::parallel_for_each(
+                "reconstruct_axial_curl",
+                Kokkos::DefaultExecutionSpace(),
+                m_domain,
+                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                    sil::exterior::LeviCivitaContinuousHodgeStar<
+                            ddc::TypeSeq<
+                                    sil::tensor::Contravariant<CurlDirection>,
+                                    sil::tensor::Contravariant<Direction>>,
+                            ddc::TypeSeq<sil::tensor::Covariant<VolumeDirection>>,
+                            MetricTensor,
+                            SpatialDomain::discrete_element_type>::
+                    operator()(axial[element], reconstructed[element], metric, element);
+                });
         Kokkos::parallel_for(
-                "vorticity_faces_to_nodes",
-                cells,
-                KOKKOS_LAMBDA(int i) {
-                    for (int a = 0; a < 3; ++a) {
-                        int const b = (a + 1) % 3, c = (a + 2) % 3;
-                        int const ib = neighbor(i, b, -1, nodes), ic = neighbor(i, c, -1, nodes),
-                                  ibc = neighbor(ib, c, -1, nodes);
-                        output(a, i) = 0.25
-                                       * (face_curl(reconstructed, i, a, nodes)
-                                          + face_curl(reconstructed, ib, a, nodes)
-                                          + face_curl(reconstructed, ic, a, nodes)
-                                          + face_curl(reconstructed, ibc, a, nodes));
-                    }
+                "unpack_curl_coefficients",
+                Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {cells, 3}),
+                KOKKOS_LAMBDA(int i, int component) {
+                    output(component, i) = placed(0, 3 * i + component);
                 });
     }
 };
