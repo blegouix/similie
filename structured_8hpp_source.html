@@ -143,196 +143,200 @@ $(function(){initNavTree('structured_8hpp_source.html',''); initResizable(true);
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;similie/tensor/tensor_indices/diagonal_tensor.hpp&gt;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;similie/tensor/tensor_indices/identity_tensor.hpp&gt;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;similie/tensor/tensor_indices/levi_civita_tensor.hpp&gt;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &quot;diagonal.hpp&quot;</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &quot;identity.hpp&quot;</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &quot;levi_civita.hpp&quot;</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &quot;weighted_levi_civita.hpp&quot;</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">namespace </span>sil::tensor::detail {</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">concept </span>StructuredTensorProductIndex</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>        = misc::Specialization&lt;Index, TensorIdentityIndex&gt;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>          || misc::Specialization&lt;Index, TensorDiagonalIndex&gt;</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>          || misc::Specialization&lt;Index, TensorLeviCivitaIndex&gt;</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>          || misc::Specialization&lt;Index, TensorWeightedLeviCivitaIndex&gt;;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Index, <span class="keyword">class</span>... Tags&gt;</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> tensor_product_indices_match(ddc::DiscreteElement&lt;Tags...&gt; element)</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>{</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (misc::Specialization&lt;Index, TensorIdentityIndex&gt;) {</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        <span class="keywordflow">return</span> IdentityTensorProductMatcher&lt;Index&gt;::operator()(</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>                element);</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (misc::Specialization&lt;Index, TensorDiagonalIndex&gt;) {</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">return</span> DiagonalTensorProductMatcher&lt;Index&gt;::operator()(</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                element);</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (misc::Specialization&lt;Index, TensorWeightedLeviCivitaIndex&gt;) {</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keywordflow">return</span> WeightedLeviCivitaTensorProductMatcher&lt;Index&gt;::operator()(</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                element);</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (misc::Specialization&lt;Index, TensorLeviCivitaIndex&gt;) {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <span class="keywordflow">return</span> LeviCivitaTensorProductMatcher&lt;Index&gt;::operator()(</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                element);</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    }</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>}</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Free, <span class="keyword">class</span>... Contracted&gt;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>KOKKOS_FUNCTION <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;Free..., Contracted...&gt; tensor_product_known_element(</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        ddc::DiscreteElement&lt;Free...&gt; free,</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        ddc::DiscreteElement&lt;Contracted...&gt; contracted)</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>{</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordflow">return</span> ddc::DiscreteElement&lt;Free..., Contracted...&gt;(free, contracted);</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>}</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ProductIndices, <span class="keyword">class</span> LeftIndices, <span class="keyword">class</span> RightIndices, <span class="keyword">class</span> ContractedIndices&gt;</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="keyword">class </span>TensorProdStructured;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="comment">// Unfold the canonical output components and structurally possible contractions.</span></div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="comment">// Accessor conversions then see constant indices, including antisymmetric signs.</span></div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment">// This works for a structured index in either operand, alongside other indices.</span></div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Product, <span class="keyword">class</span>... Left, <span class="keyword">class</span>... Right, <span class="keyword">class</span>... Contracted&gt;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="keyword">class </span>TensorProdStructured&lt;</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::TypeSeq&lt;Product...&gt;,</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        ddc::TypeSeq&lt;Left...&gt;,</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        ddc::TypeSeq&lt;Right...&gt;,</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        ddc::TypeSeq&lt;Contracted...&gt;&gt;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>{</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> Output&gt;</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;Product...&gt; output_element()</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    {</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        std::array&lt;std::size_t, <span class="keyword">sizeof</span>...(Product)&gt; <span class="keyword">const</span> sizes {Product::mem_size()...};</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        std::array&lt;std::size_t, <span class="keyword">sizeof</span>...(Product)&gt; ids {};</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        std::size_t remaining = Output;</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keywordflow">for</span> (std::size_t i = sizes.size(); i &gt; 0; --i) {</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            ids[i - 1] = remaining % sizes[i - 1];</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            remaining /= sizes[i - 1];</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        }</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        ddc::DiscreteElement&lt;Product...&gt; element;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        ddc::detail::array(element) = ids;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        <span class="keywordflow">return</span> element;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    }</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="keyword">template</span> &lt;std::size_t... Values, std::size_t... Positions&gt;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>            ddc::type_seq_element_t&lt;Positions, ddc::TypeSeq&lt;Contracted...&gt;&gt;...&gt;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    contracted_element(std::index_sequence&lt;Values...&gt;, std::index_sequence&lt;Positions...&gt;)</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    {</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <span class="keywordflow">return</span> ddc::DiscreteElement&lt;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                ddc::type_seq_element_t&lt;Positions, ddc::TypeSeq&lt;Contracted...&gt;&gt;...&gt;(Values...);</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    }</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            std::size_t Output,</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            <span class="keyword">class </span>Tensor1,</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            <span class="keyword">class </span>Tensor2,</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>            std::size_t... Values,</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            std::size_t... Next&gt;</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> extend(</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            Tensor2 <span class="keyword">const</span>&amp; right,</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            std::remove_const_t&lt;typename Tensor1::element_type&gt;&amp; sum,</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>            <span class="keywordtype">bool</span>&amp; initialized,</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            std::index_sequence&lt;Values...&gt;,</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            std::index_sequence&lt;Next...&gt;)</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    {</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        (contract&lt;Output&gt;(left, right, sum, initialized, std::index_sequence&lt;Values..., Next&gt;()),</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>         ...);</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    }</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keyword">template</span> &lt;std::size_t Output, <span class="keyword">class </span>Tensor1, <span class="keyword">class </span>Tensor2, std::size_t... Values&gt;</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> contract(</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>            Tensor2 <span class="keyword">const</span>&amp; right,</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>            std::remove_const_t&lt;typename Tensor1::element_type&gt;&amp; sum,</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>            <span class="keywordtype">bool</span>&amp; initialized,</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>            std::index_sequence&lt;Values...&gt; assigned)</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    {</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <span class="keyword">constexpr</span> <span class="keyword">auto</span> known = tensor_product_known_element(</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                <a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#af16273e32bd79e52e20f079ded285426">TensorAccessor&lt;Product...&gt;::canonical_natural_element</a>(output_element&lt;Output&gt;()),</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                contracted_element(</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>                        std::index_sequence&lt;Values...&gt;(),</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>                        std::make_index_sequence&lt;<span class="keyword">sizeof</span>...(Values)&gt;()));</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>                (tensor_product_indices_match&lt;Left&gt;(known) &amp;&amp; ...)</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>                &amp;&amp; (tensor_product_indices_match&lt;Right&gt;(known) &amp;&amp; ...)) {</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(Values) == <span class="keyword">sizeof</span>...(Contracted)) {</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>                <span class="keyword">constexpr</span> <span class="keyword">auto</span> left_element = <a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a392e0699882d8edd960137cc3bdd1713">TensorAccessor&lt;Left...&gt;::access_element</a>(known);</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>                <span class="keyword">constexpr</span> <span class="keyword">auto</span> right_element = <a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a392e0699882d8edd960137cc3bdd1713">TensorAccessor&lt;Right...&gt;::access_element</a>(known);</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>                <span class="keywordflow">if</span> (initialized)</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>                    sum += left.get(left_element) * right.get(right_element);</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>                <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                    sum = left.get(left_element) * right.get(right_element);</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>                    initialized = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>                }</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>                extend&lt;Output&gt;(</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                        left,</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                        right,</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                        sum,</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                        initialized,</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                        assigned,</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                        std::make_index_sequence&lt;ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                                <span class="keyword">sizeof</span>...(Values),</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                                ddc::TypeSeq&lt;Contracted...&gt;&gt;::size()&gt;());</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>            }</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        }</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    }</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span> </div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> Output, <span class="keyword">class</span> ProductTensor, <span class="keyword">class</span> Tensor1, <span class="keyword">class</span> Tensor2&gt;</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> write(</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>            ProductTensor <span class="keyword">const</span>&amp; product,</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>            Tensor2 <span class="keyword">const</span>&amp; right)</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    {</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;Product...&gt; element = output_element&lt;Output&gt;();</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        <span class="comment">// Tensor views may select only a subset of the stored output components.</span></div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>        <span class="keywordflow">if</span> (product.domain().contains(element)) {</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>            <span class="keyword">typename</span> ProductTensor::element_type sum = 0.;</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>            <span class="keywordtype">bool</span> initialized = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>            contract&lt;Output&gt;(left, right, sum, initialized, std::index_sequence&lt;&gt;());</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            product.mem(element) = sum;</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        }</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    }</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    <span class="keyword">template</span> &lt;<span class="keyword">class </span>ProductTensor, <span class="keyword">class </span>Tensor1, <span class="keyword">class </span>Tensor2, std::size_t... Outputs&gt;</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> write(</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            ProductTensor <span class="keyword">const</span>&amp; product,</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>            Tensor2 <span class="keyword">const</span>&amp; right,</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>            std::index_sequence&lt;Outputs...&gt;)</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    {</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>        (write&lt;Outputs&gt;(product, left, right), ...);</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    }</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span> </div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> ProductTensor, <span class="keyword">class</span> Tensor1, <span class="keyword">class</span> Tensor2&gt;</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> operator()(</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>            ProductTensor <span class="keyword">const</span>&amp; product,</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>            Tensor2 <span class="keyword">const</span>&amp; right)</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    {</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        write(product,</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>              left,</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>              right,</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>              std::make_index_sequence&lt;(Product::mem_size() * ... * std::size_t(1))&gt;());</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    }</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>};</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>} <span class="comment">// namespace sil::tensor::detail</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;similie/tensor/tensor_indices/scaling_tensor.hpp&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &quot;diagonal.hpp&quot;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &quot;identity.hpp&quot;</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &quot;levi_civita.hpp&quot;</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#include &quot;weighted_levi_civita.hpp&quot;</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">namespace </span>sil::tensor::detail {</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">concept </span>StructuredTensorProductIndex</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        = misc::Specialization&lt;Index, TensorIdentityIndex&gt;</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>          || misc::Specialization&lt;Index, TensorDiagonalIndex&gt;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>          || misc::Specialization&lt;Index, TensorScalingIndex&gt;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>          || misc::Specialization&lt;Index, TensorLeviCivitaIndex&gt;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>          || misc::Specialization&lt;Index, TensorWeightedLeviCivitaIndex&gt;;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Index, <span class="keyword">class</span>... Tags&gt;</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> tensor_product_indices_match(ddc::DiscreteElement&lt;Tags...&gt; element)</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>{</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>            misc::Specialization&lt;Index, TensorIdentityIndex&gt;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>            || misc::Specialization&lt;Index, TensorScalingIndex&gt;) {</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keywordflow">return</span> IdentityTensorProductMatcher&lt;Index&gt;::operator()(</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                element);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (misc::Specialization&lt;Index, TensorDiagonalIndex&gt;) {</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        <span class="keywordflow">return</span> DiagonalTensorProductMatcher&lt;Index&gt;::operator()(</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                element);</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (misc::Specialization&lt;Index, TensorWeightedLeviCivitaIndex&gt;) {</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="keywordflow">return</span> WeightedLeviCivitaTensorProductMatcher&lt;Index&gt;::operator()(</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                element);</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (misc::Specialization&lt;Index, TensorLeviCivitaIndex&gt;) {</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keywordflow">return</span> LeviCivitaTensorProductMatcher&lt;Index&gt;::operator()(</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                        ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">natural_domain_t&lt;Index&gt;</a>&gt;,</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                        ddc::TypeSeq&lt;Tags...&gt;&gt;(),</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                element);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    }</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>}</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Free, <span class="keyword">class</span>... Contracted&gt;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>KOKKOS_FUNCTION <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;Free..., Contracted...&gt; tensor_product_known_element(</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        ddc::DiscreteElement&lt;Free...&gt; free,</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        ddc::DiscreteElement&lt;Contracted...&gt; contracted)</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>{</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">return</span> ddc::DiscreteElement&lt;Free..., Contracted...&gt;(free, contracted);</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>}</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ProductIndices, <span class="keyword">class</span> LeftIndices, <span class="keyword">class</span> RightIndices, <span class="keyword">class</span> ContractedIndices&gt;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="keyword">class </span>TensorProdStructured;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="comment">// Unfold the canonical output components and structurally possible contractions.</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="comment">// Accessor conversions then see constant indices, including antisymmetric signs.</span></div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="comment">// This works for a structured index in either operand, alongside other indices.</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Product, <span class="keyword">class</span>... Left, <span class="keyword">class</span>... Right, <span class="keyword">class</span>... Contracted&gt;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="keyword">class </span>TensorProdStructured&lt;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::TypeSeq&lt;Product...&gt;,</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        ddc::TypeSeq&lt;Left...&gt;,</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        ddc::TypeSeq&lt;Right...&gt;,</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        ddc::TypeSeq&lt;Contracted...&gt;&gt;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>{</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> Output&gt;</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;Product...&gt; output_element()</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    {</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        std::array&lt;std::size_t, <span class="keyword">sizeof</span>...(Product)&gt; <span class="keyword">const</span> sizes {Product::mem_size()...};</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        std::array&lt;std::size_t, <span class="keyword">sizeof</span>...(Product)&gt; ids {};</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        std::size_t remaining = Output;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        <span class="keywordflow">for</span> (std::size_t i = sizes.size(); i &gt; 0; --i) {</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>            ids[i - 1] = remaining % sizes[i - 1];</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            remaining /= sizes[i - 1];</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        }</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        ddc::DiscreteElement&lt;Product...&gt; element;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        ddc::detail::array(element) = ids;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        <span class="keywordflow">return</span> element;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    }</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keyword">template</span> &lt;std::size_t... Values, std::size_t... Positions&gt;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>            ddc::type_seq_element_t&lt;Positions, ddc::TypeSeq&lt;Contracted...&gt;&gt;...&gt;</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    contracted_element(std::index_sequence&lt;Values...&gt;, std::index_sequence&lt;Positions...&gt;)</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    {</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        <span class="keywordflow">return</span> ddc::DiscreteElement&lt;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                ddc::type_seq_element_t&lt;Positions, ddc::TypeSeq&lt;Contracted...&gt;&gt;...&gt;(Values...);</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    }</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            std::size_t Output,</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            <span class="keyword">class </span>Tensor1,</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            <span class="keyword">class </span>Tensor2,</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            std::size_t... Values,</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            std::size_t... Next&gt;</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> extend(</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            Tensor2 <span class="keyword">const</span>&amp; right,</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            std::remove_const_t&lt;typename Tensor1::element_type&gt;&amp; sum,</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            <span class="keywordtype">bool</span>&amp; initialized,</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>            std::index_sequence&lt;Values...&gt;,</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>            std::index_sequence&lt;Next...&gt;)</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    {</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        (contract&lt;Output&gt;(left, right, sum, initialized, std::index_sequence&lt;Values..., Next&gt;()),</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>         ...);</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    }</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keyword">template</span> &lt;std::size_t Output, <span class="keyword">class </span>Tensor1, <span class="keyword">class </span>Tensor2, std::size_t... Values&gt;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> contract(</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>            Tensor2 <span class="keyword">const</span>&amp; right,</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>            std::remove_const_t&lt;typename Tensor1::element_type&gt;&amp; sum,</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>            <span class="keywordtype">bool</span>&amp; initialized,</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>            std::index_sequence&lt;Values...&gt; assigned)</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    {</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        <span class="keyword">constexpr</span> <span class="keyword">auto</span> known = tensor_product_known_element(</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>                <a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#af16273e32bd79e52e20f079ded285426">TensorAccessor&lt;Product...&gt;::canonical_natural_element</a>(output_element&lt;Output&gt;()),</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>                contracted_element(</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>                        std::index_sequence&lt;Values...&gt;(),</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>                        std::make_index_sequence&lt;<span class="keyword">sizeof</span>...(Values)&gt;()));</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>                (tensor_product_indices_match&lt;Left&gt;(known) &amp;&amp; ...)</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>                &amp;&amp; (tensor_product_indices_match&lt;Right&gt;(known) &amp;&amp; ...)) {</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(Values) == <span class="keyword">sizeof</span>...(Contracted)) {</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>                <span class="keyword">constexpr</span> <span class="keyword">auto</span> left_element = <a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a392e0699882d8edd960137cc3bdd1713">TensorAccessor&lt;Left...&gt;::access_element</a>(known);</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                <span class="keyword">constexpr</span> <span class="keyword">auto</span> right_element = <a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a392e0699882d8edd960137cc3bdd1713">TensorAccessor&lt;Right...&gt;::access_element</a>(known);</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>                <span class="keywordflow">if</span> (initialized)</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>                    sum += left.get(left_element) * right.get(right_element);</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>                <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>                    sum = left.get(left_element) * right.get(right_element);</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                    initialized = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                }</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                extend&lt;Output&gt;(</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                        left,</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                        right,</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                        sum,</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                        initialized,</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>                        assigned,</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>                        std::make_index_sequence&lt;ddc::type_seq_element_t&lt;</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>                                <span class="keyword">sizeof</span>...(Values),</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>                                ddc::TypeSeq&lt;Contracted...&gt;&gt;::size()&gt;());</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>            }</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        }</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    }</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span> </div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    <span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> Output, <span class="keyword">class</span> ProductTensor, <span class="keyword">class</span> Tensor1, <span class="keyword">class</span> Tensor2&gt;</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> write(</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>            ProductTensor <span class="keyword">const</span>&amp; product,</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>            Tensor2 <span class="keyword">const</span>&amp; right)</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    {</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        <span class="keyword">constexpr</span> ddc::DiscreteElement&lt;Product...&gt; element = output_element&lt;Output&gt;();</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>        <span class="comment">// Tensor views may select only a subset of the stored output components.</span></div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        <span class="keywordflow">if</span> (product.domain().contains(element)) {</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>            <span class="keyword">typename</span> ProductTensor::element_type sum = 0.;</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>            <span class="keywordtype">bool</span> initialized = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>            contract&lt;Output&gt;(left, right, sum, initialized, std::index_sequence&lt;&gt;());</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>            product.mem(element) = sum;</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>        }</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    }</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <span class="keyword">template</span> &lt;<span class="keyword">class </span>ProductTensor, <span class="keyword">class </span>Tensor1, <span class="keyword">class </span>Tensor2, std::size_t... Outputs&gt;</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    KOKKOS_FORCEINLINE_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> write(</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>            ProductTensor <span class="keyword">const</span>&amp; product,</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>            Tensor2 <span class="keyword">const</span>&amp; right,</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>            std::index_sequence&lt;Outputs...&gt;)</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    {</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>        (write&lt;Outputs&gt;(product, left, right), ...);</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    }</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span> </div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> ProductTensor, <span class="keyword">class</span> Tensor1, <span class="keyword">class</span> Tensor2&gt;</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> operator()(</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>            ProductTensor <span class="keyword">const</span>&amp; product,</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>            Tensor1 <span class="keyword">const</span>&amp; left,</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>            Tensor2 <span class="keyword">const</span>&amp; right)</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    {</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        write(product,</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>              left,</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>              right,</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>              std::make_index_sequence&lt;(Product::mem_size() * ... * std::size_t(1))&gt;());</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    }</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>};</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span> </div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>} <span class="comment">// namespace sil::tensor::detail</span></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_a392e0699882d8edd960137cc3bdd1713"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#a392e0699882d8edd960137cc3bdd1713">sil::tensor::TensorAccessor::access_element</a></div><div class="ttdeci">static KOKKOS_FUNCTION constexpr discrete_element_type access_element()</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00390">tensor_impl.hpp:390</a></div></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_af16273e32bd79e52e20f079ded285426"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#af16273e32bd79e52e20f079ded285426">sil::tensor::TensorAccessor::canonical_natural_element</a></div><div class="ttdeci">static KOKKOS_FUNCTION constexpr natural_domain_t::discrete_element_type canonical_natural_element(ddc::DiscreteElement&lt; MemIndex... &gt; mem_elem)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00409">tensor_impl.hpp:409</a></div></div>
 <div class="ttc" id="anamespaceddc_html"><div class="ttname"><a href="namespaceddc.html">ddc</a></div><div class="ttdef"><b>Definition</b> <a href="signed__discrete__element_8hpp_source.html#l00080">signed_discrete_element.hpp:80</a></div></div>

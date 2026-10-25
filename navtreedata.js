@@ -118,7 +118,7 @@ var NAVTREEINDEX =
 "functions_vars_l.html",
 "namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c",
 "structsil_1_1multidomains_1_1Connection.html#ad5c965deff97e04d670bdfe5b0b8d4a1",
-"structsil_1_1tensor_1_1TensorYoungTableauIndex.html"
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#af2fc96692db625bbd0a38a09aff72e0c"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

@@ -152,6 +152,7 @@ var hierarchy =
     [ "sil::tensor::TensorNaturalIndex<>", "structsil_1_1tensor_1_1TensorNaturalIndex.html", [
       [ "sil::tensor::ScalarIndex", "structsil_1_1tensor_1_1ScalarIndex.html", null ]
     ] ],
+    [ "sil::tensor::TensorScalingIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorScalingIndex.html", null ],
     [ "sil::tensor::TensorSymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", null ],
     [ "sil::tensor::TensorWeightedLeviCivitaIndex< Source, Target >", "structsil_1_1tensor_1_1TensorWeightedLeviCivitaIndex.html", null ],
     [ "sil::tensor::TensorWithExtrapolationRules< Field, Rules, Fixed >", "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html", null ],

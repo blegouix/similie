@@ -31,6 +31,7 @@ var namespacesil_1_1tensor =
     [ "TensorLeviCivitaIndex", "structsil_1_1tensor_1_1TensorLeviCivitaIndex.html", "structsil_1_1tensor_1_1TensorLeviCivitaIndex" ],
     [ "TensorLorentzianSignIndex", "structsil_1_1tensor_1_1TensorLorentzianSignIndex.html", "structsil_1_1tensor_1_1TensorLorentzianSignIndex" ],
     [ "TensorNaturalIndex", "structsil_1_1tensor_1_1TensorNaturalIndex.html", "structsil_1_1tensor_1_1TensorNaturalIndex" ],
+    [ "TensorScalingIndex", "structsil_1_1tensor_1_1TensorScalingIndex.html", "structsil_1_1tensor_1_1TensorScalingIndex" ],
     [ "TensorSymmetricIndex", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", "structsil_1_1tensor_1_1TensorSymmetricIndex" ],
     [ "TensorWeightedLeviCivitaIndex", "structsil_1_1tensor_1_1TensorWeightedLeviCivitaIndex.html", "structsil_1_1tensor_1_1TensorWeightedLeviCivitaIndex" ],
     [ "TensorWithExtrapolationRules", "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html", "structsil_1_1tensor_1_1TensorWithExtrapolationRules" ],
