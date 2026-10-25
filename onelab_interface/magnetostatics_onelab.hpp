@@ -30,6 +30,7 @@
 #include <similie/exterior/coboundary/coboundary.hpp>
 #include <similie/exterior/codifferential/codifferential.hpp>
 #include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
+#include <similie/exterior/integration/integration.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/physics/hamilton_equations.hpp>
@@ -494,7 +495,6 @@ inline void apply_x_mirror_symmetry_projection_to_traction_integral(
                      return lhs.x < rhs.x;
                  });
 
-    std::array<double, 3> projected_integral {0.0, 0.0, 0.0};
     std::size_t left = 0;
     std::size_t right = sorted_samples.size();
     while (left < right) {
@@ -505,8 +505,6 @@ inline void apply_x_mirror_symmetry_projection_to_traction_integral(
             if (std::abs(left_face.x) > tol) {
                 return;
             }
-            projected_integral[1] += left_face.measure * left_face.traction[1];
-            projected_integral[2] += left_face.measure * left_face.traction[2];
             break;
         }
 
@@ -515,14 +513,10 @@ inline void apply_x_mirror_symmetry_projection_to_traction_integral(
             return;
         }
 
-        projected_integral[1]
-                += left_face.measure * (left_face.traction[1] + right_face.traction[1]);
-        projected_integral[2]
-                += left_face.measure * (left_face.traction[2] + right_face.traction[2]);
         ++left;
     }
 
-    result.diagnostic_traction_integral = projected_integral;
+    result.diagnostic_traction_integral[0] = 0.0;
 }
 
 inline void validate_nonlinear_bh_curve(std::string const& nonlinear_bh_curve)
@@ -4585,6 +4579,168 @@ inline void fill_force_density_on_hexahedral_grid_xy_slices(
     }
 }
 
+// Physical diagnostic densities are reduced on selected oriented grid faces.
+// The 2D model is extruded by length_z for surface diagnostics; its current
+// remains a cross-section integral, exactly as in the 3D model.
+struct DiagnosticQuantity
+{
+};
+
+template <class Grid>
+void integrate_diagnostics(
+        Grid const& grid,
+        Inputs const& inputs,
+        std::vector<CellInputFields> const& cell_inputs,
+        std::vector<CellPostProcessFields> const& cell_outputs,
+        Result& result)
+{
+    using DDimX = magnetostatics_local::DDimX;
+    using DDimY = magnetostatics_local::DDimY;
+    using DDimZ = magnetostatics_local::DDimZ;
+    using First = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>;
+    using Second
+            = sil::tensor::Covariant<sil::tensor::prime<sil::tensor::TensorNaturalIndex<X, Y, Z>>>;
+    using FormIndex = sil::tensor::TensorAntisymmetricIndex<First, Second>;
+    using PositionIndex = magnetostatics_local::PositionIndex3D;
+    using Face = sil::exterior::Simplex<2, DDimX, DDimY, DDimZ>;
+    using Chain = sil::exterior::Chain<Face>;
+    constexpr bool planar = std::is_same_v<Grid, sil::onelab_interface::gmsh::StructuredGrid2D>;
+    std::vector<double> const z_coords = [&] {
+        if constexpr (planar)
+            return std::vector<double> {grid.z_value, grid.z_value + inputs.length_z};
+        else
+            return grid.z_coords;
+    }();
+    ddc::DiscreteDomain<DDimX, DDimY, DDimZ> const
+            nodes(ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
+                  ddc::DiscreteVector<DDimX, DDimY, DDimZ>(grid.nx(), grid.ny(), z_coords.size()));
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
+    ddc::Chunk position_alloc(
+            ddc::DiscreteDomain<
+                    DDimX,
+                    DDimY,
+                    DDimZ,
+                    PositionIndex>(nodes, position_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+    ddc::host_for_each(nodes, [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+        position(elem, position.accessor().template access_element<X>())
+                = grid.x_coords[elem.uid<DDimX>()];
+        position(elem, position.accessor().template access_element<Y>())
+                = grid.y_coords[elem.uid<DDimY>()];
+        position(elem, position.accessor().template access_element<Z>())
+                = z_coords[elem.uid<DDimZ>()];
+    });
+    // Quantities: current, flux, area, traction x/y/z, traction magnitude.
+    ddc::DiscreteDomain<DiagnosticQuantity> const quantities(
+            ddc::DiscreteElement<DiagnosticQuantity>(0),
+            ddc::DiscreteVector<DiagnosticQuantity>(7));
+    [[maybe_unused]] sil::tensor::TensorAccessor<FormIndex> form_accessor;
+    ddc::Chunk forms_alloc(
+            ddc::DiscreteDomain<
+                    DDimX,
+                    DDimY,
+                    DDimZ,
+                    DiagnosticQuantity,
+                    FormIndex>(nodes, quantities, form_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor forms(forms_alloc);
+    ddc::parallel_fill(forms, 0.0);
+    Chain
+    current(Kokkos::View<
+                    Face*,
+                    Kokkos::HostSpace>("current_section", grid.ncell_x() * grid.ncell_y()),
+            std::size_t(0));
+    Chain
+    surface(Kokkos::View<Face*, Kokkos::HostSpace>("diagnostic_surface", cell_outputs.size()),
+            std::size_t(0));
+    std::vector<DiagnosticFaceSample> face_samples;
+    std::size_t const current_k = planar ? 0 : (z_coords.size() - 1) / 2;
+    for (std::size_t k = 0; k + 1 < z_coords.size(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                std::size_t const cell = [&] {
+                    if constexpr (planar)
+                        return grid.cell_index(i, j);
+                    else
+                        return grid.cell_index(i, j, k);
+                }();
+                int const tag = grid.ordered_cells[cell].physical_tag;
+                ddc::DiscreteElement<DDimX, DDimY, DDimZ> const origin(i, j, k);
+                if (k == current_k && has_tag(inputs.positive_electrical_conductor_tags, tag)) {
+                    current += Face(origin, ddc::DiscreteVector<DDimX, DDimY, DDimZ>(1, 1, 0));
+                    forms(origin,
+                          ddc::DiscreteElement<DiagnosticQuantity>(0),
+                          forms.accessor().template access_element<X, Y>())
+                            = cell_inputs[cell].current_density[2];
+                }
+                if (!has_tag(inputs.diagnostic_region_tags, tag))
+                    continue;
+                if (j + 1 < grid.ncell_y()) {
+                    std::size_t const neighbor = [&] {
+                        if constexpr (planar)
+                            return grid.cell_index(i, j + 1);
+                        else
+                            return grid.cell_index(i, j + 1, k);
+                    }();
+                    if (has_tag(inputs.diagnostic_region_tags,
+                                grid.ordered_cells[neighbor].physical_tag))
+                        continue;
+                }
+                ddc::DiscreteElement<DDimX, DDimY, DDimZ> const upper(i, j + 1, k);
+                // dz ^ dx has the positive-y normal, opposite to dx ^ dz.
+                Face const face(upper, ddc::DiscreteVector<DDimX, DDimY, DDimZ>(1, 0, 1), true);
+                surface += face;
+                std::array<double, 3> const traction = traction_on_positive_y_face(
+                        cell_outputs[cell].magnetic_induction,
+                        cell_outputs[cell].magnetic_field);
+                auto set_density = [&](std::size_t quantity, double value) {
+                    forms(upper,
+                          ddc::DiscreteElement<DiagnosticQuantity>(quantity),
+                          forms.accessor().template access_element<Z, X>())
+                            = value;
+                };
+                set_density(1, cell_outputs[cell].magnetic_induction[1]);
+                set_density(2, 1.0);
+                set_density(3, traction[0]);
+                set_density(4, traction[1]);
+                set_density(5, traction[2]);
+                set_density(
+                        6,
+                        std::sqrt(
+                                traction[0] * traction[0] + traction[1] * traction[1]
+                                + traction[2] * traction[2]));
+                face_samples.push_back(
+                        DiagnosticFaceSample {
+                                .x = grid.cell_center_x(i),
+                                .z
+                                = planar ? z_coords.front() : 0.5 * (z_coords[k] + z_coords[k + 1]),
+                                .measure = sil::exterior::integrate<ddc::TypeSeq<First, Second>>(
+                                        forms[ddc::DiscreteElement<DiagnosticQuantity>(2)],
+                                        position,
+                                        face),
+                                .traction = traction});
+            }
+        }
+    }
+    auto integral = [&](std::size_t quantity, Chain const& chain) {
+        return sil::exterior::integrate<ddc::TypeSeq<First, Second>>(
+                Kokkos::DefaultHostExecutionSpace(),
+                forms[ddc::DiscreteElement<DiagnosticQuantity>(quantity)],
+                position,
+                chain);
+    };
+    result.num_current_cells = current.size();
+    result.num_diagnostic_faces = surface.size();
+    result.diagnostic_current_integral = integral(0, current);
+    result.diagnostic_flux_integral = integral(1, surface);
+    result.diagnostic_surface_measure = integral(2, surface);
+    result.diagnostic_traction_integral
+            = {integral(3, surface), integral(4, surface), integral(5, surface)};
+    result.diagnostic_traction_magnitude_integral = integral(6, surface);
+    apply_x_mirror_symmetry_projection_to_traction_integral(face_samples, result);
+}
+
 inline void write_results_view(
         std::filesystem::path const& output_view_file,
         sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
@@ -4997,57 +5153,7 @@ Result run_on_quadrilateral_grid(
         }
     }
     fill_force_density_on_quadrilateral_grid(grid, cell_outputs);
-    std::vector<DiagnosticFaceSample> diagnostic_face_samples;
-    diagnostic_face_samples.reserve(grid.ncell_x());
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            std::size_t const cell_index = grid.cell_index(i, j);
-            int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
-            double const cell_area = (grid.x_coords[i + 1] - grid.x_coords[i])
-                                     * (grid.y_coords[j + 1] - grid.y_coords[j]);
-            if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-                result.diagnostic_current_integral
-                        += cell_area * cell_inputs[cell_index].current_density[2];
-                ++result.num_current_cells;
-            }
-            if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
-                continue;
-            }
-            bool const has_upper_neighbor = j + 1 < grid.ncell_y();
-            bool const upper_neighbor_in_region
-                    = has_upper_neighbor
-                      && has_tag(
-                              inputs.diagnostic_region_tags,
-                              grid.ordered_cells[grid.cell_index(i, j + 1)].physical_tag);
-            if (upper_neighbor_in_region) {
-                continue;
-            }
-            double const face_measure = (grid.x_coords[i + 1] - grid.x_coords[i]) * inputs.length_z;
-            result.diagnostic_flux_integral
-                    += face_measure * cell_outputs[cell_index].magnetic_induction[1];
-            std::array<double, 3> const traction = traction_on_positive_y_face(
-                    cell_outputs[cell_index].magnetic_induction,
-                    cell_outputs[cell_index].magnetic_field);
-            result.diagnostic_surface_measure += face_measure;
-            result.diagnostic_traction_integral[0] += face_measure * traction[0];
-            result.diagnostic_traction_integral[1] += face_measure * traction[1];
-            result.diagnostic_traction_integral[2] += face_measure * traction[2];
-            result.diagnostic_traction_magnitude_integral
-                    += face_measure
-                       * std::sqrt(
-                               traction[0] * traction[0] + traction[1] * traction[1]
-                               + traction[2] * traction[2]);
-            diagnostic_face_samples.push_back(
-                    DiagnosticFaceSample {
-                            .x = grid.cell_center_x(i),
-                            .z = grid.z_value,
-                            .measure = face_measure,
-                            .traction = traction,
-                    });
-            ++result.num_diagnostic_faces;
-        }
-    }
-    apply_x_mirror_symmetry_projection_to_traction_integral(diagnostic_face_samples, result);
+    integrate_diagnostics(grid, inputs, cell_inputs, cell_outputs, result);
 
     write_results_view(
             output_view_file,
@@ -5575,68 +5681,7 @@ Result run_on_hexahedral_grid(
         }
     }
     fill_force_density_on_hexahedral_grid_xy_slices(grid, cell_outputs);
-    std::vector<DiagnosticFaceSample> diagnostic_face_samples;
-    diagnostic_face_samples.reserve(grid.ncell_x() * grid.ncell_z());
-    std::size_t const current_diagnostic_k = grid.ncell_z() / 2;
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            std::size_t const cell_index_3d = grid.cell_index(i, j, current_diagnostic_k);
-            int const physical_tag = grid.ordered_cells[cell_index_3d].physical_tag;
-            if (!has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-                continue;
-            }
-            double const cell_cross_section_area = (grid.x_coords[i + 1] - grid.x_coords[i])
-                                                   * (grid.y_coords[j + 1] - grid.y_coords[j]);
-            result.diagnostic_current_integral
-                    += cell_cross_section_area * cell_inputs_3d[cell_index_3d].current_density[2];
-            ++result.num_current_cells;
-        }
-    }
-    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
-        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-                std::size_t const cell_index = grid.cell_index(i, j, k);
-                int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
-                if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
-                    continue;
-                }
-                bool const has_upper_neighbor = j + 1 < grid.ncell_y();
-                bool const upper_neighbor_in_region
-                        = has_upper_neighbor
-                          && has_tag(
-                                  inputs.diagnostic_region_tags,
-                                  grid.ordered_cells[grid.cell_index(i, j + 1, k)].physical_tag);
-                if (upper_neighbor_in_region) {
-                    continue;
-                }
-                double const face_measure = (grid.x_coords[i + 1] - grid.x_coords[i])
-                                            * (grid.z_coords[k + 1] - grid.z_coords[k]);
-                result.diagnostic_flux_integral
-                        += face_measure * cell_outputs[cell_index].magnetic_induction[1];
-                std::array<double, 3> const traction = traction_on_positive_y_face(
-                        cell_outputs[cell_index].magnetic_induction,
-                        cell_outputs[cell_index].magnetic_field);
-                result.diagnostic_surface_measure += face_measure;
-                result.diagnostic_traction_integral[0] += face_measure * traction[0];
-                result.diagnostic_traction_integral[1] += face_measure * traction[1];
-                result.diagnostic_traction_integral[2] += face_measure * traction[2];
-                result.diagnostic_traction_magnitude_integral
-                        += face_measure
-                           * std::sqrt(
-                                   traction[0] * traction[0] + traction[1] * traction[1]
-                                   + traction[2] * traction[2]);
-                diagnostic_face_samples.push_back(
-                        DiagnosticFaceSample {
-                                .x = grid.cell_center_x(i),
-                                .z = grid.cell_center_z(k),
-                                .measure = face_measure,
-                                .traction = traction,
-                        });
-                ++result.num_diagnostic_faces;
-            }
-        }
-    }
-    apply_x_mirror_symmetry_projection_to_traction_integral(diagnostic_face_samples, result);
+    integrate_diagnostics(grid, inputs, cell_inputs_3d, cell_outputs, result);
 
     write_results_view(
             output_view_file,
