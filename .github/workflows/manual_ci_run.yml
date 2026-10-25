@@ -77,6 +77,8 @@ jobs:
         submodules: recursive
         fetch-depth: 0
         lfs: true
+    - name: Materialize Git LFS files in the reused workspace
+      run: git lfs checkout
     - name: Clear persistent CUDA build
       run: |
         set -euo pipefail
@@ -137,6 +139,8 @@ jobs:
         submodules: recursive
         fetch-depth: 0
         lfs: true
+    - name: Materialize Git LFS files in the reused workspace
+      run: git lfs checkout
     - name: Clear persistent OMP debug build
       run: |
         set -euo pipefail
