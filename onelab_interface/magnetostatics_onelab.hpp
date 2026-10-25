@@ -4695,10 +4695,11 @@ void integrate_diagnostics(
                         cell_outputs[cell].magnetic_induction,
                         cell_outputs[cell].magnetic_field);
                 auto set_density = [&](std::size_t quantity, double value) {
+                    // Store the canonical dx ^ dz coefficient of value dz ^ dx.
                     forms(upper,
                           ddc::DiscreteElement<DiagnosticQuantity>(quantity),
-                          forms.accessor().template access_element<Z, X>())
-                            = value;
+                          forms.accessor().template access_element<X, Z>())
+                            = -value;
                 };
                 set_density(1, cell_outputs[cell].magnetic_induction[1]);
                 set_density(2, 1.0);

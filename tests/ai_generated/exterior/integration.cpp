@@ -18,9 +18,11 @@ struct Z
 };
 struct GridX
 {
+    using continuous_dimension_type = X;
 };
 struct GridY
 {
+    using continuous_dimension_type = Y;
 };
 struct GridZ
 {
@@ -65,7 +67,8 @@ TEST(Integration, ReducedCochainOrientationAndNonzeroOrigin)
 {
     ddc::Chunk allocation = allocate_field<First>();
     sil::tensor::Tensor field(allocation);
-    auto host = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), field);
+    auto host_allocation = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), field);
+    sil::tensor::Tensor host(host_allocation);
     ddc::host_for_each(host.non_indices_domain(), [&](auto elem) {
         host(elem, host.accessor().template access_element<X>()) = 3.0;
         host(elem, host.accessor().template access_element<Y>()) = 7.0;
@@ -100,8 +103,8 @@ TEST(Integration, EmptyChainAndZeroForms)
             0.0);
     using Point = sil::exterior::Simplex<0, GridX, GridY>;
     auto points = device_chain<0>(
-            {Point(ddc::DiscreteElement<GridX, GridY>(2, 3)),
-             Point(ddc::DiscreteElement<GridX, GridY>(3, 3))});
+            {Point(ddc::DiscreteElement<GridX, GridY>(2, 3), ddc::DiscreteVector<>()),
+             Point(ddc::DiscreteElement<GridX, GridY>(3, 3), ddc::DiscreteVector<>())});
     EXPECT_DOUBLE_EQ(
             sil::exterior::integrate<Scalar>(Kokkos::DefaultExecutionSpace(), field, points),
             8.0);
@@ -119,9 +122,13 @@ TEST(Integration, PhysicalFormsUseMappedReduction)
     sil::tensor::Tensor position(positions_alloc);
     sil::tensor::Tensor form(form_alloc);
     sil::tensor::Tensor area(area_alloc);
-    auto positions_host = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), position);
-    auto form_host = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), form);
-    auto area_host = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), area);
+    auto positions_host_allocation
+            = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), position);
+    sil::tensor::Tensor positions_host(positions_host_allocation);
+    auto form_host_allocation = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), form);
+    sil::tensor::Tensor form_host(form_host_allocation);
+    auto area_host_allocation = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), area);
+    sil::tensor::Tensor area_host(area_host_allocation);
     ddc::host_for_each(positions_host.non_indices_domain(), [&](auto elem) {
         double const i = elem.template uid<GridX>();
         double const j = elem.template uid<GridY>();
@@ -162,7 +169,8 @@ TEST(Integration, DiscreteStokes)
     ddc::Chunk two_alloc = allocate_field<Derivative>();
     sil::tensor::Tensor one(one_alloc);
     sil::tensor::Tensor two(two_alloc);
-    auto host = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), one);
+    auto host_allocation = ddc::create_mirror_view_and_copy(Kokkos::HostSpace(), one);
+    sil::tensor::Tensor host(host_allocation);
     ddc::host_for_each(host.non_indices_domain(), [&](auto elem) {
         host(elem, host.accessor().template access_element<X>()) = 0.0;
         host(elem, host.accessor().template access_element<Y>()) = elem.template uid<GridX>();

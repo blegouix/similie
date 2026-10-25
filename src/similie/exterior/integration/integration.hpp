@@ -91,6 +91,11 @@ KOKKOS_FUNCTION double integrate(
         Position const& position,
         SimplexType const& simplex)
 {
+    assert(misc::domain_contains(form.non_indices_domain(), simplex.discrete_element()));
+    assert(misc::domain_contains(position.non_indices_domain(), simplex.discrete_element()));
+    assert(misc::domain_contains(
+            position.non_indices_domain(),
+            simplex.discrete_element() + simplex.discrete_vector()));
     using Operator = Reduction<Indices, Position, typename SimplexType::discrete_element_type>;
     using NaturalElement = typename tensor::tensor_accessor_for_domain_t<
             reduction_domain_t<Indices>>::natural_domain_t::discrete_element_type;
