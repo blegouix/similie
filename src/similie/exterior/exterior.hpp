@@ -11,6 +11,7 @@
 #include <similie/exterior/covariant_derivative/covariant_derivative.hpp>
 #include <similie/exterior/discrete_hodge_star/discrete_hodge_star.hpp>
 #include <similie/exterior/discrete_hodge_star/weighted_levi_civita_discrete_hodge_star.hpp>
+#include <similie/exterior/integration/integration.hpp>
 #include <similie/exterior/laplacian/laplacian.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 #include <similie/exterior/staged_operator/staged_operator.hpp>

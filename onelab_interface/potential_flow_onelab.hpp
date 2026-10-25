@@ -19,6 +19,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/exterior/integration/integration.hpp>
 #include <similie/multidomains/laplacian.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
@@ -518,13 +519,38 @@ inline Result run(
                 equations.dpotential_dt<std::integral_constant<std::size_t, 2>>(state, 0)};
     };
     auto mass_flow = [&](PotentialFlowSamples const& samples) {
-        double flux = 0.0;
-        for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            auto const v = velocity(samples, cut_cell_i, j, 1.0, 0.5);
-            auto const p0 = point(cut_node_i, j), p1 = point(cut_node_i, j + 1);
-            flux -= inputs.density * (v[0] * (p1[1] - p0[1]) - v[1] * (p1[0] - p0[0]));
+        GridDomain const cut_nodes(
+                ddc::DiscreteElement<GridX, GridY>(0, 0),
+                ddc::DiscreteVector<GridX, GridY>(1, cells_per_patch_j + 1));
+        [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
+        [[maybe_unused]] sil::tensor::TensorAccessor<GradientIndex> flux_accessor;
+        ddc::Chunk positions_alloc(
+                PositionDomain(cut_nodes, position_accessor.domain()),
+                ddc::HostAllocator<double>());
+        ddc::Chunk flux_alloc(
+                ddc::DiscreteDomain<GridX, GridY, GradientIndex>(cut_nodes, flux_accessor.domain()),
+                ddc::HostAllocator<double>());
+        sil::tensor::Tensor positions(positions_alloc);
+        sil::tensor::Tensor flux(flux_alloc);
+        using Edge = sil::exterior::Simplex<1, GridX, GridY>;
+        sil::exterior::Chain<Edge>
+        cut(Kokkos::View<Edge*, Kokkos::HostSpace>("mass_flow_cut", cells_per_patch_j),
+            std::size_t(0));
+        for (std::size_t j = 0; j <= cells_per_patch_j; ++j) {
+            ddc::DiscreteElement<GridX, GridY> const elem(0, j);
+            std::array<double, 2> const p = point(cut_node_i, j);
+            positions(elem, positions.accessor().template access_element<X>()) = p[0];
+            positions(elem, positions.accessor().template access_element<Y>()) = p[1];
+            if (j == cells_per_patch_j)
+                continue;
+            std::array<double, 2> const v = velocity(samples, cut_cell_i, j, 1.0, 0.5);
+            // The oriented mass-flux one-form is rho (v_y dx - v_x dy).
+            flux(elem, flux.accessor().template access_element<X>()) = inputs.density * v[1];
+            flux(elem, flux.accessor().template access_element<Y>()) = -inputs.density * v[0];
+            cut += Edge(elem, ddc::DiscreteVector<GridX, GridY>(0, 1));
         }
-        return flux;
+        return sil::exterior::integrate<ddc::TypeSeq<
+                GradientIndex>>(Kokkos::DefaultHostExecutionSpace(), flux, positions, cut);
     };
     double const flow0 = mass_flow(base_samples);
     double const flow1 = mass_flow(response_samples);
