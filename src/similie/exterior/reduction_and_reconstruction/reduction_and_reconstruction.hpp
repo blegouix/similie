@@ -457,6 +457,8 @@ struct Reduction
 {
 private:
     using ComponentSource = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
+    using CoefficientIndex = detail::
+            LocalCoefficientIndex<ComponentSource, reduction_index_t<Indices>, Coefficients>;
 
 public:
     using staged_storage_type = detail::LocalOperatorStorage<
@@ -488,20 +490,15 @@ public:
             PositionType const& position,
             BatchElem elem)
     {
-        if constexpr (misc::Specialization<
-                              detail::LocalCoefficientIndex<
-                                      ComponentSource,
-                                      target_index_type,
-                                      Coefficients>,
-                              tensor::TensorDiagonalIndex>) {
+        if constexpr (detail::LocalDiagonalCoefficientIndex<CoefficientIndex>) {
 #ifndef NDEBUG
-            detail::assert_local_diagonal(
+            detail::assert_local_diagonal<Coefficients>(
                     Reduction<Indices, PositionType, BatchElem, Complex>::value(position, elem));
 #endif
-            detail::apply_local_diagonal<ComponentSource, target_index_type>(
-                    reduced_tensor,
-                    form_tensor,
-                    diagonal_weights(position, elem));
+            detail::apply_local_diagonal<
+                    ComponentSource,
+                    target_index_type,
+                    Coefficients>(reduced_tensor, form_tensor, diagonal_weights(position, elem));
             return;
         }
         using reduction_accessor_t
@@ -552,21 +549,16 @@ public:
             PositionType const& position,
             BatchElem elem)
     {
-        if constexpr (misc::Specialization<
-                              detail::LocalCoefficientIndex<
-                                      ComponentSource,
-                                      target_index_type,
-                                      Coefficients>,
-                              tensor::TensorDiagonalIndex>) {
+        if constexpr (detail::LocalDiagonalCoefficientIndex<CoefficientIndex>) {
 #ifndef NDEBUG
-            detail::assert_local_diagonal(
+            detail::assert_local_diagonal<Coefficients>(
                     Reduction<Indices, PositionType, BatchElem, Complex>::
                             value(metric, position, elem));
-            detail::assert_local_diagonal(
+            detail::assert_local_diagonal<Coefficients>(
                     Reduction<Indices, PositionType, BatchElem, CellComplex::Primal>::
                             value(position, elem));
 #endif
-            detail::apply_local_diagonal<ComponentSource, target_index_type>(
+            detail::apply_local_diagonal<ComponentSource, target_index_type, Coefficients>(
                     reduced_tensor,
                     form_tensor,
                     diagonal_weights(metric, position, elem));
@@ -729,6 +721,12 @@ public:
             BatchElem elem,
             auto natural_elem)
     {
+        if constexpr (misc::Specialization<CoefficientIndex, tensor::TensorScalingIndex>) {
+            return detail::local_stencil_coefficient<ComponentSource, target_index_type>(
+                    value(position, elem),
+                    ddc::detail::array(source_natural_elem_type(natural_elem)),
+                    ddc::detail::array(target_natural_elem_type(natural_elem)));
+        }
         constexpr std::size_t K = target_index_type::rank();
         if constexpr (K == 0) {
             return 1.;
@@ -764,22 +762,15 @@ public:
     {
         using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
         detail::LocalOperatorStencil<Source, target_index_type> result;
-        if constexpr (misc::Specialization<
-                              detail::LocalCoefficientIndex<
-                                      ComponentSource,
-                                      target_index_type,
-                                      Coefficients>,
-                              tensor::TensorDiagonalIndex>) {
+        if constexpr (detail::LocalDiagonalCoefficientIndex<CoefficientIndex>) {
 #ifndef NDEBUG
-            detail::assert_local_diagonal(
+            detail::assert_local_diagonal<Coefficients>(
                     Reduction<Indices, PositionType, BatchElem, Complex>::value(position, element));
 #endif
-            std::array<double, ComponentSource::mem_size()> const coefficients
+            std::array<double, CoefficientIndex::mem_size()> const coefficients
                     = diagonal_weights(position, element);
-            for (std::size_t component = 0; component < coefficients.size(); ++component)
-                result.weights[component * coefficients.size() + component]
-                        = coefficients[component];
-            return result;
+            return detail::local_diagonal_stencil<ComponentSource, target_index_type, Coefficients>(
+                    coefficients);
         }
         auto unit = detail::make_stencil<typename PositionType::memory_space, Source>(
                 ddc::DiscreteElement<>());
@@ -808,23 +799,16 @@ public:
     {
         using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
         detail::LocalOperatorStencil<Source, target_index_type> result;
-        if constexpr (misc::Specialization<
-                              detail::LocalCoefficientIndex<
-                                      ComponentSource,
-                                      target_index_type,
-                                      Coefficients>,
-                              tensor::TensorDiagonalIndex>) {
+        if constexpr (detail::LocalDiagonalCoefficientIndex<CoefficientIndex>) {
 #ifndef NDEBUG
-            detail::assert_local_diagonal(
+            detail::assert_local_diagonal<Coefficients>(
                     Reduction<Indices, PositionType, BatchElem, Complex>::
                             value(metric, position, element));
 #endif
-            std::array<double, ComponentSource::mem_size()> const coefficients
+            std::array<double, CoefficientIndex::mem_size()> const coefficients
                     = diagonal_weights(metric, position, element);
-            for (std::size_t component = 0; component < coefficients.size(); ++component)
-                result.weights[component * coefficients.size() + component]
-                        = coefficients[component];
-            return result;
+            return detail::local_diagonal_stencil<ComponentSource, target_index_type, Coefficients>(
+                    coefficients);
         }
         auto unit = detail::make_stencil<typename PositionType::memory_space, Source>(
                 ddc::DiscreteElement<>());
@@ -853,6 +837,12 @@ public:
             BatchElem elem,
             auto natural_elem)
     {
+        if constexpr (misc::Specialization<CoefficientIndex, tensor::TensorScalingIndex>) {
+            return detail::local_stencil_coefficient<ComponentSource, target_index_type>(
+                    value(metric, position, elem),
+                    ddc::detail::array(source_natural_elem_type(natural_elem)),
+                    ddc::detail::array(target_natural_elem_type(natural_elem)));
+        }
         if constexpr (Complex == CellComplex::Primal) {
             return value(position, elem, natural_elem);
         } else {
@@ -908,11 +898,11 @@ public:
     }
 
 private:
-    KOKKOS_FUNCTION static std::array<double, ComponentSource::mem_size()> diagonal_weights(
+    KOKKOS_FUNCTION static std::array<double, CoefficientIndex::mem_size()> diagonal_weights(
             PositionType const& position,
             BatchElem elem)
     {
-        std::array<double, ComponentSource::mem_size()> weights {};
+        std::array<double, CoefficientIndex::mem_size()> weights {};
         if constexpr (target_index_type::rank() == 0) {
             weights[0] = 1.;
         } else {
@@ -936,7 +926,7 @@ private:
     }
 
     template <class Metric>
-    KOKKOS_FUNCTION static std::array<double, ComponentSource::mem_size()> diagonal_weights(
+    KOKKOS_FUNCTION static std::array<double, CoefficientIndex::mem_size()> diagonal_weights(
             Metric const& metric,
             PositionType const& position,
             BatchElem elem)
@@ -948,7 +938,7 @@ private:
             constexpr std::size_t N = position_index_type::size();
             constexpr std::size_t Q = target_index_type::rank();
             constexpr std::size_t K = N - Q;
-            std::array<double, ComponentSource::mem_size()> weights {};
+            std::array<double, CoefficientIndex::mem_size()> weights {};
             for (std::size_t component = 0; component < weights.size(); ++component) {
                 std::array<std::size_t, Q> const target_ids
                         = target_index_type::mem_id_to_canonical_natural_ids(component);
@@ -1151,6 +1141,13 @@ template <
         template <class...> class Coefficients = tensor::TensorFullIndex>
 struct Reconstruction
 {
+private:
+    using CoefficientIndex = detail::LocalCoefficientIndex<
+            reduction_index_t<Indices>,
+            reduction_index_t<tensor::primes<Indices>>,
+            Coefficients>;
+
+public:
     using staged_storage_type = detail::LocalOperatorStorage<
             Reconstruction,
             reduction_index_t<Indices>,
@@ -1180,17 +1177,12 @@ struct Reconstruction
             PositionType const& position,
             BatchElem elem)
     {
-        if constexpr (misc::Specialization<
-                              detail::LocalCoefficientIndex<
-                                      source_index_type,
-                                      target_index_type,
-                                      Coefficients>,
-                              tensor::TensorDiagonalIndex>) {
+        if constexpr (detail::LocalDiagonalCoefficientIndex<CoefficientIndex>) {
 #ifndef NDEBUG
-            detail::assert_local_diagonal(
+            detail::assert_local_diagonal<Coefficients>(
                     Reduction<Indices, PositionType, BatchElem, Complex>::value(position, elem));
 #endif
-            detail::apply_local_diagonal<source_index_type, target_index_type>(
+            detail::apply_local_diagonal<source_index_type, target_index_type, Coefficients>(
                     reconstructed_tensor,
                     cochain_tensor,
                     diagonal_weights(position, elem));
@@ -1241,21 +1233,16 @@ struct Reconstruction
             BatchElem element)
     {
         detail::LocalOperatorStencil<source_index_type, target_index_type> stencil;
-        if constexpr (misc::Specialization<
-                              detail::LocalCoefficientIndex<
-                                      source_index_type,
-                                      target_index_type,
-                                      Coefficients>,
-                              tensor::TensorDiagonalIndex>) {
+        if constexpr (detail::LocalDiagonalCoefficientIndex<CoefficientIndex>) {
 #ifndef NDEBUG
-            detail::assert_local_diagonal(
+            detail::assert_local_diagonal<Coefficients>(
                     Reduction<Indices, PositionType, BatchElem, Complex>::value(position, element));
 #endif
-            std::array<double, source_index_type::mem_size()> const weights
+            std::array<double, CoefficientIndex::mem_size()> const weights
                     = diagonal_weights(position, element);
-            for (std::size_t component = 0; component < weights.size(); ++component)
-                stencil.weights[component * weights.size() + component] = weights[component];
-            return stencil;
+            return detail::
+                    local_diagonal_stencil<source_index_type, target_index_type, Coefficients>(
+                            weights);
         }
         if constexpr (source_index_type::rank() == 0) {
             stencil.weights[0] = 1.0;
@@ -1280,12 +1267,7 @@ struct Reconstruction
             BatchElem elem,
             auto natural_elem)
     {
-        if constexpr (misc::Specialization<
-                              detail::LocalCoefficientIndex<
-                                      source_index_type,
-                                      target_index_type,
-                                      Coefficients>,
-                              tensor::TensorDiagonalIndex>) {
+        if constexpr (detail::LocalDiagonalCoefficientIndex<CoefficientIndex>) {
             return detail::local_stencil_coefficient<source_index_type, target_index_type, false>(
                     value(position, elem),
                     ddc::detail::array(source_natural_elem_type(natural_elem)),
@@ -1298,11 +1280,11 @@ struct Reconstruction
     }
 
 private:
-    KOKKOS_FUNCTION static std::array<double, source_index_type::mem_size()> diagonal_weights(
+    KOKKOS_FUNCTION static std::array<double, CoefficientIndex::mem_size()> diagonal_weights(
             PositionType const& position,
             BatchElem elem)
     {
-        std::array<double, source_index_type::mem_size()> weights {};
+        std::array<double, CoefficientIndex::mem_size()> weights {};
         bool invertible = true;
         if constexpr (source_index_type::rank() == 0) {
             weights[0] = 1.;

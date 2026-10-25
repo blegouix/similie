@@ -10,7 +10,8 @@
 
 #include "local_staging_fixture.hpp"
 
-int main(int argc, char** argv)
+template <template <class...> class Coefficients>
+int probe(int argc, char** argv)
 {
     Kokkos::ScopeGuard kokkos(argc, argv);
     ddc::ScopeGuard ddc(argc, argv);
@@ -20,6 +21,19 @@ int main(int argc, char** argv)
     auto positions = allocate<PositionIndex>(halo());
     Field<PositionIndex> position(positions);
     fill_geometry(position, skew);
+    if (argc > 2 && std::string(argv[2]) == "isotropic") {
+        ddc::parallel_for_each(
+                Exec(),
+                halo(),
+                KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                    position.mem(element, ddc::DiscreteElement<PositionIndex>(0))
+                            = 0.75 * element.uid<GridX>();
+                    position.mem(element, ddc::DiscreteElement<PositionIndex>(1))
+                            = 0.75 * element.uid<GridY>();
+                    position.mem(element, ddc::DiscreteElement<PositionIndex>(2))
+                            = 0.75 * element.uid<GridZ>();
+                });
+    }
     using Indices = ddc::TypeSeq<One>;
     if (argc > 1 && std::string(argv[1]) == "weighted-hodge") {
         using Target = sil::tensor::TensorAntisymmetricIndex<
@@ -69,7 +83,7 @@ int main(int argc, char** argv)
                                 Field<PositionIndex>,
                                 Domain::discrete_element_type,
                                 sil::exterior::CellComplex::Primal,
-                                sil::tensor::TensorDiagonalIndex>::
+                                Coefficients>::
                         operator()(output[element], input[element], position, element);
                     else
                         sil::exterior::Reconstruction<
@@ -77,7 +91,7 @@ int main(int argc, char** argv)
                                 Field<PositionIndex>,
                                 Domain::discrete_element_type,
                                 sil::exterior::CellComplex::Primal,
-                                sil::tensor::TensorDiagonalIndex>::
+                                Coefficients>::
                         operator()(output[element], input[element], position, element);
                 });
         Exec().fence();
@@ -87,7 +101,7 @@ int main(int argc, char** argv)
                 Field<PositionIndex>,
                 typename Field<One>::non_indices_domain_t::discrete_element_type,
                 sil::exterior::CellComplex::Primal,
-                sil::tensor::TensorDiagonalIndex>>
+                Coefficients>>
                 cached(Exec(), position, domain());
         Exec().fence();
     } else {
@@ -96,9 +110,16 @@ int main(int argc, char** argv)
                 Field<PositionIndex>,
                 typename Field<One>::non_indices_domain_t::discrete_element_type,
                 sil::exterior::CellComplex::Primal,
-                sil::tensor::TensorDiagonalIndex>>
+                Coefficients>>
                 cached(Exec(), position, domain());
         Exec().fence();
     }
     return 0;
+}
+
+int main(int argc, char** argv)
+{
+    if (argc > 4 && std::string(argv[4]) == "scaling")
+        return probe<sil::tensor::TensorScalingIndex>(argc, argv);
+    return probe<sil::tensor::TensorDiagonalIndex>(argc, argv);
 }

@@ -75,15 +75,21 @@ KOKKOS_FUNCTION void apply_local_stencil(
 
 // Apply coefficients computed at the current point through the same diagonal
 // tensor product as a cached local operator, without allocating a cache.
-template <class Source, class Target, class Output, class Input>
+template <
+        class Source,
+        class Target,
+        template <class...> class Coefficients = tensor::TensorDiagonalIndex,
+        class Output,
+        class Input>
 KOKKOS_FUNCTION void apply_local_diagonal(
         Output const& output,
         Input const& input,
-        std::array<double, Source::mem_size()> const& weights)
+        std::array<double, LocalCoefficientIndex<Source, Target, Coefficients>::mem_size()> const&
+                weights)
 {
     using SourceComponent = tensor::Covariant<LocalComponentIndex<Source, false>>;
     using TargetComponent = tensor::Covariant<LocalComponentIndex<Target, true>>;
-    using Matrix = tensor::TensorDiagonalIndex<TargetComponent, tensor::upper_t<SourceComponent>>;
+    using Matrix = Coefficients<TargetComponent, tensor::upper_t<SourceComponent>>;
     using Span = ddc::ChunkSpan<
             double const,
             ddc::DiscreteDomain<Matrix>,
@@ -101,7 +107,24 @@ KOKKOS_FUNCTION void apply_local_diagonal(
             local_component_tensor<SourceComponent>(input));
 }
 
-template <class Source, class Target>
+// Expand compressed diagonal coefficients only when a caller requests a full stencil.
+template <class Source, class Target, template <class...> class Coefficients>
+KOKKOS_FUNCTION LocalOperatorStencil<Source, Target> local_diagonal_stencil(
+        std::array<double, LocalCoefficientIndex<Source, Target, Coefficients>::mem_size()> const&
+                weights)
+{
+    LocalOperatorStencil<Source, Target> result;
+    for (std::size_t component = 0; component < Source::mem_size(); ++component)
+        result.weights[component * Source::mem_size() + component]
+                = weights[LocalCoefficientIndex<Source, Target, Coefficients>::mem_id(
+                        {component, component})];
+    return result;
+}
+
+template <
+        template <class...> class Coefficients = tensor::TensorDiagonalIndex,
+        class Source,
+        class Target>
 KOKKOS_FUNCTION void assert_local_diagonal(
         [[maybe_unused]] LocalOperatorStencil<Source, Target> const& stencil)
 {
@@ -115,6 +138,17 @@ KOKKOS_FUNCTION void assert_local_diagonal(
                     || Kokkos::abs(stencil.weights[row * Source::mem_size() + col])
                                <= 128. * std::numeric_limits<double>::epsilon() * scale)
                    && "Diagonal operator requires diagonal coefficients");
+    if constexpr (misc::Specialization<
+                          LocalCoefficientIndex<Source, Target, Coefficients>,
+                          tensor::TensorScalingIndex>) {
+        // Edge lengths come from coordinate differences, which can amplify roundoff.
+        for (std::size_t component = 1; component < Source::mem_size(); ++component)
+            assert((Kokkos::abs(
+                            stencil.weights[component * Source::mem_size() + component]
+                            - stencil.weights[0])
+                    <= Kokkos::sqrt(std::numeric_limits<double>::epsilon()) * scale)
+                   && "Scaling operator requires equal diagonal coefficients");
+    }
 #endif
 }
 
@@ -322,9 +356,16 @@ public:
         LocalOperatorStencil<Source, Target> result;
         using Index = LocalCoefficientIndex<Source, Target, Coefficients>;
         std::size_t const node = stencil_node(m_stencils.domain, element);
-        for (std::size_t entry = 0; entry < Index::mem_size(); ++entry) {
-            std::array const ids = Index::mem_id_to_canonical_natural_ids(entry);
-            result.weights[ids[0] * Source::mem_size() + ids[1]] = m_stencils.weights(node, entry);
+        if constexpr (misc::Specialization<Index, tensor::TensorScalingIndex>) {
+            for (std::size_t component = 0; component < Source::mem_size(); ++component)
+                result.weights[component * Source::mem_size() + component]
+                        = m_stencils.weights(node, 0);
+        } else {
+            for (std::size_t entry = 0; entry < Index::mem_size(); ++entry) {
+                std::array const ids = Index::mem_id_to_canonical_natural_ids(entry);
+                result.weights[ids[0] * Source::mem_size() + ids[1]]
+                        = m_stencils.weights(node, entry);
+            }
         }
         return result;
     }

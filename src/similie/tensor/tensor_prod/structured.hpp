@@ -13,6 +13,7 @@
 #include <similie/tensor/tensor_indices/diagonal_tensor.hpp>
 #include <similie/tensor/tensor_indices/identity_tensor.hpp>
 #include <similie/tensor/tensor_indices/levi_civita_tensor.hpp>
+#include <similie/tensor/tensor_indices/scaling_tensor.hpp>
 
 #include "diagonal.hpp"
 #include "identity.hpp"
@@ -25,13 +26,16 @@ template <class Index>
 concept StructuredTensorProductIndex
         = misc::Specialization<Index, TensorIdentityIndex>
           || misc::Specialization<Index, TensorDiagonalIndex>
+          || misc::Specialization<Index, TensorScalingIndex>
           || misc::Specialization<Index, TensorLeviCivitaIndex>
           || misc::Specialization<Index, TensorWeightedLeviCivitaIndex>;
 
 template <class Index, class... Tags>
 KOKKOS_FUNCTION constexpr bool tensor_product_indices_match(ddc::DiscreteElement<Tags...> element)
 {
-    if constexpr (misc::Specialization<Index, TensorIdentityIndex>) {
+    if constexpr (
+            misc::Specialization<Index, TensorIdentityIndex>
+            || misc::Specialization<Index, TensorScalingIndex>) {
         return IdentityTensorProductMatcher<Index>::operator()(
                 misc::type_seq_intersect_t<
                         ddc::to_type_seq_t<natural_domain_t<Index>>,

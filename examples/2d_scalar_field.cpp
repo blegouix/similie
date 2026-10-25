@@ -433,7 +433,9 @@ int main(int argc, char** argv)
     sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             ddc::TypeSeq<AlphaLow>,
             decltype(position),
-            ddc::DiscreteElement<DDimX, DDimY>>>
+            ddc::DiscreteElement<DDimX, DDimY>,
+            sil::exterior::CellComplex::Primal,
+            sil::tensor::TensorScalingIndex>>
             reconstruct_spatial_moments(
                     Kokkos::DefaultExecutionSpace(),
                     reconstructed_spatial_moments,

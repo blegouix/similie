@@ -153,6 +153,13 @@ void equal_index_cases()
             ddc::DiscreteDomain<I>(ddc::DiscreteElement<I>(1), ddc::DiscreteVector<I>(1)));
 }
 
+TEST(TensorProdStructured, ScalingBothSides)
+{
+    static_assert(TensorScalingIndex<I, upper_t<J>>::mem_size() == 1);
+    static_assert(TensorScalingIndex<I, upper_t<J>>::access_size() == 2);
+    equal_index_cases<TensorScalingIndex>();
+}
+
 TEST(TensorProdStructured, WeightedLeviCivitaBothSides)
 {
     compare<TensorAntisymmetricIndex<J, K>>(

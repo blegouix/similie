@@ -12,18 +12,6 @@
 
 #include <similie/similie.hpp>
 
-namespace {
-template <
-        sil::exterior::CellComplex Complex,
-        class Source,
-        class Target,
-        class Metric,
-        class Position,
-        class Element>
-using CachedHodgeStar = sil::exterior::StagedOperator<
-        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
-}
-
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
 metadata:
@@ -103,7 +91,7 @@ struct Y
 };
 
 // Declare a metric
-using MetricIndex = sil::tensor::TensorSymmetricIndex<
+using MetricIndex = sil::tensor::TensorIdentityIndex<
         sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
         sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
 
@@ -183,14 +171,6 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            mesh_xy,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                metric(elem, metric.accessor().access_element<X, X>()) = 1.;
-                metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
-                metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
-            });
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> potential_accessor;
@@ -231,12 +211,15 @@ int main(int argc, char** argv)
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
     // Exterior operators act on cochains, while the analytic field above is a one-form.
+    // The Cartesian basis gives diagonal coefficients, even where Greville spacing varies.
     ddc::Chunk potential_cochain_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential_cochain(potential_cochain_alloc);
     sil::exterior::StagedOperator<sil::exterior::Reduction<
             ddc::TypeSeq<MuLow>,
             decltype(position),
-            ddc::DiscreteElement<DDimX, DDimY>>>
+            ddc::DiscreteElement<DDimX, DDimY>,
+            sil::exterior::CellComplex::Primal,
+            sil::tensor::TensorDiagonalIndex>>
             reduction(Kokkos::DefaultExecutionSpace(), potential_cochain, potential, position);
     reduction(potential_cochain, potential);
 
@@ -249,7 +232,11 @@ int main(int argc, char** argv)
     sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
     ddc::Chunk laplacian_cochain_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian_cochain(laplacian_cochain_alloc);
-    auto laplacian = sil::exterior::make_laplacian<MetricIndex, MuLow, MuLow, CachedHodgeStar>(
+    auto laplacian = sil::exterior::make_laplacian<
+            MetricIndex,
+            MuLow,
+            MuLow,
+            sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>(
             Kokkos::DefaultExecutionSpace(),
             laplacian_cochain,
             potential_cochain,
@@ -271,7 +258,9 @@ int main(int argc, char** argv)
     sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             ddc::TypeSeq<MuLow>,
             decltype(position),
-            ddc::DiscreteElement<DDimX, DDimY>>>
+            ddc::DiscreteElement<DDimX, DDimY>,
+            sil::exterior::CellComplex::Primal,
+            sil::tensor::TensorDiagonalIndex>>
             reconstruction(
                     Kokkos::DefaultExecutionSpace(),
                     laplacian_tensor,

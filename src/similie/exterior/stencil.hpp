@@ -14,6 +14,7 @@
 
 #include <similie/exterior/coboundary/coboundary.hpp>
 #include <similie/tensor/tensor_indices/diagonal_tensor.hpp>
+#include <similie/tensor/tensor_indices/scaling_tensor.hpp>
 
 #include "stencil_indices.hpp"
 
@@ -329,6 +330,10 @@ struct LocalComponentIndex<Form, Row, std::index_sequence<Components...>>
 {
 };
 
+template <class Index>
+concept LocalDiagonalCoefficientIndex = misc::Specialization<Index, tensor::TensorDiagonalIndex>
+                                        || misc::Specialization<Index, tensor::TensorScalingIndex>;
+
 template <class Source, class Target, template <class...> class Coefficients>
 using LocalCoefficientIndex
         = Coefficients<LocalComponentIndex<Target, true>, LocalComponentIndex<Source, false>>;
@@ -365,8 +370,9 @@ LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> cache_local_st
     using Index = LocalCoefficientIndex<Source, Target, Coefficients>;
     static_assert(
             misc::Specialization<Index, tensor::TensorFullIndex>
-            || misc::Specialization<Index, tensor::TensorDiagonalIndex>);
-    if constexpr (misc::Specialization<Index, tensor::TensorDiagonalIndex>)
+            || misc::Specialization<Index, tensor::TensorDiagonalIndex>
+            || misc::Specialization<Index, tensor::TensorScalingIndex>);
+    if constexpr (LocalDiagonalCoefficientIndex<Index>)
         static_assert(Source::mem_size() == Target::mem_size());
     LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> storage;
     storage.domain = domain;
@@ -380,7 +386,7 @@ LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> cache_local_st
             KOKKOS_LAMBDA(std::size_t node) {
                 auto const stencil = evaluate(stencil_element(domain, node));
 #ifndef NDEBUG
-                if constexpr (misc::Specialization<Index, tensor::TensorDiagonalIndex>) {
+                if constexpr (LocalDiagonalCoefficientIndex<Index>) {
                     double scale = 0.0;
                     for (double coefficient : stencil.weights)
                         scale = Kokkos::max(scale, Kokkos::abs(coefficient));
@@ -391,6 +397,17 @@ LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> cache_local_st
                                                <= 128.0 * std::numeric_limits<double>::epsilon()
                                                           * scale)
                                    && "Diagonal staged operator requires diagonal coefficients");
+                    if constexpr (misc::Specialization<Index, tensor::TensorScalingIndex>) {
+                        // Edge lengths come from coordinate differences, which can amplify roundoff.
+                        for (std::size_t component = 1; component < Source::mem_size(); ++component)
+                            assert((Kokkos::abs(
+                                            stencil.weights
+                                                    [component * Source::mem_size() + component]
+                                            - stencil.weights[0])
+                                    <= Kokkos::sqrt(std::numeric_limits<double>::epsilon()) * scale)
+                                   && "Scaling staged operator requires equal diagonal "
+                                      "coefficients");
+                    }
                 }
 #endif
                 for (std::size_t entry = 0; entry < Index::mem_size(); ++entry) {

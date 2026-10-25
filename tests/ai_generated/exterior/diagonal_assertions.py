@@ -29,3 +29,25 @@ for operator, path in (
             assert "requires diagonal coefficients" in result.stdout, result.stdout
         else:
             assert result.returncode == 0, result.stdout
+
+for operator in ("reduction", "reconstruction"):
+    for path in ("direct", "staged"):
+        for executable, geometry, should_assert in (
+            (sys.argv[1], "isotropic", False),
+            (sys.argv[1], "aligned", True),
+            (sys.argv[2], "aligned", False),
+        ):
+            result = subprocess.run(
+                [executable, operator, geometry, path, "scaling"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=30,
+            )
+            if should_assert:
+                assert result.returncode != 0, result.stdout
+                assert "requires equal diagonal coefficients" in result.stdout, (
+                    result.stdout
+                )
+            else:
+                assert result.returncode == 0, result.stdout

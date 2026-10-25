@@ -11,18 +11,6 @@
 
 #include <similie/similie.hpp>
 
-namespace {
-template <
-        sil::exterior::CellComplex Complex,
-        class Source,
-        class Target,
-        class Metric,
-        class Position,
-        class Element>
-using CachedHodgeStar = sil::exterior::StagedOperator<
-        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
-}
-
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
 metadata:
@@ -102,7 +90,7 @@ struct Y
 };
 
 // Declare a metric
-using MetricIndex = sil::tensor::TensorSymmetricIndex<
+using MetricIndex = sil::tensor::TensorIdentityIndex<
         sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
         sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
 
@@ -178,14 +166,6 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            mesh_xy,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                metric(elem, metric.accessor().access_element<X, X>()) = 1.;
-                metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
-                metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
-            });
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
@@ -222,7 +202,11 @@ int main(int argc, char** argv)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
-    auto laplacian = sil::exterior::make_laplacian<MetricIndex, NuLow, DummyIndex, CachedHodgeStar>(
+    auto laplacian = sil::exterior::make_laplacian<
+            MetricIndex,
+            NuLow,
+            DummyIndex,
+            sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>(
             Kokkos::DefaultExecutionSpace(),
             laplacian_tensor,
             potential,
