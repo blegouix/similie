@@ -228,6 +228,8 @@ class IterationAttribution(unittest.TestCase):
             )
             self.assertIn("--launch-count=3", command)
             self.assertIn("--kill=yes", command)
+            self.assertIn("--replay-mode=application", command)
+            self.assertIn("--app-replay-mode=strict", command)
             self.assertIn(
                 "--metrics="
                 + ",".join(

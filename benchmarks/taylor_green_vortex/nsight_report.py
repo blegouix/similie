@@ -66,7 +66,11 @@ def compute_command(
         f"--kernel-id=::regex:^({symbols})$:^({invocations})$",
         f"--launch-count={count}",
         "--kill=yes",
-        "--replay-mode=kernel",
+        # Kernel replay backs up device allocations for each sampled launch.
+        # At N=128 those backups spill into host memory; application replay
+        # recreates the state instead and preserves every requested metric.
+        "--replay-mode=application",
+        "--app-replay-mode=strict",
         "--section=SpeedOfLight",
         "--section=LaunchStats",
         "--section=Occupancy",
@@ -239,8 +243,9 @@ def profile_cases(binary, output, fluid, transport, coupling):
                         f"{time.monotonic() - started:.1f} s",
                         flush=True,
                     )
-                    # --kill ends the diagnostic as soon as all requested calls
-                    # are captured. No timings or completed trajectory are used.
+                    # --kill ends each replay pass after the requested calls.
+                    # Strict matching rejects inconsistent launches between
+                    # passes. No timings or completed trajectory are used.
                     reports = [
                         path
                         for path in batch_directory.glob("kernels.ncu-rep*")
