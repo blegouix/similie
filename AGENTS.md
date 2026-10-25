@@ -37,6 +37,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 - Except if copy-pass or move-pass is relevant, prefer passing variables to functions by reference except very primitive type like `int`, `float` etc. Annotate them `const` if never mutated. Do not specify any name if unused (ie. unused variable passed to a particular member function of a standardized-API class).
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except if explicity asked. In general, if such an alias is used only once it should not be declared and inlined.
 - Whenever possible, avoid using `auto`, `decltype`, etc...
+- Even if you compile for CPU, ensure the GPU-compatibility. In particular KOKKOS_FUNCTION-ish-annotate the GPU-compatible functions and ensure GPU-capturable lambda are defined in public KOKKOS_FUNCTION-annotated functions (it is a constraint for tests in particular, as GTest generates private functions whenever using the TEST(,) macro).
 - Try to mimic the coding style of human-made code in the project as much as possible.
 - Any fully AI-generated file has to be annotated with a `// AI-GENERATED` tag just below the copyright and license.
 - Any new AI-generated test has to be located in the `tests/ai_generated` folder.
