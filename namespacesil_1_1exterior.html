@@ -353,6 +353,22 @@ requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8" id="r_a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a> &gt; CosimplexType&gt; </td></tr>
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a941c3e48322d9c305635d3b5a1376ab8">operator&lt;&lt;</a> (std::ostream &amp;out, CosimplexType const &amp;cosimplex)</td></tr>
 <tr class="separator:a941c3e48322d9c305635d3b5a1376ab8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58e5df70a848a7ef17f5461634df01f5" id="r_a58e5df70a848a7ef17f5461634df01f5"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex Index, class CochainTensor , class SimplexType &gt; </td></tr>
+<tr class="memitem:a58e5df70a848a7ef17f5461634df01f5"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a58e5df70a848a7ef17f5461634df01f5">integrate</a> (CochainTensor const &amp;cochain, SimplexType const &amp;simplex)</td></tr>
+<tr class="memdesc:a58e5df70a848a7ef17f5461634df01f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate an already reduced k-cochain on one oriented k-cell.  <br /></td></tr>
+<tr class="separator:a58e5df70a848a7ef17f5461634df01f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e7b7e615443917b987e0de91d69ec4e" id="r_a4e7b7e615443917b987e0de91d69ec4e"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex Index, class ExecSpace , class CochainTensor , class ChainType &gt; </td></tr>
+<tr class="memitem:a4e7b7e615443917b987e0de91d69ec4e"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a4e7b7e615443917b987e0de91d69ec4e">integrate</a> (ExecSpace const &amp;exec, CochainTensor const &amp;cochain, ChainType const &amp;chain)</td></tr>
+<tr class="memdesc:a4e7b7e615443917b987e0de91d69ec4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pair a reduced k-cochain with an oriented k-chain: &lt;c, C&gt; = sum s_i c_i.  <br /></td></tr>
+<tr class="separator:a4e7b7e615443917b987e0de91d69ec4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4cc1bba3af055be82e121e38383afc8" id="r_af4cc1bba3af055be82e121e38383afc8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class SimplexType &gt; </td></tr>
+<tr class="memitem:af4cc1bba3af055be82e121e38383afc8"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af4cc1bba3af055be82e121e38383afc8">integrate</a> (<a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;form, Position const &amp;position, SimplexType const &amp;simplex)</td></tr>
+<tr class="memdesc:af4cc1bba3af055be82e121e38383afc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reduce a physical differential form, then evaluate it on an oriented cell.  <br /></td></tr>
+<tr class="separator:af4cc1bba3af055be82e121e38383afc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1d4864b8d4cc465e11404608a33f53a" id="r_ad1d4864b8d4cc465e11404608a33f53a"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace , class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class ChainType &gt; </td></tr>
+<tr class="memitem:ad1d4864b8d4cc465e11404608a33f53a"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad1d4864b8d4cc465e11404608a33f53a">integrate</a> (ExecSpace const &amp;exec, <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;form, Position const &amp;position, ChainType const &amp;chain)</td></tr>
+<tr class="memdesc:ad1d4864b8d4cc465e11404608a33f53a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reduce a physical form and pair it with a chain without storing a cochain.  <br /></td></tr>
+<tr class="separator:ad1d4864b8d4cc465e11404608a33f53a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60e01e239e4ee42c85402b174d3687e5" id="r_a60e01e239e4ee42c85402b174d3687e5"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, template&lt; <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar, class Exec , class Tensor , class Metric , class Position &gt; </td></tr>
 <tr class="memitem:a60e01e239e4ee42c85402b174d3687e5"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsil_1_1exterior_1_1Laplacian.html">Laplacian</a>&lt; MetricIndex, Index, <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>, Tensor, Metric, Position, Exec, Hodge &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a60e01e239e4ee42c85402b174d3687e5">make_laplacian</a> (Exec const &amp;exec, Tensor const &amp;output, Tensor const &amp;input, Metric const &amp;metric, Position const &amp;position)</td></tr>
 <tr class="separator:a60e01e239e4ee42c85402b174d3687e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1457,6 +1473,141 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00114">114</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a58e5df70a848a7ef17f5461634df01f5" name="a58e5df70a848a7ef17f5461634df01f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58e5df70a848a7ef17f5461634df01f5">&#9670;&#160;</a></span>integrate() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex Index, class CochainTensor , class SimplexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION double sil::exterior::integrate </td>
+          <td>(</td>
+          <td class="paramtype">CochainTensor const &amp;</td>          <td class="paramname"><span class="paramname"><em>cochain</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SimplexType const &amp;</td>          <td class="paramname"><span class="paramname"><em>simplex</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Evaluate an already reduced k-cochain on one oriented k-cell. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
+<p>The tensor stores integrals on positively oriented cells, not physical components. The cell's active logical directions select its coefficient; its orientation supplies the sign. Logical axes must follow the same order in the cell and the cochain index. No metric or cell measure is applied here. </p>
+
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00048">48</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a4e7b7e615443917b987e0de91d69ec4e" name="a4e7b7e615443917b987e0de91d69ec4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e7b7e615443917b987e0de91d69ec4e">&#9670;&#160;</a></span>integrate() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex Index, class ExecSpace , class CochainTensor , class ChainType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">double sil::exterior::integrate </td>
+          <td>(</td>
+          <td class="paramtype">ExecSpace const &amp;</td>          <td class="paramname"><span class="paramname"><em>exec</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">CochainTensor const &amp;</td>          <td class="paramname"><span class="paramname"><em>cochain</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ChainType const &amp;</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Pair a reduced k-cochain with an oriented k-chain: &lt;c, C&gt; = sum s_i c_i. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
+<p>This is DEC integration. In particular, integrating df over C equals integrating f over the boundary of C. An empty chain integrates to zero. The execution space must be able to access both the chain and the tensor. </p>
+
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00064">64</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af4cc1bba3af055be82e121e38383afc8" name="af4cc1bba3af055be82e121e38383afc8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4cc1bba3af055be82e121e38383afc8">&#9670;&#160;</a></span>integrate() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class SimplexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION double sil::exterior::integrate </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>form</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Position const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SimplexType const &amp;</td>          <td class="paramname"><span class="paramname"><em>simplex</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reduce a physical differential form, then evaluate it on an oriented cell. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
+<p><a class="el" href="structsil_1_1exterior_1_1Reduction.html">Reduction</a> owns the geometric pullback and its sampling convention. This overload adds no quadrature rule. Use the cochain overload when reduction has already been performed, to avoid applying cell measures twice. </p>
+
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00089">89</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ad1d4864b8d4cc465e11404608a33f53a" name="ad1d4864b8d4cc465e11404608a33f53a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1d4864b8d4cc465e11404608a33f53a">&#9670;&#160;</a></span>integrate() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace , class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class ChainType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">double sil::exterior::integrate </td>
+          <td>(</td>
+          <td class="paramtype">ExecSpace const &amp;</td>          <td class="paramname"><span class="paramname"><em>exec</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>form</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Position const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ChainType const &amp;</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reduce a physical form and pair it with a chain without storing a cochain. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00133">133</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
 
 </div>
 </div>

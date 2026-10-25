@@ -116,9 +116,9 @@ var NAVTREEINDEX =
 "classsil_1_1exterior_1_1WeightedLeviCivitaDiscreteHodgeStar.html#a8bb1fec526f9e65b9b50b72b6aea5611",
 "classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html#a8e4c7fd1bf4c4f43ce96ef7dfae7a1c7",
 "functions_vars_l.html",
-"namespacesil_1_1tensor.html#a538427c8eb64c5f8645d9c5de7468e71",
-"structsil_1_1multidomains_1_1DomainReference.html#a34bec7ead0f87f68263b0ff4245ab29a",
-"structsil_1_1tensor_1_1TensorYoungTableauIndex.html#aed5c525a24e6b67e9b50e9de3565d166"
+"namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c",
+"structsil_1_1multidomains_1_1Connection.html#ad5c965deff97e04d670bdfe5b0b8d4a1",
+"structsil_1_1tensor_1_1TensorYoungTableauIndex.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

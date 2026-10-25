@@ -1,5 +1,9 @@
 var NAVTREEINDEX7 =
 {
+"structsil_1_1multidomains_1_1Connection.html#ad5c965deff97e04d670bdfe5b0b8d4a1":[10,0,11,4,2,0],
+"structsil_1_1multidomains_1_1DomainReference.html":[8,0,13,4,5],
+"structsil_1_1multidomains_1_1DomainReference.html":[10,0,11,4,5],
+"structsil_1_1multidomains_1_1DomainReference.html#a34bec7ead0f87f68263b0ff4245ab29a":[8,0,13,4,5,3],
 "structsil_1_1multidomains_1_1DomainReference.html#a34bec7ead0f87f68263b0ff4245ab29a":[10,0,11,4,5,3],
 "structsil_1_1multidomains_1_1DomainReference.html#a71f6b2f8585ef6c61f6446ce925137bb":[8,0,13,4,5,7],
 "structsil_1_1multidomains_1_1DomainReference.html#a71f6b2f8585ef6c61f6446ce925137bb":[10,0,11,4,5,7],
@@ -245,9 +249,5 @@ var NAVTREEINDEX7 =
 "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#af2fc96692db625bbd0a38a09aff72e0c":[10,0,11,5,33,20],
 "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#afd346d01bf3358adecdb578162f2574f":[8,0,13,5,33,9],
 "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#afd346d01bf3358adecdb578162f2574f":[10,0,11,5,33,9],
-"structsil_1_1tensor_1_1TensorYoungTableauIndex.html":[8,0,13,5,34],
-"structsil_1_1tensor_1_1TensorYoungTableauIndex.html":[10,0,11,5,34],
-"structsil_1_1tensor_1_1TensorYoungTableauIndex.html#ab44d3e06ac1104ccaa597b2d3031b096":[8,0,13,5,34,1],
-"structsil_1_1tensor_1_1TensorYoungTableauIndex.html#ab44d3e06ac1104ccaa597b2d3031b096":[10,0,11,5,34,1],
-"structsil_1_1tensor_1_1TensorYoungTableauIndex.html#aed5c525a24e6b67e9b50e9de3565d166":[8,0,13,5,34,0]
+"structsil_1_1tensor_1_1TensorYoungTableauIndex.html":[8,0,13,5,34]
 };
