@@ -11,7 +11,6 @@ from similie_generate_cpp_hamiltonian import (
 )
 from sympy import Function, simplify, symbols
 
-
 INTERPOLATED_BH_CURVE_HEADER = """\
 template <std::size_t MaxSamples>
 struct InterpolatedNonlinearBHCurve
@@ -292,7 +291,7 @@ public:
     explicit NonlinearMagneticInductionToMagneticField(BHCurve bh_curve) : m_bh_curve(bh_curve) {}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> operator()(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> operator()(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
         std::array<double, N> const& hodge_star = state.hodge_star;
@@ -313,13 +312,13 @@ public:
     }
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> value(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> value(State const& state, Elem const& elem) const
     {
         return jacobian(state, elem);
     }
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> inverse(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> inverse(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
         std::array<double, N> const& hodge_star = state.hodge_star;
@@ -338,14 +337,14 @@ public:
     }
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> inverse_value(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> inverse_value(State const& state, Elem const& elem) const
     {
         State const inverse_state {inverse(state, elem), state.hodge_star};
         return inverse_matrix3x3(jacobian(inverse_state, elem));
     }
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> jacobian(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> jacobian(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
         return jacobian_from_magnetic_induction(state.hodge_star, state.value);

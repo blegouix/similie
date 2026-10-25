@@ -140,7 +140,11 @@ def _render_constructor_signature(
     struct_name: str, parameters: list[tuple[str, str, bool, str]]
 ) -> str:
     params = ",\n            ".join(
-        f"{type_name} {constructor_name}_"
+        (
+            f"{type_name} const {constructor_name}_"
+            if type_name in {"double", "float", "int", "bool", "std::size_t"}
+            else f"{type_name} const& {constructor_name}_"
+        )
         for _, constructor_name, _, type_name in parameters
     )
     return f"    KOKKOS_FUNCTION constexpr {struct_name}(\n            {params})"
@@ -168,7 +172,7 @@ def _render_state_component_method(
     )
     return f"""
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double {name}(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double {name}(State const& state, Elem const& elem) const
     {{
         static_cast<void>(state);
         static_cast<void>(elem);
@@ -272,7 +276,7 @@ def write_cpp_hamiltonian_header(
         )
         nonlocal_method = f"""
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dhamiltonian_dmoments_value(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dhamiltonian_dmoments_value(State const& state, Elem const& elem) const
     {{
         using Component = ddc::type_seq_element_t<Index::value, ddc::TypeSeq<SpatialIndex...>>;
         auto value = MomentsComputer::template forward_value<Component>(elem);
@@ -362,14 +366,14 @@ public:
 {constructor}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double hamiltonian(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double hamiltonian(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
         return {_render_cxx_expression(hamiltonian, replacements, symbolic_functions)};
     }}
 {potential_method}{moment_method}{inverse_method}
     template <class RowIndex, class ColumnIndex, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double jacobian(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double jacobian(State const& state, Elem const& elem) const
     {{
         static_cast<void>(state);
         static_cast<void>(elem);

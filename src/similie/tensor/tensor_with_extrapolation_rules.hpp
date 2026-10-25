@@ -195,7 +195,7 @@ private:
 };
 
 template <class Field, class Rule>
-KOKKOS_FUNCTION auto make_tensor_with_extrapolation_rules(Field field, Rule rule)
+KOKKOS_FUNCTION auto make_tensor_with_extrapolation_rules(Field const& field, Rule rule)
 {
     if constexpr (misc::Specialization<Rule, ExtrapolationRules>)
         return TensorWithExtrapolationRules<Field, Rule> {field, rule};

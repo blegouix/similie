@@ -117,7 +117,7 @@ public:
         Kokkos::resize(m_simplices, size);
     }
 
-    KOKKOS_FUNCTION int check()
+    KOKKOS_FUNCTION int check() const
     {
         for (auto i = begin(); i < end() - 1; ++i) {
             for (auto j = i + 1; j < end(); ++j) {
@@ -233,7 +233,7 @@ public:
         return chain;
     }
 
-    KOKKOS_FUNCTION Chain operator+(Chain simplices_to_add)
+    KOKKOS_FUNCTION Chain operator+(Chain const& simplices_to_add)
     {
         Chain chain = *this;
         chain += simplices_to_add;
@@ -283,7 +283,7 @@ public:
         return chain;
     }
 
-    KOKKOS_FUNCTION bool operator==(Chain simplices)
+    KOKKOS_FUNCTION bool operator==(Chain const& simplices) const
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
             if (*i != m_simplices(Kokkos::Experimental::distance(simplices.begin(), i))) {

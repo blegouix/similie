@@ -16,7 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 - **Mount path in Docker:** By default (no particular contradictory instructions), you will compile into a `agent_build/` or `agent_build_cpu/` repository mounted in Docker at the same absolute path as on the host.
 - **CUDA in Docker:** When building or running the CUDA backend inside Docker, start the container with `--gpus all` so the NVIDIA driver and GPU devices are exposed in the container. Check `nvidia-smi` output once inside the docker image.
 - **Git safe.directory in Docker:** Some vendored submodules query Git metadata during CMake. If Docker reports "detected dubious ownership" on the mounted repository or its submodules, add temporary `git config --global --add safe.directory <path>` entries inside the container for the repository and the relevant submodules before building.
-- **Configure CMake:** For CPU with `cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -B agent_build_cpu -S .` or for CUDA with `cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B agent_build -S .`. Of course replace `<YOUR_ARCH_NAMECODE>` with the arch namecode which suits the GPU.
+- **Configure CMake:** For CPU with `cmake -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -B agent_build_cpu -S .` or for CUDA with `cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B agent_build -S .`. Of course replace `<YOUR_ARCH_NAMECODE>` with the arch namecode which suits the GPU.
 - **Compile:** As usual once configured (`make -jN_PROC` from the `agent_build/` or `agent_build_cpu/` folder). Never exceed N_PROC=8.
 
 ## Run tests
@@ -25,11 +25,19 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 ## Run examples
 - Running `free_scalar_field` example in Debug mode on CPU can be very long (on GPU this can be ok though). By default (no particular contradictory instruction), if you have to run it on CPU, first recompile in Release mode.
 
+## General organization  & programming model
+- The library should contain all algorithms, numerical methods, etc. Examples may use them as needed but should never reimplement ad hoc numerical schemes. If SimiLie does not provide a canonical operator to compute a quantity of interest, it means that something is missing from the library's design, and this should be reported. If an example requires complicated logic to implement common numerical simulation functionality, it may indicate that a systematic, general-purpose mechanism is missing from the library. A human should decide whether this logic can be implemented ad hoc in the example or whether the library needs to be modified.
+- Several classes follow standardized APIs, making them interoperable (i.e., other classes can be templated on them and instantiated with different implementations as template arguments). This is particularly useful for GPU programming, where virtual classes are often impractical. API compliance is checked using C++ concepts. The concepts that define these standardized APIs are particularly important, and any changes to them must be validated by a human. This is the core programming model followed by SimiLie.
+- Before making any changes to the library, AI should analyze how related, existing components are implemented (i.e., those sharing the same concepts) and try to integrate its changes into the existing design patterns. If something is inherently new and warrants structural changes, AI should discuss the proposed approach with a human for validation.
+- In general, iterating over the components of a vector, tensor, or differential form should be considered a workaround and therefore avoided (except in core algorithmic implementations, such as tensor products). SimiLie is designed so that the canonical approach is almost always to apply operations to entire mathematical structures (tensors, differential forms, etc.), extracting individual components only when they represent quantities of particular interest. If it cannot be done this way, report to human.
+
 ## Coding
 - `clang-format` is used to format C++, `ruff format` is used to format python.
 - Classes with an associated Concept and static assertion are API-standardized and must not expose additional public members.
+- Except if copy-pass or move-pass is relevant, prefer passing variables to functions by reference except very primitive type like `int`, `float` etc. Annotate them `const` if never mutated. Do not specify any name if unused (ie. unused variable passed to a particular member function of a standardized-API class).
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except if explicity asked. In general, if such an alias is used only once it should not be declared and inlined.
 - Whenever possible, avoid using `auto`, `decltype`, etc...
+- Even if you compile for CPU, ensure the GPU-compatibility. In particular KOKKOS_FUNCTION-ish-annotate the GPU-compatible functions and ensure GPU-capturable lambda are defined in public KOKKOS_FUNCTION-annotated functions (it is a constraint for tests in particular, as GTest generates private functions whenever using the TEST(,) macro).
 - Try to mimic the coding style of human-made code in the project as much as possible.
 - Any fully AI-generated file has to be annotated with a `// AI-GENERATED` tag just below the copyright and license.
 - Any new AI-generated test has to be located in the `tests/ai_generated` folder.

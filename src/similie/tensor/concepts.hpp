@@ -42,7 +42,7 @@ struct IndexTensorConcept
 struct IndexAccessConcept
 {
     template <class Tensor, class Element>
-    double operator()(Tensor tensor, Element element) const;
+    double operator()(Tensor const& tensor, Element element) const;
 };
 } // namespace detail
 
@@ -77,7 +77,7 @@ concept TensorIndexConcept = requires(
             Index::mem_id_to_canonical_natural_ids(id)
         } -> std::same_as<std::array<std::size_t, Index::rank()>>;
         // Natural indices take one ID; composite indices take subindex IDs.
-        requires (requires(std::array<std::size_t, Index::subindices_domain_t::rank()> ids) {
+        requires (requires(std::array<std::size_t, Index::subindices_domain_t::rank()> const& ids) {
             { Index::mem_id(ids) } -> std::same_as<std::size_t>;
             { Index::access_id(ids) } -> std::same_as<std::size_t>;
         } || requires {
@@ -101,7 +101,7 @@ concept NaturalTensorIndexConcept = TensorIndexConcept<Index> && requires(std::s
 template <class Index>
 concept YoungTableauTensorIndexConcept
         = TensorIndexConcept<Index>
-          && requires(std::array<std::size_t, Index::subindices_domain_t::rank()> ids) {
+          && requires(std::array<std::size_t, Index::subindices_domain_t::rank()> const& ids) {
                  requires(!Index::is_explicitely_stored_tensor);
                  { Index::access_id(ids) } -> std::same_as<std::size_t>;
                  {

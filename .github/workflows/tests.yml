@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 name: tests
+permissions:
+  actions: read
+  contents: read
 on:
   workflow_run:
     workflows: [ build ]
@@ -23,7 +26,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: tests-cuda
 
 concurrency:
   group: tests-${{ inputs.test_target || 'all' }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
@@ -34,7 +37,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'cuda')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'tests-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || 'tests-cuda' }}
     steps:
     - name: Select target commit
       id: target
@@ -48,33 +51,32 @@ jobs:
         fi
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
-    - name: Set build paths
+    - name: Require matching persistent CUDA build
       run: |
+        set -euo pipefail
+        BUILD_ROOT="${RUNNER_WORKSPACE}/builds/cuda"
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
-    - name: Restore commit workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
-        fail-on-cache-miss: true
-    - name: Recompile and run CUDA tests
+        echo "BUILD_ROOT=${BUILD_ROOT}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${BUILD_ROOT}" >> "${GITHUB_ENV}"
+        test -f "${BUILD_ROOT}/COMMIT_SHA" || { echo "Missing persistent build at ${BUILD_ROOT}" >&2; exit 1; }
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}" || { echo "Build commit tag does not match ${TARGET_SHA}" >&2; exit 1; }
+        test -d "${BUILD_ROOT}/build"
+    - name: Run CUDA tests
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/build" \
+          -e HOME="${BUILD_ROOT}/home" \
+          -e CACHE_ROOT="${BUILD_ROOT}" \
+          -v "${CACHE_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
-            cmake --build . --parallel 8
             ctest --output-on-failure
           '
 
@@ -96,31 +98,29 @@ jobs:
         fi
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
-    - name: Set build paths
+    - name: Require matching persistent OMP debug build
       run: |
+        set -euo pipefail
+        BUILD_ROOT="${RUNNER_WORKSPACE}/builds/omp-debug"
         echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
-    - name: Restore OpenMP commit workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
-        fail-on-cache-miss: true
-    - name: Pre-run YoungTableau tests, recompile, and run OpenMP tests
+        echo "BUILD_ROOT=${BUILD_ROOT}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${BUILD_ROOT}" >> "${GITHUB_ENV}"
+        test -f "${BUILD_ROOT}/COMMIT_SHA" || { echo "Missing persistent build at ${BUILD_ROOT}" >&2; exit 1; }
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}" || { echo "Build commit tag does not match ${TARGET_SHA}" >&2; exit 1; }
+        test -d "${BUILD_ROOT}/build_omp"
+    - name: Run OpenMP tests
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/build_omp" \
+          -e HOME="${BUILD_ROOT}/home" \
+          -e CACHE_ROOT="${BUILD_ROOT}" \
+          -v "${CACHE_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build_omp" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             git config --global --add safe.directory "*"
-            ctest --output-on-failure -R '^YoungTableau\.'
-            cmake --build . --clean-first --parallel 8
             ctest --output-on-failure
           '

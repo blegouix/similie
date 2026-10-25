@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 name: manual-ci-run
+permissions:
+  actions: read
+  contents: read
 
 on:
   push:
@@ -20,7 +23,7 @@ jobs:
       name: automatic-ci-run
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
     - name: Check GPU visibility on runner
@@ -44,7 +47,7 @@ jobs:
       name: automatic-ci-run
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
     - name: Build CPU similie_env_cpu image
@@ -59,26 +62,27 @@ jobs:
   build-cuda:
     needs: build-cuda-docker-env
     runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-cuda-build
+      cancel-in-progress: false
     environment:
       name: ${{ github.event_name == 'pull_request' && 'build-cuda' || 'automatic-ci-run' }}
+    env:
+      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
         submodules: recursive
         fetch-depth: 0
-    - name: Clear temporary workspace path
+        lfs: true
+    - name: Clear persistent CUDA build
       run: |
+        set -euo pipefail
         echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}"
-    - name: Restore CUDA commit workspace
-      id: restore-workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/cuda"
     - name: Populate CUDA commit workspace
       run: |
         mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
@@ -90,66 +94,55 @@ jobs:
           --user "$(id -u):$(id -g)" \
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
+          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
           -w "${CACHE_ROOT}/src" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
-            cap="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n1 | tr -d "[:space:]")"
-            case "${cap}" in
-              7.0) kokkos_arch=VOLTA70 ;;
-              7.2) kokkos_arch=VOLTA72 ;;
-              7.5) kokkos_arch=TURING75 ;;
-              8.0) kokkos_arch=AMPERE80 ;;
-              8.6) kokkos_arch=AMPERE86 ;;
-              8.9) kokkos_arch=ADA89 ;;
-              9.0) kokkos_arch=HOPPER90 ;;
-              *) echo "Unsupported NVIDIA compute capability for Kokkos: ${cap}" >&2; exit 1 ;;
-            esac
+            # The installed Kokkos package supplies its CUDA architecture flags.
             cmake \
               -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper \
               -DCMAKE_BUILD_TYPE=Release \
               -DKokkos_ENABLE_CUDA=ON \
-              -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_BUILD_BENCHMARKS=ON \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build" \
               -S .
-            cmake --build "${CACHE_ROOT}/build" --parallel 8
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build"
           '
-    - name: Save CUDA commit workspace
-      if: steps.restore-workspace.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+    - name: Tag persistent CUDA build
+      run: printf '%s\n' "${GITHUB_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
 
   build-omp-debug:
     needs: build-cpu-docker-env
     runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-omp-build
+      cancel-in-progress: false
     environment:
       name: ${{ github.event_name == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run' }}
+    env:
+      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
         submodules: recursive
         fetch-depth: 0
-    - name: Clear temporary workspace path
+        lfs: true
+    - name: Clear persistent OMP debug build
       run: |
+        set -euo pipefail
         echo "IMAGE_TAG=similie_env_cpu:${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}"
-    - name: Restore OpenMP commit workspace
-      id: restore-workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
-        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/omp-debug"
     - name: Populate OpenMP commit workspace
       run: |
         mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
@@ -161,11 +154,13 @@ jobs:
           --user "$(id -u):$(id -g)" \
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
+          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
           -w "${CACHE_ROOT}/src" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             git config --global --add safe.directory "*"
             g++-15 --version
             cmake \
@@ -177,48 +172,48 @@ jobs:
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build_omp" \
               -S .
-            cmake --build "${CACHE_ROOT}/build_omp" --parallel 8
+            # Young tableaux generate the dictionary at runtime; tensor consumers
+            # must compile after those entries exist for their #embed directive.
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp" unit_tests_young_tableau
+            "${CACHE_ROOT}/build_omp/tests/young_tableau/unit_tests_young_tableau"
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp"
           '
-    - name: Save OpenMP commit workspace
-      if: steps.restore-workspace.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
-        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+    - name: Tag persistent OMP debug build
+      run: printf '%s\n' "${GITHUB_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
 
   tests-cuda:
     needs: build-cuda
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'tests-cuda' || 'automatic-ci-run' }}
+      name: tests-cuda
     steps:
     - name: Set build paths
       run: |
         echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}"
-    - name: Restore CUDA commit workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
-        fail-on-cache-miss: true
-    - name: Recompile and run CUDA tests
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+        echo "BUILD_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+    - name: Require matching CUDA build
+      run: |
+        set -euo pipefail
+        test -f "${BUILD_ROOT}/COMMIT_SHA"
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${GITHUB_SHA}"
+        test -d "${BUILD_ROOT}/build"
+    - name: Run CUDA tests
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/build" \
+          -e HOME="${BUILD_ROOT}/home" \
+          -e CACHE_ROOT="${BUILD_ROOT}" \
+          -v "${CACHE_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
-            cmake --build . --parallel 8
             ctest --output-on-failure
           '
 
@@ -231,29 +226,28 @@ jobs:
     - name: Set build paths
       run: |
         echo "IMAGE_TAG=similie_env_cpu:${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}"
-    - name: Restore OpenMP commit workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
-        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
-        fail-on-cache-miss: true
-    - name: Pre-run YoungTableau tests, recompile, and run OpenMP tests
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
+        echo "BUILD_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
+    - name: Require matching OMP debug build
+      run: |
+        set -euo pipefail
+        test -f "${BUILD_ROOT}/COMMIT_SHA"
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${GITHUB_SHA}"
+        test -d "${BUILD_ROOT}/build_omp"
+    - name: Run OpenMP tests
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/build_omp" \
+          -e HOME="${BUILD_ROOT}/home" \
+          -e CACHE_ROOT="${BUILD_ROOT}" \
+          -v "${CACHE_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build_omp" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             git config --global --add safe.directory "*"
-            ctest --output-on-failure -R '^YoungTableau\.'
-            cmake --build . --clean-first --parallel 8
             ctest --output-on-failure
           '
 
@@ -262,21 +256,21 @@ jobs:
     uses: ./.github/workflows/example_laplacian.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-cuda' || 'automatic-ci-run' }}
+      ci_environment: laplacians-cuda
 
   example-2d_vector_laplacian:
     needs: build-cuda
     uses: ./.github/workflows/example_laplacian_vector.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-cuda' || 'automatic-ci-run' }}
+      ci_environment: laplacians-cuda
 
   example-2d_scalar_field:
     needs: build-cuda
     uses: ./.github/workflows/example_scalar_field.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-cuda' || 'automatic-ci-run' }}
+      ci_environment: scalar-field-cuda
 
   example-onelab_inductor:
     needs: build-cuda
@@ -305,3 +299,9 @@ jobs:
     with:
       target_sha: ${{ github.sha }}
       ci_environment: ${{ github.event_name == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run' }}
+
+  benchmark-taylor-green-vortex:
+    needs: build-cuda
+    uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
+    with:
+      target_sha: ${{ github.sha }}

@@ -27,14 +27,16 @@ public:
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double potential_grad(State const& state, Elem elem)
-            const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double potential_grad(
+            State const& state,
+            Elem const& elem) const
     {
         return m_hamiltonian.template dhamiltonian_dmoments<Index>(state, elem);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double moments_div(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double moments_div(State const& state, Elem const& elem)
+            const
     {
         return -m_hamiltonian.template dhamiltonian_dpotential<Index>(state, elem);
     }

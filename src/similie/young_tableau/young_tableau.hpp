@@ -13,9 +13,9 @@
 #include <similie/misc/permutation_parity.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/stride.hpp>
-#include <similie/tensor/dummy_index.hpp>
-#include <similie/tensor/prime.hpp>
 #include <similie/tensor/tensor_impl.hpp>
+#include <similie/tensor/tensor_indices/dummy_index.hpp>
+#include <similie/tensor/tensor_indices/prime.hpp>
 
 namespace sil {
 
@@ -509,7 +509,7 @@ public:
 
     template <class BasisId, class... Id>
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> u(
-            ddc::DiscreteDomain<Id...> restricted_domain)
+            ddc::DiscreteDomain<Id...> const& restricted_domain)
     {
         if constexpr (n_nonzeros_in_irrep() != 0) {
             ddc::DiscreteDomain<BasisId, Id...>
@@ -540,7 +540,7 @@ public:
 
     template <class BasisId, class... Id>
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> v(
-            ddc::DiscreteDomain<Id...> restricted_domain)
+            ddc::DiscreteDomain<Id...> const& restricted_domain)
     {
         if constexpr (n_nonzeros_in_irrep() != 0) {
             ddc::DiscreteDomain<BasisId, Id...>
@@ -821,7 +821,7 @@ private:
     std::array<std::size_t, Rank> idx_to_permute;
 
 public:
-    TrFunctor(TensorType t_, std::array<std::size_t, Rank> idx_to_permute_)
+    TrFunctor(TensorType const& t_, std::array<std::size_t, Rank> const& idx_to_permute_)
         : t(t_)
         , idx_to_permute(idx_to_permute_)
     {
@@ -829,7 +829,7 @@ public:
 
     void operator()(ddc::DiscreteElement<NaturalId...> elem) const
     {
-        std::array<std::size_t, sizeof...(NaturalId)> elem_array = ddc::detail::array(elem);
+        std::array<std::size_t, sizeof...(NaturalId)> const elem_array = ddc::detail::array(elem);
         bool has_to_be_one = true;
         for (std::size_t i = 0; i < Rank; ++i) {
             has_to_be_one
@@ -853,7 +853,7 @@ fill_symmetrizer(
                 ddc::DiscreteDomain<Id...>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> sym,
-        std::array<std::size_t, sizeof...(Id) / 2> idx_to_permute)
+        std::array<std::size_t, sizeof...(Id) / 2> const& idx_to_permute)
 {
     ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
     tensor::Tensor tr(tr_alloc);
@@ -876,8 +876,8 @@ fill_symmetrizer(
  */
 template <std::size_t Nt, std::size_t Ns>
 static std::vector<std::array<std::size_t, Nt>> permutations_subset(
-        std::array<std::size_t, Nt> t,
-        std::array<std::size_t, Ns> subset_values)
+        std::array<std::size_t, Nt> const& t,
+        std::array<std::size_t, Ns> const& subset_values)
 {
     std::array<std::size_t, Ns> subset_indices;
     std::array<std::size_t, Ns> elements_to_permute;
@@ -922,7 +922,7 @@ struct Projector<
                double,
                ddc::DiscreteDomain<Id...>,
                Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> proj)
+               Kokkos::DefaultHostExecutionSpace::memory_space> const& proj)
     {
         if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
             // Allocate & build a symmetric projector for the row
@@ -1098,7 +1098,7 @@ template <class T, std::size_t N, std::size_t... I>
 struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 {
     static consteval std::array<std::array<T, N>, sizeof...(I)> operator()(
-            std::array<std::string_view, sizeof...(I)> const str,
+            std::array<std::string_view, sizeof...(I)> const& str,
             std::string_view const tag)
     {
         return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I], tag)...};

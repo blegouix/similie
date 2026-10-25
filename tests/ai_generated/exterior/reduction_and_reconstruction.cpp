@@ -214,7 +214,7 @@ void run_reconstruction_test(SetupForm&& setup_form, CheckValue&& check_value)
                 if constexpr (FormIndex::rank() == 2) {
                     using NaturalElement = typename decltype(reconstruction_accessor)::
                             natural_domain_t::discrete_element_type;
-                    auto value = [&](std::array<std::size_t, 4> ids) {
+                    auto value = [&](std::array<std::size_t, 4> const& ids) {
                         return sil::exterior::
                                 Reconstruction<IndexSeq, decltype(position), decltype(elem)>::
                                         value(position,

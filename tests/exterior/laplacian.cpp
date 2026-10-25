@@ -10,9 +10,21 @@
 
 #include <gtest/gtest.h>
 #include <similie/misc/type_seq_ext.hpp>
-#include <similie/tensor/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
 #include "exterior.hpp"
+
+namespace {
+template <
+        sil::exterior::CellComplex Complex,
+        class Source,
+        class Target,
+        class Metric,
+        class Position,
+        class Element>
+using CachedHodgeStar = sil::exterior::StagedOperator<
+        sil::exterior::DiscreteHodgeStar<Complex, Source, Target, Metric, Position, Element>>;
+}
 
 template <class... CDim>
 using MetricIndex = sil::tensor::TensorIdentityIndex<
@@ -624,7 +636,7 @@ TEST(Laplacian, 2D1Form)
     ddc::detail::g_discrete_space_dual<DDimZ>.reset();
 }
 
-TEST(Laplacian, Staged2D1Form)
+TEST(Laplacian, StagedHodge2D1Form)
 {
     using InterestIndex = sil::tensor::Covariant<Mu2>;
     using PositionIndex = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y>>;
@@ -695,8 +707,8 @@ TEST(Laplacian, Staged2D1Form)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
-    auto staged_laplacian
-            = sil::exterior::make_staged_laplacian<MetricIndex<X, Y>, InterestIndex, InterestIndex>(
+    auto staged_laplacian = sil::exterior::
+            make_laplacian<MetricIndex<X, Y>, InterestIndex, InterestIndex, CachedHodgeStar>(
                     Kokkos::DefaultHostExecutionSpace(),
                     laplacian,
                     potential,

@@ -26,15 +26,20 @@ on:
         default: automatic-ci-run
 
 concurrency:
-  group: build-${{ inputs.build_target || 'all' }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
-  cancel-in-progress: true
+  group: similie-persistent-build-cache
+  cancel-in-progress: false
 
 jobs:
   build-cuda:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'cuda')
     runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-cuda-build
+      cancel-in-progress: false
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-cuda' || 'automatic-ci-run') }}
+    env:
+      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:
     - name: Select target commit
       id: target
@@ -53,22 +58,18 @@ jobs:
         echo "TARGET_REF=${target_ref}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
         fetch-depth: 0
-    - name: Clear temporary workspace path
+        lfs: true
+    - name: Clear persistent CUDA build
       run: |
+        set -euo pipefail
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
-    - name: Restore CUDA commit workspace
-      id: restore-workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/cuda"
     - name: Populate CUDA commit workspace
       run: |
         mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
@@ -80,6 +81,7 @@ jobs:
           --user "$(id -u):$(id -g)" \
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
+          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
           -w "${CACHE_ROOT}/src" \
           "${IMAGE_TAG}" \
@@ -88,40 +90,31 @@ jobs:
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
-            cap="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n1 | tr -d "[:space:]")"
-            case "${cap}" in
-              7.0) kokkos_arch=VOLTA70 ;;
-              7.2) kokkos_arch=VOLTA72 ;;
-              7.5) kokkos_arch=TURING75 ;;
-              8.0) kokkos_arch=AMPERE80 ;;
-              8.6) kokkos_arch=AMPERE86 ;;
-              8.9) kokkos_arch=ADA89 ;;
-              9.0) kokkos_arch=HOPPER90 ;;
-              *) echo "Unsupported NVIDIA compute capability for Kokkos: ${cap}" >&2; exit 1 ;;
-            esac
+            # The installed Kokkos package supplies its CUDA architecture flags.
             cmake \
               -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper \
               -DCMAKE_BUILD_TYPE=Release \
               -DKokkos_ENABLE_CUDA=ON \
-              -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_BUILD_BENCHMARKS=ON \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build" \
               -S .
-            cmake --build "${CACHE_ROOT}/build"
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build"
           '
-    - name: Save CUDA commit workspace
-      if: steps.restore-workspace.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+    - name: Tag persistent CUDA build
+      run: printf '%s\n' "${TARGET_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
 
   build-omp-debug:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'omp')
     runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-omp-build
+      cancel-in-progress: false
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run') }}
+    env:
+      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:
     - name: Select target commit
       id: target
@@ -140,22 +133,18 @@ jobs:
         echo "TARGET_REF=${target_ref}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
         fetch-depth: 0
-    - name: Clear temporary workspace path
+        lfs: true
+    - name: Clear persistent OMP debug build
       run: |
+        set -euo pipefail
         echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
-    - name: Restore OpenMP commit workspace
-      id: restore-workspace
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/omp-debug"
     - name: Populate OpenMP commit workspace
       run: |
         mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
@@ -167,6 +156,7 @@ jobs:
           --user "$(id -u):$(id -g)" \
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
+          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
           -w "${CACHE_ROOT}/src" \
           "${IMAGE_TAG}" \
@@ -183,11 +173,11 @@ jobs:
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build_omp" \
               -S .
-            cmake --build "${CACHE_ROOT}/build_omp"
+            # Young tableaux generate the dictionary at runtime; tensor consumers
+            # must compile after those entries exist for their #embed directive.
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp" unit_tests_young_tableau
+            "${CACHE_ROOT}/build_omp/tests/young_tableau/unit_tests_young_tableau"
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp"
           '
-    - name: Save OpenMP commit workspace
-      if: steps.restore-workspace.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+    - name: Tag persistent OMP debug build
+      run: printf '%s\n' "${TARGET_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"

@@ -45,7 +45,7 @@ private:
     template <class DDim, class SourceDomain, class TargetDomain, class Element>
     KOKKOS_FUNCTION void map_coordinate(
             SourceDomain source,
-            TargetDomain target,
+            TargetDomain const& target,
             Element sampled,
             Element& mapped) const
     {
@@ -77,8 +77,10 @@ private:
 
 public:
     template <class... DDim, class TargetDomain, class Element>
-    KOKKOS_FUNCTION Element
-    operator()(ddc::DiscreteDomain<DDim...> source, TargetDomain target, Element sampled) const
+    KOKKOS_FUNCTION Element operator()(
+            ddc::DiscreteDomain<DDim...> const& source,
+            TargetDomain const& target,
+            Element sampled) const
     {
         static_assert((std::is_same_v<Dimension, DDim> || ...));
         static_assert(std::is_same_v<ddc::TypeSeq<DDim...>, ddc::to_type_seq_t<TargetDomain>>);
@@ -89,7 +91,7 @@ public:
 
     template <class SourceDomain, class TargetDomain, class Element>
     KOKKOS_FUNCTION Element
-    map_boundary(SourceDomain source, TargetDomain target, Element sampled) const
+    map_boundary(SourceDomain source, TargetDomain const& target, Element sampled) const
     {
         assert(shared_boundary);
         assert(sampled.template uid<Dimension>()
@@ -126,7 +128,7 @@ struct ExternalDomainExtrapolationRule
     TargetRule target_rule = {};
 
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element element) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element element) const
     {
         auto result = detail::make_extrapolation_basis(domain, element);
         result

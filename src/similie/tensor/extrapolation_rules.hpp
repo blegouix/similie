@@ -96,11 +96,11 @@ public:
 
     template <class Domain, class Element, class Result, class Evaluate>
     KOKKOS_FUNCTION void accumulate(
-            Domain domain,
+            Domain const& domain,
             Element element,
             Result& result,
             double& total,
-            Evaluate evaluate) const
+            Evaluate const& evaluate) const
     {
         using DDim = ddc::type_seq_element_t<Dimension, ddc::to_type_seq_t<Domain>>;
         std::ptrdiff_t const sampled = static_cast<std::ptrdiff_t>(element.template uid<DDim>());
@@ -192,7 +192,7 @@ public:
     }
 
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element sampled_element) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element sampled_element) const
     {
         static_assert(sizeof...(RulePairs) == ddc::type_seq_size_v<ddc::to_type_seq_t<Domain>>);
         misc::convert_type_seq_to_t<misc::SignedDiscreteElement, ddc::to_type_seq_t<Domain>> const
@@ -233,8 +233,8 @@ private:
     KOKKOS_FUNCTION auto evaluate(
             Field const& field,
             Element sample,
-            Evaluate evaluate,
-            Interior interior) const
+            Evaluate const& evaluate,
+            Interior const& interior) const
     {
         static_assert(
                 sizeof...(RulePairs)

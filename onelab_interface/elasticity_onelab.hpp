@@ -526,7 +526,7 @@ public:
     }
 
     template <class ExecSpace, class InputView, class OutputView>
-    void apply(ExecSpace exec_space, InputView input, OutputView output) const
+    void apply(ExecSpace const& exec_space, InputView input, OutputView output) const
     {
         auto const columns = m_columns;
         auto const coefficients = m_coefficients;

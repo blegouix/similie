@@ -40,10 +40,10 @@ template <
 void assemble_differential_rows(
         Kokkos::DefaultExecutionSpace const& stream,
         RowAssembly<Capacity> system,
-        Output output,
-        Input input,
+        Output const& output,
+        Input const& input,
         Operator op,
-        Rules rules,
+        Rules const& rules,
         StencilFactory stencil_factory)
 {
     std::tuple<Operator, Input, Rules, StencilFactory> const

@@ -6,8 +6,8 @@
 
 #include <concepts>
 
-#include <similie/tensor/character.hpp>
 #include <similie/tensor/metric.hpp>
+#include <similie/tensor/tensor_indices/character.hpp>
 
 #include "local_chain.hpp"
 
@@ -50,10 +50,10 @@ template <
         class Element,
         class NaturalElement>
 concept CoboundaryConcept = requires(
-        Output output,
-        Evaluator evaluator,
-        Chain chain,
-        LowerChain lower_chain,
+        Output const& output,
+        Evaluator const& evaluator,
+        Chain const& chain,
+        LowerChain const& lower_chain,
         Element element,
         NaturalElement natural_element) {
     Operator::value(chain, lower_chain, element, natural_element);
@@ -69,14 +69,16 @@ template <
         class Element,
         class NaturalElement>
 concept DiscreteHodgeStarConcept = requires(
-        Output output,
-        Input input,
-        Metric metric,
-        Position position,
+        Operator operation,
+        Output const& output,
+        Input const& input,
+        Metric const& metric,
+        Position const& position,
         Element element,
         NaturalElement natural_element) {
-    { Operator::value(metric, position, element, natural_element) } -> std::same_as<double>;
-    { Operator::operator()(output, input, metric, position, element) } -> std::same_as<void>;
+    operation.value(metric, position, element);
+    { operation.value(metric, position, element, natural_element) } -> std::same_as<double>;
+    { operation(output, input, metric, position, element) } -> std::same_as<void>;
 };
 
 template <
@@ -87,24 +89,45 @@ template <
         class Element,
         class NaturalElement>
 concept ContinuousHodgeStarConcept = requires(
-        Output output,
-        Input input,
-        Metric metric,
+        Operator operation,
+        Output const& output,
+        Input const& input,
+        Metric const& metric,
         Element element,
         NaturalElement natural_element) {
-    { Operator::value(metric, element, natural_element) } -> std::same_as<double>;
-    { Operator::operator()(output, input, metric, element) } -> std::same_as<void>;
+    operation.value(metric, element);
+    { operation.value(metric, element, natural_element) } -> std::same_as<double>;
+    { operation(output, input, metric, element) } -> std::same_as<void>;
 };
 
-template <class Operator, class Output, class Input>
-concept StagedCodifferentialConcept
-        = requires(Operator const& operation, Output output, Input input) {
+template <class Operator, class Output, class Input, class... Arguments>
+concept LocalOperatorConcept = requires(
+        Operator const& operation,
+        Output const& output,
+        Input const& input,
+        Arguments... arguments) {
+    { operation(output, input, arguments...) } -> std::same_as<void>;
+};
+
+template <class Operator, class Output, class Input = Output>
+concept StagedOperatorConcept
+        = requires(Operator const& operation, Output const& output, Input const& input) {
               { operation(output, input) } -> std::same_as<Output>;
           };
 
-template <class Operator, class Tensor>
-concept StagedLaplacianConcept = requires(Operator& operation, Tensor output, Tensor input) {
-    { operation(output, input) } -> std::same_as<Tensor>;
+template <class Storage, class Output, class Input = Output>
+concept StagingStorageConcept = requires(
+        Storage const& storage,
+        typename Storage::execution_space const& exec,
+        Output const& output,
+        Input const& input) {
+    { storage.apply(exec, output, input) } -> std::same_as<Output>;
+};
+
+template <class Operator, class Output, class Input = Output>
+concept StageableOperatorConcept = requires {
+    typename Operator::staged_storage_type;
+    requires StagingStorageConcept<typename Operator::staged_storage_type, Output, Input>;
 };
 
 } // namespace sil::exterior

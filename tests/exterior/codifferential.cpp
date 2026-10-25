@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/misc/type_seq_ext.hpp>
-#include <similie/tensor/symmetric_tensor.hpp>
+#include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
 
 #include "exterior.hpp"
 

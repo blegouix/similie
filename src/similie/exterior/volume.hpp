@@ -54,7 +54,7 @@ KOKKOS_FUNCTION double complex_volume_factor(std::size_t const simplex_dim)
 
 template <class PositionIndex, class PositionType, class BatchElem>
 KOKKOS_FUNCTION std::array<double, PositionIndex::size()> edge_vector(
-        PositionType position,
+        PositionType const& position,
         BatchElem elem,
         std::size_t const dim_id)
 {
@@ -103,8 +103,8 @@ struct SimplexVolume
 {
     template <std::size_t K>
     KOKKOS_FUNCTION static double operator()(
-            MetricType metric,
-            PositionType position,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem elem,
             std::array<std::size_t, K> const& ids)
     {
@@ -159,8 +159,8 @@ struct DualSimplexVolume
 {
     template <std::size_t K>
     KOKKOS_FUNCTION static double operator()(
-            MetricType metric,
-            PositionType position,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem elem,
             std::array<std::size_t, K> const& ids)
     {
