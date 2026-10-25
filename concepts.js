@@ -5,8 +5,10 @@ var concepts =
         [ "CoboundaryConcept", "conceptsil_1_1exterior_1_1CoboundaryConcept.html", null ],
         [ "DiscreteHodgeStarConcept", "conceptsil_1_1exterior_1_1DiscreteHodgeStarConcept.html", null ],
         [ "ContinuousHodgeStarConcept", "conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html", null ],
-        [ "StagedCodifferentialConcept", "conceptsil_1_1exterior_1_1StagedCodifferentialConcept.html", null ],
-        [ "StagedLaplacianConcept", "conceptsil_1_1exterior_1_1StagedLaplacianConcept.html", null ]
+        [ "LocalOperatorConcept", "conceptsil_1_1exterior_1_1LocalOperatorConcept.html", null ],
+        [ "StagedOperatorConcept", "conceptsil_1_1exterior_1_1StagedOperatorConcept.html", null ],
+        [ "StagingStorageConcept", "conceptsil_1_1exterior_1_1StagingStorageConcept.html", null ],
+        [ "StageableOperatorConcept", "conceptsil_1_1exterior_1_1StageableOperatorConcept.html", null ]
       ] ],
       [ "misc", "namespacesil_1_1misc.html", [
         [ "Specialization", "conceptsil_1_1misc_1_1Specialization.html", null ],

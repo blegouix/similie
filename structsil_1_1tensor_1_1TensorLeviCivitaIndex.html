@@ -161,16 +161,16 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a54aa5ea603ec5e5e9cf65ff9256fc6b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43156e9593d3fef1528a4b577fb0a16c" id="r_a43156e9593d3fef1528a4b577fb0a16c"><td class="memItemLeft" align="right" valign="top">static constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a43156e9593d3fef1528a4b577fb0a16c">access_size</a> ()</td></tr>
 <tr class="separator:a43156e9593d3fef1528a4b577fb0a16c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5997ae755922d82c7773081831222aff" id="r_a5997ae755922d82c7773081831222aff"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5997ae755922d82c7773081831222aff">mem_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const natural_ids)</td></tr>
-<tr class="separator:a5997ae755922d82c7773081831222aff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e4256825e30495879f4a1acc7704441" id="r_a1e4256825e30495879f4a1acc7704441"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1e4256825e30495879f4a1acc7704441">access_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const natural_ids)</td></tr>
-<tr class="separator:a1e4256825e30495879f4a1acc7704441"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a490d2d2de1b8262f70baf162b47f4fee" id="r_a490d2d2de1b8262f70baf162b47f4fee"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a490d2d2de1b8262f70baf162b47f4fee">access_id_to_mem_id</a> (std::size_t <a class="el" href="#a1e4256825e30495879f4a1acc7704441">access_id</a>)</td></tr>
+<tr class="memitem:a0768e85ecc55f4b72b513d016e3c820b" id="r_a0768e85ecc55f4b72b513d016e3c820b"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0768e85ecc55f4b72b513d016e3c820b">mem_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;natural_ids)</td></tr>
+<tr class="separator:a0768e85ecc55f4b72b513d016e3c820b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9163b9d2fba8b016df6edd7b7ed28d70" id="r_a9163b9d2fba8b016df6edd7b7ed28d70"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9163b9d2fba8b016df6edd7b7ed28d70">access_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;natural_ids)</td></tr>
+<tr class="separator:a9163b9d2fba8b016df6edd7b7ed28d70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a490d2d2de1b8262f70baf162b47f4fee" id="r_a490d2d2de1b8262f70baf162b47f4fee"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a490d2d2de1b8262f70baf162b47f4fee">access_id_to_mem_id</a> (std::size_t <a class="el" href="#a9163b9d2fba8b016df6edd7b7ed28d70">access_id</a>)</td></tr>
 <tr class="separator:a490d2d2de1b8262f70baf162b47f4fee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6580d034273cea1db68345a92126ddb6" id="r_a6580d034273cea1db68345a92126ddb6"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id , class FunctorType &gt; </td></tr>
-<tr class="memitem:a6580d034273cea1db68345a92126ddb6"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6580d034273cea1db68345a92126ddb6">process_access</a> (const FunctorType &amp;access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> tensor, Elem elem)</td></tr>
-<tr class="separator:a6580d034273cea1db68345a92126ddb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc028ab8bb7b7b24ae65e75a72021f93" id="r_adc028ab8bb7b7b24ae65e75a72021f93"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::array&lt; std::size_t, <a class="el" href="#a86bf667897fd515fb3ab00a0c1603d71">rank</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adc028ab8bb7b7b24ae65e75a72021f93">mem_id_to_canonical_natural_ids</a> (std::size_t <a class="el" href="#a5997ae755922d82c7773081831222aff">mem_id</a>)</td></tr>
+<tr class="memitem:a5aaf2b2e4dd803326b8885d2666373ea" id="r_a5aaf2b2e4dd803326b8885d2666373ea"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id , class FunctorType &gt; </td></tr>
+<tr class="memitem:a5aaf2b2e4dd803326b8885d2666373ea"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5aaf2b2e4dd803326b8885d2666373ea">process_access</a> (const FunctorType &amp;access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> const &amp;tensor, Elem const &amp;elem)</td></tr>
+<tr class="separator:a5aaf2b2e4dd803326b8885d2666373ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc028ab8bb7b7b24ae65e75a72021f93" id="r_adc028ab8bb7b7b24ae65e75a72021f93"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::array&lt; std::size_t, <a class="el" href="#a86bf667897fd515fb3ab00a0c1603d71">rank</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adc028ab8bb7b7b24ae65e75a72021f93">mem_id_to_canonical_natural_ids</a> (std::size_t <a class="el" href="#a0768e85ecc55f4b72b513d016e3c820b">mem_id</a>)</td></tr>
 <tr class="separator:adc028ab8bb7b7b24ae65e75a72021f93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -183,7 +183,7 @@ Static Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;TensorNatIndex... TensorIndex&gt;<br />
 struct sil::tensor::TensorLeviCivitaIndex&lt; TensorIndex &gt;</div>
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00018">18</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00017">17</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="ad00e0d8f0fe56c6b8708e368f2fc3d85" name="ad00e0d8f0fe56c6b8708e368f2fc3d85"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad00e0d8f0fe56c6b8708e368f2fc3d85">&#9670;&#160;</a></span>subindices_domain_t</h2>
@@ -199,7 +199,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00023">23</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00022">22</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -229,7 +229,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00025">25</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00024">24</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -258,7 +258,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00033">33</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00032">32</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -287,7 +287,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00040">40</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00039">39</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -316,7 +316,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00045">45</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00044">44</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -345,12 +345,12 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00050">50</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00049">49</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a5997ae755922d82c7773081831222aff" name="a5997ae755922d82c7773081831222aff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5997ae755922d82c7773081831222aff">&#9670;&#160;</a></span>mem_id()</h2>
+<a id="a0768e85ecc55f4b72b513d016e3c820b" name="a0768e85ecc55f4b72b513d016e3c820b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0768e85ecc55f4b72b513d016e3c820b">&#9670;&#160;</a></span>mem_id()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -363,7 +363,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html">sil::tensor::TensorLeviCivitaIndex</a>&lt; TensorIndex &gt;::mem_id </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
+          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -374,12 +374,12 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00055">55</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00054">54</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a1e4256825e30495879f4a1acc7704441" name="a1e4256825e30495879f4a1acc7704441"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1e4256825e30495879f4a1acc7704441">&#9670;&#160;</a></span>access_id()</h2>
+<a id="a9163b9d2fba8b016df6edd7b7ed28d70" name="a9163b9d2fba8b016df6edd7b7ed28d70"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9163b9d2fba8b016df6edd7b7ed28d70">&#9670;&#160;</a></span>access_id()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -392,7 +392,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html">sil::tensor::TensorLeviCivitaIndex</a>&lt; TensorIndex &gt;::access_id </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
+          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -403,7 +403,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00061">61</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00060">60</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -432,12 +432,12 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00078">78</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00077">77</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a6580d034273cea1db68345a92126ddb6" name="a6580d034273cea1db68345a92126ddb6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6580d034273cea1db68345a92126ddb6">&#9670;&#160;</a></span>process_access()</h2>
+<a id="a5aaf2b2e4dd803326b8885d2666373ea" name="a5aaf2b2e4dd803326b8885d2666373ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5aaf2b2e4dd803326b8885d2666373ea">&#9670;&#160;</a></span>process_access()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -457,12 +457,12 @@ template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1te
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a></td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
+          <td class="paramtype">Elem const &amp;</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -472,7 +472,7 @@ template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1te
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00085">85</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00084">84</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -501,7 +501,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00100">100</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00099">99</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -528,7 +528,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00020">20</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00019">19</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -554,7 +554,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00021">21</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__tensor_8hpp_source.html#l00020">20</a> of file <a class="el" href="levi__civita__tensor_8hpp_source.html">levi_civita_tensor.hpp</a>.</p>
 
 </div>
 </div>

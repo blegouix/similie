@@ -149,24 +149,24 @@ Functions</h2></td></tr>
 <tr class="memitem:a57b504ec3990fa45394704d444631f7b" id="r_a57b504ec3990fa45394704d444631f7b"><td class="memTemplParams" colspan="2">template&lt;class Scalar , class MemorySpace &gt; </td></tr>
 <tr class="memitem:a57b504ec3990fa45394704d444631f7b"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#a0904c4d4494ab3d38f4fa9493e074f39">unmanaged_vector_view_t</a>&lt; Scalar, MemorySpace &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a57b504ec3990fa45394704d444631f7b">vector_view</a> (Scalar *data, std::size_t n)</td></tr>
 <tr class="separator:a57b504ec3990fa45394704d444631f7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55e9f71fa9670da956aa63ada8d96079" id="r_a55e9f71fa9670da956aa63ada8d96079"><td class="memTemplParams" colspan="2">template&lt;class MatrixView &gt; </td></tr>
-<tr class="memitem:a55e9f71fa9670da956aa63ada8d96079"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a55e9f71fa9670da956aa63ada8d96079">fill_identity</a> (MatrixView matrix)</td></tr>
-<tr class="separator:a55e9f71fa9670da956aa63ada8d96079"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a59f9a15e6f0a81705b9049f9e7e1f3" id="r_a5a59f9a15e6f0a81705b9049f9e7e1f3"><td class="memTemplParams" colspan="2">template&lt;class MatrixView1 , class MatrixView2 &gt; </td></tr>
-<tr class="memitem:a5a59f9a15e6f0a81705b9049f9e7e1f3"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5a59f9a15e6f0a81705b9049f9e7e1f3">copy_matrix</a> (MatrixView1 dst, MatrixView2 src)</td></tr>
-<tr class="separator:a5a59f9a15e6f0a81705b9049f9e7e1f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3847509fa11bb3a98e02c510071bc460" id="r_a3847509fa11bb3a98e02c510071bc460"><td class="memTemplParams" colspan="2">template&lt;class MatrixView , class RowIds , class ColIds , class SubmatrixView &gt; </td></tr>
-<tr class="memitem:a3847509fa11bb3a98e02c510071bc460"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3847509fa11bb3a98e02c510071bc460">extract_submatrix</a> (SubmatrixView submatrix, MatrixView matrix, RowIds const &amp;row_ids, ColIds const &amp;col_ids)</td></tr>
-<tr class="separator:a3847509fa11bb3a98e02c510071bc460"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aea8f8a7b33c75c74f3f9f5b31beb123b" id="r_aea8f8a7b33c75c74f3f9f5b31beb123b"><td class="memTemplParams" colspan="2">template&lt;class MatrixView &gt; </td></tr>
-<tr class="memitem:aea8f8a7b33c75c74f3f9f5b31beb123b"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION MatrixView::non_const_value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aea8f8a7b33c75c74f3f9f5b31beb123b">determinant</a> (MatrixView matrix)</td></tr>
-<tr class="separator:aea8f8a7b33c75c74f3f9f5b31beb123b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d2a269ec93521400e05150df356f7d4" id="r_a3d2a269ec93521400e05150df356f7d4"><td class="memTemplParams" colspan="2">template&lt;class InverseView , class MatrixView , class WorkspaceView &gt; </td></tr>
-<tr class="memitem:a3d2a269ec93521400e05150df356f7d4"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3d2a269ec93521400e05150df356f7d4">invert</a> (InverseView inverse, MatrixView matrix, WorkspaceView workspace)</td></tr>
-<tr class="separator:a3d2a269ec93521400e05150df356f7d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a865eb72f2a72d1f7f557a6b51046bc71" id="r_a865eb72f2a72d1f7f557a6b51046bc71"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, class MatrixView , class RowIds , class ColIds &gt; </td></tr>
-<tr class="memitem:a865eb72f2a72d1f7f557a6b51046bc71"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a865eb72f2a72d1f7f557a6b51046bc71">submatrix_determinant</a> (MatrixView matrix, RowIds const &amp;row_ids, ColIds const &amp;col_ids, std::array&lt; double, N *N &gt; &amp;submatrix_alloc)</td></tr>
-<tr class="separator:a865eb72f2a72d1f7f557a6b51046bc71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada92ba2d6baba1aad69e20d665c658b4" id="r_ada92ba2d6baba1aad69e20d665c658b4"><td class="memTemplParams" colspan="2">template&lt;class MatrixView &gt; </td></tr>
+<tr class="memitem:ada92ba2d6baba1aad69e20d665c658b4"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ada92ba2d6baba1aad69e20d665c658b4">fill_identity</a> (MatrixView const &amp;matrix)</td></tr>
+<tr class="separator:ada92ba2d6baba1aad69e20d665c658b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad27078562e12f7153c1b3f66aab633d3" id="r_ad27078562e12f7153c1b3f66aab633d3"><td class="memTemplParams" colspan="2">template&lt;class MatrixView1 , class MatrixView2 &gt; </td></tr>
+<tr class="memitem:ad27078562e12f7153c1b3f66aab633d3"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad27078562e12f7153c1b3f66aab633d3">copy_matrix</a> (MatrixView1 const &amp;dst, MatrixView2 const &amp;src)</td></tr>
+<tr class="separator:ad27078562e12f7153c1b3f66aab633d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33b6e877cca69f6f8ea3fe50013502b4" id="r_a33b6e877cca69f6f8ea3fe50013502b4"><td class="memTemplParams" colspan="2">template&lt;class MatrixView , class RowIds , class ColIds , class SubmatrixView &gt; </td></tr>
+<tr class="memitem:a33b6e877cca69f6f8ea3fe50013502b4"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a33b6e877cca69f6f8ea3fe50013502b4">extract_submatrix</a> (SubmatrixView const &amp;submatrix, MatrixView const &amp;matrix, RowIds const &amp;row_ids, ColIds const &amp;col_ids)</td></tr>
+<tr class="separator:a33b6e877cca69f6f8ea3fe50013502b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9147edfcb997d528a0d756dfd22ebe85" id="r_a9147edfcb997d528a0d756dfd22ebe85"><td class="memTemplParams" colspan="2">template&lt;class MatrixView &gt; </td></tr>
+<tr class="memitem:a9147edfcb997d528a0d756dfd22ebe85"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION MatrixView::non_const_value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a9147edfcb997d528a0d756dfd22ebe85">determinant</a> (MatrixView const &amp;matrix)</td></tr>
+<tr class="separator:a9147edfcb997d528a0d756dfd22ebe85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0fa7149989af1581c0723efaaf17c4a2" id="r_a0fa7149989af1581c0723efaaf17c4a2"><td class="memTemplParams" colspan="2">template&lt;class InverseView , class MatrixView , class WorkspaceView &gt; </td></tr>
+<tr class="memitem:a0fa7149989af1581c0723efaaf17c4a2"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0fa7149989af1581c0723efaaf17c4a2">invert</a> (InverseView const &amp;inverse, MatrixView const &amp;matrix, WorkspaceView const &amp;workspace)</td></tr>
+<tr class="separator:a0fa7149989af1581c0723efaaf17c4a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc039c00eaf62ada3673b63854c889b5" id="r_adc039c00eaf62ada3673b63854c889b5"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, class MatrixView , class RowIds , class ColIds &gt; </td></tr>
+<tr class="memitem:adc039c00eaf62ada3673b63854c889b5"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#adc039c00eaf62ada3673b63854c889b5">submatrix_determinant</a> (MatrixView const &amp;matrix, RowIds const &amp;row_ids, ColIds const &amp;col_ids, std::array&lt; double, N *N &gt; &amp;submatrix_alloc)</td></tr>
+<tr class="separator:adc039c00eaf62ada3673b63854c889b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="af498e338bc880a7473c4bcf3ead5d5f8" name="af498e338bc880a7473c4bcf3ead5d5f8"></a>
@@ -265,8 +265,8 @@ template&lt;class Scalar , class MemorySpace &gt; </div>
 
 </div>
 </div>
-<a id="a55e9f71fa9670da956aa63ada8d96079" name="a55e9f71fa9670da956aa63ada8d96079"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a55e9f71fa9670da956aa63ada8d96079">&#9670;&#160;</a></span>fill_identity()</h2>
+<a id="ada92ba2d6baba1aad69e20d665c658b4" name="ada92ba2d6baba1aad69e20d665c658b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada92ba2d6baba1aad69e20d665c658b4">&#9670;&#160;</a></span>fill_identity()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -276,7 +276,7 @@ template&lt;class MatrixView &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION void sil::misc::math::fill_identity </td>
           <td>(</td>
-          <td class="paramtype">MatrixView</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span></td><td>)</td>
+          <td class="paramtype">MatrixView const &amp;</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -286,8 +286,8 @@ template&lt;class MatrixView &gt; </div>
 
 </div>
 </div>
-<a id="a5a59f9a15e6f0a81705b9049f9e7e1f3" name="a5a59f9a15e6f0a81705b9049f9e7e1f3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5a59f9a15e6f0a81705b9049f9e7e1f3">&#9670;&#160;</a></span>copy_matrix()</h2>
+<a id="ad27078562e12f7153c1b3f66aab633d3" name="ad27078562e12f7153c1b3f66aab633d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad27078562e12f7153c1b3f66aab633d3">&#9670;&#160;</a></span>copy_matrix()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -297,12 +297,12 @@ template&lt;class MatrixView1 , class MatrixView2 &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION void sil::misc::math::copy_matrix </td>
           <td>(</td>
-          <td class="paramtype">MatrixView1</td>          <td class="paramname"><span class="paramname"><em>dst</em></span>, </td>
+          <td class="paramtype">MatrixView1 const &amp;</td>          <td class="paramname"><span class="paramname"><em>dst</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">MatrixView2</td>          <td class="paramname"><span class="paramname"><em>src</em></span>&#160;)</td>
+          <td class="paramtype">MatrixView2 const &amp;</td>          <td class="paramname"><span class="paramname"><em>src</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -311,8 +311,8 @@ template&lt;class MatrixView1 , class MatrixView2 &gt; </div>
 
 </div>
 </div>
-<a id="a3847509fa11bb3a98e02c510071bc460" name="a3847509fa11bb3a98e02c510071bc460"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3847509fa11bb3a98e02c510071bc460">&#9670;&#160;</a></span>extract_submatrix()</h2>
+<a id="a33b6e877cca69f6f8ea3fe50013502b4" name="a33b6e877cca69f6f8ea3fe50013502b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33b6e877cca69f6f8ea3fe50013502b4">&#9670;&#160;</a></span>extract_submatrix()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -322,12 +322,12 @@ template&lt;class MatrixView , class RowIds , class ColIds , class SubmatrixView
         <tr>
           <td class="memname">KOKKOS_FUNCTION void sil::misc::math::extract_submatrix </td>
           <td>(</td>
-          <td class="paramtype">SubmatrixView</td>          <td class="paramname"><span class="paramname"><em>submatrix</em></span>, </td>
+          <td class="paramtype">SubmatrixView const &amp;</td>          <td class="paramname"><span class="paramname"><em>submatrix</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">MatrixView</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span>, </td>
+          <td class="paramtype">MatrixView const &amp;</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -346,8 +346,8 @@ template&lt;class MatrixView , class RowIds , class ColIds , class SubmatrixView
 
 </div>
 </div>
-<a id="aea8f8a7b33c75c74f3f9f5b31beb123b" name="aea8f8a7b33c75c74f3f9f5b31beb123b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aea8f8a7b33c75c74f3f9f5b31beb123b">&#9670;&#160;</a></span>determinant()</h2>
+<a id="a9147edfcb997d528a0d756dfd22ebe85" name="a9147edfcb997d528a0d756dfd22ebe85"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9147edfcb997d528a0d756dfd22ebe85">&#9670;&#160;</a></span>determinant()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -357,7 +357,7 @@ template&lt;class MatrixView &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION MatrixView::non_const_value_type sil::misc::math::determinant </td>
           <td>(</td>
-          <td class="paramtype">MatrixView</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span></td><td>)</td>
+          <td class="paramtype">MatrixView const &amp;</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -367,8 +367,8 @@ template&lt;class MatrixView &gt; </div>
 
 </div>
 </div>
-<a id="a3d2a269ec93521400e05150df356f7d4" name="a3d2a269ec93521400e05150df356f7d4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d2a269ec93521400e05150df356f7d4">&#9670;&#160;</a></span>invert()</h2>
+<a id="a0fa7149989af1581c0723efaaf17c4a2" name="a0fa7149989af1581c0723efaaf17c4a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0fa7149989af1581c0723efaaf17c4a2">&#9670;&#160;</a></span>invert()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -378,17 +378,17 @@ template&lt;class InverseView , class MatrixView , class WorkspaceView &gt; </di
         <tr>
           <td class="memname">KOKKOS_FUNCTION bool sil::misc::math::invert </td>
           <td>(</td>
-          <td class="paramtype">InverseView</td>          <td class="paramname"><span class="paramname"><em>inverse</em></span>, </td>
+          <td class="paramtype">InverseView const &amp;</td>          <td class="paramname"><span class="paramname"><em>inverse</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">MatrixView</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span>, </td>
+          <td class="paramtype">MatrixView const &amp;</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">WorkspaceView</td>          <td class="paramname"><span class="paramname"><em>workspace</em></span>&#160;)</td>
+          <td class="paramtype">WorkspaceView const &amp;</td>          <td class="paramname"><span class="paramname"><em>workspace</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -397,8 +397,8 @@ template&lt;class InverseView , class MatrixView , class WorkspaceView &gt; </di
 
 </div>
 </div>
-<a id="a865eb72f2a72d1f7f557a6b51046bc71" name="a865eb72f2a72d1f7f557a6b51046bc71"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a865eb72f2a72d1f7f557a6b51046bc71">&#9670;&#160;</a></span>submatrix_determinant()</h2>
+<a id="adc039c00eaf62ada3673b63854c889b5" name="adc039c00eaf62ada3673b63854c889b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc039c00eaf62ada3673b63854c889b5">&#9670;&#160;</a></span>submatrix_determinant()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -408,7 +408,7 @@ template&lt;std::size_t N, class MatrixView , class RowIds , class ColIds &gt; <
         <tr>
           <td class="memname">KOKKOS_FUNCTION double sil::misc::math::submatrix_determinant </td>
           <td>(</td>
-          <td class="paramtype">MatrixView</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span>, </td>
+          <td class="paramtype">MatrixView const &amp;</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -428,7 +428,7 @@ template&lt;std::size_t N, class MatrixView , class RowIds , class ColIds &gt; <
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="small__matrix_8hpp_source.html#l00183">183</a> of file <a class="el" href="small__matrix_8hpp_source.html">small_matrix.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="small__matrix_8hpp_source.html#l00186">186</a> of file <a class="el" href="small__matrix_8hpp_source.html">small_matrix.hpp</a>.</p>
 
 </div>
 </div>

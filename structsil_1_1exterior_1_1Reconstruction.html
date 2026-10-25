@@ -10,7 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SimiLie: sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex &gt; Struct Template Reference</title>
+<title>SimiLie: sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -129,128 +129,165 @@ $(function(){initNavTree('structsil_1_1exterior_1_1Reconstruction.html',''); ini
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="structsil_1_1exterior_1_1Reconstruction-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex &gt; Struct Template Reference</div></div>
+  <div class="headertitle"><div class="title">sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt; Struct Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p><code>#include &lt;<a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>&gt;</code></p>
 <div class="dynheader">
-Collaboration diagram for sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex &gt;:</div>
+Collaboration diagram for sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;:</div>
 <div class="dyncontent">
-<div class="center"><img src="structsil_1_1exterior_1_1Reconstruction__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_01_4_coll__map" alt="Collaboration graph"/></div>
-<map name="asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_01_4_coll__map" id="asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,199,120"/>
+<div class="center"><img src="structsil_1_1exterior_1_1Reconstruction__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_00_01Coefficients_01_4_coll__map" alt="Collaboration graph"/></div>
+<map name="asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_00_01Coefficients_01_4_coll__map" id="asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_00_01Coefficients_01_4_coll__map">
+<area shape="rect" title=" " alt="" coords="5,5,260,140"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a645faba94d43ae5e1cf51920faa40ca1" id="r_a645faba94d43ae5e1cf51920faa40ca1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a645faba94d43ae5e1cf51920faa40ca1">source_index_type</a> = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;Indices&gt;</td></tr>
-<tr class="separator:a645faba94d43ae5e1cf51920faa40ca1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a86d293a07043fe1efd4ece7cefea3677" id="r_a86d293a07043fe1efd4ece7cefea3677"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a86d293a07043fe1efd4ece7cefea3677">target_index_type</a> = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;<a class="el" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">tensor::primes</a>&lt;Indices&gt;&gt;</td></tr>
-<tr class="separator:a86d293a07043fe1efd4ece7cefea3677"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab6a9c7c7a1881066b1b7a9fdf5250a1f" id="r_ab6a9c7c7a1881066b1b7a9fdf5250a1f"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab6a9c7c7a1881066b1b7a9fdf5250a1f">source_natural_elem_type</a></td></tr>
-<tr class="separator:ab6a9c7c7a1881066b1b7a9fdf5250a1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab4447dfb86aee837c9381e2944a1b95" id="r_aab4447dfb86aee837c9381e2944a1b95"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aab4447dfb86aee837c9381e2944a1b95">target_natural_elem_type</a></td></tr>
-<tr class="separator:aab4447dfb86aee837c9381e2944a1b95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6460d10a65f3441d0ff6453ee92b48b1" id="r_a6460d10a65f3441d0ff6453ee92b48b1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6460d10a65f3441d0ff6453ee92b48b1">staged_storage_type</a></td></tr>
+<tr class="separator:a6460d10a65f3441d0ff6453ee92b48b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e764479896eed71c49f152976a658c3" id="r_a0e764479896eed71c49f152976a658c3"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0e764479896eed71c49f152976a658c3">source_index_type</a> = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;Indices&gt;</td></tr>
+<tr class="separator:a0e764479896eed71c49f152976a658c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72d3bb0b7a5f20ce71a61cafa8aec1b8" id="r_a72d3bb0b7a5f20ce71a61cafa8aec1b8"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a72d3bb0b7a5f20ce71a61cafa8aec1b8">target_index_type</a> = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;<a class="el" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">tensor::primes</a>&lt;Indices&gt;&gt;</td></tr>
+<tr class="separator:a72d3bb0b7a5f20ce71a61cafa8aec1b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa121d2b4da4fca789f0667c572b7e2fa" id="r_aa121d2b4da4fca789f0667c572b7e2fa"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa121d2b4da4fca789f0667c572b7e2fa">source_natural_elem_type</a></td></tr>
+<tr class="separator:aa121d2b4da4fca789f0667c572b7e2fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b02d187fe171d18f9dff91cd43964fa" id="r_a2b02d187fe171d18f9dff91cd43964fa"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2b02d187fe171d18f9dff91cd43964fa">target_natural_elem_type</a></td></tr>
+<tr class="separator:a2b02d187fe171d18f9dff91cd43964fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a02115250d2dce62851ecd8d99926f588" id="r_a02115250d2dce62851ecd8d99926f588"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; ReconstructedTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CochainTensorType&gt; </td></tr>
-<tr class="memitem:a02115250d2dce62851ecd8d99926f588"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a02115250d2dce62851ecd8d99926f588">operator()</a> (ReconstructedTensorType reconstructed_tensor, CochainTensorType cochain_tensor, PositionType position, BatchElem elem)</td></tr>
-<tr class="separator:a02115250d2dce62851ecd8d99926f588"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a054cf29cb8c68bc43c4c09e5b7c95ea2" id="r_a054cf29cb8c68bc43c4c09e5b7c95ea2"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a054cf29cb8c68bc43c4c09e5b7c95ea2">value</a> (PositionType position, BatchElem elem, auto natural_elem)</td></tr>
-<tr class="separator:a054cf29cb8c68bc43c4c09e5b7c95ea2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe3e30285c9b9659dfc5cb8a59ff7811" id="r_afe3e30285c9b9659dfc5cb8a59ff7811"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; ReconstructedTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CochainTensorType&gt; </td></tr>
+<tr class="memitem:afe3e30285c9b9659dfc5cb8a59ff7811"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afe3e30285c9b9659dfc5cb8a59ff7811">operator()</a> (ReconstructedTensorType const &amp;reconstructed_tensor, CochainTensorType const &amp;cochain_tensor, PositionType const &amp;position, BatchElem elem)</td></tr>
+<tr class="separator:afe3e30285c9b9659dfc5cb8a59ff7811"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab2b6954b47ee56c448f6d91a3323b59" id="r_aab2b6954b47ee56c448f6d91a3323b59"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION detail::LocalOperatorStencil&lt; <a class="el" href="#a0e764479896eed71c49f152976a658c3">source_index_type</a>, <a class="el" href="#a72d3bb0b7a5f20ce71a61cafa8aec1b8">target_index_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aab2b6954b47ee56c448f6d91a3323b59">value</a> (PositionType const &amp;position, BatchElem element)</td></tr>
+<tr class="separator:aab2b6954b47ee56c448f6d91a3323b59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a249b62c747f68678db00c97a0d2ee099" id="r_a249b62c747f68678db00c97a0d2ee099"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a249b62c747f68678db00c97a0d2ee099">value</a> (PositionType const &amp;position, BatchElem elem, auto natural_elem)</td></tr>
+<tr class="separator:a249b62c747f68678db00c97a0d2ee099"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem, <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt;<br />
-struct sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex &gt;</div>
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00819">819</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<div class="textblock"><div class="compoundTemplParams">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem, <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt;<br />
+struct sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;</div>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01151">1151</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a645faba94d43ae5e1cf51920faa40ca1" name="a645faba94d43ae5e1cf51920faa40ca1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a645faba94d43ae5e1cf51920faa40ca1">&#9670;&#160;</a></span>source_index_type</h2>
+<a id="a6460d10a65f3441d0ff6453ee92b48b1" name="a6460d10a65f3441d0ff6453ee92b48b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6460d10a65f3441d0ff6453ee92b48b1">&#9670;&#160;</a></span>staged_storage_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex &gt;::source_index_type = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;Indices&gt;</td>
+          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::staged_storage_type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> detail::LocalOperatorStorage&lt;</div>
+<div class="line">            Reconstruction,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;Indices&gt;</a>,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;tensor::primes&lt;Indices&gt;</a>&gt;,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;ddc::DiscreteDomain, ddc::to_type_seq_t&lt;BatchElem&gt;</a>&gt;,</div>
+<div class="line">            <span class="keyword">typename</span> PositionType::memory_space,</div>
+<div class="line">            <span class="keyword">typename</span> PositionType::memory_space::execution_space,</div>
+<div class="line">            Coefficients,</div>
+<div class="line">            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;reduction_index_t&lt;Indices&gt;</a>&gt;::discrete_element_type,</div>
+<div class="line">            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t</a>&lt;</div>
+<div class="line">                    <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;tensor::primes&lt;Indices&gt;</a>&gt;&gt;::discrete_element_type,</div>
+<div class="line">            <span class="keyword">false</span>&gt;</div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a7f4162fd50b1c01db82d03934600fced"><div class="ttname"><a href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">sil::exterior::reduction_index_t</a></div><div class="ttdeci">typename detail::ReductionTargetIndex&lt; Indices &gt;::type reduction_index_t</div><div class="ttdef"><b>Definition</b> <a href="reduction__and__reconstruction_8hpp_source.html#l00435">reduction_and_reconstruction.hpp:435</a></div></div>
+<div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ad931792b69b009623e283e74cdb06076"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">sil::tensor::natural_domain_t</a></div><div class="ttdeci">typename detail::NaturalDomainType&lt; Index &gt;::type natural_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00150">tensor_impl.hpp:150</a></div></div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01153">1153</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a0e764479896eed71c49f152976a658c3" name="a0e764479896eed71c49f152976a658c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e764479896eed71c49f152976a658c3">&#9670;&#160;</a></span>source_index_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::source_index_type = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;Indices&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00821">821</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01166">1166</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a86d293a07043fe1efd4ece7cefea3677" name="a86d293a07043fe1efd4ece7cefea3677"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a86d293a07043fe1efd4ece7cefea3677">&#9670;&#160;</a></span>target_index_type</h2>
+<a id="a72d3bb0b7a5f20ce71a61cafa8aec1b8" name="a72d3bb0b7a5f20ce71a61cafa8aec1b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a72d3bb0b7a5f20ce71a61cafa8aec1b8">&#9670;&#160;</a></span>target_index_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex &gt;::target_index_type = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;<a class="el" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">tensor::primes</a>&lt;Indices&gt;&gt;</td>
+          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::target_index_type = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;<a class="el" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">tensor::primes</a>&lt;Indices&gt;&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00822">822</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01167">1167</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ab6a9c7c7a1881066b1b7a9fdf5250a1f" name="ab6a9c7c7a1881066b1b7a9fdf5250a1f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab6a9c7c7a1881066b1b7a9fdf5250a1f">&#9670;&#160;</a></span>source_natural_elem_type</h2>
+<a id="aa121d2b4da4fca789f0667c572b7e2fa" name="aa121d2b4da4fca789f0667c572b7e2fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa121d2b4da4fca789f0667c572b7e2fa">&#9670;&#160;</a></span>source_natural_elem_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex &gt;::source_natural_elem_type</td>
+          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::source_natural_elem_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
 <div class="line">            <span class="keyword">typename</span> tensor::natural_domain_t&lt;source_index_type&gt;::discrete_element_type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00823">823</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01168">1168</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aab4447dfb86aee837c9381e2944a1b95" name="aab4447dfb86aee837c9381e2944a1b95"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aab4447dfb86aee837c9381e2944a1b95">&#9670;&#160;</a></span>target_natural_elem_type</h2>
+<a id="a2b02d187fe171d18f9dff91cd43964fa" name="a2b02d187fe171d18f9dff91cd43964fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b02d187fe171d18f9dff91cd43964fa">&#9670;&#160;</a></span>target_natural_elem_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex &gt;::target_natural_elem_type</td>
+          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::target_natural_elem_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
 <div class="line">            <span class="keyword">typename</span> tensor::natural_domain_t&lt;target_index_type&gt;::discrete_element_type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00825">825</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01170">1170</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a02115250d2dce62851ecd8d99926f588" name="a02115250d2dce62851ecd8d99926f588"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a02115250d2dce62851ecd8d99926f588">&#9670;&#160;</a></span>operator()()</h2>
+<a id="afe3e30285c9b9659dfc5cb8a59ff7811" name="afe3e30285c9b9659dfc5cb8a59ff7811"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe3e30285c9b9659dfc5cb8a59ff7811">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
 <div class="memtemplate">
 template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; ReconstructedTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CochainTensorType&gt; </div>
 <table class="mlabels">
@@ -258,19 +295,19 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static KOKKOS_FUNCTION void <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex &gt;::operator() </td>
+          <td class="memname">static KOKKOS_FUNCTION void <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::operator() </td>
           <td>(</td>
-          <td class="paramtype">ReconstructedTensorType</td>          <td class="paramname"><span class="paramname"><em>reconstructed_tensor</em></span>, </td>
+          <td class="paramtype">ReconstructedTensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em>reconstructed_tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">CochainTensorType</td>          <td class="paramname"><span class="paramname"><em>cochain_tensor</em></span>, </td>
+          <td class="paramtype">CochainTensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em>cochain_tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">PositionType</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+          <td class="paramtype">PositionType const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -285,25 +322,58 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00831">831</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01176">1176</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a054cf29cb8c68bc43c4c09e5b7c95ea2" name="a054cf29cb8c68bc43c4c09e5b7c95ea2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a054cf29cb8c68bc43c4c09e5b7c95ea2">&#9670;&#160;</a></span>value()</h2>
+<a id="aab2b6954b47ee56c448f6d91a3323b59" name="aab2b6954b47ee56c448f6d91a3323b59"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab2b6954b47ee56c448f6d91a3323b59">&#9670;&#160;</a></span>value() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static KOKKOS_FUNCTION double <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex &gt;::value </td>
+          <td class="memname">static KOKKOS_FUNCTION detail::LocalOperatorStencil&lt; <a class="el" href="#a0e764479896eed71c49f152976a658c3">source_index_type</a>, <a class="el" href="#a72d3bb0b7a5f20ce71a61cafa8aec1b8">target_index_type</a> &gt; <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::value </td>
           <td>(</td>
-          <td class="paramtype">PositionType</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+          <td class="paramtype">PositionType const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BatchElem</td>          <td class="paramname"><span class="paramname"><em>element</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01238">1238</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a249b62c747f68678db00c97a0d2ee099" name="a249b62c747f68678db00c97a0d2ee099"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a249b62c747f68678db00c97a0d2ee099">&#9670;&#160;</a></span>value() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FUNCTION double <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::value </td>
+          <td>(</td>
+          <td class="paramtype">PositionType const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -323,7 +393,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00875">875</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01277">1277</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>

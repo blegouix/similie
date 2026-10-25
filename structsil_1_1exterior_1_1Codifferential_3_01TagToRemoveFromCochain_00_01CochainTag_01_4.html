@@ -141,24 +141,29 @@ Collaboration diagram for sil::exterior::Codifferential&lt; TagToRemoveFromCocha
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1exterior_1_1Codifferential_3_01TagToRemoveFromCochain_00_01CochainTag_01_4__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Codifferential_3_01TagToRemoveFromCochain_00_01CochainTag_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1Codifferential_3_01TagToRemoveFromCochain_00_01CochainTag_01_4_coll__map" id="asil_1_1exterior_1_1Codifferential_3_01TagToRemoveFromCochain_00_01CochainTag_01_4_coll__map">
-<area shape="rect" title="Pointwise codifferential with independently supplied Hodge operators." alt="" coords="5,5,213,140"/>
+<area shape="rect" title="Pointwise codifferential with independently supplied Hodge operators." alt="" coords="5,5,213,160"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a0a1957e37aaa57f7a6e23920f9cbe7b6" id="r_a0a1957e37aaa57f7a6e23920f9cbe7b6"><td class="memTemplParams" colspan="2">template&lt;class Output , class DualEvaluator , class InverseHodge , class <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> , class LowerChain , class Element &gt; </td></tr>
-<tr class="memitem:a0a1957e37aaa57f7a6e23920f9cbe7b6"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0a1957e37aaa57f7a6e23920f9cbe7b6">operator()</a> (Output output, DualEvaluator evaluate_dual, InverseHodge inverse_hodge, <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> chain, LowerChain lower_chain, Element elem)</td></tr>
-<tr class="separator:a0a1957e37aaa57f7a6e23920f9cbe7b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3835fd532952096754ae1c4b51af4fc5" id="r_a3835fd532952096754ae1c4b51af4fc5"><td class="memTemplParams" colspan="2">template&lt;class DualField , class InverseHodge , class Element &gt; <br />
+<tr class="memitem:a3829d6f9bdee35effc11a8ac3e2a0d2c" id="r_a3829d6f9bdee35effc11a8ac3e2a0d2c"><td class="memTemplParams" colspan="2">template&lt;class Output , class DualEvaluator , class InverseHodge , class <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> , class LowerChain , class Element &gt; </td></tr>
+<tr class="memitem:a3829d6f9bdee35effc11a8ac3e2a0d2c"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3829d6f9bdee35effc11a8ac3e2a0d2c">operator()</a> (Output output, DualEvaluator const &amp;evaluate_dual, InverseHodge const &amp;inverse_hodge, <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> const &amp;chain, LowerChain const &amp;lower_chain, Element elem)</td></tr>
+<tr class="separator:a3829d6f9bdee35effc11a8ac3e2a0d2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a311e5bd1be8d4e680b1cb5bdee2c1f9e" id="r_a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="memTemplParams" colspan="2">template&lt;class Geometry , class Field , class Element , class Rules &gt; <br />
+requires requires(Geometry const&amp; geometry) { geometry.forward; geometry.inverse; }</td></tr>
+<tr class="memitem:a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FORCEINLINE_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a311e5bd1be8d4e680b1cb5bdee2c1f9e">value</a> (Geometry const &amp;geometry, Field const &amp;input, Element element, Rules const &amp;rules)</td></tr>
+<tr class="memdesc:a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Complete cochain stencil, with geometry and closure supplied separately.  <br /></td></tr>
+<tr class="separator:a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6768b222a0537765cc72de9a9855ab9" id="r_ac6768b222a0537765cc72de9a9855ab9"><td class="memTemplParams" colspan="2">template&lt;class DualField , class InverseHodge , class Element &gt; <br />
 requires (CochainTag::rank() == 1)</td></tr>
-<tr class="memitem:a3835fd532952096754ae1c4b51af4fc5"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3835fd532952096754ae1c4b51af4fc5">value</a> (DualField const &amp;, InverseHodge inverse_hodge, Element elem)</td></tr>
-<tr class="memdesc:a3835fd532952096754ae1c4b51af4fc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scalar codifferential coefficients on the incident dual faces.  <br /></td></tr>
-<tr class="separator:a3835fd532952096754ae1c4b51af4fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2885091cf49a79652be95e1379395978" id="r_a2885091cf49a79652be95e1379395978"><td class="memTemplParams" colspan="2">template&lt;class DualField , class DualRules , class InverseHodge , class Element &gt; <br />
+<tr class="memitem:ac6768b222a0537765cc72de9a9855ab9"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ac6768b222a0537765cc72de9a9855ab9">value</a> (DualField const &amp;, InverseHodge const &amp;inverse_hodge, Element elem)</td></tr>
+<tr class="memdesc:ac6768b222a0537765cc72de9a9855ab9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scalar codifferential coefficients on the incident dual faces.  <br /></td></tr>
+<tr class="separator:ac6768b222a0537765cc72de9a9855ab9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d534a469c3d0cb0ee6ff61e3a75ed6c" id="r_a2d534a469c3d0cb0ee6ff61e3a75ed6c"><td class="memTemplParams" colspan="2">template&lt;class DualField , class DualRules , class InverseHodge , class Element &gt; <br />
 requires requires { typename DualField::non_indices_domain_t; }</td></tr>
-<tr class="memitem:a2885091cf49a79652be95e1379395978"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2885091cf49a79652be95e1379395978">value</a> (DualField const &amp;dual_field, DualRules dual_rules, InverseHodge inverse_hodge, Element elem)</td></tr>
-<tr class="separator:a2885091cf49a79652be95e1379395978"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d534a469c3d0cb0ee6ff61e3a75ed6c"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2d534a469c3d0cb0ee6ff61e3a75ed6c">value</a> (DualField const &amp;dual_field, DualRules const &amp;dual_rules, InverseHodge const &amp;inverse_hodge, Element elem)</td></tr>
+<tr class="separator:a2d534a469c3d0cb0ee6ff61e3a75ed6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag&gt;<br />
@@ -167,8 +172,8 @@ struct sil::exterior::Codifferential&lt; TagToRemoveFromCochain, CochainTag &gt;
 
 <p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00145">145</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a0a1957e37aaa57f7a6e23920f9cbe7b6" name="a0a1957e37aaa57f7a6e23920f9cbe7b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0a1957e37aaa57f7a6e23920f9cbe7b6">&#9670;&#160;</a></span>operator()()</h2>
+<a id="a3829d6f9bdee35effc11a8ac3e2a0d2c" name="a3829d6f9bdee35effc11a8ac3e2a0d2c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3829d6f9bdee35effc11a8ac3e2a0d2c">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -188,22 +193,22 @@ template&lt;class Output , class DualEvaluator , class InverseHodge , class <a c
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">DualEvaluator</td>          <td class="paramname"><span class="paramname"><em>evaluate_dual</em></span>, </td>
+          <td class="paramtype">DualEvaluator const &amp;</td>          <td class="paramname"><span class="paramname"><em>evaluate_dual</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">InverseHodge</td>          <td class="paramname"><span class="paramname"><em>inverse_hodge</em></span>, </td>
+          <td class="paramtype">InverseHodge const &amp;</td>          <td class="paramname"><span class="paramname"><em>inverse_hodge</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a></td>          <td class="paramname"><span class="paramname"><em>chain</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">LowerChain</td>          <td class="paramname"><span class="paramname"><em>lower_chain</em></span>, </td>
+          <td class="paramtype">LowerChain const &amp;</td>          <td class="paramname"><span class="paramname"><em>lower_chain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -222,8 +227,57 @@ template&lt;class Output , class DualEvaluator , class InverseHodge , class <a c
 
 </div>
 </div>
-<a id="a3835fd532952096754ae1c4b51af4fc5" name="a3835fd532952096754ae1c4b51af4fc5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3835fd532952096754ae1c4b51af4fc5">&#9670;&#160;</a></span>value() <span class="overload">[1/2]</span></h2>
+<a id="a311e5bd1be8d4e680b1cb5bdee2c1f9e" name="a311e5bd1be8d4e680b1cb5bdee2c1f9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a311e5bd1be8d4e680b1cb5bdee2c1f9e">&#9670;&#160;</a></span>value() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag&gt; </div>
+<div class="memtemplate">
+template&lt;class Geometry , class Field , class Element , class Rules &gt; <br />
+requires requires(Geometry const&amp; geometry) { geometry.forward; geometry.inverse; }</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FORCEINLINE_FUNCTION auto <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential">sil::exterior::Codifferential</a>&lt; TagToRemoveFromCochain, CochainTag &gt;::value </td>
+          <td>(</td>
+          <td class="paramtype">Geometry const &amp;</td>          <td class="paramname"><span class="paramname"><em>geometry</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Field const &amp;</td>          <td class="paramname"><span class="paramname"><em>input</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Element</td>          <td class="paramname"><span class="paramname"><em>element</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Rules const &amp;</td>          <td class="paramname"><span class="paramname"><em>rules</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Complete cochain stencil, with geometry and closure supplied separately. </p>
+<dl class="section important"><dt>Important</dt><dd>This documentation is fully AI-generated. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00187">187</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ac6768b222a0537765cc72de9a9855ab9" name="ac6768b222a0537765cc72de9a9855ab9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6768b222a0537765cc72de9a9855ab9">&#9670;&#160;</a></span>value() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -244,7 +298,7 @@ requires (CochainTag::rank() == 1)</div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">InverseHodge</td>          <td class="paramname"><span class="paramname"><em>inverse_hodge</em></span>, </td>
+          <td class="paramtype">InverseHodge const &amp;</td>          <td class="paramname"><span class="paramname"><em>inverse_hodge</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -262,12 +316,12 @@ requires (CochainTag::rank() == 1)</div>
 <p>Scalar codifferential coefficients on the incident dual faces. </p>
 <p>Spatial stencil coordinates are offsets plus one, with the center at one. </p><dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00185">185</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00253">253</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a2885091cf49a79652be95e1379395978" name="a2885091cf49a79652be95e1379395978"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2885091cf49a79652be95e1379395978">&#9670;&#160;</a></span>value() <span class="overload">[2/2]</span></h2>
+<a id="a2d534a469c3d0cb0ee6ff61e3a75ed6c" name="a2d534a469c3d0cb0ee6ff61e3a75ed6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d534a469c3d0cb0ee6ff61e3a75ed6c">&#9670;&#160;</a></span>value() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -288,12 +342,12 @@ requires requires { typename DualField::non_indices_domain_t; }</div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">DualRules</td>          <td class="paramname"><span class="paramname"><em>dual_rules</em></span>, </td>
+          <td class="paramtype">DualRules const &amp;</td>          <td class="paramname"><span class="paramname"><em>dual_rules</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">InverseHodge</td>          <td class="paramname"><span class="paramname"><em>inverse_hodge</em></span>, </td>
+          <td class="paramtype">InverseHodge const &amp;</td>          <td class="paramname"><span class="paramname"><em>inverse_hodge</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -308,7 +362,7 @@ requires requires { typename DualField::non_indices_domain_t; }</div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00236">236</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00307">307</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>

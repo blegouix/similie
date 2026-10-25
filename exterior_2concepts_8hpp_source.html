@@ -136,8 +136,8 @@ $(function(){initNavTree('exterior_2concepts_8hpp_source.html',''); initResizabl
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;concepts&gt;</span></div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;similie/tensor/character.hpp&gt;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;similie/tensor/metric.hpp&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;similie/tensor/metric.hpp&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;similie/tensor/tensor_indices/character.hpp&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;local_chain.hpp&quot;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
@@ -181,10 +181,10 @@ $(function(){initNavTree('exterior_2concepts_8hpp_source.html',''); initResizabl
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="keyword">class </span>NaturalElement&gt;</div>
 <div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">   52</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">CoboundaryConcept</a> = <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        Output output,</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        Evaluator evaluator,</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a> chain,</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        LowerChain lower_chain,</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        Evaluator <span class="keyword">const</span>&amp; evaluator,</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a> <span class="keyword">const</span>&amp; chain,</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        LowerChain <span class="keyword">const</span>&amp; lower_chain,</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        Element element,</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        NaturalElement natural_element) {</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    Operator::value(chain, lower_chain, element, natural_element);</div>
@@ -202,57 +202,86 @@ $(function(){initNavTree('exterior_2concepts_8hpp_source.html',''); initResizabl
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        <span class="keyword">class </span>NaturalElement&gt;</div>
 <div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1DiscreteHodgeStarConcept.html">   71</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1DiscreteHodgeStarConcept.html">DiscreteHodgeStarConcept</a> = <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        Output output,</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>        Input input,</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        Metric metric,</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        Position position,</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>        Element element,</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        NaturalElement natural_element) {</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    { Operator::value(metric, position, element, natural_element) } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    { Operator::operator()(output, input, metric, position, element) } -&gt; std::same_as&lt;void&gt;;</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>};</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        Operator operation,</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        Input <span class="keyword">const</span>&amp; input,</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        Metric <span class="keyword">const</span>&amp; metric,</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>        Position <span class="keyword">const</span>&amp; position,</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        Element element,</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        NaturalElement natural_element) {</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    operation.value(metric, position, element);</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    { operation.value(metric, position, element, natural_element) } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    { operation(output, input, metric, position, element) } -&gt; std::same_as&lt;void&gt;;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>};</div>
 </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keyword">class </span>Operator,</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <span class="keyword">class </span>Output,</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keyword">class </span>Input,</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="keyword">class </span>Metric,</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keyword">class </span>Element,</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keyword">class </span>NaturalElement&gt;</div>
-<div class="foldopen" id="foldopen00089" data-start="{" data-end="}">
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">   89</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">ContinuousHodgeStarConcept</a> = <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        Output output,</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        Input input,</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        Metric metric,</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        Element element,</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        NaturalElement natural_element) {</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    { Operator::value(metric, element, natural_element) } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    { Operator::operator()(output, input, metric, element) } -&gt; std::same_as&lt;void&gt;;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>};</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keyword">class </span>Operator,</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="keyword">class </span>Output,</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keyword">class </span>Input,</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keyword">class </span>Metric,</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="keyword">class </span>Element,</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keyword">class </span>NaturalElement&gt;</div>
+<div class="foldopen" id="foldopen00091" data-start="{" data-end="}">
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">   91</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">ContinuousHodgeStarConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        Operator operation,</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        Input <span class="keyword">const</span>&amp; input,</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        Metric <span class="keyword">const</span>&amp; metric,</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        Element element,</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        NaturalElement natural_element) {</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    operation.value(metric, element);</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    { operation.value(metric, element, natural_element) } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    { operation(output, input, metric, element) } -&gt; std::same_as&lt;void&gt;;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>};</div>
 </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Output, <span class="keyword">class</span> Input&gt;</div>
-<div class="foldopen" id="foldopen00100" data-start="{" data-end="}">
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1StagedCodifferentialConcept.html">  100</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagedCodifferentialConcept.html">StagedCodifferentialConcept</a></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        = <span class="keyword">requires</span>(Operator <span class="keyword">const</span>&amp; operation, Output output, Input input) {</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>              { operation(output, input) } -&gt; std::same_as&lt;Output&gt;;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>          };</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Operator, <span class="keyword">class </span>Output, <span class="keyword">class </span>Input, <span class="keyword">class</span>... Arguments&gt;</div>
+<div class="foldopen" id="foldopen00104" data-start="{" data-end="}">
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1LocalOperatorConcept.html">  104</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1LocalOperatorConcept.html">LocalOperatorConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        Operator <span class="keyword">const</span>&amp; operation,</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>        Input <span class="keyword">const</span>&amp; input,</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        Arguments... arguments) {</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    { operation(output, input, arguments...) } -&gt; std::same_as&lt;void&gt;;</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>};</div>
 </div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Tensor&gt;</div>
-<div class="foldopen" id="foldopen00106" data-start="{" data-end="}">
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1StagedLaplacianConcept.html">  106</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagedLaplacianConcept.html">StagedLaplacianConcept</a> = <span class="keyword">requires</span>(Operator&amp; operation, Tensor output, Tensor input) {</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    { operation(output, input) } -&gt; std::same_as&lt;Tensor&gt;;</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>};</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Output, <span class="keyword">class</span> Input = Output&gt;</div>
+<div class="foldopen" id="foldopen00113" data-start="{" data-end="}">
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1StagedOperatorConcept.html">  113</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagedOperatorConcept.html">StagedOperatorConcept</a></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        = <span class="keyword">requires</span>(Operator <span class="keyword">const</span>&amp; operation, Output <span class="keyword">const</span>&amp; output, Input <span class="keyword">const</span>&amp; input) {</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>              { operation(output, input) } -&gt; std::same_as&lt;Output&gt;;</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>          };</div>
 </div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>} <span class="comment">// namespace sil::exterior</span></div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Storage, <span class="keyword">class</span> Output, <span class="keyword">class</span> Input = Output&gt;</div>
+<div class="foldopen" id="foldopen00119" data-start="{" data-end="}">
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">  119</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">StagingStorageConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        Storage <span class="keyword">const</span>&amp; storage,</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        <span class="keyword">typename</span> Storage::execution_space <span class="keyword">const</span>&amp; exec,</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        Input <span class="keyword">const</span>&amp; input) {</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    { storage.apply(exec, output, input) } -&gt; std::same_as&lt;Output&gt;;</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>};</div>
+</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Output, <span class="keyword">class</span> Input = Output&gt;</div>
+<div class="foldopen" id="foldopen00128" data-start="{" data-end="}">
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">  128</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">StageableOperatorConcept</a> = <span class="keyword">requires</span> {</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keyword">typename</span> Operator::staged_storage_type;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keyword">requires</span> <a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">StagingStorageConcept&lt;typename Operator::staged_storage_type, Output, Input&gt;</a>;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>};</div>
+</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>} <span class="comment">// namespace sil::exterior</span></div>
 <div class="ttc" id="aconceptsil_1_1exterior_1_1CoboundaryConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">sil::exterior::CoboundaryConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00052">exterior/concepts.hpp:52</a></div></div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1ContinuousHodgeStarConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">sil::exterior::ContinuousHodgeStarConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00089">exterior/concepts.hpp:89</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1ContinuousHodgeStarConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">sil::exterior::ContinuousHodgeStarConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00091">exterior/concepts.hpp:91</a></div></div>
 <div class="ttc" id="aconceptsil_1_1exterior_1_1DiscreteHodgeStarConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1DiscreteHodgeStarConcept.html">sil::exterior::DiscreteHodgeStarConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00071">exterior/concepts.hpp:71</a></div></div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1StagedCodifferentialConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StagedCodifferentialConcept.html">sil::exterior::StagedCodifferentialConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00100">exterior/concepts.hpp:101</a></div></div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1StagedLaplacianConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StagedLaplacianConcept.html">sil::exterior::StagedLaplacianConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00106">exterior/concepts.hpp:106</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1LocalOperatorConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1LocalOperatorConcept.html">sil::exterior::LocalOperatorConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00104">exterior/concepts.hpp:104</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1StageableOperatorConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">sil::exterior::StageableOperatorConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00128">exterior/concepts.hpp:128</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1StagedOperatorConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StagedOperatorConcept.html">sil::exterior::StagedOperatorConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00113">exterior/concepts.hpp:114</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1StagingStorageConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">sil::exterior::StagingStorageConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00119">exterior/concepts.hpp:119</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html"><div class="ttname"><a href="namespacesil_1_1exterior.html">sil::exterior</a></div><div class="ttdef"><b>Definition</b> <a href="boundary_8hpp_source.html#l00017">boundary.hpp:17</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a44d7a21937a15c4687c17dbb94778c2f"><div class="ttname"><a href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">sil::exterior::Chain</a></div><div class="ttdeci">Chain(Head, Tail...) -&gt; Chain&lt; typename Head::value_type, typename Head::array_layout, typename Head::memory_space &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>

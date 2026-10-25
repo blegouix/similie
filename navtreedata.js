@@ -69,16 +69,23 @@ var NAVTREE =
         [ "Local material Hodge in 2D", "physics_module.html#autotoc_md36", null ]
       ] ]
     ] ],
+    [ "taylor_green_vortex", "md_taylor__green__vortex.html", [
+      [ "Taylor–Green vortex", "md_taylor__green__vortex.html#taylor_green_vortex", [
+        [ "Fluid problem", "md_taylor__green__vortex.html#autotoc_md37", null ],
+        [ "Electromagnetic extensions", "md_taylor__green__vortex.html#autotoc_md38", null ],
+        [ "Discretization and use", "md_taylor__green__vortex.html#autotoc_md39", null ]
+      ] ]
+    ] ],
     [ "The ONELAB interface", "onelab_interface.html", null ],
     [ "Multidomains and potential flow", "multidomains.html", [
-      [ "Domain graph and field ownership", "multidomains.html#autotoc_md37", null ],
-      [ "Differential operators and assembly", "multidomains.html#autotoc_md38", null ],
-      [ "ONELAB potential flow example", "multidomains.html#autotoc_md39", null ]
+      [ "Domain graph and field ownership", "multidomains.html#autotoc_md40", null ],
+      [ "Differential operators and assembly", "multidomains.html#autotoc_md41", null ],
+      [ "ONELAB potential flow example", "multidomains.html#autotoc_md42", null ]
     ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
-        [ "All", "namespacemembers.html", null ],
+        [ "All", "namespacemembers.html", "namespacemembers_dup" ],
         [ "Functions", "namespacemembers_func.html", null ],
         [ "Variables", "namespacemembers_vars.html", null ],
         [ "Typedefs", "namespacemembers_type.html", null ],
@@ -93,7 +100,7 @@ var NAVTREE =
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
         [ "Functions", "functions_func.html", "functions_func" ],
-        [ "Variables", "functions_vars.html", null ],
+        [ "Variables", "functions_vars.html", "functions_vars" ],
         [ "Typedefs", "functions_type.html", null ],
         [ "Related Symbols", "functions_rela.html", null ]
       ] ]
@@ -104,12 +111,14 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "Running.html",
-"classsil_1_1exterior_1_1CochainIterator.html#accfa2f96fd8a102079455b4923974027",
-"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html",
-"classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html",
-"namespacesil_1_1misc_1_1math.html#a0904c4d4494ab3d38f4fa9493e074f39",
-"structsil_1_1misc_1_1is__specialization__of.html",
-"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#ae36c04df1fa9b2bae7dff7b942672a3e"
+"classnavier__stokes__fourier_1_1ThermodynamicRelation.html#ab48f48cb63e834da1189032633620b96",
+"classsil_1_1exterior_1_1CochainIterator.html#ae42dd60031a3f0828f80844f83f6c64f",
+"classsil_1_1exterior_1_1WeightedLeviCivitaDiscreteHodgeStar.html#a8bb1fec526f9e65b9b50b72b6aea5611",
+"classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html#a8e4c7fd1bf4c4f43ce96ef7dfae7a1c7",
+"functions_vars_l.html",
+"namespacesil_1_1tensor.html#a538427c8eb64c5f8645d9c5de7468e71",
+"structsil_1_1multidomains_1_1DomainReference.html#a34bec7ead0f87f68263b0ff4245ab29a",
+"structsil_1_1tensor_1_1TensorYoungTableauIndex.html#aed5c525a24e6b67e9b50e9de3565d166"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

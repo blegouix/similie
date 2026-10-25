@@ -133,7 +133,7 @@ $(function(){initNavTree('conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Index&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html">sil::tensor::YoungTableauTensorIndexConcept</a> =  <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept&lt;Index&gt;</a></div>
-<div class="line">          &amp;&amp; <span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; ids) {</div>
+<div class="line">          &amp;&amp; <span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; <span class="keyword">const</span>&amp; ids) {</div>
 <div class="line">                 <span class="keyword">requires</span>(!Index::is_explicitely_stored_tensor);</div>
 <div class="line">                 { Index::access_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
 <div class="line">                 {</div>

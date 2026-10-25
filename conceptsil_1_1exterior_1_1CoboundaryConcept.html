@@ -133,10 +133,10 @@ $(function(){initNavTree('conceptsil_1_1exterior_1_1CoboundaryConcept.html','');
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Output, <span class="keyword">class</span> Evaluator, <span class="keyword">class</span> Chain, <span class="keyword">class</span> LowerChain, <span class="keyword">class</span> Element, <span class="keyword">class</span> NaturalElement&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">sil::exterior::CoboundaryConcept</a> =  <span class="keyword">requires</span>(</div>
-<div class="line">        Output output,</div>
-<div class="line">        Evaluator evaluator,</div>
-<div class="line">        <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a> chain,</div>
-<div class="line">        LowerChain lower_chain,</div>
+<div class="line">        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line">        Evaluator <span class="keyword">const</span>&amp; evaluator,</div>
+<div class="line">        <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a> <span class="keyword">const</span>&amp; chain,</div>
+<div class="line">        LowerChain <span class="keyword">const</span>&amp; lower_chain,</div>
 <div class="line">        Element element,</div>
 <div class="line">        NaturalElement natural_element) {</div>
 <div class="line">    Operator::value(chain, lower_chain, element, natural_element);</div>

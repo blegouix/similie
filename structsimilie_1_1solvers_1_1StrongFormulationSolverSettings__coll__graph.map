@@ -1,3 +1,5 @@
 <map id="similie::solvers::StrongFormulationSolverSettings" name="similie::solvers::StrongFormulationSolverSettings">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,195,340"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,148,195,503"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="25,5,175,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,86,103,131,97,131,97,86"/>
 </map>

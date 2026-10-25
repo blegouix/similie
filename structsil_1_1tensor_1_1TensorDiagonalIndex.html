@@ -161,16 +161,16 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a599b4f87aee1bbdec265c40874ae6c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a242e424402a9cdbe3c216d17c2cb92ed" id="r_a242e424402a9cdbe3c216d17c2cb92ed"><td class="memItemLeft" align="right" valign="top">static constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a242e424402a9cdbe3c216d17c2cb92ed">access_size</a> ()</td></tr>
 <tr class="separator:a242e424402a9cdbe3c216d17c2cb92ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b525c7b1beb7519445e828ed8df5138" id="r_a6b525c7b1beb7519445e828ed8df5138"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6b525c7b1beb7519445e828ed8df5138">mem_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const natural_ids)</td></tr>
-<tr class="separator:a6b525c7b1beb7519445e828ed8df5138"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd35b490a0ba58a79dedeeed82853c75" id="r_abd35b490a0ba58a79dedeeed82853c75"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abd35b490a0ba58a79dedeeed82853c75">access_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const natural_ids)</td></tr>
-<tr class="separator:abd35b490a0ba58a79dedeeed82853c75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1901a73e4b69061873f0188301686e3b" id="r_a1901a73e4b69061873f0188301686e3b"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1901a73e4b69061873f0188301686e3b">access_id_to_mem_id</a> (std::size_t <a class="el" href="#abd35b490a0ba58a79dedeeed82853c75">access_id</a>)</td></tr>
+<tr class="memitem:aa1ff961ed139f62c3ac7f3e5ddbe3771" id="r_aa1ff961ed139f62c3ac7f3e5ddbe3771"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa1ff961ed139f62c3ac7f3e5ddbe3771">mem_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;natural_ids)</td></tr>
+<tr class="separator:aa1ff961ed139f62c3ac7f3e5ddbe3771"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa155addf4c0875b328a1fa2e1c4233bf" id="r_aa155addf4c0875b328a1fa2e1c4233bf"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa155addf4c0875b328a1fa2e1c4233bf">access_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;natural_ids)</td></tr>
+<tr class="separator:aa155addf4c0875b328a1fa2e1c4233bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1901a73e4b69061873f0188301686e3b" id="r_a1901a73e4b69061873f0188301686e3b"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1901a73e4b69061873f0188301686e3b">access_id_to_mem_id</a> (std::size_t <a class="el" href="#aa155addf4c0875b328a1fa2e1c4233bf">access_id</a>)</td></tr>
 <tr class="separator:a1901a73e4b69061873f0188301686e3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeeb0ee244a9272201c2b07ecbdfa042c" id="r_aeeb0ee244a9272201c2b07ecbdfa042c"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id , class FunctorType &gt; </td></tr>
-<tr class="memitem:aeeb0ee244a9272201c2b07ecbdfa042c"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aeeb0ee244a9272201c2b07ecbdfa042c">process_access</a> (const FunctorType &amp;access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> tensor, Elem elem)</td></tr>
-<tr class="separator:aeeb0ee244a9272201c2b07ecbdfa042c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3323cbddd8cf86252c1123e242cd9717" id="r_a3323cbddd8cf86252c1123e242cd9717"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::array&lt; std::size_t, <a class="el" href="#ae8d1f9553e6e5b7560ae4cf9410e89b6">rank</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3323cbddd8cf86252c1123e242cd9717">mem_id_to_canonical_natural_ids</a> (std::size_t <a class="el" href="#a6b525c7b1beb7519445e828ed8df5138">mem_id</a>)</td></tr>
+<tr class="memitem:a10ca87285e6bfbdf02458c48ad92c110" id="r_a10ca87285e6bfbdf02458c48ad92c110"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id , class FunctorType &gt; </td></tr>
+<tr class="memitem:a10ca87285e6bfbdf02458c48ad92c110"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a10ca87285e6bfbdf02458c48ad92c110">process_access</a> (const FunctorType &amp;access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> const &amp;tensor, Elem const &amp;elem)</td></tr>
+<tr class="separator:a10ca87285e6bfbdf02458c48ad92c110"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3323cbddd8cf86252c1123e242cd9717" id="r_a3323cbddd8cf86252c1123e242cd9717"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::array&lt; std::size_t, <a class="el" href="#ae8d1f9553e6e5b7560ae4cf9410e89b6">rank</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3323cbddd8cf86252c1123e242cd9717">mem_id_to_canonical_natural_ids</a> (std::size_t <a class="el" href="#aa1ff961ed139f62c3ac7f3e5ddbe3771">mem_id</a>)</td></tr>
 <tr class="separator:a3323cbddd8cf86252c1123e242cd9717"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -183,7 +183,7 @@ Static Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;TensorNatIndex... TensorIndex&gt;<br />
 struct sil::tensor::TensorDiagonalIndex&lt; TensorIndex &gt;</div>
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00018">18</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00017">17</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a9571f6176d63e05725d28a8eeb7ef008" name="a9571f6176d63e05725d28a8eeb7ef008"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9571f6176d63e05725d28a8eeb7ef008">&#9670;&#160;</a></span>subindices_domain_t</h2>
@@ -199,7 +199,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00023">23</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00022">22</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -229,7 +229,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00025">25</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00024">24</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -258,7 +258,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00033">33</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00032">32</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -287,7 +287,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00038">38</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00037">37</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -316,7 +316,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00043">43</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00042">42</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -345,12 +345,12 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00048">48</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00047">47</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a6b525c7b1beb7519445e828ed8df5138" name="a6b525c7b1beb7519445e828ed8df5138"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6b525c7b1beb7519445e828ed8df5138">&#9670;&#160;</a></span>mem_id()</h2>
+<a id="aa1ff961ed139f62c3ac7f3e5ddbe3771" name="aa1ff961ed139f62c3ac7f3e5ddbe3771"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa1ff961ed139f62c3ac7f3e5ddbe3771">&#9670;&#160;</a></span>mem_id()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -363,7 +363,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorDiagonalIndex.html">sil::tensor::TensorDiagonalIndex</a>&lt; TensorIndex &gt;::mem_id </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
+          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -374,12 +374,12 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00053">53</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00052">52</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
-<a id="abd35b490a0ba58a79dedeeed82853c75" name="abd35b490a0ba58a79dedeeed82853c75"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abd35b490a0ba58a79dedeeed82853c75">&#9670;&#160;</a></span>access_id()</h2>
+<a id="aa155addf4c0875b328a1fa2e1c4233bf" name="aa155addf4c0875b328a1fa2e1c4233bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa155addf4c0875b328a1fa2e1c4233bf">&#9670;&#160;</a></span>access_id()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -392,7 +392,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorDiagonalIndex.html">sil::tensor::TensorDiagonalIndex</a>&lt; TensorIndex &gt;::access_id </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
+          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -403,7 +403,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00062">62</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00061">61</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -432,12 +432,12 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00074">74</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00073">73</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aeeb0ee244a9272201c2b07ecbdfa042c" name="aeeb0ee244a9272201c2b07ecbdfa042c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeeb0ee244a9272201c2b07ecbdfa042c">&#9670;&#160;</a></span>process_access()</h2>
+<a id="a10ca87285e6bfbdf02458c48ad92c110" name="a10ca87285e6bfbdf02458c48ad92c110"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10ca87285e6bfbdf02458c48ad92c110">&#9670;&#160;</a></span>process_access()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -457,12 +457,12 @@ template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1te
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a></td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
+          <td class="paramtype">Elem const &amp;</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -472,7 +472,7 @@ template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1te
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00081">81</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00080">80</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -501,7 +501,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00094">94</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00093">93</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -528,7 +528,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00020">20</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00019">19</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>
@@ -554,7 +554,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00021">21</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="diagonal__tensor_8hpp_source.html#l00020">20</a> of file <a class="el" href="diagonal__tensor_8hpp_source.html">diagonal_tensor.hpp</a>.</p>
 
 </div>
 </div>

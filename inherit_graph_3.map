@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classgenerate__cpp__constitutive__law_1_1ConstitutiveLawDefinition.html" title=" " alt="" coords="5,5,228,45"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,13,136,38"/>
+<area shape="rect" id="Node000001" href="$classsimilie_1_1physics_1_1electrodynamics_1_1ResistiveElectrodynamics.html" title="Electric&#45;only conduction: j=E/eta, J=charge*u+j, Q=E.E/eta&gt;=0." alt="" coords="184,5,423,45"/>
+<area shape="poly" id="edge5_Node000000_Node000001" title=" " alt="" coords="150,23,184,23,184,28,150,28"/>
 </map>

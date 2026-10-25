@@ -16,10 +16,11 @@ var namespacesimilie_1_1solvers =
       [ "Ssor", "namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4da07e96aa4428e9ea3d0ce9314f13e248e", null ],
       [ "ChebyshevJacobi", "namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4dadf6e1fe5bf3711e66282af2e3fa7d765", null ],
       [ "IrJacobi", "namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4da8979fd488b85205e014ff793eab7632c", null ],
-      [ "GeneralIsai", "namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4dabff129ee7f9ba359bd78e0867d94e5ca", null ]
+      [ "GeneralIsai", "namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4dabff129ee7f9ba359bd78e0867d94e5ca", null ],
+      [ "Multigrid", "namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4da3e418b9454f381f0f9dc17980803b03e", null ]
     ] ],
     [ "preconditioner_name", "namespacesimilie_1_1solvers.html#a4afb09862767630787094fbbdedb8738", null ],
     [ "parse_preconditioner", "namespacesimilie_1_1solvers.html#a8c2ab1e62487904153f6330bbf3c79a3", null ],
-    [ "minimize_strong_formulation_residual", "namespacesimilie_1_1solvers.html#a39b04eb2bc1fe212721ccba405368611", null ],
-    [ "minimize_strong_formulation_residual", "namespacesimilie_1_1solvers.html#a22ee35bfe9c82b756c1afcac8d123ea1", null ]
+    [ "minimize_strong_formulation_residual", "namespacesimilie_1_1solvers.html#acca3cfd2f519f41fa0a91b6cf8d3bd00", null ],
+    [ "minimize_strong_formulation_residual", "namespacesimilie_1_1solvers.html#a4859575245fc1351acde9caaa677ec98", null ]
 ];

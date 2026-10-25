@@ -4,6 +4,8 @@ var namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSol
     [ "relative_tolerance", "namespacesimilie_1_1solvers.html#a467f8b9ce32053dfa852860140398b71", null ],
     [ "jacobi_max_block_size", "namespacesimilie_1_1solvers.html#ade8d928c1534d50e44daa06bf13c4fe1", null ],
     [ "use_matrix_free", "namespacesimilie_1_1solvers.html#a17841b2d292e8a5cccb38544adfd34de", null ],
+    [ "use_initial_guess", "namespacesimilie_1_1solvers.html#ae21516ac515a32ba9d6bd3f444353bc9", null ],
+    [ "generated_preconditioner", "namespacesimilie_1_1solvers.html#a3e727f23c3cc1a55a6643f7c3e4bbdd1", null ],
     [ "criterion", "namespacesimilie_1_1solvers.html#a48c2117b459e6496d25a6a8712f6ad24", null ],
     [ "preconditioner", "namespacesimilie_1_1solvers.html#a6dca8c0cdf04eb4227218e703da59b0e", null ],
     [ "vector_potential_gauge_penalty", "namespacesimilie_1_1solvers.html#a79b41a45568260ed7134b511ba8f806a", null ],

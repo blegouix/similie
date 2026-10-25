@@ -1,8 +1,9 @@
 var structsil_1_1exterior_1_1Reduction =
 [
-    [ "source_index_type", "structsil_1_1exterior_1_1Reduction.html#a48eda402754058b4567f4ad238966364", null ],
-    [ "target_index_type", "structsil_1_1exterior_1_1Reduction.html#a0b1963dc5d0edb7b18f3491d54d23765", null ],
-    [ "source_natural_elem_type", "structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323", null ],
-    [ "target_natural_elem_type", "structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971", null ],
-    [ "position_index_type", "structsil_1_1exterior_1_1Reduction.html#af415650ccc90ec899ca9fd17152f70ae", null ]
+    [ "staged_storage_type", "structsil_1_1exterior_1_1Reduction.html#aa4c40b3554c9d9779012452a700eccc6", null ],
+    [ "source_index_type", "structsil_1_1exterior_1_1Reduction.html#a1316b53fdc69cedacc127efa35861667", null ],
+    [ "target_index_type", "structsil_1_1exterior_1_1Reduction.html#afc8ada67e41c593d178ff8825d95286b", null ],
+    [ "source_natural_elem_type", "structsil_1_1exterior_1_1Reduction.html#a52c8727b6f94c2fdff3afc725797b816", null ],
+    [ "target_natural_elem_type", "structsil_1_1exterior_1_1Reduction.html#a3c2ea9c8fac64f3a2fc20222da8dfe39", null ],
+    [ "position_index_type", "structsil_1_1exterior_1_1Reduction.html#aa1400b7e9e2da25d6d136412e5d5c037", null ]
 ];

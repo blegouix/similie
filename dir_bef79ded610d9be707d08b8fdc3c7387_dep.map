@@ -1,7 +1,12 @@
 <map id="physics" name="physics">
-<area shape="rect" id="node2" href="dir_dfb58dfdc487b683d2259c0bc4abc7ee.html" title="elasticity" alt="" coords="304,63,387,88"/>
-<area shape="rect" id="node3" href="dir_186a0de00f85b3e1c52565aa6bd1d81f.html" title="magnetostatics" alt="" coords="157,63,280,88"/>
-<area shape="rect" id="node4" href="dir_ebab0fb12d1fd36dc29e38a87b137990.html" title="scalar_field" alt="" coords="37,63,133,88"/>
-<area shape="rect" id="clust2" href="dir_bef79ded610d9be707d08b8fdc3c7387.html" alt="" coords="27,52,493,99"/>
-<area shape="rect" id="clust1" href="dir_0b6977dce45a22625dea7f9fb928eeb1.html" title="similie" alt="" coords="16,16,504,109"/>
+<area shape="rect" id="node2" href="dir_378f87c2cf82ae362cb67e35c9c522f4.html" title="coupling" alt="" coords="973,63,1051,88"/>
+<area shape="rect" id="node3" href="dir_dfb58dfdc487b683d2259c0bc4abc7ee.html" title="elasticity" alt="" coords="867,63,949,88"/>
+<area shape="rect" id="node4" href="dir_b730e5e5799a2c4a5009b9e2efdc1217.html" title="electrodynamics" alt="" coords="712,63,843,88"/>
+<area shape="rect" id="node5" href="dir_c374b44ef150b19008d71e62e2cceb13.html" title="electromagnetism" alt="" coords="547,63,688,88"/>
+<area shape="rect" id="node6" href="dir_038319884d1ad906df3e006d19b51ba8.html" title="fluid" alt="" coords="472,63,523,88"/>
+<area shape="rect" id="node7" href="dir_8e41c91b22761737c3e7d3699d5e8b27.html" title="magnetodynamics" alt="" coords="305,63,447,88"/>
+<area shape="rect" id="node8" href="dir_186a0de00f85b3e1c52565aa6bd1d81f.html" title="magnetostatics" alt="" coords="157,63,280,88"/>
+<area shape="rect" id="node9" href="dir_ebab0fb12d1fd36dc29e38a87b137990.html" title="scalar_field" alt="" coords="37,63,133,88"/>
+<area shape="rect" id="clust2" href="dir_bef79ded610d9be707d08b8fdc3c7387.html" alt="" coords="27,52,1157,99"/>
+<area shape="rect" id="clust1" href="dir_0b6977dce45a22625dea7f9fb928eeb1.html" title="similie" alt="" coords="16,16,1168,109"/>
 </map>

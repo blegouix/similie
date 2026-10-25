@@ -1,0 +1,5 @@
+<map id="similie::physics::electromagnetism::ResistiveElectromagnetism" name="similie::physics::electromagnetism::ResistiveElectromagnetism">
+<area shape="rect" id="Node000001" title="Full Maxwell Ohm law: j=(E+u cross B)/eta, J=charge*u+j." alt="" coords="5,119,248,279"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="60,5,193,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,85,129,118,124,118,124,85"/>
+</map>

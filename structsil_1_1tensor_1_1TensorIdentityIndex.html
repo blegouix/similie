@@ -161,16 +161,16 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a506a5fa8d737bd3effc5c96fede95840"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4ac29613f90799d3ac07ccdfa420b2a" id="r_aa4ac29613f90799d3ac07ccdfa420b2a"><td class="memItemLeft" align="right" valign="top">static constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa4ac29613f90799d3ac07ccdfa420b2a">access_size</a> ()</td></tr>
 <tr class="separator:aa4ac29613f90799d3ac07ccdfa420b2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9b137ef2664e66b274f9b9e96834337" id="r_aa9b137ef2664e66b274f9b9e96834337"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa9b137ef2664e66b274f9b9e96834337">mem_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const natural_ids)</td></tr>
-<tr class="separator:aa9b137ef2664e66b274f9b9e96834337"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5566aee27c61a6d80cc922edbad9423e" id="r_a5566aee27c61a6d80cc922edbad9423e"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5566aee27c61a6d80cc922edbad9423e">access_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const natural_ids)</td></tr>
-<tr class="separator:a5566aee27c61a6d80cc922edbad9423e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90aa4311ef2bfbd1decd4383d644118d" id="r_a90aa4311ef2bfbd1decd4383d644118d"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a90aa4311ef2bfbd1decd4383d644118d">access_id_to_mem_id</a> (std::size_t <a class="el" href="#a5566aee27c61a6d80cc922edbad9423e">access_id</a>)</td></tr>
+<tr class="memitem:af735ee80f92fc1ee1fc485cd6824a529" id="r_af735ee80f92fc1ee1fc485cd6824a529"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af735ee80f92fc1ee1fc485cd6824a529">mem_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;natural_ids)</td></tr>
+<tr class="separator:af735ee80f92fc1ee1fc485cd6824a529"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ad48788e8bef6fdf90312e357a1aa64" id="r_a1ad48788e8bef6fdf90312e357a1aa64"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1ad48788e8bef6fdf90312e357a1aa64">access_id</a> (std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;natural_ids)</td></tr>
+<tr class="separator:a1ad48788e8bef6fdf90312e357a1aa64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90aa4311ef2bfbd1decd4383d644118d" id="r_a90aa4311ef2bfbd1decd4383d644118d"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a90aa4311ef2bfbd1decd4383d644118d">access_id_to_mem_id</a> (std::size_t <a class="el" href="#a1ad48788e8bef6fdf90312e357a1aa64">access_id</a>)</td></tr>
 <tr class="separator:a90aa4311ef2bfbd1decd4383d644118d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26f1dd0f02b7d32c0a106a12cb2d24d0" id="r_a26f1dd0f02b7d32c0a106a12cb2d24d0"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id , class FunctorType &gt; </td></tr>
-<tr class="memitem:a26f1dd0f02b7d32c0a106a12cb2d24d0"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a26f1dd0f02b7d32c0a106a12cb2d24d0">process_access</a> (const FunctorType &amp;access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> tensor, Elem elem)</td></tr>
-<tr class="separator:a26f1dd0f02b7d32c0a106a12cb2d24d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a34e87b7987f95989af0e9eb56e8f3f5c" id="r_a34e87b7987f95989af0e9eb56e8f3f5c"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::array&lt; std::size_t, <a class="el" href="#a379f296cc937d2f096885e084c7fe63e">rank</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a34e87b7987f95989af0e9eb56e8f3f5c">mem_id_to_canonical_natural_ids</a> (std::size_t <a class="el" href="#aa9b137ef2664e66b274f9b9e96834337">mem_id</a>)</td></tr>
+<tr class="memitem:a6b73fcacb6b5b082b93a495ebffc835e" id="r_a6b73fcacb6b5b082b93a495ebffc835e"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id , class FunctorType &gt; </td></tr>
+<tr class="memitem:a6b73fcacb6b5b082b93a495ebffc835e"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6b73fcacb6b5b082b93a495ebffc835e">process_access</a> (const FunctorType &amp;access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> const &amp;tensor, Elem const &amp;elem)</td></tr>
+<tr class="separator:a6b73fcacb6b5b082b93a495ebffc835e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34e87b7987f95989af0e9eb56e8f3f5c" id="r_a34e87b7987f95989af0e9eb56e8f3f5c"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::array&lt; std::size_t, <a class="el" href="#a379f296cc937d2f096885e084c7fe63e">rank</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a34e87b7987f95989af0e9eb56e8f3f5c">mem_id_to_canonical_natural_ids</a> (std::size_t <a class="el" href="#af735ee80f92fc1ee1fc485cd6824a529">mem_id</a>)</td></tr>
 <tr class="separator:a34e87b7987f95989af0e9eb56e8f3f5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -349,8 +349,8 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 
 </div>
 </div>
-<a id="aa9b137ef2664e66b274f9b9e96834337" name="aa9b137ef2664e66b274f9b9e96834337"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa9b137ef2664e66b274f9b9e96834337">&#9670;&#160;</a></span>mem_id()</h2>
+<a id="af735ee80f92fc1ee1fc485cd6824a529" name="af735ee80f92fc1ee1fc485cd6824a529"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af735ee80f92fc1ee1fc485cd6824a529">&#9670;&#160;</a></span>mem_id()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -363,7 +363,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html">sil::tensor::TensorIdentityIndex</a>&lt; TensorIndex &gt;::mem_id </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
+          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -378,8 +378,8 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 
 </div>
 </div>
-<a id="a5566aee27c61a6d80cc922edbad9423e" name="a5566aee27c61a6d80cc922edbad9423e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5566aee27c61a6d80cc922edbad9423e">&#9670;&#160;</a></span>access_id()</h2>
+<a id="a1ad48788e8bef6fdf90312e357a1aa64" name="a1ad48788e8bef6fdf90312e357a1aa64"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ad48788e8bef6fdf90312e357a1aa64">&#9670;&#160;</a></span>access_id()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -392,7 +392,7 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html">sil::tensor::TensorIdentityIndex</a>&lt; TensorIndex &gt;::access_id </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
+          <td class="paramtype">std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>natural_ids</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -436,8 +436,8 @@ template&lt;TensorNatIndex... TensorIndex&gt; </div>
 
 </div>
 </div>
-<a id="a26f1dd0f02b7d32c0a106a12cb2d24d0" name="a26f1dd0f02b7d32c0a106a12cb2d24d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a26f1dd0f02b7d32c0a106a12cb2d24d0">&#9670;&#160;</a></span>process_access()</h2>
+<a id="a6b73fcacb6b5b082b93a495ebffc835e" name="a6b73fcacb6b5b082b93a495ebffc835e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b73fcacb6b5b082b93a495ebffc835e">&#9670;&#160;</a></span>process_access()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -457,12 +457,12 @@ template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1te
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a></td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
+          <td class="paramtype">Elem const &amp;</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
         </tr>
       </table>
   </td>

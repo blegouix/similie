@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['generate_5fcpp_5fconstitutive_5flaw_0',['generate_cpp_constitutive_law',['../namespacegenerate__cpp__constitutive__law.html',1,'']]],
-  ['generate_5fcpp_5fhamiltonian_1',['generate_cpp_hamiltonian',['../namespacegenerate__cpp__hamiltonian.html',1,'']]]
+  ['electrodynamics_0',['electrodynamics',['../namespaceelectrodynamics.html',1,'']]],
+  ['electromagnetic_5fcoupling_1',['electromagnetic_coupling',['../namespaceelectromagnetic__coupling.html',1,'']]],
+  ['electromagnetism_2',['electromagnetism',['../namespaceelectromagnetism.html',1,'']]]
 ];

@@ -175,31 +175,31 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:aa3219f39c625fcde2f896d0b8452f51c" id="r_aa3219f39c625fcde2f896d0b8452f51c"><td class="memTemplParams" colspan="2">template&lt;class Head , class... Tail&gt; </td></tr>
-<tr class="memitem:aa3219f39c625fcde2f896d0b8452f51c"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa3219f39c625fcde2f896d0b8452f51c">are_all_equal</a> (Head head, Tail... tail)</td></tr>
-<tr class="separator:aa3219f39c625fcde2f896d0b8452f51c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a1751c14a48bdc336c6ff27d10b1041" id="r_a5a1751c14a48bdc336c6ff27d10b1041"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; std::vector &gt; T&gt; </td></tr>
-<tr class="memitem:a5a1751c14a48bdc336c6ff27d10b1041"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5a1751c14a48bdc336c6ff27d10b1041">are_all_equal</a> (T t)</td></tr>
-<tr class="separator:a5a1751c14a48bdc336c6ff27d10b1041"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70c14b037aca3934038c0e489f3b3c2d" id="r_a70c14b037aca3934038c0e489f3b3c2d"><td class="memTemplParams" colspan="2">template&lt;class Head , class... Tail&gt; </td></tr>
+<tr class="memitem:a70c14b037aca3934038c0e489f3b3c2d"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a70c14b037aca3934038c0e489f3b3c2d">are_all_equal</a> (Head const &amp;head, Tail const &amp;... tail)</td></tr>
+<tr class="separator:a70c14b037aca3934038c0e489f3b3c2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa33786e6cd86b315bcdcbb3328ccb2ec" id="r_aa33786e6cd86b315bcdcbb3328ccb2ec"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; std::vector &gt; T&gt; </td></tr>
+<tr class="memitem:aa33786e6cd86b315bcdcbb3328ccb2ec"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa33786e6cd86b315bcdcbb3328ccb2ec">are_all_equal</a> (T const &amp;t)</td></tr>
+<tr class="separator:aa33786e6cd86b315bcdcbb3328ccb2ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81e060e093a42a2ef034657324d9f45b" id="r_a81e060e093a42a2ef034657324d9f45b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a81e060e093a42a2ef034657324d9f45b">binomial_coefficient</a> (std::size_t n, std::size_t k) noexcept</td></tr>
 <tr class="separator:a81e060e093a42a2ef034657324d9f45b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c5c59c51d124f3937f0349afde6eb03" id="r_a0c5c59c51d124f3937f0349afde6eb03"><td class="memTemplParams" colspan="2">template&lt;class BatchDomain , class Elem &gt; </td></tr>
 <tr class="memitem:a0c5c59c51d124f3937f0349afde6eb03"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Elem&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0c5c59c51d124f3937f0349afde6eb03">clamp_to_domain</a> (BatchDomain const &amp;batch_domain, Elem const &amp;elem)</td></tr>
 <tr class="separator:a0c5c59c51d124f3937f0349afde6eb03"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993" id="r_a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
-<tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3972a6165c52a1398ca03e1b4ef8d993">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; dom, ddc::DiscreteElement&lt; ODDim... &gt; elem)</td></tr>
-<tr class="separator:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a569551d81f613a3ff7ff642d9bb2196e" id="r_a569551d81f613a3ff7ff642d9bb2196e"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
-<tr class="memitem:a569551d81f613a3ff7ff642d9bb2196e"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a569551d81f613a3ff7ff642d9bb2196e">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; dom, <a class="el" href="classsil_1_1misc_1_1SignedDiscreteElement.html">SignedDiscreteElement</a>&lt; ODDim... &gt; elem)</td></tr>
-<tr class="separator:a569551d81f613a3ff7ff642d9bb2196e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ee13b96a4fbfd2dcb7bada1d3989a05" id="r_a7ee13b96a4fbfd2dcb7bada1d3989a05"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
+<tr class="memitem:a7ee13b96a4fbfd2dcb7bada1d3989a05"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7ee13b96a4fbfd2dcb7bada1d3989a05">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; const &amp;dom, ddc::DiscreteElement&lt; ODDim... &gt; elem)</td></tr>
+<tr class="separator:a7ee13b96a4fbfd2dcb7bada1d3989a05"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad06b1d9173874c11af4785dc4b7a953c" id="r_ad06b1d9173874c11af4785dc4b7a953c"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
+<tr class="memitem:ad06b1d9173874c11af4785dc4b7a953c"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad06b1d9173874c11af4785dc4b7a953c">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; const &amp;dom, <a class="el" href="classsil_1_1misc_1_1SignedDiscreteElement.html">SignedDiscreteElement</a>&lt; ODDim... &gt; elem)</td></tr>
+<tr class="separator:ad06b1d9173874c11af4785dc4b7a953c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94edf431638777006466c9a72d271a21" id="r_a94edf431638777006466c9a72d271a21"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a94edf431638777006466c9a72d271a21">factorial</a> (std::size_t k) noexcept</td></tr>
 <tr class="separator:a94edf431638777006466c9a72d271a21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36c59ab9309645fcf275d0031187995b" id="r_a36c59ab9309645fcf275d0031187995b"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = std::size_t&gt; </td></tr>
 <tr class="memitem:a36c59ab9309645fcf275d0031187995b"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a36c59ab9309645fcf275d0031187995b">filled_struct</a> (ElementType const n=0)</td></tr>
 <tr class="separator:a36c59ab9309645fcf275d0031187995b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2b3ad1f36defe84df9a851364d75775d" id="r_a2b3ad1f36defe84df9a851364d75775d"><td class="memTemplParams" colspan="2">template&lt;std::size_t N&gt; </td></tr>
-<tr class="memitem:a2b3ad1f36defe84df9a851364d75775d"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2b3ad1f36defe84df9a851364d75775d">permutation_parity</a> (std::array&lt; std::size_t, N &gt; lst)</td></tr>
-<tr class="separator:a2b3ad1f36defe84df9a851364d75775d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9efa210a5779ab038d3f15a5d0b3144" id="r_ad9efa210a5779ab038d3f15a5d0b3144"><td class="memTemplParams" colspan="2">template&lt;std::size_t N&gt; </td></tr>
+<tr class="memitem:ad9efa210a5779ab038d3f15a5d0b3144"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad9efa210a5779ab038d3f15a5d0b3144">permutation_parity</a> (std::array&lt; std::size_t, N &gt; const &amp;lst)</td></tr>
+<tr class="separator:ad9efa210a5779ab038d3f15a5d0b3144"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4920dd15665754dd8afd25c431036c5" id="r_ac4920dd15665754dd8afd25c431036c5"><td class="memTemplParams" colspan="2">template&lt;class Seq , class T &gt; </td></tr>
 <tr class="memitem:ac4920dd15665754dd8afd25c431036c5"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a> (T t)</td></tr>
 <tr class="separator:ac4920dd15665754dd8afd25c431036c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -288,8 +288,8 @@ template&lt;class... Domains&gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="aa3219f39c625fcde2f896d0b8452f51c" name="aa3219f39c625fcde2f896d0b8452f51c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa3219f39c625fcde2f896d0b8452f51c">&#9670;&#160;</a></span>are_all_equal() <span class="overload">[1/2]</span></h2>
+<a id="a70c14b037aca3934038c0e489f3b3c2d" name="a70c14b037aca3934038c0e489f3b3c2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70c14b037aca3934038c0e489f3b3c2d">&#9670;&#160;</a></span>are_all_equal() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -302,12 +302,12 @@ template&lt;class Head , class... Tail&gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION constexpr bool sil::misc::are_all_equal </td>
           <td>(</td>
-          <td class="paramtype">Head</td>          <td class="paramname"><span class="paramname"><em>head</em></span>, </td>
+          <td class="paramtype">Head const &amp;</td>          <td class="paramname"><span class="paramname"><em>head</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Tail...</td>          <td class="paramname"><span class="paramname"><em>tail</em></span>&#160;)</td>
+          <td class="paramtype">Tail const &amp;...</td>          <td class="paramname"><span class="paramname"><em>tail</em></span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -321,8 +321,8 @@ template&lt;class Head , class... Tail&gt; </div>
 
 </div>
 </div>
-<a id="a5a1751c14a48bdc336c6ff27d10b1041" name="a5a1751c14a48bdc336c6ff27d10b1041"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5a1751c14a48bdc336c6ff27d10b1041">&#9670;&#160;</a></span>are_all_equal() <span class="overload">[2/2]</span></h2>
+<a id="aa33786e6cd86b315bcdcbb3328ccb2ec" name="aa33786e6cd86b315bcdcbb3328ccb2ec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa33786e6cd86b315bcdcbb3328ccb2ec">&#9670;&#160;</a></span>are_all_equal() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -335,7 +335,7 @@ template&lt;misc::Specialization&lt; std::vector &gt; T&gt; </div>
         <tr>
           <td class="memname">bool sil::misc::are_all_equal </td>
           <td>(</td>
-          <td class="paramtype">T</td>          <td class="paramname"><span class="paramname"><em>t</em></span></td><td>)</td>
+          <td class="paramtype">T const &amp;</td>          <td class="paramname"><span class="paramname"><em>t</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -406,8 +406,8 @@ template&lt;class BatchDomain , class Elem &gt; </div>
 
 </div>
 </div>
-<a id="a3972a6165c52a1398ca03e1b4ef8d993" name="a3972a6165c52a1398ca03e1b4ef8d993"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3972a6165c52a1398ca03e1b4ef8d993">&#9670;&#160;</a></span>domain_contains() <span class="overload">[1/2]</span></h2>
+<a id="a7ee13b96a4fbfd2dcb7bada1d3989a05" name="a7ee13b96a4fbfd2dcb7bada1d3989a05"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ee13b96a4fbfd2dcb7bada1d3989a05">&#9670;&#160;</a></span>domain_contains() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -417,7 +417,7 @@ template&lt;class... DDim, class... ODDim&gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION bool sil::misc::domain_contains </td>
           <td>(</td>
-          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt;</td>          <td class="paramname"><span class="paramname"><em>dom</em></span>, </td>
+          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>dom</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -431,8 +431,8 @@ template&lt;class... DDim, class... ODDim&gt; </div>
 
 </div>
 </div>
-<a id="a569551d81f613a3ff7ff642d9bb2196e" name="a569551d81f613a3ff7ff642d9bb2196e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a569551d81f613a3ff7ff642d9bb2196e">&#9670;&#160;</a></span>domain_contains() <span class="overload">[2/2]</span></h2>
+<a id="ad06b1d9173874c11af4785dc4b7a953c" name="ad06b1d9173874c11af4785dc4b7a953c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad06b1d9173874c11af4785dc4b7a953c">&#9670;&#160;</a></span>domain_contains() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -442,7 +442,7 @@ template&lt;class... DDim, class... ODDim&gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION bool sil::misc::domain_contains </td>
           <td>(</td>
-          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt;</td>          <td class="paramname"><span class="paramname"><em>dom</em></span>, </td>
+          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>dom</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -512,8 +512,8 @@ template&lt;class T , class ElementType  = std::size_t&gt; </div>
 
 </div>
 </div>
-<a id="a2b3ad1f36defe84df9a851364d75775d" name="a2b3ad1f36defe84df9a851364d75775d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2b3ad1f36defe84df9a851364d75775d">&#9670;&#160;</a></span>permutation_parity()</h2>
+<a id="ad9efa210a5779ab038d3f15a5d0b3144" name="ad9efa210a5779ab038d3f15a5d0b3144"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad9efa210a5779ab038d3f15a5d0b3144">&#9670;&#160;</a></span>permutation_parity()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -526,7 +526,7 @@ template&lt;std::size_t N&gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION constexpr int sil::misc::permutation_parity </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; std::size_t, N &gt;</td>          <td class="paramname"><span class="paramname"><em>lst</em></span></td><td>)</td>
+          <td class="paramtype">std::array&lt; std::size_t, N &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>lst</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>

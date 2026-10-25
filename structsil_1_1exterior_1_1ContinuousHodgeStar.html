@@ -126,37 +126,77 @@ $(function(){initNavTree('structsil_1_1exterior_1_1ContinuousHodgeStar.html','')
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="structsil_1_1exterior_1_1ContinuousHodgeStar-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">sil::exterior::ContinuousHodgeStar&lt; Indices1, Indices2, MetricType, BatchElem &gt; Struct Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>&gt;</code></p>
 <div class="dynheader">
 Collaboration diagram for sil::exterior::ContinuousHodgeStar&lt; Indices1, Indices2, MetricType, BatchElem &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1exterior_1_1ContinuousHodgeStar__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1ContinuousHodgeStar_3_01Indices1_00_01Indices2_00_01MetricType_00_01BatchElem_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1ContinuousHodgeStar_3_01Indices1_00_01Indices2_00_01MetricType_00_01BatchElem_01_4_coll__map" id="asil_1_1exterior_1_1ContinuousHodgeStar_3_01Indices1_00_01Indices2_00_01MetricType_00_01BatchElem_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,223,120"/>
+<area shape="rect" title=" " alt="" coords="5,5,223,140"/>
 </map>
 </div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:aabf24fd32e23ac19c193fc5ec7445346" id="r_aabf24fd32e23ac19c193fc5ec7445346"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aabf24fd32e23ac19c193fc5ec7445346">staged_storage_type</a></td></tr>
+<tr class="separator:aabf24fd32e23ac19c193fc5ec7445346"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a59e34d550d3a022defd0c1df69b27746" id="r_a59e34d550d3a022defd0c1df69b27746"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; FormTensorType&gt; </td></tr>
-<tr class="memitem:a59e34d550d3a022defd0c1df69b27746"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a59e34d550d3a022defd0c1df69b27746">operator()</a> (HodgeTensorType hodge_tensor, FormTensorType form_tensor, MetricType metric, BatchElem elem)</td></tr>
-<tr class="separator:a59e34d550d3a022defd0c1df69b27746"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4dc2e96efab4dc87335bf0b25567af69" id="r_a4dc2e96efab4dc87335bf0b25567af69"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4dc2e96efab4dc87335bf0b25567af69">value</a> (MetricType metric, BatchElem elem, auto natural_elem)</td></tr>
-<tr class="separator:a4dc2e96efab4dc87335bf0b25567af69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38aff6aaa09ffaad3606f453b8752132" id="r_a38aff6aaa09ffaad3606f453b8752132"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; FormTensorType&gt; </td></tr>
+<tr class="memitem:a38aff6aaa09ffaad3606f453b8752132"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a38aff6aaa09ffaad3606f453b8752132">operator()</a> (HodgeTensorType const &amp;hodge_tensor, FormTensorType const &amp;form_tensor, MetricType const &amp;metric, BatchElem elem)</td></tr>
+<tr class="separator:a38aff6aaa09ffaad3606f453b8752132"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f6a048274894652e0fcf86ae1a5cd42" id="r_a9f6a048274894652e0fcf86ae1a5cd42"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION detail::LocalOperatorStencil&lt; <a class="el" href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">tensor::lower_t</a>&lt; <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt; Indices1 &gt; &gt;, <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt; Indices2 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9f6a048274894652e0fcf86ae1a5cd42">value</a> (MetricType const &amp;metric, BatchElem element)</td></tr>
+<tr class="separator:a9f6a048274894652e0fcf86ae1a5cd42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adff410c0610a857e041e5d1b2671ebf0" id="r_adff410c0610a857e041e5d1b2671ebf0"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adff410c0610a857e041e5d1b2671ebf0">value</a> (MetricType const &amp;metric, BatchElem elem, auto natural_elem)</td></tr>
+<tr class="separator:adff410c0610a857e041e5d1b2671ebf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType, class BatchElem&gt;<br />
 struct sil::exterior::ContinuousHodgeStar&lt; Indices1, Indices2, MetricType, BatchElem &gt;</div>
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00404">404</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a59e34d550d3a022defd0c1df69b27746" name="a59e34d550d3a022defd0c1df69b27746"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a59e34d550d3a022defd0c1df69b27746">&#9670;&#160;</a></span>operator()()</h2>
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00224">224</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="aabf24fd32e23ac19c193fc5ec7445346" name="aabf24fd32e23ac19c193fc5ec7445346"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aabf24fd32e23ac19c193fc5ec7445346">&#9670;&#160;</a></span>staged_storage_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType , class BatchElem &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="structsil_1_1exterior_1_1ContinuousHodgeStar.html">sil::exterior::ContinuousHodgeStar</a>&lt; Indices1, Indices2, MetricType, BatchElem &gt;::staged_storage_type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> detail::LocalOperatorStorage&lt;</div>
+<div class="line">            ContinuousHodgeStar,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">tensor::lower_t&lt;reduction_index_t&lt;Indices1&gt;</a>&gt;,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;Indices2&gt;</a>,</div>
+<div class="line">            <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
+<div class="line">            <span class="keyword">typename</span> MetricType::memory_space,</div>
+<div class="line">            <span class="keyword">typename</span> MetricType::memory_space::execution_space,</div>
+<div class="line">            tensor::TensorFullIndex,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;ddc::DiscreteElement, Indices1&gt;</a>,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;ddc::DiscreteElement, Indices2&gt;</a>&gt;</div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a7f4162fd50b1c01db82d03934600fced"><div class="ttname"><a href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">sil::exterior::reduction_index_t</a></div><div class="ttdeci">typename detail::ReductionTargetIndex&lt; Indices &gt;::type reduction_index_t</div><div class="ttdef"><b>Definition</b> <a href="reduction__and__reconstruction_8hpp_source.html#l00435">reduction_and_reconstruction.hpp:435</a></div></div>
+<div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ad1b951f27338222afe0730eda16f06db"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">sil::tensor::lower_t</a></div><div class="ttdeci">detail::Lower&lt; T &gt;::type lower_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00079">character.hpp:79</a></div></div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00226">226</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a38aff6aaa09ffaad3606f453b8752132" name="a38aff6aaa09ffaad3606f453b8752132"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a38aff6aaa09ffaad3606f453b8752132">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -171,17 +211,17 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
         <tr>
           <td class="memname">static KOKKOS_FUNCTION void <a class="el" href="structsil_1_1exterior_1_1ContinuousHodgeStar.html">sil::exterior::ContinuousHodgeStar</a>&lt; Indices1, Indices2, MetricType, BatchElem &gt;::operator() </td>
           <td>(</td>
-          <td class="paramtype">HodgeTensorType</td>          <td class="paramname"><span class="paramname"><em>hodge_tensor</em></span>, </td>
+          <td class="paramtype">HodgeTensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em>hodge_tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">FormTensorType</td>          <td class="paramname"><span class="paramname"><em>form_tensor</em></span>, </td>
+          <td class="paramtype">FormTensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em>form_tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+          <td class="paramtype">MetricType const &amp;</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -196,12 +236,45 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00409">409</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00240">240</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a4dc2e96efab4dc87335bf0b25567af69" name="a4dc2e96efab4dc87335bf0b25567af69"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4dc2e96efab4dc87335bf0b25567af69">&#9670;&#160;</a></span>value()</h2>
+<a id="a9f6a048274894652e0fcf86ae1a5cd42" name="a9f6a048274894652e0fcf86ae1a5cd42"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f6a048274894652e0fcf86ae1a5cd42">&#9670;&#160;</a></span>value() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType , class BatchElem &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FUNCTION detail::LocalOperatorStencil&lt; <a class="el" href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">tensor::lower_t</a>&lt; <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt; Indices1 &gt; &gt;, <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt; Indices2 &gt; &gt; <a class="el" href="structsil_1_1exterior_1_1ContinuousHodgeStar.html">sil::exterior::ContinuousHodgeStar</a>&lt; Indices1, Indices2, MetricType, BatchElem &gt;::value </td>
+          <td>(</td>
+          <td class="paramtype">MetricType const &amp;</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BatchElem</td>          <td class="paramname"><span class="paramname"><em>element</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00268">268</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
+
+</div>
+</div>
+<a id="adff410c0610a857e041e5d1b2671ebf0" name="adff410c0610a857e041e5d1b2671ebf0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adff410c0610a857e041e5d1b2671ebf0">&#9670;&#160;</a></span>value() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -214,7 +287,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specializ
         <tr>
           <td class="memname">static KOKKOS_FUNCTION double <a class="el" href="structsil_1_1exterior_1_1ContinuousHodgeStar.html">sil::exterior::ContinuousHodgeStar</a>&lt; Indices1, Indices2, MetricType, BatchElem &gt;::value </td>
           <td>(</td>
-          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+          <td class="paramtype">MetricType const &amp;</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -234,12 +307,12 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specializ
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00434">434</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00292">292</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a></li>
+<li><a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

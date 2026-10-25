@@ -1,6 +1,7 @@
 var namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics_dup =
 [
     [ "iterations", "namespacesimilie_1_1solvers.html#ad5d4f7b085e8da315ecfd44fe443410f", null ],
+    [ "rhs_norm_l2", "namespacesimilie_1_1solvers.html#a8aa1c29a53a5f1ba57bd987aab4cc492", null ],
     [ "initial_residual_l2", "namespacesimilie_1_1solvers.html#a523b4841fee412e86b41f867060fa05a", null ],
     [ "final_residual_l2", "namespacesimilie_1_1solvers.html#aa5af6d5f08dacb85bfe077e3e062a1e7", null ],
     [ "final_relative_residual", "namespacesimilie_1_1solvers.html#a1310dfbf1d5b0656e7362612a6f1e584", null ],

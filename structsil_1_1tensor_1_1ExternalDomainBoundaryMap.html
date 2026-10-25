@@ -148,12 +148,12 @@ Collaboration diagram for sil::tensor::ExternalDomainBoundaryMap&lt; Dimension &
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:abef4d8eba9752dbbb3f8658654341734" id="r_abef4d8eba9752dbbb3f8658654341734"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class TargetDomain , class Element &gt; </td></tr>
-<tr class="memitem:abef4d8eba9752dbbb3f8658654341734"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Element&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abef4d8eba9752dbbb3f8658654341734">operator()</a> (ddc::DiscreteDomain&lt; DDim... &gt; source, TargetDomain target, Element sampled) const</td></tr>
-<tr class="separator:abef4d8eba9752dbbb3f8658654341734"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd65d6bb6e2c21ee83751635a0883adc" id="r_abd65d6bb6e2c21ee83751635a0883adc"><td class="memTemplParams" colspan="2">template&lt;class SourceDomain , class TargetDomain , class Element &gt; </td></tr>
-<tr class="memitem:abd65d6bb6e2c21ee83751635a0883adc"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Element&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abd65d6bb6e2c21ee83751635a0883adc">map_boundary</a> (SourceDomain source, TargetDomain target, Element sampled) const</td></tr>
-<tr class="separator:abd65d6bb6e2c21ee83751635a0883adc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5c117f1fd42fc09d08728696bc8aa93" id="r_ab5c117f1fd42fc09d08728696bc8aa93"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class TargetDomain , class Element &gt; </td></tr>
+<tr class="memitem:ab5c117f1fd42fc09d08728696bc8aa93"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Element&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab5c117f1fd42fc09d08728696bc8aa93">operator()</a> (ddc::DiscreteDomain&lt; DDim... &gt; const &amp;source, TargetDomain const &amp;target, Element sampled) const</td></tr>
+<tr class="separator:ab5c117f1fd42fc09d08728696bc8aa93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3201c074ade512b998798827b843ee6" id="r_af3201c074ade512b998798827b843ee6"><td class="memTemplParams" colspan="2">template&lt;class SourceDomain , class TargetDomain , class Element &gt; </td></tr>
+<tr class="memitem:af3201c074ade512b998798827b843ee6"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Element&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af3201c074ade512b998798827b843ee6">map_boundary</a> (SourceDomain source, TargetDomain const &amp;target, Element sampled) const</td></tr>
+<tr class="separator:af3201c074ade512b998798827b843ee6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -169,12 +169,12 @@ Public Attributes</h2></td></tr>
 struct sil::tensor::ExternalDomainBoundaryMap&lt; Dimension &gt;</div><p>Map samples through an aligned interface, in any number of dimensions. </p>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
 <p>Dimension is the interface normal. The source and donor use the same grid ordered tags and matching tangential extents, but may have different logical origins and normal extents. Tangential offsets from the source origin are preserved. source_side selects the boundary being left; target_side selects the boundary being entered. Either lower or upper boundary can connect to either side.</p>
-<p>With shared_boundary=true, both domains store the interface node: one step outside maps one step inside the donor. With false, adjacent domains have disjoint stored nodes: one step outside maps to the donor boundary node. <a class="el" href="#abd65d6bb6e2c21ee83751635a0883adc">map_boundary()</a> identifies the coincident trace nodes in the shared case. Spectator tensor indices pass through unchanged. Axis permutations, reversed tangential coordinates, interpolation, and component frame changes are not supported by this aligned map. </p>
+<p>With shared_boundary=true, both domains store the interface node: one step outside maps one step inside the donor. With false, adjacent domains have disjoint stored nodes: one step outside maps to the donor boundary node. <a class="el" href="#af3201c074ade512b998798827b843ee6">map_boundary()</a> identifies the coincident trace nodes in the shared case. Spectator tensor indices pass through unchanged. Axis permutations, reversed tangential coordinates, interpolation, and component frame changes are not supported by this aligned map. </p>
 
 <p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00038">38</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="abef4d8eba9752dbbb3f8658654341734" name="abef4d8eba9752dbbb3f8658654341734"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abef4d8eba9752dbbb3f8658654341734">&#9670;&#160;</a></span>operator()()</h2>
+<a id="ab5c117f1fd42fc09d08728696bc8aa93" name="ab5c117f1fd42fc09d08728696bc8aa93"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab5c117f1fd42fc09d08728696bc8aa93">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -189,12 +189,12 @@ template&lt;class... DDim, class TargetDomain , class Element &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION Element <a class="el" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">sil::tensor::ExternalDomainBoundaryMap</a>&lt; Dimension &gt;::operator() </td>
           <td>(</td>
-          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt;</td>          <td class="paramname"><span class="paramname"><em>source</em></span>, </td>
+          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>source</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">TargetDomain</td>          <td class="paramname"><span class="paramname"><em>target</em></span>, </td>
+          <td class="paramtype">TargetDomain const &amp;</td>          <td class="paramname"><span class="paramname"><em>target</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -209,12 +209,12 @@ template&lt;class... DDim, class TargetDomain , class Element &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00081">81</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00080">80</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
-<a id="abd65d6bb6e2c21ee83751635a0883adc" name="abd65d6bb6e2c21ee83751635a0883adc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abd65d6bb6e2c21ee83751635a0883adc">&#9670;&#160;</a></span>map_boundary()</h2>
+<a id="af3201c074ade512b998798827b843ee6" name="af3201c074ade512b998798827b843ee6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af3201c074ade512b998798827b843ee6">&#9670;&#160;</a></span>map_boundary()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -234,7 +234,7 @@ template&lt;class SourceDomain , class TargetDomain , class Element &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">TargetDomain</td>          <td class="paramname"><span class="paramname"><em>target</em></span>, </td>
+          <td class="paramtype">TargetDomain const &amp;</td>          <td class="paramname"><span class="paramname"><em>target</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -249,7 +249,7 @@ template&lt;class SourceDomain , class TargetDomain , class Element &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00092">92</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00094">94</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>

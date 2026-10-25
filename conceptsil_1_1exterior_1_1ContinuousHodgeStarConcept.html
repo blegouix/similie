@@ -133,18 +133,20 @@ $(function(){initNavTree('conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.h
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Output, <span class="keyword">class</span> Input, <span class="keyword">class</span> Metric, <span class="keyword">class</span> Element, <span class="keyword">class</span> NaturalElement&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">sil::exterior::ContinuousHodgeStarConcept</a> =  <span class="keyword">requires</span>(</div>
-<div class="line">        Output output,</div>
-<div class="line">        Input input,</div>
-<div class="line">        Metric metric,</div>
+<div class="line">        Operator operation,</div>
+<div class="line">        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line">        Input <span class="keyword">const</span>&amp; input,</div>
+<div class="line">        Metric <span class="keyword">const</span>&amp; metric,</div>
 <div class="line">        Element element,</div>
 <div class="line">        NaturalElement natural_element) {</div>
-<div class="line">    { Operator::value(metric, element, natural_element) } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line">    { Operator::operator()(output, input, metric, element) } -&gt; std::same_as&lt;void&gt;;</div>
+<div class="line">    operation.value(metric, element);</div>
+<div class="line">    { operation.value(metric, element, natural_element) } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line">    { operation(output, input, metric, element) } -&gt; std::same_as&lt;void&gt;;</div>
 <div class="line">}</div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1ContinuousHodgeStarConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">sil::exterior::ContinuousHodgeStarConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00089">exterior/concepts.hpp:89</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1ContinuousHodgeStarConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">sil::exterior::ContinuousHodgeStarConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00091">exterior/concepts.hpp:91</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="exterior_2concepts_8hpp_source.html#l00089">89</a> of file <a class="el" href="exterior_2concepts_8hpp_source.html">exterior/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="exterior_2concepts_8hpp_source.html#l00091">91</a> of file <a class="el" href="exterior_2concepts_8hpp_source.html">exterior/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

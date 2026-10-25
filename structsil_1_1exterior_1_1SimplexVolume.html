@@ -144,17 +144,17 @@ Collaboration diagram for sil::exterior::SimplexVolume&lt; Complex, N, MetricTyp
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:adb03cfdc07afadab53a00303d4353db4" id="r_adb03cfdc07afadab53a00303d4353db4"><td class="memTemplParams" colspan="2">template&lt;std::size_t K&gt; </td></tr>
-<tr class="memitem:adb03cfdc07afadab53a00303d4353db4"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#adb03cfdc07afadab53a00303d4353db4">operator()</a> (MetricType metric, PositionType position, BatchElem elem, std::array&lt; std::size_t, K &gt; const &amp;ids)</td></tr>
-<tr class="separator:adb03cfdc07afadab53a00303d4353db4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec239aa0f8bf90ad77ce9429e34360f6" id="r_aec239aa0f8bf90ad77ce9429e34360f6"><td class="memTemplParams" colspan="2">template&lt;std::size_t K&gt; </td></tr>
+<tr class="memitem:aec239aa0f8bf90ad77ce9429e34360f6"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aec239aa0f8bf90ad77ce9429e34360f6">operator()</a> (MetricType const &amp;metric, PositionType const &amp;position, BatchElem elem, std::array&lt; std::size_t, K &gt; const &amp;ids)</td></tr>
+<tr class="separator:aec239aa0f8bf90ad77ce9429e34360f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex, std::size_t N, class MetricType, class PositionType, class BatchElem&gt;<br />
 struct sil::exterior::SimplexVolume&lt; Complex, N, MetricType, PositionType, BatchElem &gt;</div>
 <p class="definition">Definition at line <a class="el" href="volume_8hpp_source.html#l00102">102</a> of file <a class="el" href="volume_8hpp_source.html">volume.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="adb03cfdc07afadab53a00303d4353db4" name="adb03cfdc07afadab53a00303d4353db4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adb03cfdc07afadab53a00303d4353db4">&#9670;&#160;</a></span>operator()()</h2>
+<a id="aec239aa0f8bf90ad77ce9429e34360f6" name="aec239aa0f8bf90ad77ce9429e34360f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec239aa0f8bf90ad77ce9429e34360f6">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -169,12 +169,12 @@ template&lt;std::size_t K&gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION double <a class="el" href="structsil_1_1exterior_1_1SimplexVolume.html">sil::exterior::SimplexVolume</a>&lt; Complex, N, MetricType, PositionType, BatchElem &gt;::operator() </td>
           <td>(</td>
-          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+          <td class="paramtype">MetricType const &amp;</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">PositionType</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+          <td class="paramtype">PositionType const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>

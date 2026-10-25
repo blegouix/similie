@@ -160,10 +160,10 @@ $(function(){initNavTree('differential__operator_8hpp_source.html',''); initResi
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="keywordtype">void</span> assemble_differential_rows(</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        Kokkos::DefaultExecutionSpace <span class="keyword">const</span>&amp; stream,</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        RowAssembly&lt;Capacity&gt; system,</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        Output output,</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        Input input,</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        Input <span class="keyword">const</span>&amp; input,</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        Operator op,</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        Rules rules,</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        Rules <span class="keyword">const</span>&amp; rules,</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        StencilFactory stencil_factory)</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>{</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    std::tuple&lt;Operator, Input, Rules, StencilFactory&gt; <span class="keyword">const</span></div>

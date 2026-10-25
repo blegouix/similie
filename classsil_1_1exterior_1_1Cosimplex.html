@@ -166,8 +166,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2abcaad448ce09616de65434a5f1b1f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d168ddef85a1bb05772cd92efdce645" id="r_a3d168ddef85a1bb05772cd92efdce645"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3d168ddef85a1bb05772cd92efdce645">Cosimplex</a> (<a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a> &amp;&amp;)=default</td></tr>
 <tr class="separator:a3d168ddef85a1bb05772cd92efdce645"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93727dced674545d66dd5c3a83c15640" id="r_a93727dced674545d66dd5c3a83c15640"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a93727dced674545d66dd5c3a83c15640">Cosimplex</a> (SimplexType <a class="el" href="#a507d33e58ae24c43fa0363d31a1485e0">simplex</a>, ElementType <a class="el" href="#a018af9b7f01871dd43bd5112d3ab2626">value</a>) noexcept</td></tr>
-<tr class="separator:a93727dced674545d66dd5c3a83c15640"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3df939a5e5cd72b7e74983f3ef0235e" id="r_ae3df939a5e5cd72b7e74983f3ef0235e"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae3df939a5e5cd72b7e74983f3ef0235e">Cosimplex</a> (SimplexType const &amp;<a class="el" href="#a507d33e58ae24c43fa0363d31a1485e0">simplex</a>, ElementType <a class="el" href="#a018af9b7f01871dd43bd5112d3ab2626">value</a>) noexcept</td></tr>
+<tr class="separator:ae3df939a5e5cd72b7e74983f3ef0235e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59cadba223bd830e3c34ada3af7d2db4" id="r_a59cadba223bd830e3c34ada3af7d2db4"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a59cadba223bd830e3c34ada3af7d2db4">~Cosimplex</a> ()=default</td></tr>
 <tr class="separator:a59cadba223bd830e3c34ada3af7d2db4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52f22f11640cc7e7b41363a987136367" id="r_a52f22f11640cc7e7b41363a987136367"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a52f22f11640cc7e7b41363a987136367">operator=</a> (<a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a> const &amp;other)=default</td></tr>
@@ -362,8 +362,8 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 
 </div>
 </div>
-<a id="a93727dced674545d66dd5c3a83c15640" name="a93727dced674545d66dd5c3a83c15640"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a93727dced674545d66dd5c3a83c15640">&#9670;&#160;</a></span>Cosimplex() <span class="overload">[4/4]</span></h2>
+<a id="ae3df939a5e5cd72b7e74983f3ef0235e" name="ae3df939a5e5cd72b7e74983f3ef0235e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3df939a5e5cd72b7e74983f3ef0235e">&#9670;&#160;</a></span>Cosimplex() <span class="overload">[4/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -376,7 +376,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">sil::exterior::Cosimplex</a>&lt; SimplexType, ElementType &gt;::Cosimplex </td>
           <td>(</td>
-          <td class="paramtype">SimplexType</td>          <td class="paramname"><span class="paramname"><em>simplex</em></span>, </td>
+          <td class="paramtype">SimplexType const &amp;</td>          <td class="paramname"><span class="paramname"><em>simplex</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -502,7 +502,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00050">50</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00052">52</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -531,7 +531,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00055">55</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00057">57</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -560,7 +560,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00060">60</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00062">62</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -589,7 +589,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00065">65</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00067">67</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -618,7 +618,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00070">70</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00072">72</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -647,7 +647,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00075">75</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00077">77</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -676,7 +676,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00080">80</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00082">82</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -705,7 +705,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00085">85</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00087">87</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -734,7 +734,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00090">90</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00092">92</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -763,7 +763,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00095">95</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00097">97</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -792,7 +792,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00100">100</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00102">102</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -821,7 +821,7 @@ template&lt;class SimplexType , class ElementType  = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00105">105</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00107">107</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
 
 </div>
 </div>

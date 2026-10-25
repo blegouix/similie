@@ -160,7 +160,7 @@ $(function(){initNavTree('conceptsil_1_1tensor_1_1TensorIndexConcept.html',''); 
 <div class="line">            Index::mem_id_to_canonical_natural_ids(<span class="keywordtype">id</span>)</div>
 <div class="line">        } -&gt; std::same_as&lt;std::array&lt;std::size_t, Index::rank()&gt;&gt;;</div>
 <div class="line">        </div>
-<div class="line">        <span class="keyword">requires</span> (<span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; ids) {</div>
+<div class="line">        <span class="keyword">requires</span> (<span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; <span class="keyword">const</span>&amp; ids) {</div>
 <div class="line">            { Index::mem_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
 <div class="line">            { Index::access_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
 <div class="line">        } || <span class="keyword">requires</span> {</div>

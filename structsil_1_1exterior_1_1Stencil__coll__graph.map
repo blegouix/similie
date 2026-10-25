@@ -1,0 +1,9 @@
+<map id="sil::exterior::Stencil&lt; Index, Source, Target, Radius &gt;" name="sil::exterior::Stencil&lt; Index, Source, Target, Radius &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="203,192,373,287"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,187,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,128,225,179,222,183,164,132"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="211,27,365,107"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="291,108,291,175,285,175,285,108"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="389,20,555,115"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="424,117,352,183,348,179,420,113"/>
+</map>

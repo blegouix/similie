@@ -1,0 +1,5 @@
+<map id="similie::physics::CoupledFluidElectromagnetism&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;" name="similie::physics::CoupledFluidElectromagnetism&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;">
+<area shape="rect" id="Node000001" title="Assemble fluid and electric, magnetic, or full Maxwell sectors with shared exchange laws." alt="" coords="5,177,272,587"/>
+<area shape="rect" id="Node000002" href="$namespacesimilie_1_1physics.html" title=" " alt="" coords="7,5,270,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,143,141,177,136,177,136,143"/>
+</map>

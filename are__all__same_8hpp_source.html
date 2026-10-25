@@ -147,7 +147,7 @@ $(function(){initNavTree('are__all__same_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Head, <span class="keyword">class</span>... Tail&gt;</div>
 <div class="foldopen" id="foldopen00018" data-start="{" data-end="}">
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#aa3219f39c625fcde2f896d0b8452f51c">   18</a></span>KOKKOS_FUNCTION <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacesil_1_1misc.html#aa3219f39c625fcde2f896d0b8452f51c">are_all_equal</a>(Head head, Tail... tail)</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a70c14b037aca3934038c0e489f3b3c2d">   18</a></span>KOKKOS_FUNCTION <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacesil_1_1misc.html#a70c14b037aca3934038c0e489f3b3c2d">are_all_equal</a>(Head <span class="keyword">const</span>&amp; head, Tail <span class="keyword">const</span>&amp;... tail)</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>{</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keywordflow">return</span> ((head == tail) &amp;&amp; ...);</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>}</div>
@@ -155,7 +155,7 @@ $(function(){initNavTree('are__all__same_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">template</span> &lt;misc::Specialization&lt;std::vector&gt; T&gt;</div>
 <div class="foldopen" id="foldopen00024" data-start="{" data-end="}">
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a5a1751c14a48bdc336c6ff27d10b1041">   24</a></span><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacesil_1_1misc.html#aa3219f39c625fcde2f896d0b8452f51c">are_all_equal</a>(T t)</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#aa33786e6cd86b315bcdcbb3328ccb2ec">   24</a></span><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacesil_1_1misc.html#a70c14b037aca3934038c0e489f3b3c2d">are_all_equal</a>(T <span class="keyword">const</span>&amp; t)</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>{</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keywordflow">return</span> std::all_of(t.begin(), t.end(), [&amp;](<span class="keyword">const</span> std::size_t i) { return i == *t.begin(); });</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>}</div>
@@ -166,7 +166,7 @@ $(function(){initNavTree('are__all__same_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_a094c71e44717da55afa244de80ca4b2c"><div class="ttname"><a href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">sil::misc::are_all_same</a></div><div class="ttdeci">constexpr bool are_all_same</div><div class="ttdef"><b>Definition</b> <a href="#l00015">are_all_same.hpp:15</a></div></div>
-<div class="ttc" id="anamespacesil_1_1misc_html_aa3219f39c625fcde2f896d0b8452f51c"><div class="ttname"><a href="namespacesil_1_1misc.html#aa3219f39c625fcde2f896d0b8452f51c">sil::misc::are_all_equal</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr bool are_all_equal(Head head, Tail... tail)</div><div class="ttdef"><b>Definition</b> <a href="#l00018">are_all_same.hpp:18</a></div></div>
+<div class="ttc" id="anamespacesil_1_1misc_html_a70c14b037aca3934038c0e489f3b3c2d"><div class="ttname"><a href="namespacesil_1_1misc.html#a70c14b037aca3934038c0e489f3b3c2d">sil::misc::are_all_equal</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr bool are_all_equal(Head const &amp;head, Tail const &amp;... tail)</div><div class="ttdef"><b>Definition</b> <a href="#l00018">are_all_same.hpp:18</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

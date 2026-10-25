@@ -206,12 +206,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a7cac3f0ca78a1c4f09d56c4cd15492bb"><td class="memTemplItemLeft" align="right" valign="top">Kokkos::View&lt; double ** &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7cac3f0ca78a1c4f09d56c4cd15492bb">assemble_multidomain_laplacian_rhs</a> (Kokkos::DefaultExecutionSpace const &amp;exec, Domains const &amp;domains, <a class="el" href="namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1AssembledLinearSystem">similie::solvers::AssembledLinearSystem</a> const &amp;matrix_system, Diffusivity diffusivity, double jump_scale=1.0)</td></tr>
 <tr class="memdesc:a7cac3f0ca78a1c4f09d56c4cd15492bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate a new boundary/interface load for an already assembled operator.  <br /></td></tr>
 <tr class="separator:a7cac3f0ca78a1c4f09d56c4cd15492bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac129f62573e9e0de21ba0731e79175a5" id="r_ac129f62573e9e0de21ba0731e79175a5"><td class="memTemplParams" colspan="2">template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> , class Physics &gt; </td></tr>
-<tr class="memitem:ac129f62573e9e0de21ba0731e79175a5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ac129f62573e9e0de21ba0731e79175a5">domain_data</a> (Field field, <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> geometry, Physics physics)</td></tr>
-<tr class="separator:ac129f62573e9e0de21ba0731e79175a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa5055e64028c0542033f7e9b7bbff1f4" id="r_aa5055e64028c0542033f7e9b7bbff1f4"><td class="memTemplParams" colspan="2">template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> , class Physics , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ea1c30b35b12895df175ccd44dbb6f5ace">Flux</a> &gt; </td></tr>
-<tr class="memitem:aa5055e64028c0542033f7e9b7bbff1f4"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa5055e64028c0542033f7e9b7bbff1f4">domain_data</a> (Field field, <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> geometry, Physics physics, <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ea1c30b35b12895df175ccd44dbb6f5ace">Flux</a> flux)</td></tr>
-<tr class="separator:aa5055e64028c0542033f7e9b7bbff1f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f9c554905f0a288638ccdb8e1acc46e" id="r_a1f9c554905f0a288638ccdb8e1acc46e"><td class="memTemplParams" colspan="2">template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> , class Physics &gt; </td></tr>
+<tr class="memitem:a1f9c554905f0a288638ccdb8e1acc46e"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a1f9c554905f0a288638ccdb8e1acc46e">domain_data</a> (Field const &amp;field, <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> const &amp;geometry, Physics physics)</td></tr>
+<tr class="separator:a1f9c554905f0a288638ccdb8e1acc46e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e916bd2d0b0ee2c510c988cfa00978a" id="r_a9e916bd2d0b0ee2c510c988cfa00978a"><td class="memTemplParams" colspan="2">template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> , class Physics , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ea1c30b35b12895df175ccd44dbb6f5ace">Flux</a> &gt; </td></tr>
+<tr class="memitem:a9e916bd2d0b0ee2c510c988cfa00978a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a9e916bd2d0b0ee2c510c988cfa00978a">domain_data</a> (Field const &amp;field, <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> const &amp;geometry, Physics physics, <a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ea1c30b35b12895df175ccd44dbb6f5ace">Flux</a> const &amp;flux)</td></tr>
+<tr class="separator:a9e916bd2d0b0ee2c510c988cfa00978a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29abe13100d3cd96f2e2ddb26bc3e28e" id="r_a29abe13100d3cd96f2e2ddb26bc3e28e"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, class Data &gt; </td></tr>
 <tr class="memitem:a29abe13100d3cd96f2e2ddb26bc3e28e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a29abe13100d3cd96f2e2ddb26bc3e28e">Multidomain</a> (<a class="el" href="classsil_1_1multidomains_1_1Topology.html">Topology</a>&lt; N &gt;, std::vector&lt; Data &gt;) -&gt; Multidomain&lt; N, Data &gt;</td></tr>
 <tr class="separator:a29abe13100d3cd96f2e2ddb26bc3e28e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -576,8 +576,8 @@ template&lt;class Direction , std::size_t ColumnCapacity = 0, class Domains , cl
 
 </div>
 </div>
-<a id="ac129f62573e9e0de21ba0731e79175a5" name="ac129f62573e9e0de21ba0731e79175a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac129f62573e9e0de21ba0731e79175a5">&#9670;&#160;</a></span>domain_data() <span class="overload">[1/2]</span></h2>
+<a id="a1f9c554905f0a288638ccdb8e1acc46e" name="a1f9c554905f0a288638ccdb8e1acc46e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f9c554905f0a288638ccdb8e1acc46e">&#9670;&#160;</a></span>domain_data() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -587,12 +587,12 @@ template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3
         <tr>
           <td class="memname">auto sil::multidomains::domain_data </td>
           <td>(</td>
-          <td class="paramtype">Field</td>          <td class="paramname"><span class="paramname"><em>field</em></span>, </td>
+          <td class="paramtype">Field const &amp;</td>          <td class="paramname"><span class="paramname"><em>field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a></td>          <td class="paramname"><span class="paramname"><em>geometry</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>geometry</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -606,8 +606,8 @@ template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3
 
 </div>
 </div>
-<a id="aa5055e64028c0542033f7e9b7bbff1f4" name="aa5055e64028c0542033f7e9b7bbff1f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa5055e64028c0542033f7e9b7bbff1f4">&#9670;&#160;</a></span>domain_data() <span class="overload">[2/2]</span></h2>
+<a id="a9e916bd2d0b0ee2c510c988cfa00978a" name="a9e916bd2d0b0ee2c510c988cfa00978a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e916bd2d0b0ee2c510c988cfa00978a">&#9670;&#160;</a></span>domain_data() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -617,12 +617,12 @@ template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3
         <tr>
           <td class="memname">auto sil::multidomains::domain_data </td>
           <td>(</td>
-          <td class="paramtype">Field</td>          <td class="paramname"><span class="paramname"><em>field</em></span>, </td>
+          <td class="paramtype">Field const &amp;</td>          <td class="paramname"><span class="paramname"><em>field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a></td>          <td class="paramname"><span class="paramname"><em>geometry</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ead9c6333623e6357515fcbf17be806273">Geometry</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>geometry</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -632,7 +632,7 @@ template&lt;class Field , class <a class="el" href="#ad4cbf20c081eedeb4c79da91f3
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ea1c30b35b12895df175ccd44dbb6f5ace">Flux</a></td>          <td class="paramname"><span class="paramname"><em>flux</em></span>&#160;)</td>
+          <td class="paramtype"><a class="el" href="#ad4cbf20c081eedeb4c79da91f3a0ee2ea1c30b35b12895df175ccd44dbb6f5ace">Flux</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>flux</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">

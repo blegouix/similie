@@ -151,9 +151,9 @@ Collaboration diagram for sil::tensor::ExternalDomainExtrapolationRule&lt; Dimen
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:abb1c69ad2f3fb8cdecac81d470aab19b" id="r_abb1c69ad2f3fb8cdecac81d470aab19b"><td class="memTemplParams" colspan="2">template&lt;class Domain , class Element &gt; </td></tr>
-<tr class="memitem:abb1c69ad2f3fb8cdecac81d470aab19b"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abb1c69ad2f3fb8cdecac81d470aab19b">value</a> (Domain domain, Element element) const</td></tr>
-<tr class="separator:abb1c69ad2f3fb8cdecac81d470aab19b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74bfb90a2778c838bda0ad356fb9d57a" id="r_a74bfb90a2778c838bda0ad356fb9d57a"><td class="memTemplParams" colspan="2">template&lt;class Domain , class Element &gt; </td></tr>
+<tr class="memitem:a74bfb90a2778c838bda0ad356fb9d57a"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a74bfb90a2778c838bda0ad356fb9d57a">value</a> (Domain const &amp;domain, Element element) const</td></tr>
+<tr class="separator:a74bfb90a2778c838bda0ad356fb9d57a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62aebc6c313fcf5be483d5b7e88e85d2" id="r_a62aebc6c313fcf5be483d5b7e88e85d2"><td class="memTemplParams" colspan="2">template&lt;class Field , class Element &gt; </td></tr>
 <tr class="memitem:a62aebc6c313fcf5be483d5b7e88e85d2"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a62aebc6c313fcf5be483d5b7e88e85d2">operator()</a> (Field const &amp;field, Element element) const</td></tr>
 <tr class="separator:a62aebc6c313fcf5be483d5b7e88e85d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -183,10 +183,10 @@ struct sil::tensor::ExternalDomainExtrapolationRule&lt; Dimension, NeighborTenso
 <p>Install this rule on the corresponding side of <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html" title="Select an extrapolation rule independently on each side of each dimension.">ExtrapolationRules</a>. Stored samples retain their values. Exterior samples are mapped with boundary_map and evaluated by target_rule in the donor. The default clamps samples that also cross a tangential donor boundary; another rule can supply that closure. <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html" title="Select an extrapolation rule independently on each side of each dimension.">ExtrapolationRules</a> handles corners using its normalized-distance blend.</p>
 <p>orientation * donor_value + jump applies an affine transformation to sampled values. The reverse connection must use reciprocal orientation and jump -jump/orientation. The tensor view and target rule must be accessible in the execution space; the caller owns the donor allocation and synchronizes donor updates before sampling. Sampling does not merge the tensor allocations. </p>
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00119">119</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00121">121</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="abb1c69ad2f3fb8cdecac81d470aab19b" name="abb1c69ad2f3fb8cdecac81d470aab19b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abb1c69ad2f3fb8cdecac81d470aab19b">&#9670;&#160;</a></span>value()</h2>
+<a id="a74bfb90a2778c838bda0ad356fb9d57a" name="a74bfb90a2778c838bda0ad356fb9d57a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a74bfb90a2778c838bda0ad356fb9d57a">&#9670;&#160;</a></span>value()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -201,7 +201,7 @@ template&lt;class Domain , class Element &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html">sil::tensor::ExternalDomainExtrapolationRule</a>&lt; Dimension, NeighborTensor, TargetRule &gt;::value </td>
           <td>(</td>
-          <td class="paramtype">Domain</td>          <td class="paramname"><span class="paramname"><em>domain</em></span>, </td>
+          <td class="paramtype">Domain const &amp;</td>          <td class="paramname"><span class="paramname"><em>domain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -216,7 +216,7 @@ template&lt;class Domain , class Element &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00129">129</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00131">131</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -251,7 +251,7 @@ template&lt;class Field , class Element &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00141">141</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00143">143</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -278,7 +278,7 @@ template&lt;class Dimension , class NeighborTensor , class TargetRule  = ClampEx
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00121">121</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00123">123</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -296,7 +296,7 @@ template&lt;class Dimension , class NeighborTensor , class TargetRule  = ClampEx
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00122">122</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00124">124</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -314,7 +314,7 @@ template&lt;class Dimension , class NeighborTensor , class TargetRule  = ClampEx
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00123">123</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00125">125</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -332,7 +332,7 @@ template&lt;class Dimension , class NeighborTensor , class TargetRule  = ClampEx
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00124">124</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00126">126</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -350,7 +350,7 @@ template&lt;class Dimension , class NeighborTensor , class TargetRule  = ClampEx
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00125">125</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00127">127</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -368,7 +368,7 @@ template&lt;class Dimension , class NeighborTensor , class TargetRule  = ClampEx
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00126">126</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00128">128</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>

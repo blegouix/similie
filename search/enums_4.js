@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['stencilcoordinates_0',['StencilCoordinates',['../namespacesil_1_1multidomains.html#adf814a4a3f355060e275e39af3064643',1,'sil::multidomains']]]
+  ['preconditionertype_0',['PreconditionerType',['../namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4d',1,'similie::solvers']]]
 ];

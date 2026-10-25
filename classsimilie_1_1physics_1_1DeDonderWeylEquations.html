@@ -153,12 +153,12 @@ Public Types</h2></td></tr>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a0aa6a9782e4c764b7a81ebe242993b98" id="r_a0aa6a9782e4c764b7a81ebe242993b98"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0aa6a9782e4c764b7a81ebe242993b98">DeDonderWeylEquations</a> (Hamiltonian hamiltonian)</td></tr>
 <tr class="separator:a0aa6a9782e4c764b7a81ebe242993b98"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7629701290504b9e8a6b0f538371a65" id="r_af7629701290504b9e8a6b0f538371a65"><td class="memTemplParams" colspan="2">template&lt;class Index , class Elem &gt; </td></tr>
-<tr class="memitem:af7629701290504b9e8a6b0f538371a65"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af7629701290504b9e8a6b0f538371a65">potential_grad</a> (<a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;state, Elem elem) const</td></tr>
-<tr class="separator:af7629701290504b9e8a6b0f538371a65"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17458999a7050ddadb3b8825674002f4" id="r_a17458999a7050ddadb3b8825674002f4"><td class="memTemplParams" colspan="2">template&lt;class Index , class Elem &gt; </td></tr>
-<tr class="memitem:a17458999a7050ddadb3b8825674002f4"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a17458999a7050ddadb3b8825674002f4">moments_div</a> (<a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;state, Elem elem) const</td></tr>
-<tr class="separator:a17458999a7050ddadb3b8825674002f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bb13ecae59ecaffcb8e38bac67b560f" id="r_a6bb13ecae59ecaffcb8e38bac67b560f"><td class="memTemplParams" colspan="2">template&lt;class Index , class Elem &gt; </td></tr>
+<tr class="memitem:a6bb13ecae59ecaffcb8e38bac67b560f"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6bb13ecae59ecaffcb8e38bac67b560f">potential_grad</a> (<a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;state, Elem const &amp;elem) const</td></tr>
+<tr class="separator:a6bb13ecae59ecaffcb8e38bac67b560f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefe12a1471c82ecf390cffcf5fe8dc30" id="r_aefe12a1471c82ecf390cffcf5fe8dc30"><td class="memTemplParams" colspan="2">template&lt;class Index , class Elem &gt; </td></tr>
+<tr class="memitem:aefe12a1471c82ecf390cffcf5fe8dc30"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aefe12a1471c82ecf390cffcf5fe8dc30">moments_div</a> (<a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;state, Elem const &amp;elem) const</td></tr>
+<tr class="separator:aefe12a1471c82ecf390cffcf5fe8dc30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -219,8 +219,8 @@ template&lt;class Hamiltonian &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="af7629701290504b9e8a6b0f538371a65" name="af7629701290504b9e8a6b0f538371a65"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af7629701290504b9e8a6b0f538371a65">&#9670;&#160;</a></span>potential_grad()</h2>
+<a id="a6bb13ecae59ecaffcb8e38bac67b560f" name="a6bb13ecae59ecaffcb8e38bac67b560f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6bb13ecae59ecaffcb8e38bac67b560f">&#9670;&#160;</a></span>potential_grad()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -240,7 +240,7 @@ template&lt;class Index , class Elem &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;) const</td>
+          <td class="paramtype">Elem const &amp;</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -254,8 +254,8 @@ template&lt;class Index , class Elem &gt; </div>
 
 </div>
 </div>
-<a id="a17458999a7050ddadb3b8825674002f4" name="a17458999a7050ddadb3b8825674002f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17458999a7050ddadb3b8825674002f4">&#9670;&#160;</a></span>moments_div()</h2>
+<a id="aefe12a1471c82ecf390cffcf5fe8dc30" name="aefe12a1471c82ecf390cffcf5fe8dc30"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefe12a1471c82ecf390cffcf5fe8dc30">&#9670;&#160;</a></span>moments_div()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -275,7 +275,7 @@ template&lt;class Index , class Elem &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;) const</td>
+          <td class="paramtype">Elem const &amp;</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -285,7 +285,7 @@ template&lt;class Index , class Elem &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00037">37</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00038">38</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
 
 </div>
 </div>

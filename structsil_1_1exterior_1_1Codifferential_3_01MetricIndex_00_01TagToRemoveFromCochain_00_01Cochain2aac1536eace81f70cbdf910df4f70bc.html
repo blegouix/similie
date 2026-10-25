@@ -126,6 +126,7 @@ $(function(){initNavTree('structsil_1_1exterior_1_1Codifferential_3_01MetricInde
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochain6c8b45fc6df1db66dcc216b636bd1fe0.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">sil::exterior::Codifferential&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt; Struct Template Reference</div></div>
@@ -138,25 +139,148 @@ Collaboration diagram for sil::exterior::Codifferential&lt; MetricIndex, TagToRe
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochaindcbf51d0cd0983665940d132b729c593.png" border="0" usemap="#asil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01CochainTag_00_01TensorType_00_01MetricType_00_01PositionType_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01CochainTag_00_01TensorType_00_01MetricType_00_01PositionType_01_4_coll__map" id="asil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01CochainTag_00_01TensorType_00_01MetricType_00_01PositionType_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,299,135"/>
+<area shape="rect" title=" " alt="" coords="5,5,299,175"/>
 </map>
 </div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a785d52c7b0f6aa3a178edec0c6011344" id="r_a785d52c7b0f6aa3a178edec0c6011344"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a785d52c7b0f6aa3a178edec0c6011344">staged_storage_type</a></td></tr>
+<tr class="separator:a785d52c7b0f6aa3a178edec0c6011344"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aefe4e882e3d5c6168fe2973538ea2204" id="r_aefe4e882e3d5c6168fe2973538ea2204"><td class="memTemplParams" colspan="2">template&lt;class ChainType , class LowerChainType , class NaturalElem &gt; </td></tr>
-<tr class="memitem:aefe4e882e3d5c6168fe2973538ea2204"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aefe4e882e3d5c6168fe2973538ea2204">value</a> (TensorType tensor, MetricType metric, PositionType position, ChainType chain, LowerChainType lower_chain, typename TensorType::non_indices_domain_t::discrete_element_type elem, NaturalElem natural_elem)</td></tr>
-<tr class="separator:aefe4e882e3d5c6168fe2973538ea2204"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd1a7e0cd5704e4ac20fca60706523e5" id="r_acd1a7e0cd5704e4ac20fca60706523e5"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acd1a7e0cd5704e4ac20fca60706523e5">operator()</a> (auto codifferential_tensor, TensorType tensor, MetricType metric, PositionType position, auto chain, auto lower_chain, typename TensorType::non_indices_domain_t::discrete_element_type elem)</td></tr>
-<tr class="separator:acd1a7e0cd5704e4ac20fca60706523e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa58231d2a147375042f335e6a7bf6f56" id="r_aa58231d2a147375042f335e6a7bf6f56"><td class="memTemplParams" colspan="2">template&lt;class Exec &gt; </td></tr>
+<tr class="memitem:aa58231d2a147375042f335e6a7bf6f56"><td class="memTemplItemLeft" align="right" valign="top">static auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa58231d2a147375042f335e6a7bf6f56">geometry</a> (Exec const &amp;exec, MetricType const &amp;metric, PositionType const &amp;position)</td></tr>
+<tr class="separator:aa58231d2a147375042f335e6a7bf6f56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada5aa30bf03c74601f6ca05a6686357a" id="r_ada5aa30bf03c74601f6ca05a6686357a"><td class="memTemplParams" colspan="2">template&lt;class Geometry , class Element , class Rules &gt; </td></tr>
+<tr class="memitem:ada5aa30bf03c74601f6ca05a6686357a"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ada5aa30bf03c74601f6ca05a6686357a">value</a> (Geometry const &amp;<a class="el" href="#aa58231d2a147375042f335e6a7bf6f56">geometry</a>, TensorType const &amp;input, Element element, Rules const &amp;rules)</td></tr>
+<tr class="separator:ada5aa30bf03c74601f6ca05a6686357a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6e8038dfc6bed9f6209962af828fb6f" id="r_ab6e8038dfc6bed9f6209962af828fb6f"><td class="memTemplParams" colspan="2">template&lt;class ChainType , class LowerChainType , class NaturalElem &gt; </td></tr>
+<tr class="memitem:ab6e8038dfc6bed9f6209962af828fb6f"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab6e8038dfc6bed9f6209962af828fb6f">value</a> (TensorType const &amp;tensor, MetricType const &amp;metric, PositionType const &amp;position, ChainType const &amp;chain, LowerChainType const &amp;lower_chain, typename TensorType::non_indices_domain_t::discrete_element_type elem, NaturalElem natural_elem)</td></tr>
+<tr class="separator:ab6e8038dfc6bed9f6209962af828fb6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cc77b4fcf446ca937024dc57f5e86a9" id="r_a6cc77b4fcf446ca937024dc57f5e86a9"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6cc77b4fcf446ca937024dc57f5e86a9">operator()</a> (auto codifferential_tensor, TensorType const &amp;tensor, MetricType const &amp;metric, PositionType const &amp;position, auto const &amp;chain, auto const &amp;lower_chain, typename TensorType::non_indices_domain_t::discrete_element_type elem)</td></tr>
+<tr class="separator:a6cc77b4fcf446ca937024dc57f5e86a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType&gt;<br />
 struct sil::exterior::Codifferential&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;</div>
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00283">283</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="aefe4e882e3d5c6168fe2973538ea2204" name="aefe4e882e3d5c6168fe2973538ea2204"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aefe4e882e3d5c6168fe2973538ea2204">&#9670;&#160;</a></span>value()</h2>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00365">365</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a785d52c7b0f6aa3a178edec0c6011344" name="a785d52c7b0f6aa3a178edec0c6011344"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a785d52c7b0f6aa3a178edec0c6011344">&#9670;&#160;</a></span>staged_storage_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential">sil::exterior::Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;::staged_storage_type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> detail::SpatialOperatorStorage&lt;</div>
+<div class="line">            Codifferential,</div>
+<div class="line">            TagToRemoveFromCochain,</div>
+<div class="line">            CochainTag,</div>
+<div class="line">            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22">codifferential_index_t&lt;TagToRemoveFromCochain, CochainTag&gt;</a>,</div>
+<div class="line">            1,</div>
+<div class="line">            TensorType&gt;</div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_aab91885c880898f8e30304a22b965a22"><div class="ttname"><a href="namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22">sil::exterior::codifferential_index_t</a></div><div class="ttdeci">typename detail::CodifferentialIndex&lt; TagToRemoveFromCochain, CochainTag &gt;::type codifferential_index_t</div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00089">codifferential.hpp:89</a></div></div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00373">373</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="aa58231d2a147375042f335e6a7bf6f56" name="aa58231d2a147375042f335e6a7bf6f56"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa58231d2a147375042f335e6a7bf6f56">&#9670;&#160;</a></span>geometry()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType&gt; </div>
+<div class="memtemplate">
+template&lt;class Exec &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static auto <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential">sil::exterior::Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;::geometry </td>
+          <td>(</td>
+          <td class="paramtype">Exec const &amp;</td>          <td class="paramname"><span class="paramname"><em>exec</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricType const &amp;</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">PositionType const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00382">382</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ada5aa30bf03c74601f6ca05a6686357a" name="ada5aa30bf03c74601f6ca05a6686357a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada5aa30bf03c74601f6ca05a6686357a">&#9670;&#160;</a></span>value() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType&gt; </div>
+<div class="memtemplate">
+template&lt;class Geometry , class Element , class Rules &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FUNCTION auto <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential">sil::exterior::Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;::value </td>
+          <td>(</td>
+          <td class="paramtype">Geometry const &amp;</td>          <td class="paramname"><span class="paramname"><em>geometry</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em>input</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Element</td>          <td class="paramname"><span class="paramname"><em>element</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Rules const &amp;</td>          <td class="paramname"><span class="paramname"><em>rules</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00393">393</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab6e8038dfc6bed9f6209962af828fb6f" name="ab6e8038dfc6bed9f6209962af828fb6f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6e8038dfc6bed9f6209962af828fb6f">&#9670;&#160;</a></span>value() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -171,27 +295,27 @@ template&lt;class ChainType , class LowerChainType , class NaturalElem &gt; </di
         <tr>
           <td class="memname">static KOKKOS_FUNCTION auto <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential">sil::exterior::Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;::value </td>
           <td>(</td>
-          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+          <td class="paramtype">TensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+          <td class="paramtype">MetricType const &amp;</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">PositionType</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+          <td class="paramtype">PositionType const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">ChainType</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>, </td>
+          <td class="paramtype">ChainType const &amp;</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">LowerChainType</td>          <td class="paramname"><span class="paramname"><em>lower_chain</em></span>, </td>
+          <td class="paramtype">LowerChainType const &amp;</td>          <td class="paramname"><span class="paramname"><em>lower_chain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -211,12 +335,12 @@ template&lt;class ChainType , class LowerChainType , class NaturalElem &gt; </di
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00292">292</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00404">404</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
-<a id="acd1a7e0cd5704e4ac20fca60706523e5" name="acd1a7e0cd5704e4ac20fca60706523e5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acd1a7e0cd5704e4ac20fca60706523e5">&#9670;&#160;</a></span>operator()()</h2>
+<a id="a6cc77b4fcf446ca937024dc57f5e86a9" name="a6cc77b4fcf446ca937024dc57f5e86a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cc77b4fcf446ca937024dc57f5e86a9">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -234,27 +358,27 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+          <td class="paramtype">TensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+          <td class="paramtype">MetricType const &amp;</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">PositionType</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+          <td class="paramtype">PositionType const &amp;</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">auto</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>, </td>
+          <td class="paramtype">auto const &amp;</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">auto</td>          <td class="paramname"><span class="paramname"><em>lower_chain</em></span>, </td>
+          <td class="paramtype">auto const &amp;</td>          <td class="paramname"><span class="paramname"><em>lower_chain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -269,7 +393,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00339">339</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00451">451</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>

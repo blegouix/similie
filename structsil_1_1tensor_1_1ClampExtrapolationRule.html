@@ -148,9 +148,9 @@ Collaboration diagram for sil::tensor::ClampExtrapolationRule:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a08587adc208b53d711d6304c5e5d4c8b" id="r_a08587adc208b53d711d6304c5e5d4c8b"><td class="memTemplParams" colspan="2">template&lt;class Domain , class Element &gt; </td></tr>
-<tr class="memitem:a08587adc208b53d711d6304c5e5d4c8b"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a08587adc208b53d711d6304c5e5d4c8b">value</a> (Domain domain, Element element) const</td></tr>
-<tr class="separator:a08587adc208b53d711d6304c5e5d4c8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43d6d97afd765f6c7f73783473b2b9ca" id="r_a43d6d97afd765f6c7f73783473b2b9ca"><td class="memTemplParams" colspan="2">template&lt;class Domain , class Element &gt; </td></tr>
+<tr class="memitem:a43d6d97afd765f6c7f73783473b2b9ca"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a43d6d97afd765f6c7f73783473b2b9ca">value</a> (Domain const &amp;domain, Element element) const</td></tr>
+<tr class="separator:a43d6d97afd765f6c7f73783473b2b9ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16c62eef4e8263aa63a12c4619c404cb" id="r_a16c62eef4e8263aa63a12c4619c404cb"><td class="memTemplParams" colspan="2">template&lt;class Field , class Element &gt; </td></tr>
 <tr class="memitem:a16c62eef4e8263aa63a12c4619c404cb"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a16c62eef4e8263aa63a12c4619c404cb">operator()</a> (Field const &amp;field, Element element) const</td></tr>
 <tr class="separator:a16c62eef4e8263aa63a12c4619c404cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -162,12 +162,12 @@ Static Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Spatial closure evaluated independently of the stored field values. </p>
-<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. operator() returns all stored components as a pointwise <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>. <a class="el" href="#a08587adc208b53d711d6304c5e5d4c8b">value()</a> returns its spatial coefficients in an <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1OwningTensor">OwningTensor</a>, depending only on the domain and sample. The source axis separates stored samples from the rule evaluation; prescribed data and donor mappings remain in the rule. </dd></dl>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. operator() returns all stored components as a pointwise <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>. <a class="el" href="#a43d6d97afd765f6c7f73783473b2b9ca">value()</a> returns its spatial coefficients in an <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1OwningTensor">OwningTensor</a>, depending only on the domain and sample. The source axis separates stored samples from the rule evaluation; prescribed data and donor mappings remain in the rule. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="scalar__extrapolation__rules_8hpp_source.html#l00026">26</a> of file <a class="el" href="scalar__extrapolation__rules_8hpp_source.html">scalar_extrapolation_rules.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a08587adc208b53d711d6304c5e5d4c8b" name="a08587adc208b53d711d6304c5e5d4c8b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a08587adc208b53d711d6304c5e5d4c8b">&#9670;&#160;</a></span>value()</h2>
+<a id="a43d6d97afd765f6c7f73783473b2b9ca" name="a43d6d97afd765f6c7f73783473b2b9ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a43d6d97afd765f6c7f73783473b2b9ca">&#9670;&#160;</a></span>value()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -180,7 +180,7 @@ template&lt;class Domain , class Element &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION auto sil::tensor::ClampExtrapolationRule::value </td>
           <td>(</td>
-          <td class="paramtype">Domain</td>          <td class="paramname"><span class="paramname"><em>domain</em></span>, </td>
+          <td class="paramtype">Domain const &amp;</td>          <td class="paramname"><span class="paramname"><em>domain</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>

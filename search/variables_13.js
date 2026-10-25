@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['yy_0',['yy',['../structsimilie_1_1physics_1_1elasticity_1_1Strain2D.html#a922933e49ba34ac04650b34a040e4554',1,'similie::physics::elasticity::Strain2D::yy'],['../structsimilie_1_1physics_1_1elasticity_1_1CauchyStress2D.html#a52ca6c80fdf520b33e8f4f53359dbacb',1,'similie::physics::elasticity::CauchyStress2D::yy']]]
+  ['unconnected_0',['UNCONNECTED',['../structsil_1_1multidomains_1_1Connection.html#a574efbf3b438894b9cfc2b95cb333bcb',1,'sil::multidomains::Connection']]],
+  ['use_5finitial_5fguess_1',['use_initial_guess',['../namespacesimilie_1_1solvers.html#ae21516ac515a32ba9d6bd3f444353bc9',1,'similie::solvers::StrongFormulationSolverSettings']]],
+  ['use_5fmatrix_5ffree_2',['use_matrix_free',['../namespacesimilie_1_1solvers.html#a17841b2d292e8a5cccb38544adfd34de',1,'similie::solvers::StrongFormulationSolverSettings']]]
 ];

@@ -1,12 +1,22 @@
 var searchData=
 [
-  ['parameter_5ftypes_0',['parameter_types',['../classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html#a6d335da74973d5e47c0873b7234713f9',1,'generate_cpp_hamiltonian::HamiltonianDefinition']]],
-  ['parameter_5fvalue_5fexpressions_1',['parameter_value_expressions',['../classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html#a8805eb296a33513cf655ab93be0acde8',1,'generate_cpp_hamiltonian::HamiltonianDefinition']]],
-  ['parameters_2',['parameters',['../classgenerate__cpp__constitutive__law_1_1ConstitutiveLawDefinition.html#a5f852b395a2c7b8908f6af7c36a669da',1,'generate_cpp_constitutive_law.ConstitutiveLawDefinition.parameters'],['../classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html#aa38e35b4ebbbf88a5460e1559e2d32a4',1,'generate_cpp_hamiltonian.HamiltonianDefinition.parameters']]],
-  ['periodic_3',['PERIODIC',['../structsimilie_1_1physics_1_1magnetostatics_1_1OrthogonalPlaneIndex.html#a93cde509e66311be8d33d3c20f878ecc',1,'similie::physics::magnetostatics::OrthogonalPlaneIndex']]],
-  ['physics_4',['physics',['../namespacesil_1_1multidomains.html#a7976a5ef690fe96bd59916f71ff62cf5',1,'sil::multidomains::DomainData']]],
-  ['position_5',['position',['../structsil_1_1exterior_1_1DualHodgeCochain.html#a35d238c0e5a30f154333ca6052ae717d',1,'sil::exterior::DualHodgeCochain']]],
-  ['preconditioner_6',['preconditioner',['../namespacesimilie_1_1solvers.html#a6dca8c0cdf04eb4227218e703da59b0e',1,'similie::solvers::StrongFormulationSolverSettings']]],
-  ['prescribed_5fvalue_7',['prescribed_value',['../structsil_1_1tensor_1_1PrescribedScalarExtrapolationRule.html#ada6111b3b9a1b73614f87873b024d30a',1,'sil::tensor::PrescribedScalarExtrapolationRule']]],
-  ['primal_8',['primal',['../namespacesil_1_1multidomains.html#a138c7a5c06e6fca829b357cfafd4c7b6',1,'sil::multidomains::BoundaryDomain']]]
+  ['m_5felem_0',['m_elem',['../structsil_1_1exterior_1_1FillReductionOperatorMem.html#a42ffe54a2034c522f05a200507b88b1f',1,'sil::exterior::FillReductionOperatorMem::m_elem'],['../structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#aa8f17a7ceb0370bfdfa4ba4aad6e34a1',1,'sil::exterior::FillReconstructionOperatorMem::m_elem']]],
+  ['m_5fposition_1',['m_position',['../structsil_1_1exterior_1_1FillReductionOperatorMem.html#abeeae2a611d7a813cfff4f53e38b5ce5',1,'sil::exterior::FillReductionOperatorMem::m_position'],['../structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#a14ba4bc3183ee13040f301a64a3eb09c',1,'sil::exterior::FillReconstructionOperatorMem::m_position']]],
+  ['m_5freconstruction_5ftensor_2',['m_reconstruction_tensor',['../structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#a3b59917c4faba6264dc49d05d4a518a1',1,'sil::exterior::FillReconstructionOperatorMem']]],
+  ['m_5freduction_5ftensor_3',['m_reduction_tensor',['../structsil_1_1exterior_1_1FillReductionOperatorMem.html#acd1f56b2fd731373f6413247f5c8f09f',1,'sil::exterior::FillReductionOperatorMem']]],
+  ['magnetic_4',['magnetic',['../classelectromagnetism_1_1Electromagnetism.html#adf168693b1279b5025c6b160639aceaf',1,'electromagnetism::Electromagnetism']]],
+  ['magnetic_5fenergy_5',['magnetic_energy',['../classmagnetodynamics_1_1Magnetodynamics.html#a2ebbce2dceb235d77e3ebdb5ebd65745',1,'magnetodynamics::Magnetodynamics']]],
+  ['magnetic_5ffield_6',['magnetic_field',['../classelectromagnetism_1_1Electromagnetism.html#a2f3930df35ce531ba3fdb0402d3e69dd',1,'electromagnetism.Electromagnetism.magnetic_field'],['../classmagnetodynamics_1_1Magnetodynamics.html#a97c20d701fa8918d4a33d2fc7f326423',1,'magnetodynamics.Magnetodynamics.magnetic_field']]],
+  ['magnetic_5fforce_7',['magnetic_force',['../classelectromagnetic__coupling_1_1ElectromagneticInteraction.html#a0cd37d310f62a24da470ae2f36fc8222',1,'electromagnetic_coupling::ElectromagneticInteraction']]],
+  ['magnetic_5fforce_5fdensity_8',['magnetic_force_density',['../classelectromagnetic__coupling_1_1ElectromagneticInteraction.html#ad5fc6ef1116402e97a3831284aa8dff2',1,'electromagnetic_coupling::ElectromagneticInteraction']]],
+  ['magnetic_5fpower_9',['magnetic_power',['../classelectromagnetic__coupling_1_1ElectromagneticInteraction.html#a0015fb76016581a5da1c3896a1cc4067',1,'electromagnetic_coupling::ElectromagneticInteraction']]],
+  ['mass_10',['mass',['../classelectromagnetic__coupling_1_1ElectromagneticInteraction.html#af289681fb4129211b9ab9ac49ce0579e',1,'electromagnetic_coupling::ElectromagneticInteraction']]],
+  ['matrix_11',['matrix',['../namespacesimilie_1_1solvers.html#a88cf46ac1cefd9f80bf45c58bdcef98a',1,'similie::solvers::AssembledLinearSystem']]],
+  ['max_5fiterations_12',['max_iterations',['../namespacesimilie_1_1solvers.html#ade4cdbaae3f1c5df0d998c58c2ffc1b1',1,'similie::solvers::StrongFormulationSolverSettings']]],
+  ['max_5fsize_13',['MAX_SIZE',['../classsil_1_1exterior_1_1LocalChain.html#aa3b893ad84097a496dcadcf4fff20d03',1,'sil::exterior::LocalChain']]],
+  ['mechanical_5fforce_14',['mechanical_force',['../classelectromagnetic__coupling_1_1ElectromagneticInteraction.html#a905c22a5e2d3a0779925f79c366536f8',1,'electromagnetic_coupling::ElectromagneticInteraction']]],
+  ['moments_5fcomputer_15',['moments_computer',['../classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html#a24853fad9f1cde1bd194f5ce4357c809',1,'generate_cpp_hamiltonian::HamiltonianDefinition']]],
+  ['momentum_16',['momentum',['../classelectromagnetic__coupling_1_1ElectromagneticInteraction.html#a68f82d7d7c2c2c1f47a1ff8e56111c2b',1,'electromagnetic_coupling.ElectromagneticInteraction.momentum'],['../classnavier__stokes__fourier_1_1NavierStokesFourier.html#a6d7e55f684abe52999bd2cd347ae07ea',1,'navier_stokes_fourier.NavierStokesFourier.momentum']]],
+  ['momentum_5fflux_17',['momentum_flux',['../classmagnetodynamics_1_1Magnetodynamics.html#a375a3f1ea8b00c31097ef3c4af3890b5',1,'magnetodynamics::Magnetodynamics']]],
+  ['momentum_5fsource_18',['momentum_source',['../structsimilie_1_1physics_1_1coupling_1_1ElectromagneticExchange.html#a07bfe46b00896c6a5c5df48c677b6ce4',1,'similie::physics::coupling::ElectromagneticExchange']]]
 ];
