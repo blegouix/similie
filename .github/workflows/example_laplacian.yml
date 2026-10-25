@@ -22,7 +22,6 @@ on:
       ci_environment:
         required: false
         type: string
-        default: laplacians-cuda
 
 concurrency:
   group: example-2d_laplacian-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
@@ -33,7 +32,7 @@ jobs:
     if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || 'laplacians-cuda' }}
+      name: ${{ inputs.ci_environment || ((github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')) && 'laplacians-cuda' || 'automatic-ci-run') }}
     steps:
     - name: Prepare example log
       run: |

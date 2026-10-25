@@ -17,6 +17,9 @@ on:
       target_sha:
         required: true
         type: string
+      ci_environment:
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -30,9 +33,9 @@ jobs:
     if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
-      name: taylor_green_vortex-cuda
+      name: ${{ inputs.ci_environment || ((github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')) && 'taylor_green_vortex-cuda' || 'automatic-ci-run') }}
     steps:
-      - run: echo "Environment approval granted for the Taylor–Green benchmark campaign."
+      - run: echo "Starting the Taylor–Green benchmark campaign."
 
   physics:
     if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'

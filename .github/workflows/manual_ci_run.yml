@@ -185,7 +185,7 @@ jobs:
     needs: build-cuda
     runs-on: [self-hosted, linux]
     environment:
-      name: tests-cuda
+      name: ${{ github.event_name == 'pull_request' && 'tests-cuda' || 'automatic-ci-run' }}
     steps:
     - name: Set build paths
       run: |
@@ -256,21 +256,21 @@ jobs:
     uses: ./.github/workflows/example_laplacian.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: laplacians-cuda
+      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'automatic-ci-run' }}
 
   example-2d_vector_laplacian:
     needs: build-cuda
     uses: ./.github/workflows/example_laplacian_vector.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: laplacians-cuda
+      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'automatic-ci-run' }}
 
   example-2d_scalar_field:
     needs: build-cuda
     uses: ./.github/workflows/example_scalar_field.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: scalar-field-cuda
+      ci_environment: ${{ github.event_name == 'pull_request' && 'scalar-field-cuda' || 'automatic-ci-run' }}
 
   example-onelab_inductor:
     needs: build-cuda
@@ -305,3 +305,4 @@ jobs:
     uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
     with:
       target_sha: ${{ github.sha }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'taylor_green_vortex-cuda' || 'automatic-ci-run' }}
