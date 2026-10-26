@@ -285,6 +285,7 @@ def iteration_profiles(database):
                 invocations[symbol] = invocations.get(symbol, 0) + 1
                 if sample:
                     samples.setdefault(symbol, []).append(invocations[symbol])
+            profile["kernel_invocations"] = invocations
             groups = {}
             # NCU accepts one invocation pattern per run. Group symbols with
             # the same indices to minimize the number of application launches.

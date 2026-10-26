@@ -17,7 +17,12 @@ import sys
 import time
 
 from ci_campaign import MESH_SIZES, STRATEGIES, execute
-from nsys_report import iteration_case, markdown, profiling_environment
+from nsys_report import (
+    iteration_case,
+    iteration_profiles,
+    markdown,
+    profiling_environment,
+)
 
 
 METRICS = {
@@ -49,12 +54,41 @@ def nvtx_filter(case):
     return "regex:^" + name + "$/"
 
 
+def compute_groups(plan):
+    groups = plan["sample_groups"]
+    if not groups:
+        return []
+    if "kernel_invocations" not in plan:
+        # Preserve compatibility with Systems captures made before launch
+        # counts were recorded; their exact groups remain valid.
+        return [
+            dict(group, launches=len(group["symbols"]) * len(group["invocations"]))
+            for group in groups
+        ]
+    symbols = sorted({symbol for group in groups for symbol in group["symbols"]})
+    invocations = sorted({index for group in groups for index in group["invocations"]})
+    for group in groups:
+        for symbol in group["symbols"]:
+            if max(group["invocations"]) > plan["kernel_invocations"].get(symbol, 0):
+                raise ValueError(f"Missing first-iteration launch counts for {symbol}")
+    # NCU accepts one invocation pattern per process. Its union captures a
+    # superset of the requested calls, avoiding a separate application replay
+    # for each symbol/index combination. Count only calls that actually exist
+    # so --kill neither truncates the samples nor waits for nonexistent calls.
+    launches = sum(
+        index <= plan["kernel_invocations"][symbol]
+        for symbol in symbols
+        for index in invocations
+    )
+    return [dict(symbols=symbols, invocations=invocations, launches=launches)]
+
+
 def compute_command(
     binary, directory, case, n, flags, fluid, transport, coupling, sample_ranges, group
 ):
     symbols = "|".join(re.escape(symbol) for symbol in group["symbols"])
     invocations = "|".join(map(str, group["invocations"]))
-    count = len(group["symbols"]) * len(group["invocations"])
+    count = group.get("launches", len(group["symbols"]) * len(group["invocations"]))
     return [
         "ncu",
         "--nvtx",
@@ -184,16 +218,44 @@ def read_compute_report(path, api, expected_launches=None):
     return list(kernels.values())
 
 
+def read_compute_report_isolated(path, directory, expected_launches):
+    # The native report reader can retain allocations after its Python objects
+    # are gone. Exit after each report so they cannot accumulate in the campaign
+    # process while the next GPU application is running.
+    return json.loads(
+        subprocess.check_output(
+            [
+                sys.executable,
+                str(Path(__file__).resolve()),
+                "read-compute",
+                "--output",
+                str(directory),
+                "--compute-report",
+                str(path),
+                "--expected-launches",
+                str(expected_launches),
+            ],
+            text=True,
+        )
+    )
+
+
 def profile_cases(binary, output, fluid, transport, coupling):
     directory = output / "ncu"
     directory.mkdir(parents=True, exist_ok=True)
     results = dict(configuration=f"{fluid}_{transport}_{coupling}", cases={}, errors=[])
     try:
-        api = report_api(directory)
         environment = profiling_environment()
         systems = json.loads((output / "performance/nsys/timings.json").read_text())[
             "cases"
         ]
+        database = output / "performance/nsys/tgv.sqlite"
+        if database.is_file() and any(
+            "kernel_invocations" not in plan for plan in systems.values()
+        ):
+            # Older captures can supply the counts without rerunning the
+            # performance suite or changing its saved timing report.
+            systems = iteration_profiles(database)
         for case, relative, n, flags in case_specs():
             case_directory = directory / relative
             case_directory.mkdir(parents=True, exist_ok=True)
@@ -202,20 +264,17 @@ def profile_cases(binary, output, fluid, transport, coupling):
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                groups = plan["sample_groups"]
-                count = sum(
-                    len(group["symbols"]) * len(group["invocations"])
-                    for group in groups
-                )
+                groups = compute_groups(plan)
+                count = sum(group["launches"] for group in groups)
                 print(
-                    f"\nNsight Compute: {case}: {count} first kernel calls; "
+                    f"\nNsight Compute: {case}: {count} kernel calls covering all first samples; "
                     f"{len(groups)} profiler processes (each repeats application setup)",
                     flush=True,
                 )
                 results["cases"][case] = []
                 for index, group in enumerate(groups, 1):
                     batch_directory = case_directory / f"batch-{index}"
-                    expected = len(group["symbols"]) * len(group["invocations"])
+                    expected = group["launches"]
                     print(
                         f"  Profiler process {index}/{len(groups)}: "
                         f"capture {expected} launches, then stop",
@@ -256,7 +315,7 @@ def profile_cases(binary, output, fluid, transport, coupling):
                             f"Expected one Compute report in {batch_directory}"
                         )
                     results["cases"][case].extend(
-                        read_compute_report(reports[0], api, expected)
+                        read_compute_report_isolated(reports[0], directory, expected)
                     )
                     (directory / "results.json").write_text(
                         json.dumps(results, indent=2) + "\n"
@@ -528,14 +587,28 @@ def write_combined_report(output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("phase", choices=("compute", "report"))
+    parser.add_argument("phase", choices=("compute", "report", "read-compute"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--binary", type=Path)
     parser.add_argument("--fluid", choices=("incompressible", "compressible"))
     parser.add_argument("--transport", choices=("ideal", "resistive"))
     parser.add_argument("--coupling", choices=("hd", "ehd", "mhd", "fmhd"))
+    parser.add_argument("--compute-report", type=Path)
+    parser.add_argument("--expected-launches", type=int)
     args = parser.parse_args()
-    if args.phase == "compute":
+    if args.phase == "read-compute":
+        if args.compute_report is None or args.expected_launches is None:
+            parser.error(
+                "read-compute requires --compute-report and --expected-launches"
+            )
+        print(
+            json.dumps(
+                read_compute_report(
+                    args.compute_report, report_api(args.output), args.expected_launches
+                )
+            )
+        )
+    elif args.phase == "compute":
         if not all((args.binary, args.fluid, args.transport, args.coupling)):
             parser.error(
                 "compute requires --binary, --fluid, --transport and --coupling"

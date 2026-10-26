@@ -26,6 +26,7 @@ from nsight_report import (
     case_specs,
     combined_rows,
     compute_command,
+    compute_groups,
     limiting_metrics,
     read_compute_report,
     write_combined_report,
@@ -34,6 +35,67 @@ from nsys_report import iteration_profiles
 
 CASE = "TaylorGreen/N=64/default"
 SYMBOL = "_Zprobe_full_symbol"
+
+
+class ComputeSamplingPlan(unittest.TestCase):
+    def test_combined_filter_covers_targets_and_counts_only_existing_calls(self):
+        plan = dict(
+            sample_groups=[
+                dict(symbols=[SYMBOL], invocations=[1, 4, 5]),
+                dict(symbols=["_Zshort_kernel"], invocations=[1]),
+            ],
+            kernel_invocations={SYMBOL: 6, "_Zshort_kernel": 1},
+        )
+        groups = compute_groups(plan)
+        self.assertEqual(len(groups), 1)
+        group = groups[0]
+        self.assertEqual(group["invocations"], [1, 4, 5])
+        self.assertEqual(group["launches"], 4)
+        captured = {
+            (symbol, index)
+            for symbol in group["symbols"]
+            for index in group["invocations"]
+            if index <= plan["kernel_invocations"][symbol]
+        }
+        requested = {
+            (symbol, index)
+            for original in plan["sample_groups"]
+            for symbol in original["symbols"]
+            for index in original["invocations"]
+        }
+        self.assertTrue(requested <= captured)
+        command = compute_command(
+            Path("binary"),
+            Path("output"),
+            CASE,
+            64,
+            (),
+            "incompressible",
+            "ideal",
+            "hd",
+            [1],
+            group,
+        )
+        self.assertIn("--launch-count=4", command)
+
+    def test_missing_launch_count_rejects_a_truncated_plan(self):
+        with self.assertRaises(ValueError):
+            compute_groups(
+                dict(
+                    sample_groups=[dict(symbols=[SYMBOL], invocations=[1, 4])],
+                    kernel_invocations={SYMBOL: 3},
+                )
+            )
+
+    def test_older_captures_keep_their_exact_groups(self):
+        groups = [
+            dict(symbols=[SYMBOL], invocations=[1, 4]),
+            dict(symbols=["_Zshort_kernel"], invocations=[1]),
+        ]
+        self.assertEqual(
+            compute_groups(dict(sample_groups=groups)),
+            [dict(groups[0], launches=2), dict(groups[1], launches=1)],
+        )
 
 
 def capture_fixture(path):
@@ -207,6 +269,9 @@ class IterationAttribution(unittest.TestCase):
             # Repeats stay unselected; the library and sibling B retain
             # their first samples. Setup never advances these counters.
             self.assertEqual(groups, {(1,): ["_Zother_kernel"], (1, 4, 5): [SYMBOL]})
+            self.assertEqual(
+                profile["kernel_invocations"], {SYMBOL: 5, "_Zother_kernel": 1}
+            )
             group = dict(symbols=[SYMBOL], invocations=[1, 4, 5])
             command = compute_command(
                 Path("binary"),
