@@ -105,6 +105,14 @@ def compute_command(
         # recreates the state instead and preserves every requested metric.
         "--replay-mode=application",
         "--app-replay-mode=strict",
+        # Each application replay recreates the cache history before a sample.
+        # Flushing caches at every sampled launch adds work and discards that
+        # history, making the counters less representative of the Systems run.
+        "--cache-control=none",
+        # These reports use hardware counters and launch/occupancy attributes,
+        # not instruction or source analysis. Importing the large templated
+        # CUDA cubins into every report adds unnecessary processing and I/O.
+        "--import-sass=no",
         "--section=SpeedOfLight",
         "--section=LaunchStats",
         "--section=Occupancy",

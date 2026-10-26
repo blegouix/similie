@@ -295,6 +295,8 @@ class IterationAttribution(unittest.TestCase):
             self.assertIn("--kill=yes", command)
             self.assertIn("--replay-mode=application", command)
             self.assertIn("--app-replay-mode=strict", command)
+            self.assertIn("--cache-control=none", command)
+            self.assertIn("--import-sass=no", command)
             self.assertIn(
                 "--metrics="
                 + ",".join(
