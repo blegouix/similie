@@ -6,7 +6,9 @@
 import argparse
 import hashlib
 import json
+import os
 import shutil
+import signal
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -73,23 +75,41 @@ def execute(command, directory, environment=None):
     (directory / "command.json").write_text(
         json.dumps(list(map(str, command)), indent=2)
     )
-    with (directory / "run.log").open("w") as log:
+    with (
+        (directory / "run.log").open("w") as log,
+        (directory / "run.log").open() as output,
+    ):
         child = subprocess.Popen(
             list(map(str, command)),
             cwd=directory,
             env=environment,
-            stdout=subprocess.PIPE,
+            stdout=log,
             stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
+            start_new_session=True,
         )
-        for line in child.stdout:
-            log.write(line)
-            log.flush()
-            sys.stdout.write(line)
-            sys.stdout.flush()
-        if child.wait():
-            raise RuntimeError(f"Benchmark failed; see {directory / 'run.log'}")
+        try:
+            while True:
+                try:
+                    status = child.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    status = None
+                sys.stdout.write(output.read())
+                sys.stdout.flush()
+                if status is not None:
+                    break
+        finally:
+            # A profiler can die while its injected application remains alive.
+            # Monitor the profiler itself rather than waiting for pipe EOF,
+            # and release its descendants on failure or cancellation.
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            child.wait()
+        if status:
+            raise RuntimeError(
+                f"Benchmark exited with status {status}; see {directory / 'run.log'}"
+            )
 
 
 def validate_trajectory(path, configuration, n, reference=False):

@@ -38,7 +38,7 @@ SYMBOL = "_Zprobe_full_symbol"
 
 
 class ComputeSamplingPlan(unittest.TestCase):
-    def test_combined_filter_covers_targets_and_counts_only_existing_calls(self):
+    def test_exact_filters_cover_targets_without_extra_calls(self):
         plan = dict(
             sample_groups=[
                 dict(symbols=[SYMBOL], invocations=[1, 4, 5]),
@@ -47,12 +47,13 @@ class ComputeSamplingPlan(unittest.TestCase):
             kernel_invocations={SYMBOL: 6, "_Zshort_kernel": 1},
         )
         groups = compute_groups(plan)
-        self.assertEqual(len(groups), 1)
+        self.assertEqual(len(groups), 2)
         group = groups[0]
         self.assertEqual(group["invocations"], [1, 4, 5])
-        self.assertEqual(group["launches"], 4)
+        self.assertEqual(group["launches"], 3)
         captured = {
             (symbol, index)
+            for group in groups
             for symbol in group["symbols"]
             for index in group["invocations"]
             if index <= plan["kernel_invocations"][symbol]
@@ -63,7 +64,7 @@ class ComputeSamplingPlan(unittest.TestCase):
             for symbol in original["symbols"]
             for index in original["invocations"]
         }
-        self.assertTrue(requested <= captured)
+        self.assertEqual(requested, captured)
         command = compute_command(
             Path("binary"),
             Path("output"),
@@ -74,9 +75,41 @@ class ComputeSamplingPlan(unittest.TestCase):
             "ideal",
             "hd",
             [1],
-            group,
+            groups[0],
         )
-        self.assertIn("--launch-count=4", command)
+        self.assertIn("--launch-count=3", command)
+
+    def test_large_groups_split_without_losing_or_adding_samples(self):
+        for symbols, invocations in (
+            ([f"_Zkernel_{index}" for index in range(71)], [1, 4, 7]),
+            ([SYMBOL], list(range(1, 75))),
+        ):
+            with self.subTest(symbols=len(symbols), invocations=len(invocations)):
+                groups = compute_groups(
+                    dict(sample_groups=[dict(symbols=symbols, invocations=invocations)])
+                )
+                captured = []
+                for group in groups:
+                    pairs = [
+                        (symbol, index)
+                        for symbol in group["symbols"]
+                        for index in group["invocations"]
+                    ]
+                    self.assertEqual(group["launches"], len(pairs))
+                    self.assertLessEqual(len(pairs), 32)
+                    captured.extend(pairs)
+                requested = {
+                    (symbol, index) for symbol in symbols for index in invocations
+                }
+                self.assertEqual(set(captured), requested)
+                self.assertEqual(len(captured), len(requested))
+
+    def test_empty_plan_has_no_batches(self):
+        self.assertEqual(compute_groups(dict(sample_groups=[])), [])
+
+    def test_invalid_batch_size_is_rejected(self):
+        with self.assertRaises(ValueError):
+            compute_groups(dict(sample_groups=[]), max_launches=0)
 
     def test_missing_launch_count_rejects_a_truncated_plan(self):
         with self.assertRaises(ValueError):

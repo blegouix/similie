@@ -4,9 +4,13 @@
 """Check that the campaign detects changed physics while ignoring timing noise."""
 
 import json
+import os
 import shutil
+import signal
+import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -23,9 +27,73 @@ from ci_campaign import (
     compare_vorticity_slice,
     reference_history,
     compare_strategies,
+    execute,
     validate_trajectory,
     write_report,
 )
+
+
+class CampaignExecution(unittest.TestCase):
+    def test_dead_profiler_with_inherited_stdout_fails_and_cleans_up(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            script = directory / "profiler.py"
+            script.write_text(
+                "import os, signal, time\n"
+                "child = os.fork()\n"
+                "if child == 0:\n"
+                "    signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+                "    while True: time.sleep(1)\n"
+                "open('orphan.pid', 'w').write(str(child))\n"
+                "print('profiler diagnostic', flush=True)\n"
+                "os.kill(os.getpid(), signal.SIGKILL)\n"
+            )
+            # An outer timeout turns the original open-pipe hang into a bounded
+            # regression failure rather than blocking the entire test suite.
+            try:
+                runner = subprocess.run(
+                    [
+                        sys.executable,
+                        "-c",
+                        "from ci_campaign import execute; from pathlib import Path; "
+                        f"execute([{sys.executable!r}, {str(script)!r}], Path({str(directory)!r}))",
+                    ],
+                    env=dict(os.environ, PYTHONPATH=sys.path[0]),
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                orphan = int((directory / "orphan.pid").read_text())
+                status = Path(f"/proc/{orphan}/stat")
+                deadline = time.monotonic() + 3
+                while True:
+                    try:
+                        state = status.read_text().split()[2]
+                    except FileNotFoundError:
+                        break
+                    if state == "Z":
+                        break
+                    self.assertLess(time.monotonic(), deadline, "Orphan is still alive")
+                    time.sleep(0.01)
+            finally:
+                pid_file = directory / "orphan.pid"
+                if pid_file.exists():
+                    try:
+                        os.kill(int(pid_file.read_text()), signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+            self.assertNotEqual(runner.returncode, 0)
+            self.assertIn("status -9", runner.stderr)
+            self.assertIn("profiler diagnostic", runner.stdout)
+            self.assertEqual(
+                (directory / "run.log").read_text(), "profiler diagnostic\n"
+            )
+
+    def test_successful_command_preserves_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            execute([sys.executable, "-c", "print('completed')"], directory)
+            self.assertEqual((directory / "run.log").read_text(), "completed\n")
 
 
 class CampaignConfiguration(unittest.TestCase):

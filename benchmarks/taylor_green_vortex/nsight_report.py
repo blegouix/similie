@@ -54,33 +54,35 @@ def nvtx_filter(case):
     return "regex:^" + name + "$/"
 
 
-def compute_groups(plan):
-    groups = plan["sample_groups"]
-    if not groups:
-        return []
-    if "kernel_invocations" not in plan:
-        # Preserve compatibility with Systems captures made before launch
-        # counts were recorded; their exact groups remain valid.
-        return [
-            dict(group, launches=len(group["symbols"]) * len(group["invocations"]))
-            for group in groups
-        ]
-    symbols = sorted({symbol for group in groups for symbol in group["symbols"]})
-    invocations = sorted({index for group in groups for index in group["invocations"]})
-    for group in groups:
-        for symbol in group["symbols"]:
-            if max(group["invocations"]) > plan["kernel_invocations"].get(symbol, 0):
-                raise ValueError(f"Missing first-iteration launch counts for {symbol}")
-    # NCU accepts one invocation pattern per process. Its union captures a
-    # superset of the requested calls, avoiding a separate application replay
-    # for each symbol/index combination. Count only calls that actually exist
-    # so --kill neither truncates the samples nor waits for nonexistent calls.
-    launches = sum(
-        index <= plan["kernel_invocations"][symbol]
-        for symbol in symbols
-        for index in invocations
-    )
-    return [dict(symbols=symbols, invocations=invocations, launches=launches)]
+def compute_groups(plan, max_launches=32):
+    if max_launches < 1:
+        raise ValueError("Compute batches must contain at least one launch")
+    batches = []
+    for group in plan["sample_groups"]:
+        if "kernel_invocations" in plan:
+            for symbol in group["symbols"]:
+                if max(group["invocations"]) > plan["kernel_invocations"].get(
+                    symbol, 0
+                ):
+                    raise ValueError(
+                        f"Missing first-iteration launch counts for {symbol}"
+                    )
+        # Keep the exact invocation pattern for each set of symbols. Taking
+        # their union also samples unrequested calls and makes NCU retain much
+        # larger reports. Bound each process while preserving every target.
+        for start in range(0, len(group["invocations"]), max_launches):
+            invocations = group["invocations"][start : start + max_launches]
+            symbols_per_batch = max_launches // len(invocations)
+            for offset in range(0, len(group["symbols"]), symbols_per_batch):
+                symbols = group["symbols"][offset : offset + symbols_per_batch]
+                batches.append(
+                    dict(
+                        symbols=symbols,
+                        invocations=invocations,
+                        launches=len(symbols) * len(invocations),
+                    )
+                )
+    return batches
 
 
 def compute_command(
