@@ -569,14 +569,17 @@ public:
         m_dec.reduce_one_form(m_transport, m_transport_one);
         m_dec.derivative_one_form(m_transport_one, result);
         m_dec.positive_laplacian(state, m_lap);
-        Field const lap = m_lap;
+        m_dec.reconstruct_two_form(result, m_transport);
+        m_dec.reconstruct_two_form(m_lap, m_check);
+        Field const lap = m_check, curl = m_transport;
         Kokkos::parallel_for(
                 "vorticity_evolution",
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) {
                     for (int c = 0; c < 3; ++c)
-                        result(c, i) = physics(result(c, i), -lap(c, i));
+                        curl(c, i) = physics(curl(c, i), -lap(c, i));
                 });
+        m_dec.reduce_two_form(m_transport, result);
         if (reconstruct_pressure) {
             m_pressure.compute_pressure(velocity, pressure, 0.0, vorticity, acceleration);
             monitor_constraints(state);

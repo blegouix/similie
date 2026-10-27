@@ -20,8 +20,8 @@ enum class EnergyConvention { Fluid, FluidAndField };
  * and get<2/3>() are the generated electric/magnetic coupling objects.
  *
  * The caller computes spatial derivatives with exterior operators. In
- * particular, it supplies one reduced current to both the Maxwell update and
- * the force/power evaluation, and uses that current for the charge divergence.
+ * particular, it supplies reconstructed forms to the Maxwell update and
+ * force/power evaluation. It reduces the same current for charge divergence.
  * Constitutive current laws and material parameters belong to the field model.
  *
  * For compressible flow, Fluid stores thermal+kinetic energy and adds J.E to
@@ -77,7 +77,7 @@ public:
     {
     }
 
-    /** Evaluate both exchanges using the spatially reduced current.
+    /** Evaluate both exchanges using the reconstructed current form.
      * Magnetic quasistatics also needs velocity to evaluate E=-u cross B+eta J.
      * Electric quasistatics reconstructs displacement from charge separately.
      */
