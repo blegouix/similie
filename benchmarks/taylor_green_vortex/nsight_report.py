@@ -799,26 +799,7 @@ def metric_cells(row, visible_metrics):
 
 def compact_report(systems, compute, visible_metrics):
     """Show every case within GitHub's one-MiB per-step summary limit."""
-    lines = [
-        "# TGV profiling summary",
-        "",
-        "All cases are listed below. NVTX ranges are inclusive and sorted by GPU duration. "
-        "The hottest solver kernels follow each range table. Detailed tables, full symbols, "
-        "and complete Nsight messages are in the artifact's nsight/report.md and report.json.",
-        "",
-        "Red/bold marks at least 85% of sustained throughput or a high-priority Nsight focus metric; "
-        f"green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
-        "Compute SOL is measured only for the selected hot samples in hybrid mode; — means not measured. "
-        "SM active is activity, not Compute SOL. Cache BW is normalized sector throughput, not cache hit rate.",
-    ]
-    for case, reason in compute.get("hot_kernel_skips", {}).items():
-        lines += [
-            "",
-            "Detailed profiling skipped for "
-            + markdown(case)
-            + ": "
-            + markdown(reason),
-        ]
+    lines = ["# TGV profiling summary"]
     ansi_lines = {}
     for case, _, _, _ in case_specs():
         rows = list(
@@ -888,6 +869,21 @@ def compact_report(systems, compute, visible_metrics):
             end = [markdown(analysis)]
             ansi_lines[len(lines)] = "| " + " | ".join(start + ansi + end) + " |"
             lines.append("| " + " | ".join(start + cells + end) + " |")
+    lines += [
+        "",
+        "Red/bold marks at least 85% of sustained throughput or a high-priority Nsight focus metric; "
+        f"green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
+        "Compute SOL is measured only for the selected hot samples in hybrid mode; — means not measured. "
+        "SM active is activity, not Compute SOL. Cache BW is normalized sector throughput, not cache hit rate.",
+    ]
+    for case, reason in compute.get("hot_kernel_skips", {}).items():
+        lines += [
+            "",
+            "Detailed profiling skipped for "
+            + markdown(case)
+            + ": "
+            + markdown(reason),
+        ]
     if compute.get("errors"):
         lines += ["", "Collection errors: " + markdown("; ".join(compute["errors"]))]
     text = "\n".join(lines) + "\n"
