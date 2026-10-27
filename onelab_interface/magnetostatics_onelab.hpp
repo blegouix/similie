@@ -4348,41 +4348,42 @@ inline CellPostProcessFields make_cell_post_process_fields(
     return cell_output;
 }
 
-template <class FillStress, class ReadPosition, class WriteForceDensity>
+template <class... DDim, class FillStress, class ReadPosition, class WriteForceDensity>
+    requires(sizeof...(DDim) == 2 || sizeof...(DDim) == 3)
 void fill_force_density_on_cell_domain(
-        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const&
-                cell_domain,
+        ddc::DiscreteDomain<DDim...> const& cell_domain,
         FillStress&& fill_stress,
         ReadPosition&& read_position,
         WriteForceDensity&& write_force_density)
 {
-    using InPlaneOneFormIndex = sil::tensor::Covariant<magnetostatics_local::InPlaneIndex>;
+    using StressRowIndex = sil::tensor::Covariant<
+            sil::tensor::TensorNaturalIndex<typename DDim::continuous_dimension_type...>>;
+    using StressMetricIndex = MetricIndex<typename DDim::continuous_dimension_type...>;
+    using StressPositionIndex = sil::tensor::Contravariant<
+            sil::tensor::TensorNaturalIndex<typename DDim::continuous_dimension_type...>>;
     using ForceDensityIndex = physics::magnetostatics::ForceDensityIndex<X, Y, Z>;
     using ScalarIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<ForceDensityIndex> force_density_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, ForceDensityIndex>
+    ddc::DiscreteDomain<DDim..., ForceDensityIndex>
             force_density_dom(cell_domain, force_density_accessor.domain());
     ddc::Chunk force_density_alloc(force_density_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor force_density_tensor(force_density_alloc);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex2D> metric_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, MetricIndex2D>
+    [[maybe_unused]] sil::tensor::TensorAccessor<StressMetricIndex> metric_accessor;
+    ddc::DiscreteDomain<DDim..., StressMetricIndex>
             metric_dom(cell_domain, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, PositionIndex2D>
+    [[maybe_unused]] sil::tensor::TensorAccessor<StressPositionIndex> position_accessor;
+    ddc::DiscreteDomain<DDim..., StressPositionIndex>
             position_dom(cell_domain, position_accessor.domain());
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<InPlaneOneFormIndex> one_form_accessor;
-    ddc::DiscreteDomain<
-            magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY,
-            InPlaneOneFormIndex>
+    [[maybe_unused]] sil::tensor::TensorAccessor<StressRowIndex> one_form_accessor;
+    ddc::DiscreteDomain<DDim..., StressRowIndex>
             one_form_dom(cell_domain, one_form_accessor.domain());
     ddc::Chunk one_form_alloc(one_form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor one_form_tensor(one_form_alloc);
@@ -4390,32 +4391,35 @@ void fill_force_density_on_cell_domain(
     sil::tensor::Tensor stress_form(stress_form_alloc);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<ScalarIndex> scalar_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, ScalarIndex>
-            scalar_dom(cell_domain, scalar_accessor.domain());
+    ddc::DiscreteDomain<DDim..., ScalarIndex> scalar_dom(cell_domain, scalar_accessor.domain());
     ddc::Chunk scalar_alloc(scalar_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor scalar_tensor(scalar_alloc);
 
     ddc::host_for_each(cell_domain, [&](auto elem) {
-        std::array<double, 2> const coordinates = read_position(elem);
+        std::array<double, sizeof...(DDim)> const coordinates = read_position(elem);
         position(elem, position.accessor().template access_element<X>()) = coordinates[0];
         position(elem, position.accessor().template access_element<Y>()) = coordinates[1];
 
         metric(elem, metric.accessor().template access_element<X, X>()) = 1.0;
         metric(elem, metric.accessor().template access_element<X, Y>()) = 0.0;
         metric(elem, metric.accessor().template access_element<Y, Y>()) = 1.0;
+        if constexpr (sizeof...(DDim) == 3) {
+            position(elem, position.accessor().template access_element<Z>()) = coordinates[2];
+            metric(elem, metric.accessor().template access_element<X, Z>()) = 0.0;
+            metric(elem, metric.accessor().template access_element<Y, Z>()) = 0.0;
+            metric(elem, metric.accessor().template access_element<Z, Z>()) = 1.0;
+        }
     });
 
-    auto staged_codifferential = sil::exterior::
-            make_staged_codifferential<MetricIndex2D, InPlaneOneFormIndex, InPlaneOneFormIndex>(
-                    Kokkos::DefaultHostExecutionSpace(),
-                    one_form_tensor,
-                    metric,
-                    position);
+    auto staged_codifferential = sil::exterior::make_staged_codifferential<
+            StressMetricIndex,
+            StressRowIndex,
+            StressRowIndex>(Kokkos::DefaultHostExecutionSpace(), one_form_tensor, metric, position);
 
     sil::exterior::StagedOperator<sil::exterior::Reduction<
-            ddc::TypeSeq<InPlaneOneFormIndex>,
+            ddc::TypeSeq<StressRowIndex>,
             decltype(position),
-            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>>>
+            ddc::DiscreteElement<DDim...>>>
             reduce_stress(
                     Kokkos::DefaultHostExecutionSpace(),
                     one_form_tensor,
@@ -4425,9 +4429,12 @@ void fill_force_density_on_cell_domain(
     auto fill_force_component = [&](auto select_components, auto assign_output) {
         ddc::host_for_each(cell_domain, [&](auto elem) {
             std::array<double, 6> const stress = fill_stress(elem);
-            std::array<double, 2> const one_form = select_components(stress);
+            std::array<double, sizeof...(DDim)> const one_form = select_components(stress);
             stress_form(elem, stress_form.accessor().template access_element<X>()) = one_form[0];
             stress_form(elem, stress_form.accessor().template access_element<Y>()) = one_form[1];
+            if constexpr (sizeof...(DDim) == 3)
+                stress_form(elem, stress_form.accessor().template access_element<Z>())
+                        = one_form[2];
         });
         reduce_stress(one_form_tensor, stress_form);
         staged_codifferential(scalar_tensor, one_form_tensor);
@@ -4438,7 +4445,10 @@ void fill_force_density_on_cell_domain(
 
     fill_force_component(
             [](std::array<double, 6> const& stress) {
-                return std::array<double, 2> {stress[0], stress[3]};
+                if constexpr (sizeof...(DDim) == 3)
+                    return std::array<double, 3> {stress[0], stress[3], stress[4]};
+                else
+                    return std::array<double, 2> {stress[0], stress[3]};
             },
             [&](auto elem, double value) {
                 force_density_tensor(
@@ -4448,7 +4458,10 @@ void fill_force_density_on_cell_domain(
             });
     fill_force_component(
             [](std::array<double, 6> const& stress) {
-                return std::array<double, 2> {stress[3], stress[1]};
+                if constexpr (sizeof...(DDim) == 3)
+                    return std::array<double, 3> {stress[3], stress[1], stress[5]};
+                else
+                    return std::array<double, 2> {stress[3], stress[1]};
             },
             [&](auto elem, double value) {
                 force_density_tensor(
@@ -4458,7 +4471,10 @@ void fill_force_density_on_cell_domain(
             });
     fill_force_component(
             [](std::array<double, 6> const& stress) {
-                return std::array<double, 2> {stress[4], stress[5]};
+                if constexpr (sizeof...(DDim) == 3)
+                    return std::array<double, 3> {stress[4], stress[5], stress[2]};
+                else
+                    return std::array<double, 2> {stress[4], stress[5]};
             },
             [&](auto elem, double value) {
                 force_density_tensor(
@@ -4523,45 +4539,43 @@ inline void fill_force_density_on_quadrilateral_grid(
             });
 }
 
-inline void fill_force_density_on_hexahedral_grid_xy_slices(
+inline void fill_force_density_on_hexahedral_grid(
         sil::onelab_interface::gmsh::StructuredGrid3D const& grid,
         std::vector<CellPostProcessFields>& cell_outputs)
 {
-    auto const cell_domain = ddc::DiscreteDomain<
-            magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY>(
-            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
+    using magnetostatics_local::DDimX;
+    using magnetostatics_local::DDimY;
+    using magnetostatics_local::DDimZ;
+    ddc::DiscreteDomain<DDimX, DDimY, DDimZ> const cell_domain(
+            ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
             ddc::DiscreteVector<
-                    magnetostatics_local::DDimX,
-                    magnetostatics_local::DDimY>(grid.ncell_x(), grid.ncell_y()));
-    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
-        fill_force_density_on_cell_domain(
-                cell_domain,
-                [&](auto elem) {
-                    std::size_t const i = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                    std::size_t const j = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                    return cell_outputs[grid.cell_index(i, j, k)].maxwell_stress;
-                },
-                [&](auto elem) {
-                    std::size_t const i = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                    std::size_t const j = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                    return std::array<double, 2> {
-                            grid.cell_center_x(i),
-                            grid.cell_center_y(j),
-                    };
-                },
-                [&](auto elem, std::array<double, 3> const& force_density) {
-                    std::size_t const i = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                    std::size_t const j = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                    cell_outputs[grid.cell_index(i, j, k)].force_density = force_density;
-                });
-    }
+                    DDimX,
+                    DDimY,
+                    DDimZ>(grid.ncell_x(), grid.ncell_y(), grid.ncell_z()));
+    fill_force_density_on_cell_domain(
+            cell_domain,
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> const& elem) {
+                return cell_outputs[grid.cell_index(
+                                            ddc::DiscreteElement<DDimX>(elem).uid(),
+                                            ddc::DiscreteElement<DDimY>(elem).uid(),
+                                            ddc::DiscreteElement<DDimZ>(elem).uid())]
+                        .maxwell_stress;
+            },
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> const& elem) {
+                return std::array<double, 3> {
+                        grid.cell_center_x(ddc::DiscreteElement<DDimX>(elem).uid()),
+                        grid.cell_center_y(ddc::DiscreteElement<DDimY>(elem).uid()),
+                        grid.cell_center_z(ddc::DiscreteElement<DDimZ>(elem).uid())};
+            },
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> const& elem,
+                std::array<double, 3> const& force_density) {
+                cell_outputs[grid.cell_index(
+                                     ddc::DiscreteElement<DDimX>(elem).uid(),
+                                     ddc::DiscreteElement<DDimY>(elem).uid(),
+                                     ddc::DiscreteElement<DDimZ>(elem).uid())]
+                        .force_density
+                        = force_density;
+            });
 }
 
 // Physical diagnostic densities are reduced on selected oriented grid faces.
@@ -5666,7 +5680,7 @@ Result run_on_hexahedral_grid(
             result.max_abs_field = std::max(result.max_abs_field, std::abs(value));
         }
     }
-    fill_force_density_on_hexahedral_grid_xy_slices(grid, cell_outputs);
+    fill_force_density_on_hexahedral_grid(grid, cell_outputs);
     integrate_diagnostics(grid, inputs, cell_inputs_3d, cell_outputs, result);
 
     write_results_view(
