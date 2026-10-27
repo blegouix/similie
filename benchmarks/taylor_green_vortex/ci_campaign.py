@@ -124,6 +124,9 @@ def validate_trajectory(path, configuration, n, reference=False):
         raise ValueError(f"Wrong trajectory mode: {path}")
     if record["steps"] <= 0 or (not reference and record["steps"] != PERFORMANCE_STEPS):
         raise ValueError(f"Incorrect step count: {path}")
+    monitoring_enabled = record.get("monitoring_enabled", True)
+    if reference and not monitoring_enabled:
+        raise ValueError(f"Reference validation requires monitoring: {path}")
     for key in (
         "solver_seconds",
         "mean_step_seconds",
@@ -134,45 +137,55 @@ def validate_trajectory(path, configuration, n, reference=False):
             raise ValueError(f"Invalid {key}: {path}")
     hdf = path.with_name(path.name.removesuffix(".performance.json") + ".h5")
     with h5py.File(hdf, "r") as data:
-        monitors = data["monitors"][:]
-        if monitors.shape != (record["steps"] + 1, 14) or not np.all(
-            np.isfinite(monitors)
+        components = 4 if configuration.startswith("compressible") else 3
+        state = data["final_state"][:]
+        if state.shape != (components, n**3) or not np.all(np.isfinite(state)):
+            raise ValueError(f"Invalid final state: {hdf}")
+        if "final_electromagnetic_state" in data and not np.all(
+            np.isfinite(data["final_electromagnetic_state"][:])
         ):
-            raise ValueError(f"Invalid monitor history: {hdf}")
-        if monitors[0, 0] != 0 or np.any(np.diff(monitors[:, 0]) <= 0):
-            raise ValueError(f"Time did not advance monotonically: {hdf}")
-        if monitors[-1, 0] != record["final_time"] or np.any(monitors[:, 11:13] <= 0):
-            raise ValueError(f"Invalid final time, density, or pressure: {hdf}")
-        # The incompressible velocity is a discrete curl of the analytic
-        # potential. Its unscaled difference symbol converges to the analytic
-        # derivative; the compressible velocity is prescribed directly.
-        initial_energy = (
-            0.125 * np.sinc(1 / n) ** 2
-            if configuration.startswith("incompressible")
-            else 0.125
-        )
-        if abs(monitors[0, 1] - initial_energy) > 1e-10:
-            raise ValueError(f"Incorrect initial Taylor-Green kinetic energy: {hdf}")
-        if np.max(np.abs(monitors[:, 8] - monitors[0, 8])) > 1e-8:
-            raise ValueError(f"Mass conservation exceeded tolerance: {hdf}")
-        if (
-            configuration.startswith("incompressible")
-            and np.max(monitors[:, 10]) > 1e-8
-        ):
-            raise ValueError(f"Incompressibility constraint exceeded tolerance: {hdf}")
-        constraints = data["reconstruction_monitors"][:]
-        if not np.all(np.isfinite(constraints)) or np.max(constraints[:, 1:]) > 1e-8:
-            raise ValueError(f"Reconstruction constraint exceeded tolerance: {hdf}")
-        if "electromagnetic_monitors" in data:
-            electromagnetic = data["electromagnetic_monitors"][:]
-            if not np.all(np.isfinite(electromagnetic)):
-                raise ValueError(f"Nonfinite electromagnetic monitors: {hdf}")
-            if np.max(electromagnetic[:, 5:7]) > 1e-8:
-                raise ValueError(
-                    f"Gauss or magnetic divergence constraint exceeded tolerance: {hdf}"
-                )
-            if np.max(np.abs(electromagnetic[:, 8])) > 1e-8:
-                raise ValueError(f"Inconsistent field/fluid energy exchange: {hdf}")
+            raise ValueError(f"Invalid final electromagnetic state: {hdf}")
+        if monitoring_enabled:
+            monitors = data["monitors"][:]
+            if monitors.shape != (record["steps"] + 1, 14) or not np.all(
+                np.isfinite(monitors)
+            ):
+                raise ValueError(f"Invalid monitor history: {hdf}")
+            if monitors[0, 0] != 0 or np.any(np.diff(monitors[:, 0]) <= 0):
+                raise ValueError(f"Time did not advance monotonically: {hdf}")
+            if monitors[-1, 0] != record["final_time"] or np.any(
+                monitors[:, 11:13] <= 0
+            ):
+                raise ValueError(f"Invalid final time, density, or pressure: {hdf}")
+            initial_energy = (
+                0.125 * np.sinc(1 / n) ** 2
+                if configuration.startswith("incompressible")
+                else 0.125
+            )
+            if abs(monitors[0, 1] - initial_energy) > 1e-10:
+                raise ValueError(f"Incorrect initial Taylor-Green kinetic energy: {hdf}")
+            if np.max(np.abs(monitors[:, 8] - monitors[0, 8])) > 1e-8:
+                raise ValueError(f"Mass conservation exceeded tolerance: {hdf}")
+            if (
+                configuration.startswith("incompressible")
+                and np.max(monitors[:, 10]) > 1e-8
+            ):
+                raise ValueError(f"Incompressibility constraint exceeded tolerance: {hdf}")
+            constraints = data["reconstruction_monitors"][:]
+            if not np.all(np.isfinite(constraints)) or np.max(
+                constraints[:, 1:]
+            ) > 1e-8:
+                raise ValueError(f"Reconstruction constraint exceeded tolerance: {hdf}")
+            if "electromagnetic_monitors" in data:
+                electromagnetic = data["electromagnetic_monitors"][:]
+                if not np.all(np.isfinite(electromagnetic)):
+                    raise ValueError(f"Nonfinite electromagnetic monitors: {hdf}")
+                if np.max(electromagnetic[:, 5:7]) > 1e-8:
+                    raise ValueError(
+                        f"Gauss or magnetic divergence constraint exceeded tolerance: {hdf}"
+                    )
+                if np.max(np.abs(electromagnetic[:, 8])) > 1e-8:
+                    raise ValueError(f"Inconsistent field/fluid energy exchange: {hdf}")
         if reference:
             expected_times = np.sort(np.append(np.arange(0, 10, 0.033), [8, 10]))
             times = sorted(
@@ -203,18 +216,33 @@ def validate_trajectory(path, configuration, n, reference=False):
     return record, hdf
 
 
-def compare_strategies(baseline, candidate):
-    """Compare complete final states and evolving monitors after all timing stops.
+def compare_strategies(
+    baseline, candidate, baseline_record=None, candidate_record=None
+):
+    """Compare final states and, when collected, evolving monitors.
 
     All cases advance exactly five steps from the same initial state. Compare
-    times as well as fields: different adaptive time steps cannot silently pass.
+    times as well as fields when trajectory records are supplied.
     Timing columns and Krylov residuals are deliberately excluded from equality.
     """
     results = {}
     with h5py.File(baseline, "r") as expected, h5py.File(candidate, "r") as actual:
-        names = ["final_state", "monitors"]
+        names = ["final_state"]
+        if "monitors" in expected and "monitors" in actual:
+            names.append("monitors")
         if "final_electromagnetic_state" in expected:
-            names.extend(("final_electromagnetic_state", "electromagnetic_monitors"))
+            names.append("final_electromagnetic_state")
+        if ("monitors" in expected) != ("monitors" in actual):
+            raise ValueError(f"Monitoring datasets differ: {candidate}")
+        if (
+            "electromagnetic_monitors" in expected
+            and "electromagnetic_monitors" in actual
+        ):
+            names.append("electromagnetic_monitors")
+        if ("electromagnetic_monitors" in expected) != (
+            "electromagnetic_monitors" in actual
+        ):
+            raise ValueError(f"Electromagnetic monitoring datasets differ: {candidate}")
         for name in names:
             left, right = expected[name][:], actual[name][:]
             if name == "monitors":
@@ -234,6 +262,18 @@ def compare_strategies(baseline, candidate):
                     np.all(difference <= STRATEGY_ATOL + STRATEGY_RTOL * np.abs(left))
                 ),
             }
+    if baseline_record is not None and candidate_record is not None:
+        difference = abs(
+            baseline_record["final_time"] - candidate_record["final_time"]
+        )
+        results["final_time"] = {
+            "max_absolute_error": difference,
+            "relative_l2_error": difference
+            / max(abs(baseline_record["final_time"]), STRATEGY_ATOL),
+            "passed": difference
+            <= STRATEGY_ATOL
+            + STRATEGY_RTOL * abs(baseline_record["final_time"]),
+        }
     return results
 
 
@@ -486,7 +526,7 @@ def write_report(output, phase, entries, error=None):
         lines.extend(
             (
                 "",
-                f"Final fluid/field states and monitor histories are compared with the default strategy using rtol={STRATEGY_RTOL:g}, atol={STRATEGY_ATOL:g}.",
+                f"Final fluid/field states and final times are compared with the default strategy using rtol={STRATEGY_RTOL:g}, atol={STRATEGY_ATOL:g}. Monitoring can be enabled separately for validation.",
             )
         )
         comparison_path = output / "strategy-comparison.json"
@@ -633,6 +673,7 @@ def campaign(
                 "Google Benchmark suite does not contain the expected cases"
             )
         files = {}
+        records = {}
         for strategy in range(len(STRATEGIES)) if phase == "performance" else (3,):
             for n in MESH_SIZES:
                 case = (
@@ -657,10 +698,14 @@ def campaign(
                 if "setup_seconds" in row:
                     record["setup_seconds"] = float(row["setup_seconds"])
                 files[strategy, n] = hdf
+                records[strategy, n] = record
         if phase == "performance":
             comparisons = {
                 f"strategy-{strategy + 1}/N{n}": compare_strategies(
-                    files[0, n], files[strategy, n]
+                    files[0, n],
+                    files[strategy, n],
+                    records[0, n],
+                    records[strategy, n],
                 )
                 for strategy in range(1, len(STRATEGIES))
                 for n in MESH_SIZES

@@ -18,10 +18,10 @@ import time
 
 from ci_campaign import MESH_SIZES, STRATEGIES, execute
 from nsys_report import (
-    iteration_case,
     iteration_profiles,
     markdown,
     profiling_environment,
+    solver_case,
 )
 
 
@@ -55,9 +55,11 @@ CORE_METRICS = {
     },
 }
 
+COMPUTE_SOL_GREEN_THRESHOLD = 90
+
 
 def hottest_kernels(case, plan, count):
-    """Rank by cumulative CUDA duration, once at the iteration root.
+    """Rank solver kernels by cumulative CUDA duration.
 
     Nested NVTX ranges contain the same launches, so adding their times would
     count work repeatedly. Resolve each chosen kernel's first sample to the
@@ -66,7 +68,7 @@ def hottest_kernels(case, plan, count):
     if count == 0:
         return []
     root = next(
-        region for region in plan["regions"] if region["name"] == case + "/iteration"
+        region for region in plan["regions"] if region["name"] == case + "/iteration/solver"
     )
     indices = {tuple(sample[:3]): sample[3] for sample in plan["sample_invocations"]}
     return [
@@ -144,7 +146,7 @@ def case_specs():
 
 
 def nvtx_filter(case):
-    name = re.escape(case + "/iteration").replace("/", r"\/")
+    name = re.escape(case + "/iteration/solver").replace("/", r"\/")
     return "regex:^" + name + "$/"
 
 
@@ -300,10 +302,10 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
                     domain = state.domain_by_id(domain_id)
                     if domain.name() in ("", "<default domain>"):
                         stack = list(domain.push_pop_ranges())
-            regions = [name for name in stack if iteration_case(name)]
+            regions = [name for name in stack if solver_case(name)]
             if not regions:
                 continue
-            label = "" if iteration_case(stack[-1]) else stack[-1]
+            label = "" if solver_case(stack[-1]) else stack[-1]
             launches += 1
             passes = action.metric_by_name("profiler__replayer_passes")
             passes = passes.as_double() if passes and passes.has_value() else None
@@ -780,9 +782,17 @@ def metric_cells(row, visible_metrics):
     ]
     ansi = cells.copy()
     highlights = limiting_metrics(row["metrics"], row["rules"])
-    for index, name in enumerate(visible_metrics.values()):
-        if name in highlights and row["metrics"].get(name) is not None:
-            ansi[index] = f"\x1b[1;{highlights[name]}m{cells[index]}\x1b[0m"
+    for index, (label, name) in enumerate(visible_metrics.items()):
+        value = row["metrics"].get(name)
+        color = highlights.get(name)
+        if (
+            label == "Compute SOL (%)"
+            and value is not None
+            and value >= COMPUTE_SOL_GREEN_THRESHOLD
+        ):
+            color = 32
+        if color is not None and value is not None:
+            ansi[index] = f"\x1b[1;{color}m{cells[index]}\x1b[0m"
             cells[index] = f"**{cells[index]}**"
     return cells, ansi
 
@@ -793,10 +803,11 @@ def compact_report(systems, compute, visible_metrics):
         "# TGV profiling summary",
         "",
         "All cases are listed below. NVTX ranges are inclusive and sorted by GPU duration. "
-        "The hottest iteration kernels follow each range table. Detailed tables, full symbols, "
+        "The hottest solver kernels follow each range table. Detailed tables, full symbols, "
         "and complete Nsight messages are in the artifact's nsight/report.md and report.json.",
         "",
-        "Red/bold marks at least 85% of sustained throughput or a high-priority Nsight focus metric. "
+        "Red/bold marks at least 85% of sustained throughput or a high-priority Nsight focus metric; "
+        f"green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
         "Compute SOL is measured only for the selected hot samples in hybrid mode; — means not measured. "
         "SM active is activity, not Compute SOL. Cache BW is normalized sector throughput, not cache hit rate.",
     ]
@@ -818,6 +829,7 @@ def compact_report(systems, compute, visible_metrics):
             )
         )
         lines += [
+            "",
             "",
             "## " + markdown(case.removeprefix("TaylorGreen/")),
             "",
@@ -850,14 +862,14 @@ def compact_report(systems, compute, visible_metrics):
             (
                 row
                 for row in rows
-                if row["kind"] == "kernel" and row["region"] == case + "/iteration"
+                if row["kind"] == "kernel" and row["region"] == case + "/iteration/solver"
             ),
             key=lambda row: (-row["total_ns"], row["label"], row["symbol"]),
         )[: max(10, len(compute.get("hot_kernels", {}).get(case, [])))]
         if not rows:
             lines.append(
                 "| "
-                + " | ".join(["No iteration data"] + ["—"] * (3 + len(visible_metrics)))
+                + " | ".join(["No solver data"] + ["—"] * (3 + len(visible_metrics)))
                 + " |"
             )
         for row in kernels:
@@ -914,7 +926,7 @@ def write_combined_report(output):
             "SM active is the fraction of active SM cycles, not SM peak throughput. "
             "L1/TEX and L2 BW are sector throughput relative to their respective sustained capacities, "
             "not cache hit rates or aggregate cache SOL. DRAM SOL is relative to sustained peak DRAM throughput. "
-            "In hybrid mode the hottest kernels, ranked by cumulative GPU time at the iteration root, "
+            "In hybrid mode the hottest solver kernels, ranked by cumulative GPU time in the solver range, "
             "also receive multipass Compute SOL and detailed Nsight analysis. "
             "Caches are reset between detailed replay passes for consistent counters. "
             "A dash means that metric was not measured for that sample.",
@@ -938,6 +950,7 @@ def write_combined_report(output):
         "",
         "NVTX ranges are sorted by decreasing GPU duration; kernels within each range by decreasing cumulative GPU time. "
         "Red/bold marks throughput at least 85% of sustained capacity or a high-priority Nsight focus metric. "
+        f"Green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
         "High SM activity or low occupancy alone is not treated as proof of a bottleneck.",
     ]
     if compute.get("configuration"):
@@ -965,6 +978,7 @@ def write_combined_report(output):
     for case, _, _, _ in case_specs():
         lines += [
             "",
+            "",
             "## " + markdown(case.removeprefix("TaylorGreen/")),
             "",
             "| " + " | ".join(columns) + " |",
@@ -976,7 +990,7 @@ def write_combined_report(output):
         if not rows:
             lines.append(
                 "| "
-                + " | ".join(["No iteration data"] + ["—"] * (len(columns) - 1))
+                + " | ".join(["No solver data"] + ["—"] * (len(columns) - 1))
                 + " |"
             )
         last_region = None

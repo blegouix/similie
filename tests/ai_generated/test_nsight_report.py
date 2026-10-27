@@ -32,6 +32,7 @@ from nsight_report import (
     hot_groups,
     hottest_kernels,
     limiting_metrics,
+    metric_cells,
     merge_hot_samples,
     profile_cases,
     read_compute_report,
@@ -236,7 +237,8 @@ def capture_fixture(path):
         launch(20, 50, 60)
         for base, gpu in ((100, 1000), (500, 2000)):
             region(base, base + 300, CASE + "/iteration")
-            region(base + 10, base + 100, CASE + "/iteration/A")
+            region(base + 5, base + 205, CASE + "/iteration/solver")
+            region(base + 10, base + 100, CASE + "/iteration/solver/A")
             region(base + 20, base + 40, "similie_probe")
             launch(base + 25, gpu, gpu + 10)
             if base == 100:
@@ -244,7 +246,7 @@ def capture_fixture(path):
                 launch(base + 55, gpu + 5, gpu + 15)
                 region(base + 80, base + 90, "library_probe")
                 launch(base + 85, gpu + 15, gpu + 25)
-            region(base + 110, base + 200, CASE + "/iteration/B")
+            region(base + 110, base + 200, CASE + "/iteration/solver/B")
             region(base + 120, base + 140, "similie_probe")
             launch(
                 base + 125,
@@ -264,7 +266,7 @@ class HotKernelSelection(unittest.TestCase):
         root = next(
             region
             for region in plan["regions"]
-            if region["name"] == CASE + "/iteration"
+            if region["name"] == CASE + "/iteration/solver"
         )
         library = next(
             kernel for kernel in root["kernels"] if kernel["label"] == "library_probe"
@@ -328,13 +330,13 @@ class HotKernelSelection(unittest.TestCase):
         ]
         merge_hot_samples(plan, samples, detailed, selected)
         indexed = {row["region"] + "/" + row["label"]: row for row in samples}
-        hot = indexed[CASE + "/iteration/similie_probe"]
+        hot = indexed[CASE + "/iteration/solver/similie_probe"]
         self.assertEqual(hot["metrics"]["SM (%)"], 90)
         self.assertEqual(hot["metrics"]["DRAM (%)"], 42)
         self.assertEqual(hot["replay_passes"], 1)
         self.assertEqual(hot["detailed_replay_passes"], 8)
         self.assertNotIn(
-            "SM (%)", indexed[CASE + "/iteration/B/similie_probe"]["metrics"]
+            "SM (%)", indexed[CASE + "/iteration/solver/B/similie_probe"]["metrics"]
         )
         with self.assertRaisesRegex(ValueError, "Missing detailed results"):
             merge_hot_samples(plan, samples, [], selected)
@@ -491,8 +493,8 @@ class IterationAttribution(unittest.TestCase):
             action(stack)
             for stack in (
                 (CASE + "/setup", "library_probe"),
-                (CASE + "/iteration", CASE + "/iteration/A"),
-                (CASE + "/iteration", CASE + "/iteration/A", "library_probe"),
+                (CASE + "/iteration", CASE + "/iteration/solver", CASE + "/iteration/solver/A"),
+                (CASE + "/iteration", CASE + "/iteration/solver", CASE + "/iteration/solver/A", "library_probe"),
             )
         ]
         section = SimpleNamespace(
@@ -576,7 +578,7 @@ class IterationAttribution(unittest.TestCase):
             self.assertIn(f"--kernel-id=::regex:^({SYMBOL})$:^(1|4|5)$", command)
             self.assertIn("--range-filter=::^(1)$", command)
             self.assertIn(
-                "--nvtx-include=regex:^TaylorGreen\\/N=64\\/default\\/iteration$/",
+                "--nvtx-include=regex:^TaylorGreen\\/N=64\\/default\\/iteration\\/solver$/",
                 command,
             )
             self.assertIn("--launch-count=3", command)
@@ -661,7 +663,7 @@ class IterationAttribution(unittest.TestCase):
         regions = {region["name"]: region for region in profile["regions"]}
         self.assertEqual(
             set(regions),
-            {CASE + "/iteration", CASE + "/iteration/A", CASE + "/iteration/B"},
+            {CASE + "/iteration", CASE + "/iteration/solver", CASE + "/iteration/solver/A", CASE + "/iteration/solver/B"},
         )
         root = regions[CASE + "/iteration"]
         self.assertEqual(root["calls"], 2)
@@ -670,7 +672,7 @@ class IterationAttribution(unittest.TestCase):
         self.assertEqual(root["others_ns"], 15)
         self.assertEqual(root["others_host_ns"], 600)
         self.assertEqual(root["kernels"][0]["calls"], 5)
-        a = regions[CASE + "/iteration/A"]
+        a = regions[CASE + "/iteration/solver/A"]
         self.assertEqual(a["others_ns"], 0)
         self.assertEqual(a["gpu_ns"], 35)
         self.assertEqual(
@@ -697,7 +699,7 @@ class IterationAttribution(unittest.TestCase):
         def action(region, value):
             domain = SimpleNamespace(
                 name=lambda: "<default domain>",
-                push_pop_ranges=lambda: (CASE + "/iteration", region, "similie_probe"),
+                push_pop_ranges=lambda: (CASE + "/iteration", CASE + "/iteration/solver", region, "similie_probe"),
             )
             state = SimpleNamespace(domains=lambda: (0,), domain_by_id=lambda _: domain)
 
@@ -713,9 +715,9 @@ class IterationAttribution(unittest.TestCase):
             )
 
         actions = [
-            action(CASE + "/iteration/A", 10),
-            action(CASE + "/iteration/B", 90),
-            action(CASE + "/iteration/A", 30),
+            action(CASE + "/iteration/solver/A", 10),
+            action(CASE + "/iteration/solver/B", 90),
+            action(CASE + "/iteration/solver/A", 30),
         ]
         section = SimpleNamespace(
             num_actions=lambda: len(actions), action_by_idx=lambda index: actions[index]
@@ -729,11 +731,11 @@ class IterationAttribution(unittest.TestCase):
             read_compute_report(Path("unused"), api, expected_launches=2)
         by_region = {sample["region"]: sample for sample in samples}
         self.assertEqual(len(by_region), 3)
-        self.assertEqual(by_region[CASE + "/iteration"]["metrics"]["SM (%)"], 10)
-        self.assertEqual(by_region[CASE + "/iteration/A"]["metrics"]["SM (%)"], 10)
-        self.assertEqual(by_region[CASE + "/iteration/B"]["metrics"]["SM (%)"], 90)
+        self.assertEqual(by_region[CASE + "/iteration/solver"]["metrics"]["SM (%)"], 10)
+        self.assertEqual(by_region[CASE + "/iteration/solver/A"]["metrics"]["SM (%)"], 10)
+        self.assertEqual(by_region[CASE + "/iteration/solver/B"]["metrics"]["SM (%)"], 90)
         self.assertIsNone(
-            by_region[CASE + "/iteration/A"]["metrics"]["Registers/thread"]
+            by_region[CASE + "/iteration/solver/A"]["metrics"]["Registers/thread"]
         )
 
 
@@ -751,7 +753,7 @@ class CombinedReport(unittest.TestCase):
     def test_summary_keeps_every_case_under_github_limit_when_detail_is_large(self):
         profiles, samples = {}, {}
         for case, _, _, _ in case_specs():
-            region = case + "/iteration"
+            region = case + "/iteration/solver"
             profiles[case] = dict(
                 regions=[
                     dict(
@@ -799,6 +801,7 @@ class CombinedReport(unittest.TestCase):
             summary = (output / "nsight/summary.md").read_text()
             self.assertLess(len(summary.encode()), 1024 * 1024)
             self.assertEqual(summary.count("\n## "), 14)
+            self.assertIn("\n\n\n## ", summary)
             for case, _, _, _ in case_specs():
                 self.assertIn(case.removeprefix("TaylorGreen/"), summary)
 
@@ -815,7 +818,7 @@ class CombinedReport(unittest.TestCase):
 
         domain = SimpleNamespace(
             name=lambda: "<default domain>",
-            push_pop_ranges=lambda: [CASE + "/iteration"],
+            push_pop_ranges=lambda: [CASE + "/iteration", CASE + "/iteration/solver"],
         )
         state = SimpleNamespace(domains=lambda: [0], domain_by_id=lambda _: domain)
         action = SimpleNamespace(
@@ -918,6 +921,12 @@ class CombinedReport(unittest.TestCase):
             {"Registers/thread": 31},
         )
 
+    def test_near_peak_compute_sol_is_green(self):
+        row = {"metrics": {"SM (%)": 90}, "rules": []}
+        cells, ansi = metric_cells(row, {"Compute SOL (%)": "SM (%)"})
+        self.assertEqual(cells, ["**90**"])
+        self.assertEqual(ansi, ["\x1b[1;32m90\x1b[0m"])
+
     def test_tables_use_systems_timings_and_region_specific_compute_metrics(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
@@ -1013,14 +1022,14 @@ class CombinedReport(unittest.TestCase):
                 and row["kind"] == "kernel"
                 and row["label"] == "similie_probe"
             }
-            self.assertEqual(kernels[CASE + "/iteration/A"]["calls"], 3)
-            self.assertEqual(kernels[CASE + "/iteration/A"]["mean_ns"], 10)
-            self.assertEqual(kernels[CASE + "/iteration/A"]["total_ns"], 30)
-            self.assertEqual(kernels[CASE + "/iteration/A"]["metrics"]["SM (%)"], 10)
-            self.assertEqual(kernels[CASE + "/iteration/B"]["metrics"]["SM (%)"], 90)
+            self.assertEqual(kernels[CASE + "/iteration/solver/A"]["calls"], 3)
+            self.assertEqual(kernels[CASE + "/iteration/solver/A"]["mean_ns"], 10)
+            self.assertEqual(kernels[CASE + "/iteration/solver/A"]["total_ns"], 30)
+            self.assertEqual(kernels[CASE + "/iteration/solver/A"]["metrics"]["SM (%)"], 10)
+            self.assertEqual(kernels[CASE + "/iteration/solver/B"]["metrics"]["SM (%)"], 90)
             self.assertIn(
                 "Long diagnostic detail",
-                kernels[CASE + "/iteration/A"]["rules"][0]["message"],
+                kernels[CASE + "/iteration/solver/A"]["rules"][0]["message"],
             )
             with (output / "nsight/report.csv").open() as source:
                 self.assertEqual(len(list(csv.DictReader(source))), 14 * 11)
@@ -1037,7 +1046,7 @@ class CombinedReport(unittest.TestCase):
             self.assertIn("Missing Nsight Compute diagnostics", errors)
             report = (output / "nsight/report.md").read_text()
             self.assertEqual(report.count("| Region | Kernel | GPU total (ms) |"), 14)
-            self.assertEqual(report.count("No iteration data"), 13)
+            self.assertEqual(report.count("No solver data"), 13)
             self.assertIn("Not sampled", report)
 
 

@@ -69,6 +69,17 @@ def iteration_case(name):
     return None
 
 
+def solver_case(name):
+    parts = name.split("/")
+    if (
+        len(parts) >= 5
+        and parts[0] == "TaylorGreen"
+        and parts[3:5] == ["iteration", "solver"]
+    ):
+        return "/".join(parts[:3])
+    return None
+
+
 def covered_duration(intervals):
     end = None
     duration = 0
@@ -222,6 +233,9 @@ def iteration_profiles(database):
             # Kernels launched directly in a TGV region use their CUDA name.
             label = "" if iteration_case(active[-1]["name"]) else active[-1]["name"]
             first = active[-1]["iteration"] == first_iterations[active[-1]["case"]]
+            in_solver = any(
+                solver_case(scope["name"]) == active[-1]["case"] for scope in active
+            )
             sample_targets = []
             for scope in active:
                 if "devices" not in scope:
@@ -249,13 +263,17 @@ def iteration_profiles(database):
                 )
                 kernel["calls"] += 1
                 kernel["total_ns"] += activity["end"] - activity["start"]
-                if first:
+                if (
+                    first
+                    and in_solver
+                    and solver_case(scope["name"]) == active[-1]["case"]
+                ):
                     target = (scope["name"], *key)
                     if target not in profile["targets"]:
                         profile["sample_ranges"].add(1)
                         profile["targets"].add(target)
                         sample_targets.append(target)
-            if activity["symbol"] is not None and first:
+            if activity["symbol"] is not None and first and in_solver:
                 launches.setdefault(active[-1]["case"], []).append(
                     (activity["symbol"], sample_targets)
                 )
