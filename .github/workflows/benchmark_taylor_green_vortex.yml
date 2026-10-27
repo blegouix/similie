@@ -12,6 +12,11 @@ on:
       target_sha:
         description: Full commit SHA with an existing CUDA Docker image
         required: false
+      profiling_detail:
+        description: Core uses one counter pass; full collects aggregate SOL and rules
+        type: choice
+        options: [core, full]
+        default: core
   workflow_call:
     inputs:
       target_sha:
@@ -20,6 +25,10 @@ on:
       ci_environment:
         required: false
         type: string
+      profiling_detail:
+        required: false
+        type: string
+        default: core
 
 permissions:
   contents: read
@@ -57,6 +66,7 @@ jobs:
       FLUID: ${{ matrix.fluid }}
       TRANSPORT: ${{ matrix.transport }}
       COUPLING: ${{ matrix.coupling }}
+      PROFILING_DETAIL: ${{ inputs.profiling_detail || 'core' }}
     steps:
     - name: Select target commit and isolated output path
       id: target
@@ -126,6 +136,8 @@ jobs:
         trap 'exit 130' INT
         trap 'exit 143' TERM
         docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" --name "${container_name}" \
+          --memory=8g --memory-swap=32g \
+          -e PROFILING_DETAIL="${PROFILING_DETAIL:-core}" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
@@ -138,6 +150,7 @@ jobs:
             nvidia-smi
             python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/nsight_report.py" compute \
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
+              --detail "${PROFILING_DETAIL}" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}"
           ' &

@@ -17,17 +17,20 @@ import textwrap
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[2] / "benchmarks/taylor_green_vortex")
 )
 from nsight_report import (
+    CORE_METRICS,
     METRICS,
     case_specs,
     combined_rows,
     compute_command,
     compute_groups,
     limiting_metrics,
+    profile_cases,
     read_compute_report,
     write_combined_report,
 )
@@ -106,6 +109,60 @@ class ComputeSamplingPlan(unittest.TestCase):
 
     def test_empty_plan_has_no_batches(self):
         self.assertEqual(compute_groups(dict(sample_groups=[])), [])
+
+    def test_core_union_covers_samples_and_counts_only_existing_calls(self):
+        plan = dict(
+            sample_groups=[
+                dict(symbols=[SYMBOL], invocations=[1, 4, 5]),
+                dict(symbols=["_Zshort_kernel"], invocations=[1]),
+            ],
+            kernel_invocations={SYMBOL: 6, "_Zshort_kernel": 1},
+        )
+        groups = compute_groups(plan, combine=True)
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["launches"], 4)
+        captured = {
+            (symbol, index)
+            for symbol in groups[0]["symbols"]
+            for index in groups[0]["invocations"]
+            if index <= plan["kernel_invocations"][symbol]
+        }
+        self.assertEqual(
+            captured, {(SYMBOL, 1), (SYMBOL, 4), (SYMBOL, 5), ("_Zshort_kernel", 1)}
+        )
+
+    def test_failed_capture_stops_before_starting_another_case(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            directory = output / "performance/nsys"
+            directory.mkdir(parents=True)
+            plan = dict(
+                sample_groups=[dict(symbols=[SYMBOL], invocations=[1])],
+                kernel_invocations={SYMBOL: 1},
+                sample_ranges=[1],
+            )
+            (directory / "timings.json").write_text(
+                json.dumps(dict(cases={CASE: plan, "next": plan}))
+            )
+            with (
+                patch("nsight_report.profiling_environment", return_value={}),
+                patch(
+                    "nsight_report.case_specs",
+                    return_value=[
+                        (CASE, "first", 64, ()),
+                        ("next", "second", 64, ()),
+                    ],
+                ),
+                patch(
+                    "nsight_report.execute", side_effect=RuntimeError("capture failed")
+                ) as execute,
+                self.assertRaisesRegex(RuntimeError, "capture failed"),
+            ):
+                profile_cases(Path("binary"), output, "incompressible", "ideal", "hd")
+            self.assertEqual(execute.call_count, 1)
+            result = json.loads((output / "ncu/results.json").read_text())
+            self.assertEqual(result["cases"], {CASE: []})
+            self.assertEqual(result["errors"], [CASE + ": capture failed"])
 
     def test_invalid_batch_size_is_rejected(self):
         with self.assertRaises(ValueError):
@@ -326,17 +383,33 @@ class IterationAttribution(unittest.TestCase):
             )
             self.assertIn("--launch-count=3", command)
             self.assertIn("--kill=yes", command)
-            self.assertIn("--replay-mode=application", command)
-            self.assertIn("--app-replay-mode=strict", command)
+            self.assertIn("--replay-mode=kernel", command)
+            self.assertFalse(
+                any(option.startswith("--app-replay-mode") for option in command)
+            )
             self.assertIn("--cache-control=none", command)
             self.assertIn("--import-sass=no", command)
             self.assertIn(
-                "--metrics="
-                + ",".join(
-                    METRICS[key] for key in ("L1/TEX (%)", "L2 (%)", "DRAM (%)")
-                ),
+                "--metrics=" + ",".join(CORE_METRICS.values()),
                 command,
             )
+            self.assertFalse(any(option.startswith("--section=") for option in command))
+            full = compute_command(
+                Path("binary"),
+                Path(temporary),
+                CASE,
+                64,
+                (),
+                "incompressible",
+                "ideal",
+                "ehd",
+                profile["sample_ranges"],
+                group,
+                detail="full",
+            )
+            self.assertIn("--section=SpeedOfLight", full)
+            self.assertIn("--section=Occupancy", full)
+            self.assertIn("--metrics=" + ",".join(METRICS.values()), full)
 
     def test_library_launch_nested_in_similie_scope_is_reported_separately(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -461,6 +534,84 @@ class IterationAttribution(unittest.TestCase):
 
 
 class CombinedReport(unittest.TestCase):
+    def test_core_reader_requires_one_pass_and_complete_metrics(self):
+        values = {name: 2.0 for name in CORE_METRICS.values()}
+        values["profiler__replayer_passes"] = 1.0
+
+        def metric(name):
+            return (
+                SimpleNamespace(has_value=lambda: True, as_double=lambda: values[name])
+                if name in values
+                else None
+            )
+
+        domain = SimpleNamespace(
+            name=lambda: "<default domain>",
+            push_pop_ranges=lambda: [CASE + "/iteration"],
+        )
+        state = SimpleNamespace(domains=lambda: [0], domain_by_id=lambda _: domain)
+        action = SimpleNamespace(
+            name=lambda _: SYMBOL,
+            nvtx_state=lambda: state,
+            metric_by_name=metric,
+            rule_results=lambda: [],
+        )
+        section = SimpleNamespace(num_actions=lambda: 1, action_by_idx=lambda _: action)
+        report = SimpleNamespace(num_ranges=lambda: 1, range_by_idx=lambda _: section)
+        api = SimpleNamespace(
+            load_report=lambda _: report, IAction=SimpleNamespace(NameBase_MANGLED=1)
+        )
+        rows = read_compute_report(Path("report"), api, 1, detail="core")
+        self.assertEqual(rows[0]["replay_passes"], 1)
+        self.assertEqual(set(rows[0]["metrics"]), set(CORE_METRICS))
+        values["profiler__replayer_passes"] = 8
+        with self.assertRaisesRegex(ValueError, "requires one pass"):
+            read_compute_report(Path("report"), api, 1, detail="core")
+        values["profiler__replayer_passes"] = 1
+        del values[CORE_METRICS["SM active (%)"]]
+        with self.assertRaisesRegex(ValueError, "Missing core metric"):
+            read_compute_report(Path("report"), api, 1, detail="core")
+
+    def test_core_report_labels_activity_and_cache_traffic_and_preserves_base_units(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            profiles = capture_fixture(output / "capture.sqlite")
+            samples = [
+                dict(
+                    region=region["name"],
+                    label=kernel["label"],
+                    symbol=kernel["symbol"],
+                    metrics={
+                        name: 3e9 if name.endswith("(sector/s)") else 42
+                        for name in CORE_METRICS
+                    },
+                    rules=[],
+                )
+                for region in profiles[CASE]["regions"]
+                for kernel in region["kernels"]
+            ]
+            (output / "performance/nsys").mkdir(parents=True)
+            (output / "ncu").mkdir()
+            (output / "performance/nsys/timings.json").write_text(
+                json.dumps(dict(cases=profiles))
+            )
+            (output / "ncu/results.json").write_text(
+                json.dumps(dict(detail="core", cases={CASE: samples}, errors=[]))
+            )
+            self.assertEqual(write_combined_report(output), [])
+            report = (output / "nsight/report.md").read_text()
+            self.assertIn("SM active (%)", report)
+            self.assertIn("L1/TEX (Gsector/s)", report)
+            self.assertNotIn("| SM SOL (%) |", report)
+            self.assertIn("| 42 | 3 | 3 | 42 |", report)
+            with (output / "nsight/report.csv").open() as source:
+                row = next(
+                    row for row in csv.DictReader(source) if row["kind"] == "kernel"
+                )
+            self.assertEqual(float(row["L1/TEX (sector/s)"]), 3e9)
+
     def test_only_near_peak_competing_throughputs_are_highlighted(self):
         self.assertEqual(limiting_metrics({}), {})
         self.assertEqual(limiting_metrics({"SM (%)": 40, "DRAM (%)": 70}), {})

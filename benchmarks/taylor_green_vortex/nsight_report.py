@@ -37,6 +37,24 @@ METRICS = {
     "Registers/thread": "launch__registers_per_thread",
 }
 
+# These direct counters share one hardware pass on the CI GPU. Aggregate SM,
+# memory and cache SOL metrics require several passes even when requested alone.
+CORE_METRICS = {
+    "SM active (%)": "sm__cycles_active.avg.pct_of_peak_sustained_elapsed",
+    "L1/TEX (sector/s)": "l1tex__t_sectors.sum.per_second",
+    "L2 (sector/s)": "lts__t_sectors.sum.per_second",
+    **{
+        name: METRICS[name]
+        for name in (
+            "DRAM (%)",
+            "Achieved occupancy (%)",
+            "Theoretical occupancy (%)",
+            "Active warps/SM",
+            "Registers/thread",
+        )
+    },
+}
+
 
 def case_specs():
     for strategy, flags in enumerate(STRATEGIES, 1):
@@ -54,7 +72,7 @@ def nvtx_filter(case):
     return "regex:^" + name + "$/"
 
 
-def compute_groups(plan, max_launches=32):
+def compute_groups(plan, max_launches=32, combine=False):
     if max_launches < 1:
         raise ValueError("Compute batches must contain at least one launch")
     batches = []
@@ -82,11 +100,35 @@ def compute_groups(plan, max_launches=32):
                         launches=len(symbols) * len(invocations),
                     )
                 )
+    if combine and batches and "kernel_invocations" in plan:
+        # One-pass counters need no device-memory backups. Collect their union
+        # in one execution so the expensive initial Poisson solve happens once
+        # per case, rather than once per exact invocation-pattern group.
+        symbols = sorted({symbol for group in batches for symbol in group["symbols"]})
+        invocations = sorted(
+            {index for group in batches for index in group["invocations"]}
+        )
+        count = sum(
+            index <= plan["kernel_invocations"][symbol]
+            for symbol in symbols
+            for index in invocations
+        )
+        return [dict(symbols=symbols, invocations=invocations, launches=count)]
     return batches
 
 
 def compute_command(
-    binary, directory, case, n, flags, fluid, transport, coupling, sample_ranges, group
+    binary,
+    directory,
+    case,
+    n,
+    flags,
+    fluid,
+    transport,
+    coupling,
+    sample_ranges,
+    group,
+    detail="core",
 ):
     symbols = "|".join(re.escape(symbol) for symbol in group["symbols"])
     invocations = "|".join(map(str, group["invocations"]))
@@ -102,25 +144,30 @@ def compute_command(
         f"--kernel-id=::regex:^({symbols})$:^({invocations})$",
         f"--launch-count={count}",
         "--kill=yes",
-        # Kernel replay backs up device allocations for each sampled launch.
-        # At N=128 those backups spill into host memory; application replay
-        # recreates the state instead and preserves every requested metric.
-        "--replay-mode=application",
-        "--app-replay-mode=strict",
-        # Each application replay recreates the cache history before a sample.
-        # Flushing caches at every sampled launch adds work and discards that
-        # history, making the counters less representative of the Systems run.
+        # Replay each sampled kernel inside one application execution. Replaying
+        # the application repeats the expensive solver setup for every counter
+        # pass and also requires matching separate solver executions exactly.
+        "--replay-mode=kernel",
+        # Systems supplies timings; Compute supplies diagnostic counters only.
+        # Keep the application's cache history instead of flushing each sample.
         "--cache-control=none",
         # These reports use hardware counters and launch/occupancy attributes,
         # not instruction or source analysis. Importing the large templated
         # CUDA cubins into every report adds unnecessary processing and I/O.
         "--import-sass=no",
-        "--section=SpeedOfLight",
-        "--section=LaunchStats",
-        "--section=Occupancy",
+        *(
+            [
+                "--section=SpeedOfLight",
+                "--section=LaunchStats",
+                "--section=Occupancy",
+            ]
+            if detail == "full"
+            else []
+        ),
         "--metrics="
-        + ",".join(METRICS[name] for name in ("L1/TEX (%)", "L2 (%)", "DRAM (%)")),
-        "--apply-rules=yes",
+        + ",".join((METRICS if detail == "full" else CORE_METRICS).values()),
+        "--disable-extra-suffixes",
+        "--apply-rules=" + ("yes" if detail == "full" else "no"),
         "--force-overwrite",
         f"--export={directory / 'kernels'}",
         str(binary),
@@ -164,7 +211,7 @@ def report_api(directory):
     )
 
 
-def read_compute_report(path, api, expected_launches=None):
+def read_compute_report(path, api, expected_launches=None, detail="full"):
     report = api.load_report(str(path))
     kernels = {}
     launches = 0
@@ -185,13 +232,23 @@ def read_compute_report(path, api, expected_launches=None):
                 continue
             label = "" if iteration_case(stack[-1]) else stack[-1]
             launches += 1
+            passes = action.metric_by_name("profiler__replayer_passes")
+            passes = passes.as_double() if passes and passes.has_value() else None
+            if detail == "core" and passes != 1:
+                raise ValueError(
+                    f"Core profiling requires one pass; captured {passes}: {path}"
+                )
             metrics = {}
-            for metric_label, name in METRICS.items():
+            for metric_label, name in (
+                METRICS if detail == "full" else CORE_METRICS
+            ).items():
                 metric = action.metric_by_name(name)
                 value = metric.as_double() if metric and metric.has_value() else None
                 metrics[metric_label] = (
                     value if value is not None and math.isfinite(value) else None
                 )
+                if detail == "core" and metrics[metric_label] is None:
+                    raise ValueError(f"Missing core metric {name}: {path}")
             rules = []
             for rule in action.rule_results():
                 if rule.has_rule_message():
@@ -215,6 +272,7 @@ def read_compute_report(path, api, expected_launches=None):
                         symbol=symbol,
                         metrics=metrics,
                         rules=rules,
+                        replay_passes=passes,
                     ),
                 )
     if expected_launches is not None and launches != expected_launches:
@@ -228,7 +286,7 @@ def read_compute_report(path, api, expected_launches=None):
     return list(kernels.values())
 
 
-def read_compute_report_isolated(path, directory, expected_launches):
+def read_compute_report_isolated(path, directory, expected_launches, detail="full"):
     # The native report reader can retain allocations after its Python objects
     # are gone. Exit after each report so they cannot accumulate in the campaign
     # process while the next GPU application is running.
@@ -244,16 +302,26 @@ def read_compute_report_isolated(path, directory, expected_launches):
                 str(path),
                 "--expected-launches",
                 str(expected_launches),
+                "--detail",
+                detail,
             ],
             text=True,
+            timeout=120,
         )
     )
 
 
-def profile_cases(binary, output, fluid, transport, coupling):
+def profile_cases(
+    binary, output, fluid, transport, coupling, batch_timeout=1800, detail="core"
+):
     directory = output / "ncu"
     directory.mkdir(parents=True, exist_ok=True)
-    results = dict(configuration=f"{fluid}_{transport}_{coupling}", cases={}, errors=[])
+    results = dict(
+        configuration=f"{fluid}_{transport}_{coupling}",
+        detail=detail,
+        cases={},
+        errors=[],
+    )
     try:
         environment = profiling_environment()
         systems = json.loads((output / "performance/nsys/timings.json").read_text())[
@@ -274,11 +342,11 @@ def profile_cases(binary, output, fluid, transport, coupling):
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                groups = compute_groups(plan)
+                groups = compute_groups(plan, combine=detail == "core")
                 count = sum(group["launches"] for group in groups)
                 print(
                     f"\nNsight Compute: {case}: {count} kernel calls covering all first samples; "
-                    f"{len(groups)} profiler processes (each repeats application setup)",
+                    f"{len(groups)} application executions (kernel replay for counter passes)",
                     flush=True,
                 )
                 results["cases"][case] = []
@@ -303,18 +371,20 @@ def profile_cases(binary, output, fluid, transport, coupling):
                             coupling,
                             plan["sample_ranges"],
                             group,
+                            detail,
                         ),
                         batch_directory,
                         environment,
+                        timeout=batch_timeout,
                     )
                     print(
                         f"  Profiler process {index}/{len(groups)} finished in "
                         f"{time.monotonic() - started:.1f} s",
                         flush=True,
                     )
-                    # --kill ends each replay pass after the requested calls.
-                    # Strict matching rejects inconsistent launches between
-                    # passes. No timings or completed trajectory are used.
+                    # --kill ends the single application execution after all
+                    # selected calls and their counter passes have completed.
+                    # No timings or completed trajectory are used.
                     reports = [
                         path
                         for path in batch_directory.glob("kernels.ncu-rep*")
@@ -325,7 +395,9 @@ def profile_cases(binary, output, fluid, transport, coupling):
                             f"Expected one Compute report in {batch_directory}"
                         )
                     results["cases"][case].extend(
-                        read_compute_report_isolated(reports[0], directory, expected)
+                        read_compute_report_isolated(
+                            reports[0], directory, expected, detail
+                        )
                     )
                     (directory / "results.json").write_text(
                         json.dumps(results, indent=2) + "\n"
@@ -342,19 +414,20 @@ def profile_cases(binary, output, fluid, transport, coupling):
             except Exception as error:
                 results["errors"].append(f"{case}: {error}")
                 print(results["errors"][-1], flush=True)
+                # A broken capture cannot provide a complete report. Preserve
+                # collected results and stop before repeating an expensive
+                # failure for every remaining case.
+                raise
             finally:
                 (directory / "results.json").write_text(
                     json.dumps(results, indent=2) + "\n"
                 )
     except Exception as error:
-        results["errors"].append(str(error))
+        if not results["errors"]:
+            results["errors"].append(str(error))
         raise
     finally:
         (directory / "results.json").write_text(json.dumps(results, indent=2) + "\n")
-    if results["errors"]:
-        raise RuntimeError(
-            "Some Compute cases failed; see ncu/results.json and per-batch run.log"
-        )
 
 
 def diagnostic_text(sample):
@@ -465,6 +538,7 @@ def write_combined_report(output):
     compute_path = output / "ncu/results.json"
     systems = json.loads(systems_path.read_text()) if systems_path.is_file() else {}
     compute = json.loads(compute_path.read_text()) if compute_path.is_file() else {}
+    detail = compute.get("detail", "full")
     errors = list(compute.get("errors", []))
     if not systems:
         errors.append("Missing Nsight Systems timings")
@@ -477,11 +551,25 @@ def write_combined_report(output):
         "NVTX durations are host times; GPU totals span each region's first to last GPU activity. "
         "Regions include nested scopes and all CUDA kernels, including library kernels. "
         "Others is time outside all reported kernels, including transfers and gaps; overlaps count once. "
-        "L1/TEX, L2 and DRAM SOL are throughput percentages of each unit's sustained peak, not cache hit rates. "
-        "Near-peak values (at least 85%, within 5 percentage points of the highest SM/memory throughput) "
-        "are bold in the summary and colored in the logs: red for memory, green for SM. "
-        "Nsight Compute rule analysis is shown per kernel; full symbols and metrics are in the artifacts.",
+        "Full symbols and metric values are in the artifacts.",
     ]
+    if detail == "core":
+        lines += [
+            "",
+            "Core diagnostics use one counter pass per selected launch. "
+            "SM active is the fraction of active SM cycles, not SM peak throughput. "
+            "L1/TEX and L2 traffic is in billions of sectors per second, not cache hit rates or SOL. "
+            "DRAM SOL is the percentage of sustained peak DRAM throughput; values at least 85% are bold. "
+            "Use compute --detail=full for aggregate SM/memory/cache SOL and Nsight rule analysis.",
+        ]
+    else:
+        lines += [
+            "",
+            "Full diagnostics collect aggregate SM, memory and cache SOL with multiple counter passes. "
+            "L1/TEX, L2 and DRAM SOL are percentages of sustained peak throughput, not cache hit rates. "
+            "Near-peak values (at least 85%, within 5 percentage points of the highest SM/memory throughput) "
+            "are bold and colored in the logs. Nsight Compute rule analysis is shown per kernel.",
+        ]
     if compute.get("configuration"):
         lines += ["", markdown(compute["configuration"])]
     if errors:
@@ -494,6 +582,15 @@ def write_combined_report(output):
         "Occupancy (%)": "Achieved occupancy (%)",
         "Warps/SM": "Active warps/SM",
     }
+    if detail == "core":
+        visible_metrics = {
+            "SM active (%)": "SM active (%)",
+            "L1/TEX (Gsector/s)": "L1/TEX (sector/s)",
+            "L2 (Gsector/s)": "L2 (sector/s)",
+            "DRAM SOL (%)": "DRAM (%)",
+            "Occupancy (%)": "Achieved occupancy (%)",
+            "Warps/SM": "Active warps/SM",
+        }
     columns = [
         "Region",
         "Kernel",
@@ -541,7 +638,9 @@ def write_combined_report(output):
                 format_number(row["mean_ns"], 1e3),
             ]
             cells += [
-                format_number(row["metrics"].get(name))
+                format_number(
+                    row["metrics"].get(name), 1e9 if name.endswith("(sector/s)") else 1
+                )
                 for name in visible_metrics.values()
             ]
             cells += [row["analysis"]]
@@ -566,7 +665,7 @@ def write_combined_report(output):
         "\n".join(ansi_rows.get(index, line) for index, line in enumerate(lines)) + "\n"
     )
     (directory / "report.json").write_text(
-        json.dumps(dict(rows=records, errors=errors), indent=2) + "\n"
+        json.dumps(dict(detail=detail, rows=records, errors=errors), indent=2) + "\n"
     )
     with (directory / "report.csv").open("w", newline="") as destination:
         writer = csv.DictWriter(
@@ -582,6 +681,7 @@ def write_combined_report(output):
                 "total_ns",
                 "mean_ns",
                 *METRICS,
+                *(name for name in CORE_METRICS if name not in METRICS),
                 "analysis",
                 "rules",
             ],
@@ -605,6 +705,15 @@ def main():
     parser.add_argument("--coupling", choices=("hd", "ehd", "mhd", "fmhd"))
     parser.add_argument("--compute-report", type=Path)
     parser.add_argument("--expected-launches", type=int)
+    parser.add_argument(
+        "--detail",
+        choices=("core", "full"),
+        default="core",
+        help="Core uses one hardware pass; full collects aggregate SOL and rules",
+    )
+    parser.add_argument(
+        "--batch-timeout", type=int, default=1800, help="Maximum seconds per NCU batch"
+    )
     args = parser.parse_args()
     if args.phase == "read-compute":
         if args.compute_report is None or args.expected_launches is None:
@@ -614,11 +723,16 @@ def main():
         print(
             json.dumps(
                 read_compute_report(
-                    args.compute_report, report_api(args.output), args.expected_launches
+                    args.compute_report,
+                    report_api(args.output),
+                    args.expected_launches,
+                    args.detail,
                 )
             )
         )
     elif args.phase == "compute":
+        if args.batch_timeout < 1:
+            parser.error("compute requires a positive --batch-timeout")
         if not all((args.binary, args.fluid, args.transport, args.coupling)):
             parser.error(
                 "compute requires --binary, --fluid, --transport and --coupling"
@@ -629,6 +743,8 @@ def main():
             args.fluid,
             args.transport,
             args.coupling,
+            args.batch_timeout,
+            args.detail,
         )
     elif write_combined_report(args.output.resolve()):
         raise SystemExit(1)

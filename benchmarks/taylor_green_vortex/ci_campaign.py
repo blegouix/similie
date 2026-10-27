@@ -11,6 +11,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -69,7 +70,7 @@ REFERENCE_CHECKSUMS = {
 }
 
 
-def execute(command, directory, environment=None):
+def execute(command, directory, environment=None, timeout=None):
     """Preserve the complete Google Benchmark output without campaign chatter."""
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "command.json").write_text(
@@ -87,8 +88,11 @@ def execute(command, directory, environment=None):
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
+        started = time.monotonic()
         try:
             while True:
+                if timeout is not None and time.monotonic() - started >= timeout:
+                    raise subprocess.TimeoutExpired(child.args, timeout)
                 try:
                     status = child.wait(timeout=1)
                 except subprocess.TimeoutExpired:

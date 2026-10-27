@@ -95,6 +95,18 @@ class CampaignExecution(unittest.TestCase):
             execute([sys.executable, "-c", "print('completed')"], directory)
             self.assertEqual((directory / "run.log").read_text(), "completed\n")
 
+    def test_timeout_stops_the_command(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            started = time.monotonic()
+            with self.assertRaises(subprocess.TimeoutExpired):
+                execute(
+                    [sys.executable, "-c", "import time; time.sleep(10)"],
+                    directory,
+                    timeout=0.1,
+                )
+            self.assertLess(time.monotonic() - started, 5)
+
 
 class CampaignConfiguration(unittest.TestCase):
     def test_summary_omits_the_solver_timing_table(self):
