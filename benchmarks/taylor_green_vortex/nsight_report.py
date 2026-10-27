@@ -18,10 +18,10 @@ import time
 
 from ci_campaign import MESH_SIZES, STRATEGIES, execute
 from nsys_report import (
-    iteration_case,
     iteration_profiles,
     markdown,
     profiling_environment,
+    solver_case,
 )
 
 
@@ -41,8 +41,8 @@ METRICS = {
 # memory and cache SOL metrics require several passes even when requested alone.
 CORE_METRICS = {
     "SM active (%)": "sm__cycles_active.avg.pct_of_peak_sustained_elapsed",
-    "L1/TEX (sector/s)": "l1tex__t_sectors.sum.per_second",
-    "L2 (sector/s)": "lts__t_sectors.sum.per_second",
+    "L1/TEX bandwidth (%)": "l1tex__t_sectors.avg.pct_of_peak_sustained_elapsed",
+    "L2 bandwidth (%)": "lts__t_sectors.avg.pct_of_peak_sustained_elapsed",
     **{
         name: METRICS[name]
         for name in (
@@ -54,6 +54,84 @@ CORE_METRICS = {
         )
     },
 }
+
+COMPUTE_SOL_GREEN_THRESHOLD = 90
+
+
+def hottest_kernels(case, plan, count):
+    """Rank solver kernels by cumulative CUDA duration.
+
+    Nested NVTX ranges contain the same launches, so adding their times would
+    count work repeatedly. Resolve each chosen kernel's first sample to the
+    exact symbol/invocation pair recorded in the Systems launch sequence.
+    """
+    if count == 0:
+        return []
+    root = next(
+        region for region in plan["regions"] if region["name"] == case + "/iteration/solver"
+    )
+    indices = {tuple(sample[:3]): sample[3] for sample in plan["sample_invocations"]}
+    return [
+        dict(
+            region=root["name"],
+            label=kernel["label"],
+            symbol=kernel["symbol"],
+            invocation=indices[(root["name"], kernel["label"], kernel["symbol"])],
+            total_ns=kernel["total_ns"],
+        )
+        for kernel in sorted(
+            root["kernels"],
+            key=lambda kernel: (-kernel["total_ns"], kernel["label"], kernel["symbol"]),
+        )[:count]
+    ]
+
+
+def hot_groups(plan, selected, max_launches=32):
+    """Keep the detailed capture small even when invocation patterns differ."""
+    indices = {}
+    for kernel in selected:
+        indices.setdefault(kernel["symbol"], set()).add(kernel["invocation"])
+    groups = {}
+    for symbol, invocations in indices.items():
+        groups.setdefault(tuple(sorted(invocations)), []).append(symbol)
+    hot_plan = dict(
+        kernel_invocations=plan["kernel_invocations"],
+        sample_groups=[
+            dict(symbols=sorted(symbols), invocations=list(invocations))
+            for invocations, symbols in sorted(groups.items())
+        ],
+    )
+    combined = compute_groups(hot_plan, combine=True)
+    if combined and combined[0]["launches"] <= max_launches:
+        return combined
+    return compute_groups(hot_plan, max_launches=max_launches)
+
+
+def merge_hot_samples(plan, samples, detailed, selected):
+    indices = {tuple(sample[:3]): sample[3] for sample in plan["sample_invocations"]}
+    launches = {(kernel["symbol"], kernel["invocation"]) for kernel in selected}
+    indexed = {(row["region"], row["label"], row["symbol"]): row for row in samples}
+    covered = set()
+    for row in detailed:
+        key = (row["region"], row["label"], row["symbol"])
+        # Union filters may capture extra calls. Merge only the exact first
+        # samples selected for detailed analysis, including their ancestors.
+        if key not in indexed or (row["symbol"], indices.get(key)) not in launches:
+            continue
+        target = indexed[key]
+        if row["metrics"].get("SM (%)") is None:
+            raise ValueError(f"Missing Compute SOL for hot kernel {row['symbol']}")
+        target["detailed_metrics"] = row["metrics"]
+        for name in ("SM (%)", "Memory (%)", "L1/TEX (%)", "L2 (%)"):
+            target["metrics"][name] = row["metrics"][name]
+        target["rules"].extend(row["rules"])
+        target["detailed_replay_passes"] = row["replay_passes"]
+        covered.add(key)
+    missing = {
+        (kernel["region"], kernel["label"], kernel["symbol"]) for kernel in selected
+    } - covered
+    if missing:
+        raise ValueError(f"Missing detailed results for {len(missing)} hot kernels")
 
 
 def case_specs():
@@ -68,7 +146,7 @@ def case_specs():
 
 
 def nvtx_filter(case):
-    name = re.escape(case + "/iteration").replace("/", r"\/")
+    name = re.escape(case + "/iteration/solver").replace("/", r"\/")
     return "regex:^" + name + "$/"
 
 
@@ -148,26 +226,23 @@ def compute_command(
         # the application repeats the expensive solver setup for every counter
         # pass and also requires matching separate solver executions exactly.
         "--replay-mode=kernel",
-        # Systems supplies timings; Compute supplies diagnostic counters only.
-        # Keep the application's cache history instead of flushing each sample.
-        "--cache-control=none",
+        # A one-pass sample retains the application's cache history. Detailed
+        # replay needs the same cache state for its separate counter passes.
+        # Systems supplies timings independently of these diagnostic replays.
+        "--cache-control=" + ("all" if detail == "full" else "none"),
         # These reports use hardware counters and launch/occupancy attributes,
         # not instruction or source analysis. Importing the large templated
         # CUDA cubins into every report adds unnecessary processing and I/O.
         "--import-sass=no",
-        *(
-            [
-                "--section=SpeedOfLight",
-                "--section=LaunchStats",
-                "--section=Occupancy",
-            ]
-            if detail == "full"
-            else []
-        ),
+        "--section=LaunchStats",
+        "--section=Occupancy",
+        *(["--section=SpeedOfLight"] if detail == "full" else []),
         "--metrics="
-        + ",".join((METRICS if detail == "full" else CORE_METRICS).values()),
+        + ",".join(
+            ({**METRICS, **CORE_METRICS} if detail == "full" else CORE_METRICS).values()
+        ),
         "--disable-extra-suffixes",
-        "--apply-rules=" + ("yes" if detail == "full" else "no"),
+        "--apply-rules=yes",
         "--force-overwrite",
         f"--export={directory / 'kernels'}",
         str(binary),
@@ -227,10 +302,10 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
                     domain = state.domain_by_id(domain_id)
                     if domain.name() in ("", "<default domain>"):
                         stack = list(domain.push_pop_ranges())
-            regions = [name for name in stack if iteration_case(name)]
+            regions = [name for name in stack if solver_case(name)]
             if not regions:
                 continue
-            label = "" if iteration_case(stack[-1]) else stack[-1]
+            label = "" if solver_case(stack[-1]) else stack[-1]
             launches += 1
             passes = action.metric_by_name("profiler__replayer_passes")
             passes = passes.as_double() if passes and passes.has_value() else None
@@ -240,7 +315,7 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
                 )
             metrics = {}
             for metric_label, name in (
-                METRICS if detail == "full" else CORE_METRICS
+                {**METRICS, **CORE_METRICS} if detail == "full" else CORE_METRICS
             ).items():
                 metric = action.metric_by_name(name)
                 value = metric.as_double() if metric and metric.has_value() else None
@@ -259,6 +334,10 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
                             section=rule.section_identifier(),
                             title=message["title"],
                             message=message["message"],
+                            type=message.get("type"),
+                            focus_metrics=rule.focus_metrics()
+                            if hasattr(rule, "focus_metrics")
+                            else [],
                         )
                     )
             for region in regions:
@@ -311,14 +390,85 @@ def read_compute_report_isolated(path, directory, expected_launches, detail="ful
     )
 
 
+def capture_groups(
+    binary,
+    directory,
+    case,
+    n,
+    flags,
+    fluid,
+    transport,
+    coupling,
+    plan,
+    groups,
+    detail,
+    environment,
+    timeout,
+    samples=None,
+):
+    if samples is None:
+        samples = []
+    for index, group in enumerate(groups, 1):
+        batch_directory = directory / f"batch-{index}"
+        expected = group["launches"]
+        print(
+            f"  {detail} profiler process {index}/{len(groups)}: "
+            f"capture {expected} launches, then stop",
+            flush=True,
+        )
+        started = time.monotonic()
+        execute(
+            compute_command(
+                binary,
+                batch_directory,
+                case,
+                n,
+                flags,
+                fluid,
+                transport,
+                coupling,
+                plan["sample_ranges"],
+                group,
+                detail,
+            ),
+            batch_directory,
+            environment,
+            timeout=timeout,
+        )
+        print(
+            f"  Profiler process finished in {time.monotonic() - started:.1f} s",
+            flush=True,
+        )
+        reports = [
+            path
+            for path in batch_directory.glob("kernels.ncu-rep*")
+            if path.suffix in (".ncu-rep", ".ncu-repz")
+        ]
+        if len(reports) != 1:
+            raise FileNotFoundError(f"Expected one Compute report in {batch_directory}")
+        samples.extend(
+            read_compute_report_isolated(reports[0], directory, expected, detail)
+        )
+    return samples
+
+
 def profile_cases(
-    binary, output, fluid, transport, coupling, batch_timeout=1800, detail="core"
+    binary,
+    output,
+    fluid,
+    transport,
+    coupling,
+    batch_timeout=1800,
+    detail="hybrid",
+    hot_kernels=20,
 ):
     directory = output / "ncu"
     directory.mkdir(parents=True, exist_ok=True)
     results = dict(
         configuration=f"{fluid}_{transport}_{coupling}",
         detail=detail,
+        hot_kernels={},
+        hot_kernel_skips={},
         cases={},
         errors=[],
     )
@@ -328,12 +478,20 @@ def profile_cases(
             "cases"
         ]
         database = output / "performance/nsys/tgv.sqlite"
-        if database.is_file() and any(
-            "kernel_invocations" not in plan for plan in systems.values()
-        ):
+        needs_hot = detail == "hybrid" and hot_kernels > 0
+        needs_metadata = any(
+            "kernel_invocations" not in plan
+            or (needs_hot and "sample_invocations" not in plan)
+            for plan in systems.values()
+        )
+        if database.is_file() and needs_metadata:
             # Older captures can supply the counts without rerunning the
             # performance suite or changing its saved timing report.
             systems = iteration_profiles(database)
+        elif needs_hot and needs_metadata:
+            raise ValueError(
+                "Hybrid profiling needs sample_invocations or the original tgv.sqlite export"
+            )
         for case, relative, n, flags in case_specs():
             case_directory = directory / relative
             case_directory.mkdir(parents=True, exist_ok=True)
@@ -342,7 +500,8 @@ def profile_cases(
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                groups = compute_groups(plan, combine=detail == "core")
+                capture_detail = "full" if detail == "full" else "core"
+                groups = compute_groups(plan, combine=capture_detail == "core")
                 count = sum(group["launches"] for group in groups)
                 print(
                     f"\nNsight Compute: {case}: {count} kernel calls covering all first samples; "
@@ -350,58 +509,25 @@ def profile_cases(
                     flush=True,
                 )
                 results["cases"][case] = []
-                for index, group in enumerate(groups, 1):
-                    batch_directory = case_directory / f"batch-{index}"
-                    expected = group["launches"]
-                    print(
-                        f"  Profiler process {index}/{len(groups)}: "
-                        f"capture {expected} launches, then stop",
-                        flush=True,
-                    )
-                    started = time.monotonic()
-                    execute(
-                        compute_command(
-                            binary,
-                            batch_directory,
-                            case,
-                            n,
-                            flags,
-                            fluid,
-                            transport,
-                            coupling,
-                            plan["sample_ranges"],
-                            group,
-                            detail,
-                        ),
-                        batch_directory,
-                        environment,
-                        timeout=batch_timeout,
-                    )
-                    print(
-                        f"  Profiler process {index}/{len(groups)} finished in "
-                        f"{time.monotonic() - started:.1f} s",
-                        flush=True,
-                    )
-                    # --kill ends the single application execution after all
-                    # selected calls and their counter passes have completed.
-                    # No timings or completed trajectory are used.
-                    reports = [
-                        path
-                        for path in batch_directory.glob("kernels.ncu-rep*")
-                        if path.suffix in (".ncu-rep", ".ncu-repz")
-                    ]
-                    if len(reports) != 1:
-                        raise FileNotFoundError(
-                            f"Expected one Compute report in {batch_directory}"
-                        )
-                    results["cases"][case].extend(
-                        read_compute_report_isolated(
-                            reports[0], directory, expected, detail
-                        )
-                    )
-                    (directory / "results.json").write_text(
-                        json.dumps(results, indent=2) + "\n"
-                    )
+                results["cases"][case] = capture_groups(
+                    binary,
+                    case_directory,
+                    case,
+                    n,
+                    flags,
+                    fluid,
+                    transport,
+                    coupling,
+                    plan,
+                    groups,
+                    capture_detail,
+                    environment,
+                    batch_timeout,
+                    samples=results["cases"][case],
+                )
+                (directory / "results.json").write_text(
+                    json.dumps(results, indent=2) + "\n"
+                )
                 sampled = {
                     (row["region"], row["label"], row["symbol"])
                     for row in results["cases"][case]
@@ -411,6 +537,42 @@ def profile_cases(
                     raise ValueError(
                         f"Missing Compute samples for {len(missing)} first-iteration region/kernel pairs"
                     )
+                if needs_hot:
+                    if n >= 128:
+                        reason = (
+                            "multipass kernel replay skipped at N=128 and above: "
+                            "Nsight Compute could not save the staged-Laplacian N128 "
+                            "device-memory snapshot; single-pass metrics are retained"
+                        )
+                        results["hot_kernel_skips"][case] = reason
+                        print(f"  Detailed analysis skipped: {reason}", flush=True)
+                    else:
+                        selected = hottest_kernels(case, plan, hot_kernels)
+                        results["hot_kernels"][case] = selected
+                        focused_groups = hot_groups(plan, selected)
+                        print(
+                            f"  Detailed analysis: {len(selected)} hottest kernels by cumulative GPU time; "
+                            f"{len(focused_groups)} application executions",
+                            flush=True,
+                        )
+                        detailed = capture_groups(
+                            binary,
+                            case_directory / "hot",
+                            case,
+                            n,
+                            flags,
+                            fluid,
+                            transport,
+                            coupling,
+                            plan,
+                            focused_groups,
+                            "full",
+                            environment,
+                            batch_timeout,
+                        )
+                        merge_hot_samples(
+                            plan, results["cases"][case], detailed, selected
+                        )
             except Exception as error:
                 results["errors"].append(f"{case}: {error}")
                 print(results["errors"][-1], flush=True)
@@ -437,12 +599,26 @@ def diagnostic_text(sample):
     seen = set()
     for rule in sample["rules"]:
         title = rule["title"] or rule["name"]
-        detail = rule["message"].strip()
+        detail = re.sub(
+            r"@url:([^:]+):(https?://[^@]+)@", r"[\1](\2)", rule["message"].strip()
+        )
         diagnostic = f"{title}: {detail}" if detail else title
         if diagnostic not in seen:
             diagnostics.append(diagnostic)
             seen.add(diagnostic)
-    return "\n".join(diagnostics) or "—"
+    for name in (
+        "SM (%)",
+        "L1/TEX bandwidth (%)",
+        "L2 bandwidth (%)",
+        "L1/TEX (%)",
+        "L2 (%)",
+        "DRAM (%)",
+    ):
+        value = sample["metrics"].get(name)
+        if value is not None and value >= 85:
+            label = "Compute SOL" if name == "SM (%)" else name.removesuffix(" (%)")
+            diagnostics.append(f"Near sustained capacity: {label} {value:.1f}%.")
+    return "\n".join(diagnostics) or "No stored rule warnings."
 
 
 def format_number(value, scale=1):
@@ -457,24 +633,41 @@ def kernel_display_label(kernel):
     return f"{name} ({label})" if label else name
 
 
-def limiting_metrics(metrics):
-    """Highlight near-peak throughput, without inferring limits from occupancy."""
+def limiting_metrics(metrics, rules=()):
+    """Flag saturation and native high-priority focus metrics."""
     values = {
         name: metrics[name]
-        for name in ("SM (%)", "L1/TEX (%)", "L2 (%)", "DRAM (%)")
+        for name in (
+            "SM (%)",
+            "L1/TEX (%)",
+            "L2 (%)",
+            "DRAM (%)",
+            "L1/TEX bandwidth (%)",
+            "L2 bandwidth (%)",
+        )
         if metrics.get(name) is not None
     }
-    peak = max(values.values(), default=0)
-    return {
-        name: 32 if name == "SM (%)" else 31
-        for name, value in values.items()
-        if value >= 85 and peak - value <= 5
+    highlights = {name: 31 for name, value in values.items() if value >= 85}
+    metric_names = {
+        metric: name for name, metric in {**METRICS, **CORE_METRICS}.items()
     }
+    metric_names["smsp__maximum_warps_avg_per_active_cycle"] = (
+        "Theoretical occupancy (%)"
+    )
+    for rule in rules:
+        for focus in rule.get("focus_metrics", []):
+            name = metric_names.get(focus["name"])
+            if name is not None and focus["severity"] == 2:
+                highlights[name] = 31
+    return highlights
 
 
 def combined_rows(case, profile, samples):
     indexed = {(row["region"], row["label"], row["symbol"]): row for row in samples}
-    for region in profile.get("regions", []):
+    for region in sorted(
+        profile.get("regions", []),
+        key=lambda region: (-region["gpu_ns"], region["name"]),
+    ):
         common = dict(case=case, region=region["name"])
         yield dict(
             **common,
@@ -517,6 +710,9 @@ def combined_rows(case, profile, samples):
                 metrics=sample["metrics"] if sample else {},
                 rules=sample["rules"] if sample else [],
                 analysis=diagnostic_text(sample),
+                detailed_replay_passes=sample.get("detailed_replay_passes")
+                if sample
+                else None,
             )
         yield dict(
             **common,
@@ -531,6 +727,171 @@ def combined_rows(case, profile, samples):
             rules=[],
             analysis="—",
         )
+
+
+def report_metrics(compute):
+    metrics = next(
+        (
+            sample["metrics"]
+            for samples in compute.get("cases", {}).values()
+            for sample in samples
+        ),
+        {},
+    )
+    visible = {}
+    if compute.get("detail", "full") in ("hybrid", "full"):
+        visible["Compute SOL (%)"] = "SM (%)"
+    if (
+        compute.get("detail", "full") != "full"
+        or metrics.get("SM active (%)") is not None
+    ):
+        visible["SM active (%)"] = "SM active (%)"
+    if metrics.get("L1/TEX bandwidth (%)") is not None:
+        visible.update(
+            {"L1/TEX BW (%)": "L1/TEX bandwidth (%)", "L2 BW (%)": "L2 bandwidth (%)"}
+        )
+    elif compute.get("detail", "full") == "full":
+        visible.update({"L1/TEX SOL (%)": "L1/TEX (%)", "L2 SOL (%)": "L2 (%)"})
+    else:
+        # Earlier core captures did not retain their normalization denominators.
+        # Keep their original units rather than inventing a peak bandwidth.
+        visible.update(
+            {
+                "L1/TEX (Gsector/s)": "L1/TEX (sector/s)",
+                "L2 (Gsector/s)": "L2 (sector/s)",
+            }
+        )
+    visible.update(
+        {
+            "DRAM SOL (%)": "DRAM (%)",
+            "Occupancy (%)": "Achieved occupancy (%)",
+            "Theoretical occupancy (%)": "Theoretical occupancy (%)",
+            "Warps/SM": "Active warps/SM",
+            "Registers/thread": "Registers/thread",
+        }
+    )
+    return visible
+
+
+def metric_cells(row, visible_metrics):
+    cells = [
+        format_number(
+            row["metrics"].get(name), 1e9 if name.endswith("(sector/s)") else 1
+        )
+        for name in visible_metrics.values()
+    ]
+    ansi = cells.copy()
+    highlights = limiting_metrics(row["metrics"], row["rules"])
+    for index, (label, name) in enumerate(visible_metrics.items()):
+        value = row["metrics"].get(name)
+        color = highlights.get(name)
+        if (
+            label == "Compute SOL (%)"
+            and value is not None
+            and value >= COMPUTE_SOL_GREEN_THRESHOLD
+        ):
+            color = 32
+        if color is not None and value is not None:
+            ansi[index] = f"\x1b[1;{color}m{cells[index]}\x1b[0m"
+            cells[index] = f"**{cells[index]}**"
+    return cells, ansi
+
+
+def compact_report(systems, compute, visible_metrics):
+    """Show every case within GitHub's one-MiB per-step summary limit."""
+    lines = ["# TGV profiling summary"]
+    ansi_lines = {}
+    for case, _, _, _ in case_specs():
+        rows = list(
+            combined_rows(
+                case,
+                systems.get("cases", {}).get(case, {}),
+                compute.get("cases", {}).get(case, []),
+            )
+        )
+        lines += [
+            "",
+            "",
+            "## " + markdown(case.removeprefix("TaylorGreen/")),
+            "",
+            "| NVTX range | GPU total (ms) | Host total (ms) | Calls |",
+            "| --- | --- | --- | --- |",
+        ]
+        for row in rows:
+            if row["kind"] == "region":
+                name = row["region"].removeprefix(case + "/")
+                lines.append(
+                    "| "
+                    + " | ".join(
+                        [
+                            markdown(name),
+                            format_number(row["total_ns"], 1e6),
+                            format_number(row["nvtx_ns"], 1e6),
+                            format_number(row["calls"]),
+                        ]
+                    )
+                    + " |"
+                )
+        lines += [
+            "",
+            "| Kernel | GPU total (ms) | Calls | "
+            + " | ".join(visible_metrics)
+            + " | Analysis |",
+            "| " + " | ".join("---" for _ in range(4 + len(visible_metrics))) + " |",
+        ]
+        kernels = sorted(
+            (
+                row
+                for row in rows
+                if row["kind"] == "kernel" and row["region"] == case + "/iteration/solver"
+            ),
+            key=lambda row: (-row["total_ns"], row["label"], row["symbol"]),
+        )[: max(10, len(compute.get("hot_kernels", {}).get(case, [])))]
+        if not rows:
+            lines.append(
+                "| "
+                + " | ".join(["No solver data"] + ["—"] * (3 + len(visible_metrics)))
+                + " |"
+            )
+        for row in kernels:
+            label = row.get("display_label", row["label"])
+            if len(label) > 140:
+                label = label[:137] + "…"
+            analysis = row["analysis"].replace("\n", " ")
+            if len(analysis) > 200:
+                analysis = analysis[:197] + "…"
+            cells, ansi = metric_cells(row, visible_metrics)
+            start = [
+                markdown(label),
+                format_number(row["total_ns"], 1e6),
+                format_number(row["calls"]),
+            ]
+            end = [markdown(analysis)]
+            ansi_lines[len(lines)] = "| " + " | ".join(start + ansi + end) + " |"
+            lines.append("| " + " | ".join(start + cells + end) + " |")
+    lines += [
+        "",
+        "Red/bold marks at least 85% of sustained throughput or a high-priority Nsight focus metric; "
+        f"green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
+        "Compute SOL is measured only for the selected hot samples in hybrid mode; — means not measured. "
+        "SM active is activity, not Compute SOL. Cache BW is normalized sector throughput, not cache hit rate.",
+    ]
+    for case, reason in compute.get("hot_kernel_skips", {}).items():
+        lines += [
+            "",
+            "Detailed profiling skipped for "
+            + markdown(case)
+            + ": "
+            + markdown(reason),
+        ]
+    if compute.get("errors"):
+        lines += ["", "Collection errors: " + markdown("; ".join(compute["errors"]))]
+    text = "\n".join(lines) + "\n"
+    if len(text.encode()) > 1024 * 1024:
+        raise ValueError("Profiling summary exceeds GitHub's one-MiB step limit")
+    return text, "\n".join(
+        ansi_lines.get(index, line) for index, line in enumerate(lines)
+    ) + "\n"
 
 
 def write_combined_report(output):
@@ -551,46 +912,54 @@ def write_combined_report(output):
         "NVTX durations are host times; GPU totals span each region's first to last GPU activity. "
         "Regions include nested scopes and all CUDA kernels, including library kernels. "
         "Others is time outside all reported kernels, including transfers and gaps; overlaps count once. "
+        "Cache BW is sector throughput relative to sustained sector-service capacity. "
         "Full symbols and metric values are in the artifacts.",
     ]
-    if detail == "core":
+    if detail != "full":
         lines += [
             "",
-            "Core diagnostics use one counter pass per selected launch. "
+            "Base diagnostics use one counter pass per selected launch, including native launch/occupancy analysis. "
             "SM active is the fraction of active SM cycles, not SM peak throughput. "
-            "L1/TEX and L2 traffic is in billions of sectors per second, not cache hit rates or SOL. "
-            "DRAM SOL is the percentage of sustained peak DRAM throughput; values at least 85% are bold. "
-            "Use compute --detail=full for aggregate SM/memory/cache SOL and Nsight rule analysis.",
+            "L1/TEX and L2 BW are sector throughput relative to their respective sustained capacities, "
+            "not cache hit rates or aggregate cache SOL. DRAM SOL is relative to sustained peak DRAM throughput. "
+            "In hybrid mode the hottest solver kernels, ranked by cumulative GPU time in the solver range, "
+            "also receive multipass Compute SOL and detailed Nsight analysis. "
+            "Caches are reset between detailed replay passes for consistent counters. "
+            "A dash means that metric was not measured for that sample.",
         ]
     else:
         lines += [
             "",
             "Full diagnostics collect aggregate SM, memory and cache SOL with multiple counter passes. "
             "L1/TEX, L2 and DRAM SOL are percentages of sustained peak throughput, not cache hit rates. "
-            "Near-peak values (at least 85%, within 5 percentage points of the highest SM/memory throughput) "
-            "are bold and colored in the logs. Nsight Compute rule analysis is shown per kernel.",
+            "Nsight Compute rule analysis is shown per kernel.",
         ]
+    for case, reason in compute.get("hot_kernel_skips", {}).items():
+        lines += [
+            "",
+            "Detailed profiling skipped for "
+            + markdown(case)
+            + ": "
+            + markdown(reason),
+        ]
+    lines += [
+        "",
+        "NVTX ranges are sorted by decreasing GPU duration; kernels within each range by decreasing cumulative GPU time. "
+        "Red/bold marks throughput at least 85% of sustained capacity or a high-priority Nsight focus metric. "
+        f"Green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
+        "High SM activity or low occupancy alone is not treated as proof of a bottleneck.",
+    ]
     if compute.get("configuration"):
         lines += ["", markdown(compute["configuration"])]
     if errors:
         lines += ["", "Collection errors: " + markdown("; ".join(errors))]
-    visible_metrics = {
-        "SM SOL (%)": "SM (%)",
-        "L1/TEX SOL (%)": "L1/TEX (%)",
-        "L2 SOL (%)": "L2 (%)",
-        "DRAM SOL (%)": "DRAM (%)",
-        "Occupancy (%)": "Achieved occupancy (%)",
-        "Warps/SM": "Active warps/SM",
-    }
-    if detail == "core":
-        visible_metrics = {
-            "SM active (%)": "SM active (%)",
-            "L1/TEX (Gsector/s)": "L1/TEX (sector/s)",
-            "L2 (Gsector/s)": "L2 (sector/s)",
-            "DRAM SOL (%)": "DRAM (%)",
-            "Occupancy (%)": "Achieved occupancy (%)",
-            "Warps/SM": "Active warps/SM",
-        }
+    visible_metrics = report_metrics(compute)
+    if "L1/TEX (Gsector/s)" in visible_metrics:
+        lines += [
+            "",
+            "This older capture stored cache traffic rates without peak denominators. "
+            "Its original Gsector/s units are preserved; a new capture is required for bandwidth percentages.",
+        ]
     columns = [
         "Region",
         "Kernel",
@@ -605,6 +974,7 @@ def write_combined_report(output):
     for case, _, _, _ in case_specs():
         lines += [
             "",
+            "",
             "## " + markdown(case.removeprefix("TaylorGreen/")),
             "",
             "| " + " | ".join(columns) + " |",
@@ -616,7 +986,7 @@ def write_combined_report(output):
         if not rows:
             lines.append(
                 "| "
-                + " | ".join(["No iteration data"] + ["—"] * (len(columns) - 1))
+                + " | ".join(["No solver data"] + ["—"] * (len(columns) - 1))
                 + " |"
             )
         last_region = None
@@ -637,22 +1007,10 @@ def write_combined_report(output):
                 format_number(row["calls"]),
                 format_number(row["mean_ns"], 1e3),
             ]
-            cells += [
-                format_number(
-                    row["metrics"].get(name), 1e9 if name.endswith("(sector/s)") else 1
-                )
-                for name in visible_metrics.values()
-            ]
-            cells += [row["analysis"]]
             cells = [markdown(cell) for cell in cells]
-            ansi_cells = cells.copy()
-            highlights = limiting_metrics(row["metrics"])
-            for index, name in enumerate(visible_metrics.values(), 5):
-                if name in highlights:
-                    ansi_cells[index] = (
-                        f"\x1b[1;{highlights[name]}m{cells[index]}\x1b[0m"
-                    )
-                    cells[index] = f"**{cells[index]}**"
+            values, colored = metric_cells(row, visible_metrics)
+            ansi_cells = cells + colored + [markdown(row["analysis"])]
+            cells += values + [markdown(row["analysis"])]
             ansi_rows[len(lines)] = "| " + " | ".join(ansi_cells) + " |"
             lines.append("| " + " | ".join(cells) + " |")
             if row["kind"] == "region":
@@ -665,8 +1023,23 @@ def write_combined_report(output):
         "\n".join(ansi_rows.get(index, line) for index, line in enumerate(lines)) + "\n"
     )
     (directory / "report.json").write_text(
-        json.dumps(dict(detail=detail, rows=records, errors=errors), indent=2) + "\n"
+        json.dumps(
+            dict(
+                detail=detail,
+                rows=records,
+                hot_kernels=compute.get("hot_kernels", {}),
+                hot_kernel_skips=compute.get("hot_kernel_skips", {}),
+                errors=errors,
+            ),
+            indent=2,
+        )
+        + "\n"
     )
+    summary, ansi_summary = compact_report(
+        systems, dict(compute, errors=errors), visible_metrics
+    )
+    (directory / "summary.md").write_text(summary)
+    (directory / "summary.ansi").write_text(ansi_summary)
     with (directory / "report.csv").open("w", newline="") as destination:
         writer = csv.DictWriter(
             destination,
@@ -682,6 +1055,8 @@ def write_combined_report(output):
                 "mean_ns",
                 *METRICS,
                 *(name for name in CORE_METRICS if name not in METRICS),
+                "L1/TEX (sector/s)",
+                "L2 (sector/s)",
                 "analysis",
                 "rules",
             ],
@@ -707,15 +1082,23 @@ def main():
     parser.add_argument("--expected-launches", type=int)
     parser.add_argument(
         "--detail",
-        choices=("core", "full"),
-        default="core",
-        help="Core uses one hardware pass; full collects aggregate SOL and rules",
+        choices=("hybrid", "core", "full"),
+        default="hybrid",
+        help="Hybrid adds detailed hot-kernel analysis; core is one pass; full analyzes all kernels",
+    )
+    parser.add_argument(
+        "--hot-kernels",
+        type=int,
+        default=20,
+        help="Hot kernels per case in hybrid mode",
     )
     parser.add_argument(
         "--batch-timeout", type=int, default=1800, help="Maximum seconds per NCU batch"
     )
     args = parser.parse_args()
     if args.phase == "read-compute":
+        if args.detail == "hybrid":
+            parser.error("read-compute requires --detail=core or --detail=full")
         if args.compute_report is None or args.expected_launches is None:
             parser.error(
                 "read-compute requires --compute-report and --expected-launches"
@@ -731,6 +1114,8 @@ def main():
             )
         )
     elif args.phase == "compute":
+        if args.hot_kernels < 0:
+            parser.error("compute requires a nonnegative --hot-kernels")
         if args.batch_timeout < 1:
             parser.error("compute requires a positive --batch-timeout")
         if not all((args.binary, args.fluid, args.transport, args.coupling)):
@@ -745,6 +1130,7 @@ def main():
             args.coupling,
             args.batch_timeout,
             args.detail,
+            args.hot_kernels,
         )
     elif write_combined_report(args.output.resolve()):
         raise SystemExit(1)

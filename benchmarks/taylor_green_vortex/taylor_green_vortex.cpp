@@ -55,6 +55,7 @@ bool verify = false;
 bool reference_run = false;
 bool strategy_suite = false, reference_suite = false;
 bool benchmark_output_requested = false;
+bool collect_monitoring = false;
 int strategy_index = 0;
 double reference_final_time = 10;
 bool write_snapshots = true;
@@ -1100,26 +1101,33 @@ double run_trajectory(benchmark::State* benchmark_state)
             base = output_directory / (prefix + std::to_string(invocation++));
         } while (std::filesystem::exists(base.string() + ".h5"));
         double solver_seconds = 0, monitor_seconds = 0, export_seconds = 0;
+        bool const monitoring_enabled = reference_run || collect_monitoring;
 
         std::vector<Monitor> monitors;
-        std::ofstream energy(base.string() + ".dat");
-        if (!energy)
-            throw std::runtime_error("Cannot create energy history");
-        energy << header(nodes, physics) << "# time Ek dEk/dt epsilon_enstrophy\n"
-               << std::setprecision(17);
+        std::ofstream energy;
+        if (monitoring_enabled) {
+            energy.open(base.string() + ".dat");
+            if (!energy)
+                throw std::runtime_error("Cannot create energy history");
+            energy << header(nodes, physics) << "# time Ek dEk/dt epsilon_enstrophy\n"
+                   << std::setprecision(17);
+        }
         std::unique_ptr<Export> output;
         double last_snapshot_time = 0;
         auto sample = [&](double time, double step_seconds, bool snapshot) {
-            Clock::time_point begin = Clock::now();
-            ProfilingRegion monitor_region("monitoring");
-            Monitor const m = simulation.monitor(time, step_seconds);
-            monitor_region.end();
-            monitor_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
-            monitors.push_back(m);
-            begin = Clock::now();
+            if (monitoring_enabled) {
+                Clock::time_point const begin = Clock::now();
+                ProfilingRegion monitor_region("monitoring");
+                Monitor const m = simulation.monitor(time, step_seconds);
+                monitor_region.end();
+                monitor_seconds
+                        += std::chrono::duration<double>(Clock::now() - begin).count();
+                monitors.push_back(m);
+                energy << m.time << " " << m.energy << " " << m.derivative << " "
+                       << m.dissipation << "\n";
+            }
+            Clock::time_point const begin = Clock::now();
             ProfilingRegion const export_region("export");
-            energy << m.time << " " << m.energy << " " << m.derivative << " " << m.dissipation
-                   << "\n";
             if (snapshot && write_snapshots) {
                 output->snapshot(simulation, time);
                 last_snapshot_time = time;
@@ -1234,10 +1242,12 @@ double run_trajectory(benchmark::State* benchmark_state)
         if (write_snapshots && time != last_snapshot_time)
             output->snapshot(simulation, time);
         output->final_state(simulation);
-        output->monitors(monitors);
+        if (monitoring_enabled)
+            output->monitors(monitors);
         output.reset();
-        energy.close();
-        if (!energy)
+        if (monitoring_enabled)
+            energy.close();
+        if (monitoring_enabled && !energy)
             throw std::runtime_error("Cannot write energy history");
         export_seconds += std::chrono::duration<double>(Clock::now() - finish_export).count();
         double const wall = std::chrono::duration<double>(Clock::now() - setup_start).count();
@@ -1250,7 +1260,9 @@ double run_trajectory(benchmark::State* benchmark_state)
                     << configuration.staging_name() << "\",\"operators\":\""
                     << configuration.operator_name() << "\",\"mode\":\""
                     << (benchmark_state ? "performance" : "reference")
-                    << "\",\"strategy\":" << strategy_index << ",\"flags\":\""
+                    << "\",\"monitoring_enabled\":"
+                    << (monitoring_enabled ? "true" : "false")
+                    << ",\"strategy\":" << strategy_index << ",\"flags\":\""
                     << configuration.strategy_flags() << "\",\"N\":" << nodes
                     << ",\"steps\":" << steps << ",\"final_time\":" << time
                     << ",\"mean_step_seconds\":" << solver_seconds / steps
@@ -1382,13 +1394,15 @@ int main(int argc, char** argv)
                 reference_final_time = std::stod(arg.substr(23));
             else if (arg == "--reference")
                 reference_run = true;
+            else if (arg == "--monitor")
+                collect_monitoring = true;
             else if (arg == "--no-snapshots")
                 write_snapshots = false;
             else {
                 if (arg == "--help")
                     std::cout << "Taylor-Green options: --N=64 --incompressible|--compressible "
                                  "--ideal|--resistive --hd|--ehd|--mhd|--fmhd --validate "
-                                 "--output-dir=PATH --reference --no-snapshots\n"
+                                 "--output-dir=PATH --reference --monitor --no-snapshots\n"
                                  "Suites: --strategy-suite (seven strategies at N=64,128); "
                                  "--reference-suite (staged weighted discrete Hodge star at "
                                  "N=64,128).\n"
@@ -1409,6 +1423,9 @@ int main(int argc, char** argv)
                                  "--staged-laplacian.\n"
                                  "One Google Benchmark iteration advances one time step. "
                                  "Use --benchmark_min_time=100x for 100 steps.\n"
+                                 "Per-step diagnostics are omitted during performance runs; "
+                                 "--reference enables validation monitoring and --monitor "
+                                 "opts in for other runs.\n"
                                  "Defaults: --incompressible --ideal --hd. Resistive HD is "
                                  "invalid. General continuous Hodge star, reduction and "
                                  "reconstruction are defaults; specialized operators are "
