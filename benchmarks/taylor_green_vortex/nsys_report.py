@@ -222,7 +222,7 @@ def iteration_profiles(database):
             # Kernels launched directly in a TGV region use their CUDA name.
             label = "" if iteration_case(active[-1]["name"]) else active[-1]["name"]
             first = active[-1]["iteration"] == first_iterations[active[-1]["case"]]
-            sample = False
+            sample_targets = []
             for scope in active:
                 if "devices" not in scope:
                     continue
@@ -254,10 +254,10 @@ def iteration_profiles(database):
                     if target not in profile["targets"]:
                         profile["sample_ranges"].add(1)
                         profile["targets"].add(target)
-                        sample = True
+                        sample_targets.append(target)
             if activity["symbol"] is not None and first:
                 launches.setdefault(active[-1]["case"], []).append(
-                    (activity["symbol"], sample)
+                    (activity["symbol"], sample_targets)
                 )
         for scope in ranges.values():
             if "devices" not in scope:
@@ -279,13 +279,18 @@ def iteration_profiles(database):
         for case, profile in cases.items():
             invocations = {}
             samples = {}
+            sample_invocations = []
             # Both profilers count every symbol's calls inside the first
             # iteration, including library launches and repeated operations.
-            for symbol, sample in launches.get(case, []):
+            for symbol, targets in launches.get(case, []):
                 invocations[symbol] = invocations.get(symbol, 0) + 1
-                if sample:
+                if targets:
                     samples.setdefault(symbol, []).append(invocations[symbol])
+                    sample_invocations.extend(
+                        [*target, invocations[symbol]] for target in targets
+                    )
             profile["kernel_invocations"] = invocations
+            profile["sample_invocations"] = sorted(sample_invocations)
             groups = {}
             # NCU accepts one invocation pattern per run. Group symbols with
             # the same indices to minimize the number of application launches.

@@ -29,7 +29,10 @@ from nsight_report import (
     combined_rows,
     compute_command,
     compute_groups,
+    hot_groups,
+    hottest_kernels,
     limiting_metrics,
+    merge_hot_samples,
     profile_cases,
     read_compute_report,
     write_combined_report,
@@ -158,7 +161,14 @@ class ComputeSamplingPlan(unittest.TestCase):
                 ) as execute,
                 self.assertRaisesRegex(RuntimeError, "capture failed"),
             ):
-                profile_cases(Path("binary"), output, "incompressible", "ideal", "hd")
+                profile_cases(
+                    Path("binary"),
+                    output,
+                    "incompressible",
+                    "ideal",
+                    "hd",
+                    detail="core",
+                )
             self.assertEqual(execute.call_count, 1)
             result = json.loads((output / "ncu/results.json").read_text())
             self.assertEqual(result["cases"], {CASE: []})
@@ -242,6 +252,194 @@ def capture_fixture(path):
                 gpu + 40 if base == 100 else gpu + 30,
             )
     return iteration_profiles(path)
+
+
+class HotKernelSelection(unittest.TestCase):
+    def plan(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            return capture_fixture(Path(temporary) / "capture.sqlite")[CASE]
+
+    def test_hot_ranking_uses_root_cumulative_time_without_counting_nested_ranges(self):
+        plan = self.plan()
+        root = next(
+            region
+            for region in plan["regions"]
+            if region["name"] == CASE + "/iteration"
+        )
+        library = next(
+            kernel for kernel in root["kernels"] if kernel["label"] == "library_probe"
+        )
+        library["total_ns"] = 30
+        for region in plan["regions"]:
+            if region is not root:
+                for kernel in region["kernels"]:
+                    kernel["total_ns"] = 10**9
+        selected = hottest_kernels(CASE, plan, 1)
+        self.assertEqual(selected[0]["label"], "similie_probe")
+        self.assertEqual(selected[0]["invocation"], 1)
+        selected = hottest_kernels(CASE, plan, 20)
+        self.assertEqual(len(selected), 2)
+        self.assertEqual(selected[1]["label"], "library_probe")
+        self.assertEqual(selected[1]["invocation"], 3)
+        groups = hot_groups(plan, selected)
+        self.assertEqual(
+            groups, [dict(symbols=[SYMBOL], invocations=[1, 3], launches=2)]
+        )
+        self.assertEqual(hottest_kernels(CASE, plan, 0), [])
+
+    def test_large_hot_filter_stays_bounded_and_keeps_every_requested_sample(self):
+        selected = [
+            dict(symbol=f"_Zkernel_{index}", invocation=index + 1)
+            for index in range(20)
+        ]
+        plan = dict(kernel_invocations={kernel["symbol"]: 30 for kernel in selected})
+        groups = hot_groups(plan, selected)
+        self.assertTrue(all(group["launches"] <= 32 for group in groups))
+        captured = {
+            (symbol, index)
+            for group in groups
+            for symbol in group["symbols"]
+            for index in group["invocations"]
+        }
+        self.assertTrue(
+            {(kernel["symbol"], kernel["invocation"]) for kernel in selected}
+            <= captured
+        )
+
+    def test_detailed_merge_preserves_core_counters_and_does_not_reuse_another_invocation(
+        self,
+    ):
+        plan = self.plan()
+        selected = hottest_kernels(CASE, plan, 2)
+        samples = [
+            dict(
+                region=region,
+                label=label,
+                symbol=symbol,
+                metrics=dict.fromkeys(CORE_METRICS, 42),
+                rules=[],
+                replay_passes=1,
+            )
+            for region, label, symbol in plan["targets"]
+        ]
+        detailed = [
+            dict(row, metrics=dict.fromkeys(METRICS, 90), replay_passes=8)
+            for row in samples
+        ]
+        merge_hot_samples(plan, samples, detailed, selected)
+        indexed = {row["region"] + "/" + row["label"]: row for row in samples}
+        hot = indexed[CASE + "/iteration/similie_probe"]
+        self.assertEqual(hot["metrics"]["SM (%)"], 90)
+        self.assertEqual(hot["metrics"]["DRAM (%)"], 42)
+        self.assertEqual(hot["replay_passes"], 1)
+        self.assertEqual(hot["detailed_replay_passes"], 8)
+        self.assertNotIn(
+            "SM (%)", indexed[CASE + "/iteration/B/similie_probe"]["metrics"]
+        )
+        with self.assertRaisesRegex(ValueError, "Missing detailed results"):
+            merge_hot_samples(plan, samples, [], selected)
+
+    def test_hybrid_collects_core_then_only_selected_hot_samples(self):
+        plan = self.plan()
+        base = [
+            dict(
+                region=region,
+                label=label,
+                symbol=symbol,
+                metrics=dict.fromkeys(CORE_METRICS, 42),
+                rules=[],
+                replay_passes=1,
+            )
+            for region, label, symbol in plan["targets"]
+        ]
+        detailed = [
+            dict(row, metrics=dict.fromkeys(METRICS, 90), replay_passes=8)
+            for row in base
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "performance/nsys").mkdir(parents=True)
+            (output / "performance/nsys/timings.json").write_text(
+                json.dumps(dict(cases={CASE: plan}))
+            )
+            with (
+                patch("nsight_report.profiling_environment", return_value={}),
+                patch(
+                    "nsight_report.case_specs", return_value=[(CASE, "first", 64, ())]
+                ),
+                patch(
+                    "nsight_report.capture_groups", side_effect=[base, detailed]
+                ) as capture,
+            ):
+                profile_cases(
+                    Path("binary"),
+                    output,
+                    "incompressible",
+                    "ideal",
+                    "hd",
+                    hot_kernels=1,
+                )
+            self.assertEqual(
+                [call.args[10] for call in capture.call_args_list], ["core", "full"]
+            )
+            result = json.loads((output / "ncu/results.json").read_text())
+            self.assertEqual(result["detail"], "hybrid")
+            self.assertEqual(len(result["hot_kernels"][CASE]), 1)
+            self.assertEqual(result["errors"], [])
+
+    def test_hybrid_keeps_n128_core_metrics_when_multipass_is_unsupported(self):
+        case = CASE.replace("N=64", "N=128")
+        plan = self.plan()
+
+        def replace_case(value):
+            if isinstance(value, str):
+                return value.replace(CASE, case)
+            if isinstance(value, list):
+                return [replace_case(item) for item in value]
+            if isinstance(value, dict):
+                return {key: replace_case(item) for key, item in value.items()}
+            return value
+
+        plan = replace_case(plan)
+        base = [
+            dict(
+                region=region,
+                label=label,
+                symbol=symbol,
+                metrics=dict.fromkeys(CORE_METRICS, 42),
+                rules=[],
+                replay_passes=1,
+            )
+            for region, label, symbol in plan["targets"]
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "performance/nsys").mkdir(parents=True)
+            (output / "performance/nsys/timings.json").write_text(
+                json.dumps(dict(cases={case: plan}))
+            )
+            with (
+                patch("nsight_report.profiling_environment", return_value={}),
+                patch(
+                    "nsight_report.case_specs",
+                    return_value=[(case, "only", 128, ())],
+                ),
+                patch("nsight_report.capture_groups", return_value=base) as capture,
+            ):
+                profile_cases(
+                    Path("binary"),
+                    output,
+                    "incompressible",
+                    "ideal",
+                    "hd",
+                    hot_kernels=1,
+                )
+            self.assertEqual(capture.call_count, 1)
+            self.assertEqual(capture.call_args.args[10], "core")
+            result = json.loads((output / "ncu/results.json").read_text())
+            self.assertEqual(result["errors"], [])
+            self.assertEqual(result["hot_kernels"], {})
+            self.assertIn("device-memory snapshot", result["hot_kernel_skips"][case])
 
 
 class IterationAttribution(unittest.TestCase):
@@ -393,7 +591,10 @@ class IterationAttribution(unittest.TestCase):
                 "--metrics=" + ",".join(CORE_METRICS.values()),
                 command,
             )
-            self.assertFalse(any(option.startswith("--section=") for option in command))
+            self.assertNotIn("--section=SpeedOfLight", command)
+            self.assertIn("--section=LaunchStats", command)
+            self.assertIn("--section=Occupancy", command)
+            self.assertIn("--apply-rules=yes", command)
             full = compute_command(
                 Path("binary"),
                 Path(temporary),
@@ -409,7 +610,10 @@ class IterationAttribution(unittest.TestCase):
             )
             self.assertIn("--section=SpeedOfLight", full)
             self.assertIn("--section=Occupancy", full)
-            self.assertIn("--metrics=" + ",".join(METRICS.values()), full)
+            self.assertIn("--cache-control=all", full)
+            self.assertIn(
+                "--metrics=" + ",".join({**METRICS, **CORE_METRICS}.values()), full
+            )
 
     def test_library_launch_nested_in_similie_scope_is_reported_separately(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -534,6 +738,70 @@ class IterationAttribution(unittest.TestCase):
 
 
 class CombinedReport(unittest.TestCase):
+    def test_nvtx_ranges_are_sorted_by_gpu_duration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            plan = capture_fixture(Path(temporary) / "capture.sqlite")[CASE]
+        for region, duration in zip(plan["regions"], (10, 100, 50)):
+            region["gpu_ns"] = duration
+        rows = list(combined_rows(CASE, plan, []))
+        self.assertEqual(
+            [row["total_ns"] for row in rows if row["kind"] == "region"], [100, 50, 10]
+        )
+
+    def test_summary_keeps_every_case_under_github_limit_when_detail_is_large(self):
+        profiles, samples = {}, {}
+        for case, _, _, _ in case_specs():
+            region = case + "/iteration"
+            profiles[case] = dict(
+                regions=[
+                    dict(
+                        name=region,
+                        calls=1,
+                        host_ns=100,
+                        gpu_ns=100,
+                        others_ns=0,
+                        others_host_ns=0,
+                        kernels=[
+                            dict(
+                                label="",
+                                symbol=SYMBOL,
+                                name="x" * 90000,
+                                calls=1,
+                                total_ns=100,
+                            )
+                        ],
+                    )
+                ]
+            )
+            samples[case] = [
+                dict(
+                    region=region,
+                    label="",
+                    symbol=SYMBOL,
+                    metrics=dict.fromkeys({**METRICS, **CORE_METRICS}, 42),
+                    rules=[],
+                )
+            ]
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "performance/nsys").mkdir(parents=True)
+            (output / "ncu").mkdir()
+            (output / "performance/nsys/timings.json").write_text(
+                json.dumps(dict(cases=profiles))
+            )
+            (output / "ncu/results.json").write_text(
+                json.dumps(dict(detail="hybrid", cases=samples, errors=[]))
+            )
+            self.assertEqual(write_combined_report(output), [])
+            self.assertGreater(
+                (output / "nsight/report.md").stat().st_size, 1024 * 1024
+            )
+            summary = (output / "nsight/summary.md").read_text()
+            self.assertLess(len(summary.encode()), 1024 * 1024)
+            self.assertEqual(summary.count("\n## "), 14)
+            for case, _, _, _ in case_specs():
+                self.assertIn(case.removeprefix("TaylorGreen/"), summary)
+
     def test_core_reader_requires_one_pass_and_complete_metrics(self):
         values = {name: 2.0 for name in CORE_METRICS.values()}
         values["profiler__replayer_passes"] = 1.0
@@ -572,7 +840,7 @@ class CombinedReport(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Missing core metric"):
             read_compute_report(Path("report"), api, 1, detail="core")
 
-    def test_core_report_labels_activity_and_cache_traffic_and_preserves_base_units(
+    def test_core_report_labels_activity_and_normalized_cache_bandwidth(
         self,
     ):
         with tempfile.TemporaryDirectory() as temporary:
@@ -583,10 +851,7 @@ class CombinedReport(unittest.TestCase):
                     region=region["name"],
                     label=kernel["label"],
                     symbol=kernel["symbol"],
-                    metrics={
-                        name: 3e9 if name.endswith("(sector/s)") else 42
-                        for name in CORE_METRICS
-                    },
+                    metrics={name: 42 for name in CORE_METRICS},
                     rules=[],
                 )
                 for region in profiles[CASE]["regions"]
@@ -603,33 +868,54 @@ class CombinedReport(unittest.TestCase):
             self.assertEqual(write_combined_report(output), [])
             report = (output / "nsight/report.md").read_text()
             self.assertIn("SM active (%)", report)
-            self.assertIn("L1/TEX (Gsector/s)", report)
+            self.assertIn("L1/TEX BW (%)", report)
             self.assertNotIn("| SM SOL (%) |", report)
-            self.assertIn("| 42 | 3 | 3 | 42 |", report)
+            self.assertIn("| 42 | 42 | 42 | 42 |", report)
             with (output / "nsight/report.csv").open() as source:
                 row = next(
                     row for row in csv.DictReader(source) if row["kind"] == "kernel"
                 )
-            self.assertEqual(float(row["L1/TEX (sector/s)"]), 3e9)
+            self.assertEqual(float(row["L1/TEX bandwidth (%)"]), 42)
 
-    def test_only_near_peak_competing_throughputs_are_highlighted(self):
+    def test_saturated_units_and_native_priority_metrics_are_highlighted(self):
         self.assertEqual(limiting_metrics({}), {})
         self.assertEqual(limiting_metrics({"SM (%)": 40, "DRAM (%)": 70}), {})
         self.assertEqual(
             limiting_metrics(
                 {"SM (%)": 35, "L1/TEX (%)": 96, "L2 (%)": 85, "DRAM (%)": 93}
             ),
-            {"L1/TEX (%)": 31, "DRAM (%)": 31},
+            {"L1/TEX (%)": 31, "L2 (%)": 31, "DRAM (%)": 31},
         )
         self.assertEqual(
-            limiting_metrics({"SM (%)": 98, "DRAM (%)": 90}), {"SM (%)": 32}
+            limiting_metrics({"SM (%)": 98, "DRAM (%)": 90}),
+            {"SM (%)": 31, "DRAM (%)": 31},
         )
         self.assertEqual(
             limiting_metrics({"SM (%)": 90, "L2 (%)": 95, "DRAM (%)": None}),
-            {"SM (%)": 32, "L2 (%)": 31},
+            {"SM (%)": 31, "L2 (%)": 31},
         )
         self.assertEqual(
             limiting_metrics({"Achieved occupancy (%)": 20, "SM (%)": 84}), {}
+        )
+        self.assertEqual(limiting_metrics({"SM active (%)": 100}), {})
+        self.assertEqual(
+            limiting_metrics(
+                {"L1/TEX bandwidth (%)": 90, "L2 bandwidth (%)": 95, "DRAM (%)": 50}
+            ),
+            {"L1/TEX bandwidth (%)": 31, "L2 bandwidth (%)": 31},
+        )
+        self.assertEqual(
+            limiting_metrics(
+                {"Registers/thread": 96},
+                [
+                    dict(
+                        focus_metrics=[
+                            dict(name="launch__registers_per_thread", severity=2)
+                        ]
+                    )
+                ],
+            ),
+            {"Registers/thread": 31},
         )
 
     def test_tables_use_systems_timings_and_region_specific_compute_metrics(self):
@@ -685,7 +971,6 @@ class CombinedReport(unittest.TestCase):
             self.assertNotIn("\x1b", report)
             self.assertIn("**90**", report)
             self.assertIn("\x1b[1;31m90\x1b[0m", ansi)
-            self.assertIn("\x1b[1;32m90\x1b[0m", ansi)
             self.assertNotIn("**90**", ansi)
             self.assertEqual(
                 report.count(
@@ -757,6 +1042,34 @@ class CombinedReport(unittest.TestCase):
 
 
 class WorkflowPublication(unittest.TestCase):
+    def test_compact_summary_is_published_instead_of_large_detail(self):
+        workflow = (
+            Path(__file__).resolve().parents[2]
+            / ".github/workflows/benchmark_taylor_green_vortex.yml"
+        ).read_text()
+        start = workflow.index("        publish_nsight_report()")
+        end = workflow.index("        trap publish_nsight_report EXIT", start)
+        script = textwrap.dedent(workflow[start:end]) + "\npublish_nsight_report\n"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "results/nsight"
+            directory.mkdir(parents=True)
+            (directory / "report.md").write_text("x" * (2 * 1024 * 1024))
+            (directory / "summary.md").write_text("All fourteen cases\n")
+            (directory / "summary.ansi").write_text("Colored compact summary\n")
+            summary = root / "job-summary.md"
+            result = subprocess.run(
+                ["bash", "-c", script],
+                env=dict(
+                    os.environ, CI_ROOT=str(root), GITHUB_STEP_SUMMARY=str(summary)
+                ),
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            self.assertEqual(summary.read_text(), "All fourteen cases\n")
+            self.assertEqual(result.stdout, "Colored compact summary\n")
+
     def test_cancellation_stops_the_compute_container(self):
         workflow = (
             Path(__file__).resolve().parents[2]

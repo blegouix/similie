@@ -13,10 +13,14 @@ on:
         description: Full commit SHA with an existing CUDA Docker image
         required: false
       profiling_detail:
-        description: Core uses one counter pass; full collects aggregate SOL and rules
+        description: Hybrid adds detailed hot-kernel profiling; core is one pass; full analyzes all kernels
         type: choice
-        options: [core, full]
-        default: core
+        options: [hybrid, core, full]
+        default: hybrid
+      hot_kernels:
+        description: Number of hottest kernels per case for detailed hybrid profiling
+        type: number
+        default: 20
   workflow_call:
     inputs:
       target_sha:
@@ -28,7 +32,11 @@ on:
       profiling_detail:
         required: false
         type: string
-        default: core
+        default: hybrid
+      hot_kernels:
+        required: false
+        type: number
+        default: 20
 
 permissions:
   contents: read
@@ -66,7 +74,8 @@ jobs:
       FLUID: ${{ matrix.fluid }}
       TRANSPORT: ${{ matrix.transport }}
       COUPLING: ${{ matrix.coupling }}
-      PROFILING_DETAIL: ${{ inputs.profiling_detail || 'core' }}
+      PROFILING_DETAIL: ${{ inputs.profiling_detail || 'hybrid' }}
+      HOT_KERNELS: ${{ inputs.hot_kernels }}
     steps:
     - name: Select target commit and isolated output path
       id: target
@@ -137,7 +146,8 @@ jobs:
         trap 'exit 143' TERM
         docker run --rm --gpus all --entrypoint bash --user "$(id -u):$(id -g)" --name "${container_name}" \
           --memory=8g --memory-swap=32g \
-          -e PROFILING_DETAIL="${PROFILING_DETAIL:-core}" \
+          -e PROFILING_DETAIL="${PROFILING_DETAIL:-hybrid}" \
+          -e HOT_KERNELS="${HOT_KERNELS:-20}" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
           -e BUILD_ROOT -e HOME="${BUILD_ROOT}/home" \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 -e SIMILIE_SOLVER_QUIET=1 \
@@ -151,6 +161,7 @@ jobs:
             python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/nsight_report.py" compute \
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
               --detail "${PROFILING_DETAIL}" \
+              --hot-kernels "${HOT_KERNELS}" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}"
           ' &
@@ -160,12 +171,16 @@ jobs:
       run: |
         set -euo pipefail
         publish_nsight_report() {
-          if [ -f "${CI_ROOT}/results/nsight/report.md" ]; then
-            cat "${CI_ROOT}/results/nsight/report.md" >> "${GITHUB_STEP_SUMMARY}"
-            if [ -f "${CI_ROOT}/results/nsight/report.ansi" ]; then
-              cat "${CI_ROOT}/results/nsight/report.ansi"
+          summary_report="${CI_ROOT}/results/nsight/summary.md"
+          if [ ! -f "${summary_report}" ]; then
+            summary_report="${CI_ROOT}/results/nsight/report.md"
+          fi
+          if [ -f "${summary_report}" ]; then
+            cat "${summary_report}" >> "${GITHUB_STEP_SUMMARY}"
+            if [ -f "${summary_report%.md}.ansi" ]; then
+              cat "${summary_report%.md}.ansi"
             else
-              cat "${CI_ROOT}/results/nsight/report.md"
+              cat "${summary_report}"
             fi
           fi
         }
