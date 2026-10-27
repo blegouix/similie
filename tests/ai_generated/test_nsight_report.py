@@ -743,11 +743,12 @@ class CombinedReport(unittest.TestCase):
     def test_nvtx_ranges_are_sorted_by_gpu_duration(self):
         with tempfile.TemporaryDirectory() as temporary:
             plan = capture_fixture(Path(temporary) / "capture.sqlite")[CASE]
-        for region, duration in zip(plan["regions"], (10, 100, 50)):
+        for region, duration in zip(plan["regions"], (10, 100, 50, 20), strict=True):
             region["gpu_ns"] = duration
         rows = list(combined_rows(CASE, plan, []))
         self.assertEqual(
-            [row["total_ns"] for row in rows if row["kind"] == "region"], [100, 50, 10]
+            [row["total_ns"] for row in rows if row["kind"] == "region"],
+            [100, 50, 20, 10],
         )
 
     def test_summary_keeps_every_case_under_github_limit_when_detail_is_large(self):
@@ -988,12 +989,12 @@ class CombinedReport(unittest.TestCase):
                 14,
             )
             self.assertNotIn("NVTX (ms)", report)
-            self.assertEqual(report.count("|  | similie_probe |"), 14 * 3)
-            self.assertEqual(report.count("|  | Others |"), 14 * 3)
+            self.assertEqual(report.count("|  | similie_probe |"), 14 * 4)
+            self.assertEqual(report.count("|  | Others |"), 14 * 4)
             self.assertNotIn("similie_setup", report)
             self.assertEqual(
                 report.count("|  | void Kokkos::generic_kernel() (library_probe) |"),
-                14 * 2,
+                14 * 3,
             )
             for column in ("L1/TEX SOL (%)", "L2 SOL (%)", "DRAM SOL (%)"):
                 self.assertIn(column, report)
@@ -1032,7 +1033,7 @@ class CombinedReport(unittest.TestCase):
                 kernels[CASE + "/iteration/solver/A"]["rules"][0]["message"],
             )
             with (output / "nsight/report.csv").open() as source:
-                self.assertEqual(len(list(csv.DictReader(source))), 14 * 11)
+                self.assertEqual(len(list(csv.DictReader(source))), 14 * 15)
 
     def test_missing_compute_data_still_reports_systems_times(self):
         with tempfile.TemporaryDirectory() as temporary:

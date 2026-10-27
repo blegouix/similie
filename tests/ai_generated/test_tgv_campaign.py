@@ -199,6 +199,38 @@ class CampaignConfiguration(unittest.TestCase):
 
 
 class InitialDiscretization(unittest.TestCase):
+    def test_performance_without_monitoring_still_checks_final_state(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "trajectory.performance.json"
+            record = {
+                "configuration": "incompressible_ideal_hd",
+                "N": 8,
+                "mode": "performance",
+                "monitoring_enabled": False,
+                "steps": 5,
+                "solver_seconds": 1,
+                "mean_step_seconds": 0.2,
+                "cell_updates_per_second": 512,
+                "final_time": 1,
+            }
+            path.write_text(json.dumps(record))
+            hdf = path.with_name("trajectory.h5")
+            with h5py.File(hdf, "w") as data:
+                data["final_state"] = np.ones((3, 8**3))
+            actual, actual_hdf = validate_trajectory(
+                path, "incompressible_ideal_hd", 8
+            )
+            self.assertEqual(actual, record)
+            self.assertEqual(actual_hdf, hdf)
+            with h5py.File(hdf, "r+") as data:
+                data["final_state"][0, 0] = np.nan
+            with self.assertRaisesRegex(ValueError, "Invalid final state"):
+                validate_trajectory(path, "incompressible_ideal_hd", 8)
+            record["mode"] = "reference"
+            path.write_text(json.dumps(record))
+            with self.assertRaisesRegex(ValueError, "requires monitoring"):
+                validate_trajectory(path, "incompressible_ideal_hd", 8, reference=True)
+
     def test_potential_based_energy_without_resolution_compensation(self):
         for fluid in ("incompressible", "compressible"):
             for n in (8, 16):
@@ -229,12 +261,14 @@ class InitialDiscretization(unittest.TestCase):
                         else 0.125
                     )
                     with h5py.File(path.with_name("trajectory.h5"), "w") as data:
+                        components = 3 if fluid == "incompressible" else 4
+                        data["final_state"] = np.ones((components, n**3))
                         monitors = np.zeros((6, 14))
                         monitors[:, 0] = np.linspace(0, 1, 6)
                         monitors[:, 1] = expected
                         monitors[:, 11:13] = 1
                         data["monitors"] = monitors
-                        data["reconstruction_monitors"] = np.zeros((6, 4))
+                        data["reconstruction_monitors"] = np.zeros((6, 5))
                     validate_trajectory(path, configuration, n)
                     with h5py.File(path.with_name("trajectory.h5"), "r+") as data:
                         data["monitors"][0, 1] = expected + 0.001
@@ -263,12 +297,13 @@ class ReferenceSnapshots(unittest.TestCase):
             hdf = Path(temporary) / "trajectory.h5"
             times = sorted([i * 0.033 for i in range(304)] + [8.0, 10.0])
             with h5py.File(hdf, "w") as data:
+                data["final_state"] = np.ones((4, 8**3))
                 monitors = np.zeros((2, 14))
                 monitors[:, 0] = [0, 10]
                 monitors[:, 1] = 0.125
                 monitors[:, 11:13] = 1
                 data["monitors"] = monitors
-                data["reconstruction_monitors"] = np.zeros((2, 4))
+                data["reconstruction_monitors"] = np.zeros((2, 5))
                 for i, time in enumerate(times):
                     data[f"snapshot_{i}/time"] = [time]
             xmf = hdf.with_suffix(".xmf")
@@ -318,6 +353,25 @@ class StrategyComparison(unittest.TestCase):
         self.assertFalse(
             compare_strategies(self.baseline, self.candidate)["monitors"]["passed"]
         )
+
+    def test_final_time_is_compared_without_monitor_histories(self):
+        for path in (self.baseline, self.candidate):
+            with h5py.File(path, "r+") as data:
+                del data["monitors"]
+                del data["electromagnetic_monitors"]
+        baseline = {"final_time": 1.0}
+        candidate = {"final_time": 1.0}
+        results = compare_strategies(
+            self.baseline, self.candidate, baseline, candidate
+        )
+        self.assertNotIn("monitors", results)
+        self.assertTrue(all(metric["passed"] for metric in results.values()))
+        candidate["final_time"] += 1e-3
+        results = compare_strategies(
+            self.baseline, self.candidate, baseline, candidate
+        )
+        self.assertTrue(results["final_state"]["passed"])
+        self.assertFalse(results["final_time"]["passed"])
 
     def test_changed_field_sector_is_detected_even_with_identical_fluid(self):
         with h5py.File(self.candidate, "r+") as data:
