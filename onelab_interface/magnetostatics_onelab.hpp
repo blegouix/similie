@@ -607,10 +607,12 @@ struct Z
 template <class MuTensor>
 using LinearMagnetostaticsHamiltonian
         = physics::magnetostatics::LinearMagnetostaticsHamiltonian<MuTensor, X, Y, Z>;
-using MagneticVectorPotentialToMagneticInduction2D
-        = physics::magnetostatics::MagneticVectorPotentialToMagneticInduction<X, Y>;
-using MagneticVectorPotentialToMagneticInduction3D
-        = physics::magnetostatics::MagneticVectorPotentialToMagneticInduction<X, Y, Z>;
+using PotentialCoboundary2D = sil::exterior::Coboundary<
+        sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>,
+        sil::tensor::ScalarIndex>;
+using PotentialCoboundary3D = sil::exterior::Coboundary<
+        sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>,
+        sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>>;
 using InPlaneIndex = sil::tensor::TensorNaturalIndex<X, Y>;
 
 struct MagneticMoments
@@ -699,6 +701,47 @@ struct DDimZ
 using NodeDomain2D = ddc::DiscreteDomain<DDimX, DDimY>;
 using NodeDomain3D = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>;
 using ScalarPotentialIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+
+// Select the physical curl component from the canonical exterior coboundary.
+// The returned coefficients still act on cochains; callers reconstruct fields.
+template <class Index, class PotentialCoboundary, class Elem>
+[[nodiscard]] KOKKOS_FUNCTION auto magnetic_induction_stencil(Elem const& elem)
+{
+    using Source = typename PotentialCoboundary::cochain_tag;
+    using Direction = std::conditional_t<
+            Source::rank() == 0,
+            sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>,
+            sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>>;
+    using Target = sil::exterior::coboundary_index_t<Direction, Source>;
+    using Domain = sil::misc::convert_type_seq_to_t<ddc::DiscreteDomain, ddc::to_type_seq_t<Elem>>;
+    [[maybe_unused]] sil::tensor::TensorAccessor<Target> accessor;
+    typename sil::tensor::TensorAccessor<Target>::discrete_element_type component;
+    if constexpr (Source::rank() == 0) {
+        static_assert(std::is_same_v<Index, X> || std::is_same_v<Index, Y>);
+        if constexpr (std::is_same_v<Index, X>)
+            component = accessor.template access_element<Y>();
+        else
+            component = accessor.template access_element<X>();
+    } else {
+        static_assert(
+                std::is_same_v<Index, X> || std::is_same_v<Index, Y> || std::is_same_v<Index, Z>);
+        if constexpr (std::is_same_v<Index, X>)
+            component = accessor.template access_element<Y, Z>();
+        else if constexpr (std::is_same_v<Index, Y>)
+            component = accessor.template access_element<X, Z>();
+        else
+            component = accessor.template access_element<X, Y>();
+    }
+    auto stencil = PotentialCoboundary::
+            value(sil::exterior::tangent_basis<Target::rank(), Domain>(elem),
+                  sil::exterior::tangent_basis<Source::rank(), Domain>(elem),
+                  elem,
+                  component);
+    if constexpr (std::is_same_v<Index, Y>)
+        stencil *= -1.0;
+    return stencil;
+}
+
 
 template <class... CDim>
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
@@ -1103,7 +1146,7 @@ public:
     }
 };
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 class MagnetostaticsOperator2D
 {
 public:
@@ -1233,9 +1276,7 @@ public:
                     outer1_coefficients_host(row, slot) = 0.0;
                 }
                 int moment0_count = 0;
-                auto moment0_stencil
-                        = MagneticVectorPotentialToMagneticInduction::template forward_value<X>(
-                                elem);
+                auto moment0_stencil = magnetic_induction_stencil<X, PotentialCoboundary>(elem);
                 ddc::device_for_each(moment0_stencil.domain(), [&](auto stencil_elem) {
                     double const coeff = moment0_stencil.mem(stencil_elem);
                     if (coeff == 0.0) {
@@ -1253,9 +1294,7 @@ public:
                 moment0_counts_host(row) = moment0_count;
 
                 int moment1_count = 0;
-                auto moment1_stencil
-                        = MagneticVectorPotentialToMagneticInduction::template forward_value<Y>(
-                                elem);
+                auto moment1_stencil = magnetic_induction_stencil<Y, PotentialCoboundary>(elem);
                 ddc::device_for_each(moment1_stencil.domain(), [&](auto stencil_elem) {
                     double const coeff = moment1_stencil.mem(stencil_elem);
                     if (coeff == 0.0) {
@@ -1708,15 +1747,15 @@ private:
     }
 };
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 class MagnetostaticsOperator3D
 {
 public:
     using coord_view_type = detail::coord_view_type<MemorySpace>;
-    using vector_potential_index =
-            typename MagneticVectorPotentialToMagneticInduction::vector_potential_index;
-    using magnetic_induction_index =
-            typename MagneticVectorPotentialToMagneticInduction::magnetic_induction_index;
+    using vector_potential_index = typename PotentialCoboundary::cochain_tag;
+    using magnetic_induction_index = sil::exterior::coboundary_index_t<
+            sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>,
+            vector_potential_index>;
     using matrix_free_vector_potential_alloc_type
             = vector_potential_tensor_alloc_type_3d<MemorySpace, vector_potential_index>;
     using matrix_free_vector_potential_tensor_type
@@ -2052,8 +2091,8 @@ public:
                                 = 3 * (i + nx * (j + ny * k))
                                   + static_cast<std::size_t>(component_id<index_type>());
                         int count = 0;
-                        auto stencil = MagneticVectorPotentialToMagneticInduction::
-                                template forward_value<index_type>(elem);
+                        auto stencil
+                                = magnetic_induction_stencil<index_type, PotentialCoboundary>(elem);
                         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
                             double const coeff = stencil.mem(stencil_elem);
                             if (coeff == 0.0) {
@@ -2828,8 +2867,8 @@ public:
                         if (response == 0.0) {
                             return;
                         }
-                        auto const stencil = MagneticVectorPotentialToMagneticInduction::
-                                template forward_value<index_type>(elem);
+                        auto const stencil
+                                = magnetic_induction_stencil<index_type, PotentialCoboundary>(elem);
                         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
                             double const coefficient = stencil.mem(stencil_elem);
                             if (coefficient == 0.0) {
@@ -3011,16 +3050,13 @@ template <
         class ExecSpace,
         class MemorySpace,
         class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
+        class PotentialCoboundary,
         class StateView,
         class InputView,
         class OutputView>
 void apply_jacobian(
         ExecSpace const& exec_space,
-        MagnetostaticsOperator2D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator2D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state,
         InputView input,
         OutputView output)
@@ -3152,16 +3188,13 @@ template <
         class ExecSpace,
         class MemorySpace,
         class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
+        class PotentialCoboundary,
         class StateView,
         class InputView,
         class OutputView>
 void apply_jacobian(
         ExecSpace const& exec_space,
-        MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state,
         InputView input,
         OutputView output)
@@ -3363,29 +3396,20 @@ void apply_jacobian(
             });
 }
 
-template <
-        class MemorySpace,
-        class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
-        class StateView>
+template <class MemorySpace, class Equations, class PotentialCoboundary, class StateView>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state)
 {
     if (!operator_model.has_precomputed_stencils()) {
-        auto const stencil_operator = MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction>(
-                operator_model.equations(),
-                operator_model.x_coords(),
-                operator_model.y_coords(),
-                operator_model.z_coords(),
-                operator_model.gauge_penalty(),
-                true);
+        auto const stencil_operator
+                = MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary>(
+                        operator_model.equations(),
+                        operator_model.x_coords(),
+                        operator_model.y_coords(),
+                        operator_model.z_coords(),
+                        operator_model.gauge_penalty(),
+                        true);
         return assemble_matrix_data(stencil_operator, state);
     }
     std::size_t const size = operator_model.size();
@@ -3847,28 +3871,18 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     return matrix_data;
 }
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model)
+        MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary> const& operator_model)
 {
     Kokkos::View<double**, MemorySpace> state("similie_3d_linear_state", operator_model.size(), 1);
     Kokkos::deep_copy(state, 0.0);
     return assemble_matrix_data(operator_model, state);
 }
 
-template <
-        class MemorySpace,
-        class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
-        class StateView>
+template <class MemorySpace, class Equations, class PotentialCoboundary, class StateView>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator2D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator2D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state)
 {
     std::size_t const size = operator_model.size();
@@ -4064,12 +4078,9 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     return matrix_data;
 }
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator2D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model)
+        MagnetostaticsOperator2D<MemorySpace, Equations, PotentialCoboundary> const& operator_model)
 {
     Kokkos::View<double**> state("similie_2d_linear_state", operator_model.size(), 1);
     Kokkos::deep_copy(state, 0.0);
@@ -4095,7 +4106,7 @@ using InPlaneInductionFormIndex = sil::tensor::Covariant<magnetostatics_local::I
 using InPlaneInductionIndexSeq = sil::tensor::upper_t<
         ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneInductionFormIndex>>>;
 
-template <class MagneticVectorPotentialToMagneticInduction, class Index, class NodeValueGetter>
+template <class PotentialCoboundary, class Index, class NodeValueGetter>
 double magnetic_induction_moment_from_potential_z(
         ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY> elem,
         NodeValueGetter&& node_value_z)
@@ -4116,38 +4127,7 @@ double magnetic_induction_moment_from_potential_z(
         return value;
     };
 
-    return apply_stencil(
-            MagneticVectorPotentialToMagneticInduction::template forward_value<Index>(elem));
-}
-
-template <class Index, class NodeValueGetter>
-double magnetic_induction_moment_from_potential_z_3d(
-        ddc::DiscreteElement<
-                magnetostatics_local::DDimX,
-                magnetostatics_local::DDimY,
-                magnetostatics_local::DDimZ> elem,
-        NodeValueGetter&& node_value_z)
-{
-    using namespace magnetostatics_local;
-
-    auto apply_stencil = [&](auto stencil) {
-        double value = 0.0;
-        ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
-            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
-            value += stencil.mem(stencil_elem)
-                     * node_value_z(
-                             static_cast<std::size_t>(
-                                     ddc::DiscreteElement<DDimX>(potential_elem).uid()),
-                             static_cast<std::size_t>(
-                                     ddc::DiscreteElement<DDimY>(potential_elem).uid()),
-                             static_cast<std::size_t>(
-                                     ddc::DiscreteElement<DDimZ>(potential_elem).uid()));
-        });
-        return value;
-    };
-
-    return apply_stencil(
-            MagneticVectorPotentialToMagneticInduction3D::template forward_value<Index>(elem));
+    return apply_stencil(magnetic_induction_stencil<Index, PotentialCoboundary>(elem));
 }
 
 template <class Index, class NodeValueGetter>
@@ -4159,16 +4139,14 @@ double magnetic_induction_moment_from_vector_potential_3d(
         NodeValueGetter&& node_value)
 {
     using namespace magnetostatics_local;
-    using VectorPotentialIndex =
-            typename MagneticVectorPotentialToMagneticInduction3D::vector_potential_index;
+    using VectorPotentialIndex = typename PotentialCoboundary3D::cochain_tag;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<VectorPotentialIndex> potential_accessor;
     auto const potential_x = potential_accessor.template access_element<X>();
     auto const potential_y = potential_accessor.template access_element<Y>();
 
     double value = 0.0;
-    auto stencil
-            = MagneticVectorPotentialToMagneticInduction3D::template forward_value<Index>(elem);
+    auto stencil = magnetic_induction_stencil<Index, PotentialCoboundary3D>(elem);
     ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
         auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
         auto const potential_component = ddc::DiscreteElement<VectorPotentialIndex>(stencil_elem);
@@ -4247,11 +4225,11 @@ void fill_post_process_fields_on_cell_domain(
         sil::tensor::Tensor reduced_induction(reduced_induction_span);
         reduced_induction(reduced_induction.accessor().template access_element<X>())
                 = magnetic_induction_moment_from_potential_z<
-                        magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D,
+                        magnetostatics_local::PotentialCoboundary2D,
                         Y>(elem, node_value_z);
         reduced_induction(reduced_induction.accessor().template access_element<Y>())
                 = magnetic_induction_moment_from_potential_z<
-                        magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D,
+                        magnetostatics_local::PotentialCoboundary2D,
                         X>(elem, node_value_z);
 
         std::array<double, InPlaneInductionFormIndex::access_size()>
@@ -4281,18 +4259,16 @@ void fill_post_process_fields_on_cell_domain(
                 0.0,
         };
         std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
-        std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
         if (read_nonlinear_material(elem)) {
             magnetic_field = nonlinear_constitutive_law(
-                    physics::magnetostatics::
-                            NonlinearMagneticState {magnetic_induction, unit_hodge},
+                    physics::magnetostatics::NonlinearMagneticState {magnetic_induction},
                     elem);
         } else {
             physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
                     read_mu(elem));
             magnetic_field = {
-                    constitutive_law({{magnetic_induction[0]}, unit_hodge[0]}, elem)[0],
-                    constitutive_law({{magnetic_induction[1]}, unit_hodge[1]}, elem)[0],
+                    constitutive_law({{magnetic_induction[0]}}, elem)[0],
+                    constitutive_law({{magnetic_induction[1]}}, elem)[0],
                     0.0,
             };
         }
@@ -4332,19 +4308,17 @@ void fill_post_process_fields_on_cell_domain_3d(
                         / (cell_widths[0] * cell_widths[1]),
         };
         std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
-        std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
         if (read_nonlinear_material(elem)) {
             magnetic_field = nonlinear_constitutive_law(
-                    physics::magnetostatics::
-                            NonlinearMagneticState {magnetic_induction, unit_hodge},
+                    physics::magnetostatics::NonlinearMagneticState {magnetic_induction},
                     elem);
         } else {
             physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
                     read_mu(elem));
             magnetic_field = {
-                    constitutive_law({{magnetic_induction[0]}, unit_hodge[0]}, elem)[0],
-                    constitutive_law({{magnetic_induction[1]}, unit_hodge[1]}, elem)[0],
-                    constitutive_law({{magnetic_induction[2]}, unit_hodge[2]}, elem)[0],
+                    constitutive_law({{magnetic_induction[0]}}, elem)[0],
+                    constitutive_law({{magnetic_induction[1]}}, elem)[0],
+                    constitutive_law({{magnetic_induction[2]}}, elem)[0],
             };
         }
 
@@ -4412,6 +4386,8 @@ void fill_force_density_on_cell_domain(
             one_form_dom(cell_domain, one_form_accessor.domain());
     ddc::Chunk one_form_alloc(one_form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor one_form_tensor(one_form_alloc);
+    ddc::Chunk stress_form_alloc(one_form_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor stress_form(stress_form_alloc);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<ScalarIndex> scalar_accessor;
     ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, ScalarIndex>
@@ -4436,15 +4412,24 @@ void fill_force_density_on_cell_domain(
                     metric,
                     position);
 
+    sil::exterior::StagedOperator<sil::exterior::Reduction<
+            ddc::TypeSeq<InPlaneOneFormIndex>,
+            decltype(position),
+            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>>>
+            reduce_stress(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    one_form_tensor,
+                    stress_form,
+                    position);
+
     auto fill_force_component = [&](auto select_components, auto assign_output) {
         ddc::host_for_each(cell_domain, [&](auto elem) {
             std::array<double, 6> const stress = fill_stress(elem);
             std::array<double, 2> const one_form = select_components(stress);
-            one_form_tensor(elem, one_form_tensor.accessor().template access_element<X>())
-                    = one_form[0];
-            one_form_tensor(elem, one_form_tensor.accessor().template access_element<Y>())
-                    = one_form[1];
+            stress_form(elem, stress_form.accessor().template access_element<X>()) = one_form[0];
+            stress_form(elem, stress_form.accessor().template access_element<Y>()) = one_form[1];
         });
+        reduce_stress(one_form_tensor, stress_form);
         staged_codifferential(scalar_tensor, one_form_tensor);
         ddc::host_for_each(cell_domain, [&](auto elem) {
             assign_output(elem, -scalar_tensor(elem, ddc::DiscreteElement<ScalarIndex>(0)));
@@ -5016,7 +5001,7 @@ Result run_on_quadrilateral_grid(
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator2D<
                 memory_space,
                 decltype(equations),
-                magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D>(
+                magnetostatics_local::PotentialCoboundary2D>(
                 equations,
                 x_coords,
                 y_coords,
@@ -5522,7 +5507,7 @@ Result run_on_hexahedral_grid(
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator3D<
                 memory_space,
                 decltype(equations),
-                magnetostatics_local::MagneticVectorPotentialToMagneticInduction3D>(
+                magnetostatics_local::PotentialCoboundary3D>(
                 equations,
                 x_coords,
                 y_coords,

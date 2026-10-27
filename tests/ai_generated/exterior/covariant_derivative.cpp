@@ -15,6 +15,23 @@ struct Y
 struct Z
 {
 };
+
+struct CovariantDerivativeKernel
+{
+    Kokkos::View<double*> result;
+
+    KOKKOS_FUNCTION void operator()(int) const
+    {
+        auto sampler = KOKKOS_LAMBDA(std::size_t, std::size_t vertex)
+        {
+            return std::array<double, 2> {2.0 * vertex, 3.0 * vertex};
+        };
+        std::array<double, 2> const differential
+                = sil::exterior::CovariantDerivative<X, Y>::cochain_value<0, 2>({0}, 0, sampler);
+        result(0) = differential[0];
+        result(1) = differential[1];
+    }
+};
 } // namespace
 
 TEST(CovariantDerivative, CochainStokesAndFlatSquareZero)
@@ -81,4 +98,13 @@ TEST(CovariantDerivative, CurvatureIsNotForcedToZero)
         return D::cochain_value<0, 1>({mask == 1 ? 0UL : 1UL}, v, section, transport);
     };
     EXPECT_DOUBLE_EQ((D::cochain_value<1, 1>({0, 1}, 0, edge, transport)[0]), 1);
+}
+
+TEST(CovariantDerivative, LocalStorageInCallingExecutionSpace)
+{
+    Kokkos::View<double*> result("covariant_derivative", 2);
+    Kokkos::parallel_for("covariant_derivative", 1, CovariantDerivativeKernel {result});
+    auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result);
+    EXPECT_DOUBLE_EQ(host(0), 2.0);
+    EXPECT_DOUBLE_EQ(host(1), 3.0);
 }

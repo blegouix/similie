@@ -26,7 +26,6 @@ class HamiltonianDefinition:
     hamiltonian: object
     variables: list[object]
     includes: list[str] | None = None
-    moments_computer: str | None = None
     template_parameters: list[str] | None = None
     parameter_types: dict[str, str] | None = None
     parameter_value_expressions: dict[str, str] | None = None
@@ -193,7 +192,6 @@ def write_cpp_hamiltonian_header(
     hamiltonian,
     variable_entries: list[dict[str, object]],
     includes: list[str] | None = None,
-    moments_computer: str | None = None,
     inverse_symbols: list[str] | None = None,
     inverse_expressions: list | None = None,
     template_parameters: list[str] | None = None,
@@ -263,30 +261,6 @@ def write_cpp_hamiltonian_header(
             return {_render_cxx_expression(expression, replacements, symbolic_functions)};
         }}"""
             )
-    nonlocal_method = ""
-    if moments_computer is not None:
-        coefficients = [
-            diff(diff(hamiltonian, symbol), symbol) for symbol in moment_symbols
-        ]
-        coefficient_method = _render_state_component_method(
-            "moment_coefficient",
-            coefficients,
-            replacements,
-            symbolic_functions,
-        )
-        nonlocal_method = f"""
-    template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dhamiltonian_dmoments_value(State const& state, Elem const& elem) const
-    {{
-        using Component = ddc::type_seq_element_t<Index::value, ddc::TypeSeq<SpatialIndex...>>;
-        auto value = MomentsComputer::template forward_value<Component>(elem);
-        value *= moment_coefficient<Index>(state, elem);
-        return value;
-    }}
-"""
-    else:
-        coefficient_method = ""
-    private_methods = coefficient_method
     template_prefix = (
         ""
         if not template_parameters
@@ -301,7 +275,6 @@ def write_cpp_hamiltonian_header(
         constructor += " {}"
     concept_type = struct_name
     concept_arguments = []
-    spatial_arguments = []
     parameter_types = (
         set()
         if definition is None
@@ -311,23 +284,12 @@ def write_cpp_hamiltonian_header(
         if parameter.split()[-1] in parameter_types:
             concept_arguments.append("similie::physics::detail::ParameterConcept")
         elif "..." in parameter:
-            count = 2 if moments_computer is not None else 1
-            spatial_arguments = [
-                f"std::integral_constant<std::size_t, {i + j + 1}>"
-                for j in range(count)
-            ]
-            concept_arguments.extend(spatial_arguments)
+            concept_arguments.append(f"std::integral_constant<std::size_t, {i + 1}>")
         else:
             concept_arguments.append(f"std::integral_constant<std::size_t, {i}>")
     if template_parameters:
         concept_type += "<" + ", ".join(concept_arguments) + ">"
     checks = f"static_assert(similie::physics::HamiltonianPhysicsConcept<{concept_type}, similie::physics::detail::ElementConcept>);\n"
-    if nonlocal_method and spatial_arguments:
-        grid_arguments = ", ".join(
-            "similie::physics::detail::GridConcept<" + arg + ">"
-            for arg in spatial_arguments
-        )
-        checks += f"static_assert(similie::physics::detail::HasMomentCoefficientConcept<{concept_type}, std::integral_constant<std::size_t, 0>, ddc::DiscreteElement<{grid_arguments}>>);\n"
     output_path.write_text(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
@@ -352,7 +314,6 @@ namespace {namespace} {{
 {template_prefix}class {struct_name}
 {{
 {_render_members(parameters)}
-{"" if moments_computer is None else "    using MomentsComputer = " + moments_computer + ";"}
 
 public:
     static constexpr std::size_t N = {len(moment_symbols)};
@@ -383,9 +344,6 @@ public:
             return 0.0;
         }}
     }}
-{nonlocal_method}
-private:
-{private_methods}
 }};
 
 {checks}
@@ -437,7 +395,6 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         hamiltonian=definition.hamiltonian,
         variable_entries=variable_entries,
         includes=definition.includes,
-        moments_computer=definition.moments_computer,
         inverse_symbols=inverse_symbols,
         inverse_expressions=inverse_expressions,
         template_parameters=definition.template_parameters,

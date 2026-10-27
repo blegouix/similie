@@ -298,11 +298,12 @@ public:
                         work(a, i) = advected[a];
                     }
                 });
-        m_dec.reduce_one_form(motion, m_motional);
-        // Keep the motional cochain for the rest-frame Ohm law and heating.
-        Kokkos::deep_copy(e, m_motional);
+        // Material laws receive pointwise fields; reduce only their results.
+        Kokkos::deep_copy(m_motional_edges, motion);
         if (coupling == Coupling::MHD) {
             Kokkos::deep_copy(j, ampere);
+            m_dec.reconstruct_one_form(j, current);
+            Field const current_value = current;
             Kokkos::parallel_for(
                     "mhd_ohm_law",
                     m_grid.cells,
@@ -310,14 +311,16 @@ public:
                         similie::physics::magnetodynamics::ResistiveMagnetodynamics const
                                 model(ElectromagneticReference::permeability,
                                       ElectromagneticReference::magnetic_resistivity);
-                        std::array<double, 3> const conduction
-                                = model.ohm_electric_field({}, {}, {j(0, i), j(1, i), j(2, i)});
+                        std::array<double, 3> const conduction = model.ohm_electric_field(
+                                {},
+                                {},
+                                {current_value(0, i), current_value(1, i), current_value(2, i)});
                         for (int a = 0; a < 3; ++a)
-                            if (resistive)
-                                e(a, i) += conduction[a];
+                            work(a, i) = motion(a, i) + (resistive ? conduction[a] : 0.0);
                     });
+            m_dec.reduce_one_form(work, e);
         } else {
-            m_dec.reduce_one_form(work, j);
+            Field const electric_values = electric_field;
             Kokkos::parallel_for(
                     "electric_ohm_law",
                     m_grid.cells,
@@ -328,20 +331,22 @@ public:
                         std::array<double, 3> effective_displacement {};
                         for (int a = 0; a < 3; ++a)
                             effective_displacement[a]
-                                    = d(a, i)
+                                    = dn(a, i)
                                       + (coupling == Coupling::FMHD
                                                  ? model.permittivity * motion(a, i)
                                                  : 0);
                         std::array<double, 3> const electric
-                                = model.electric_field({d(0, i), d(1, i), d(2, i)});
+                                = model.electric_field({dn(0, i), dn(1, i), dn(2, i)});
                         std::array<double, 3> const conduction
                                 = model.conduction_current(effective_displacement);
                         for (int a = 0; a < 3; ++a) {
-                            e(a, i) = electric[a];
+                            electric_values(a, i) = electric[a];
                             if (resistive)
-                                j(a, i) += conduction[a];
+                                work(a, i) += conduction[a];
                         }
                     });
+            m_dec.reduce_one_form(electric_values, e);
+            m_dec.reduce_one_form(work, j);
         }
         m_dec.reconstruct_one_form(j, current);
         m_dec.reconstruct_one_form(e, electric_field);
@@ -371,7 +376,6 @@ public:
                 });
         m_dec.reconstruct_one_form(j, m_current_edges);
         m_dec.reconstruct_one_form(e, m_electric_edges);
-        m_dec.reconstruct_one_form(m_motional, m_motional_edges);
         Field const je = m_current_edges, ee = m_electric_edges, me = m_motional_edges,
                     power = fluid_power, heating = joule_heating;
         KokkosBlas::dot(Kokkos::subview(power, 0, Kokkos::ALL), je, ee);
@@ -399,7 +403,11 @@ public:
                 Kokkos::deep_copy(m_curl, 0.0);
         }
         ProfilingRegion assembly_region("shared-electromagnetic-assembly");
-        Field const rate = m_rate, div = m_work, curl = m_curl;
+        m_dec.reconstruct_one_form(ampere, m_current_edges);
+        m_dec.reconstruct_two_form(m_curl, m_electric_edges);
+        Field const rate = m_rate, div = m_work, curl = m_electric_edges,
+                    ampere_value = m_current_edges, electric_rate = m_displacement_edges,
+                    magnetic_rate = m_magnetic_faces;
         Kokkos::parallel_for(
                 "electromagnetic_evolution",
                 m_grid.cells,
@@ -409,13 +417,26 @@ public:
                                   ElectromagneticReference::permeability);
                     similie::physics::electromagnetism::Electromagnetism::State const update
                             = model(div(0, i),
-                                    {ampere(0, i), ampere(1, i), ampere(2, i)},
+                                    {ampere_value(0, i), ampere_value(1, i), ampere_value(2, i)},
                                     {curl(0, i), curl(1, i), curl(2, i)},
-                                    {j(0, i), j(1, i), j(2, i)});
+                                    {jn(0, i), jn(1, i), jn(2, i)});
                     rate(0, i) = coupling == Coupling::MHD ? 0 : update.charge_density;
                     for (int a = 0; a < 3; ++a) {
-                        rate(a + 1, i) = coupling == Coupling::FMHD ? update.displacement[a] : 0;
-                        rate(a + 4, i) = update.induction[a];
+                        electric_rate(a, i)
+                                = coupling == Coupling::FMHD ? update.displacement[a] : 0;
+                        magnetic_rate(a, i) = update.induction[a];
+                    }
+                });
+        m_dec.reduce_one_form(electric_rate, m_ampere);
+        m_dec.reduce_two_form(magnetic_rate, m_curl);
+        Field const reduced_electric_rate = m_ampere, reduced_magnetic_rate = m_curl;
+        Kokkos::parallel_for(
+                "pack_electromagnetic_rates",
+                m_grid.cells,
+                KOKKOS_LAMBDA(int i) {
+                    for (int a = 0; a < 3; ++a) {
+                        rate(a + 1, i) = reduced_electric_rate(a, i);
+                        rate(a + 4, i) = reduced_magnetic_rate(a, i);
                     }
                 });
         assembly_region.end();

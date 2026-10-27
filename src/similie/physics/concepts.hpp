@@ -93,6 +93,8 @@ concept HasPotentialCoefficientConcept = requires(
 
 } // namespace detail
 
+// Physics states, arguments, and results contain pointwise differential-form
+// coefficients. Numerical callers own cochain reduction and reconstruction.
 // Physics models share state and compile-time metadata. Their equations are
 // specified by more specialized concepts, without prescribing the state layout.
 template <class Physics>

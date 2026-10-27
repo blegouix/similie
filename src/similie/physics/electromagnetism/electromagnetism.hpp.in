@@ -15,7 +15,8 @@ namespace similie::physics::electromagnetism {
 /** Full Maxwell sector with independent electric and magnetic dynamics.
  * W(D,B)=D.D/(2 epsilon)+B.B/(2 mu), E=W_D, H=W_B.
  * D_t=curl H-J, B_t=-curl E, charge_t=-div J; ideal current=charge*u.
- * The same reduced current must enter charge and displacement updates.
+ * All arguments and results are pointwise form coefficients. The caller
+ * reduces the same current for charge divergence and displacement evolution.
  * \important This operator and documentation is fully AI-generated.
  */
 class Electromagnetism

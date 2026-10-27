@@ -24,7 +24,9 @@
 #include <ddc/ddc.hpp>
 
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/physics/elasticity/elastic_material_hodge_2d.hpp>
+#include <similie/exterior/covariant_derivative/covariant_derivative.hpp>
+#include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
+#include <similie/exterior/volume.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -262,6 +264,141 @@ template <class Equations>
     };
 }
 
+// Reconstruct the vector-valued displacement differential in each corner frame.
+// Corner volume weights integrate the pointwise virtual stress work. All
+// incidence, pullback, and volume calculations use the exterior operators.
+struct DisplacementCellReconstruction2D
+{
+    std::array<double, 4> volume_weights {};
+    std::array<std::array<std::array<double, 4>, 8>, 4> gradients {};
+
+    explicit DisplacementCellReconstruction2D(std::array<std::array<double, 2>, 4> const& positions)
+    {
+        using GradientIndex = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
+        using MetricIndex = sil::tensor::TensorSymmetricIndex<
+                sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
+                sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
+        [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
+        [[maybe_unused]] sil::tensor::TensorAccessor<GradientIndex> gradient_accessor;
+        [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
+        ddc::DiscreteDomain<DDimX, DDimY> const
+                nodes(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                      ddc::DiscreteVector<DDimX, DDimY>(2, 2));
+        std::array<double, 8> position_storage {};
+        sil::tensor::Tensor position(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<DDimX, DDimY, PositionIndex2D>,
+                        Kokkos::layout_right,
+                        Kokkos::HostSpace>(
+                        position_storage.data(),
+                        ddc::DiscreteDomain<
+                                DDimX,
+                                DDimY,
+                                PositionIndex2D>(nodes, position_accessor.domain())));
+        for (int corner = 0; corner < 4; ++corner) {
+            ddc::DiscreteElement<DDimX, DDimY> const element(corner & 1, corner >> 1);
+            position(element, position_accessor.template access_element<X>())
+                    = positions[corner][0];
+            position(element, position_accessor.template access_element<Y>())
+                    = positions[corner][1];
+        }
+        std::array<double, 3> metric_storage {};
+        sil::tensor::Tensor metric(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<MetricIndex>,
+                        Kokkos::layout_right,
+                        Kokkos::HostSpace>(metric_storage.data(), metric_accessor.domain()));
+        metric(metric_accessor.template access_element<X, X>()) = 1.0;
+        metric(metric_accessor.template access_element<X, Y>()) = 0.0;
+        metric(metric_accessor.template access_element<Y, Y>()) = 1.0;
+        for (int corner = 0; corner < 4; ++corner) {
+            ddc::DiscreteElement<DDimX, DDimY> const element(corner & 1, corner >> 1);
+            double const sx = corner & 1 ? -1.0 : 1.0;
+            double const sy = corner & 2 ? -1.0 : 1.0;
+            double const dx = sx * (positions[corner ^ 1][0] - positions[corner][0]);
+            double const dy = sx * (positions[corner ^ 1][1] - positions[corner][1]);
+            double const ex = sy * (positions[corner ^ 2][0] - positions[corner][0]);
+            double const ey = sy * (positions[corner ^ 2][1] - positions[corner][1]);
+            if (!(dx * ey - dy * ex > 0.0))
+                throw std::runtime_error("elasticity cell has folded or degenerate geometry");
+            volume_weights[corner] = 0.25
+                                     * sil::exterior::SimplexVolume<
+                                             sil::exterior::CellComplex::Primal,
+                                             2,
+                                             decltype(metric),
+                                             decltype(position),
+                                             ddc::DiscreteElement<DDimX, DDimY>>::template
+                                     operator()<2>(metric, position, element, {0, 1});
+            for (int input = 0; input < 8; ++input) {
+                std::array<std::array<double, 2>, 4> nodal {};
+                nodal[input / 2][input % 2] = 1.0;
+                std::array<double, 2> const horizontal
+                        = sil::exterior::CovariantDerivative<X, Y>::template cochain_value<
+                                0,
+                                2>({0}, corner & 2, [&](std::size_t, std::size_t vertex) {
+                              return nodal[vertex];
+                          });
+                std::array<double, 2> const vertical
+                        = sil::exterior::CovariantDerivative<X, Y>::template cochain_value<
+                                0,
+                                2>({1}, corner & 1, [&](std::size_t, std::size_t vertex) {
+                              return nodal[vertex];
+                          });
+                for (int fibre = 0; fibre < 2; ++fibre) {
+                    std::array<double, 2> cochain_storage {}, gradient_storage {};
+                    sil::tensor::Tensor cochain(
+                            ddc::ChunkSpan<
+                                    double,
+                                    ddc::DiscreteDomain<GradientIndex>,
+                                    Kokkos::layout_right,
+                                    Kokkos::HostSpace>(
+                                    cochain_storage.data(),
+                                    gradient_accessor.domain()));
+                    sil::tensor::Tensor gradient(
+                            ddc::ChunkSpan<
+                                    double,
+                                    ddc::DiscreteDomain<GradientIndex>,
+                                    Kokkos::layout_right,
+                                    Kokkos::HostSpace>(
+                                    gradient_storage.data(),
+                                    gradient_accessor.domain()));
+                    cochain(gradient_accessor.template access_element<X>()) = horizontal[fibre];
+                    cochain(gradient_accessor.template access_element<Y>()) = vertical[fibre];
+                    sil::exterior::Reconstruction<
+                            ddc::TypeSeq<GradientIndex>,
+                            decltype(position),
+                            ddc::DiscreteElement<DDimX, DDimY>>::
+                    operator()(gradient, cochain, position, element);
+                    gradients[corner][input][2 * fibre]
+                            = gradient(gradient_accessor.template access_element<X>());
+                    gradients[corner][input][2 * fibre + 1]
+                            = gradient(gradient_accessor.template access_element<Y>());
+                }
+            }
+        }
+    }
+
+    [[nodiscard]] std::array<double, 4> gradient(
+            std::array<std::array<double, 2>, 4> const& nodal) const
+    {
+        std::array<double, 4> result {};
+        double volume = 0.0;
+        for (int corner = 0; corner < 4; ++corner) {
+            volume += volume_weights[corner];
+            for (int input = 0; input < 8; ++input)
+                for (int component = 0; component < 4; ++component)
+                    result[component] += volume_weights[corner]
+                                         * gradients[corner][input][component]
+                                         * nodal[input / 2][input % 2];
+        }
+        for (double& component : result)
+            component /= volume;
+        return result;
+    }
+};
+
 struct CurvilinearStructuredGrid2D
 {
     std::size_t ncell_x = 0;
@@ -450,20 +587,12 @@ public:
         auto const dirichlet_host
                 = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), dirichlet);
         std::vector<std::map<std::size_t, double>> rows(2 * nx * ny);
-        std::array<std::array<double, 8>, 8> incidence {};
-        for (int input = 0; input < 8; ++input) {
-            std::array<std::array<double, 2>, 4> basis {};
-            basis[input / 2][input % 2] = 1.0;
-            std::array<double, 8> const differences
-                    = physics::elasticity::ElasticMaterialHodge2D::edge_differences<X, Y>(basis);
-            for (int edge_component = 0; edge_component < 8; ++edge_component)
-                incidence[edge_component][input] = differences[edge_component];
-        }
-
-        // Each mapped quadrilateral is split into four vertex control volumes.
-        // The four internal half-faces carry one traction with opposite signs
-        // in the two neighboring balances. Natural boundary tractions are RHS
-        // data; zero traction contributes no stiffness on exterior half-faces.
+        // Integrate the reconstructed virtual stress work at the four corners:
+        // K_ab = sum_c V_c grad(v_a):sigma(grad(v_b)). The symmetric strain
+        // leaves rigid motions in the kernel; corner sampling controls the
+        // non-affine modes without an additional material-Hodge stabilization.
+        // The constitutive law receives physical strain, and geometric weights
+        // belong to this numerical assembly.
         for (std::size_t j = 0; j + 1 < ny; ++j) {
             for (std::size_t i = 0; i + 1 < nx; ++i) {
                 std::array<std::size_t, 4> const
@@ -471,25 +600,29 @@ public:
                 std::array<std::array<double, 2>, 4> positions {};
                 for (std::size_t a = 0; a < 4; ++a)
                     positions[a] = {x(nodes[a]), y(nodes[a])};
-                physics::elasticity::ElasticMaterialHodge2D const
-                        material(positions, [&](physics::elasticity::Strain2D strain) {
-                            return linear_elasticity_stress(equations, strain);
-                        });
-                std::array<std::array<double, 8>, 8> force_from_nodal {};
-                for (int output_edge = 0; output_edge < 8; ++output_edge)
-                    for (int input = 0; input < 8; ++input)
-                        for (int input_edge = 0; input_edge < 8; ++input_edge)
-                            force_from_nodal[output_edge][input]
-                                    += material.matrix()[output_edge][input_edge]
-                                       * incidence[input_edge][input];
-                for (int output = 0; output < 8; ++output)
+                DisplacementCellReconstruction2D const reconstruction(positions);
+                for (int corner = 0; corner < 4; ++corner)
                     for (int input = 0; input < 8; ++input) {
-                        double coefficient = 0.0;
-                        for (int output_edge = 0; output_edge < 8; ++output_edge)
-                            coefficient += incidence[output_edge][output]
-                                           * force_from_nodal[output_edge][input];
-                        rows[2 * nodes[output / 2] + output % 2][2 * nodes[input / 2] + input % 2]
-                                += coefficient;
+                        std::array<double, 4> const& gradient
+                                = reconstruction.gradients[corner][input];
+                        physics::elasticity::Strain2D const strain
+                                = physics::elasticity::DisplacementToStrain::from_gradient(
+                                        gradient[0],
+                                        gradient[3],
+                                        gradient[1],
+                                        gradient[2]);
+                        physics::elasticity::CauchyStress2D const stress
+                                = linear_elasticity_stress(equations, strain);
+                        for (int output = 0; output < 8; ++output) {
+                            std::array<double, 4> const& test_gradient
+                                    = reconstruction.gradients[corner][output];
+                            double const work = stress.xx * test_gradient[0]
+                                                + stress.xy * (test_gradient[1] + test_gradient[2])
+                                                + stress.yy * test_gradient[3];
+                            rows[2 * nodes[output / 2] + output % 2]
+                                [2 * nodes[input / 2] + input % 2]
+                                    += reconstruction.volume_weights[corner] * work;
+                        }
                     }
             }
         }
@@ -722,7 +855,7 @@ Result run_on_quadrilateral_grid(
     Kokkos::View<double**>
             displacement_view("similie_elasticity_displacement", 2 * grid.nx() * grid.ny(), 1);
     auto rhs_host = Kokkos::create_mirror_view(rhs);
-    // The dual-face tractions are forces per unit thickness in this 2D model.
+    // Boundary tractions are forces per unit thickness in this 2D model.
     // Distribute the prescribed boundary force over its length on the same scale.
     for (std::size_t node = 0; node < load_weights.size(); ++node) {
         rhs_host(2 * node + 1, 0)
@@ -776,17 +909,12 @@ Result run_on_quadrilateral_grid(
             for (int a = 0; a < 4; ++a) {
                 positions[a] = {grid.ordered_nodes[nodes[a]].x, grid.ordered_nodes[nodes[a]].y};
             }
-            physics::elasticity::ElasticMaterialHodge2D const
-                    material(positions, [&](physics::elasticity::Strain2D strain) {
-                        return detail::linear_elasticity_stress(equations, strain);
-                    });
+            detail::DisplacementCellReconstruction2D const reconstruction(positions);
             std::array<std::array<double, 2>, 4> nodal_displacement {};
             for (int a = 0; a < 4; ++a)
                 nodal_displacement[a]
                         = {displacement[2 * nodes[a]], displacement[2 * nodes[a] + 1]};
-            std::array<double, 4> const gradient = material.recover_gradient(
-                    physics::elasticity::ElasticMaterialHodge2D::
-                            edge_differences<detail::X, detail::Y>(nodal_displacement));
+            std::array<double, 4> const gradient = reconstruction.gradient(nodal_displacement);
             fields.strain = physics::elasticity::DisplacementToStrain::
                     from_gradient(gradient[0], gradient[3], gradient[1], gradient[2]);
             fields.stress = detail::linear_elasticity_stress(equations, fields.strain);

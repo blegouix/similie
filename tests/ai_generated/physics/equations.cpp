@@ -10,6 +10,7 @@
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>
 #include <similie/physics/hamilton_equations.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics_constitutive_law.hpp>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 
@@ -156,7 +157,7 @@ TEST(PhysicsAPI, VectorConstitutiveLawRetainsInverseAndJacobian)
                   std::array<double, 4> {0.0, 2.0, 7.0, 20.0});
     similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField law(curve);
     similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField<
-            decltype(curve)>::State state {{1.25, 0.5, 0.2}, {1.0, 2.0, 3.0}};
+            decltype(curve)>::State state {{1.25, 0.5, 0.2}};
     std::array<double, 3> const response = law(state, 0);
     std::array<double, 9> const jacobian = law.jacobian(state, 0);
     for (std::size_t column = 0; column < 3; ++column) {
@@ -184,6 +185,39 @@ TEST(PhysicsAPI, VectorConstitutiveLawRetainsInverseAndJacobian)
             EXPECT_NEAR(product, row == column ? 1.0 : 0.0, 1e-12);
         }
     }
+}
+
+TEST(PhysicsAPI, MagneticConstitutiveLawsUsePointwiseFields)
+{
+    similie::physics::magnetostatics::LinearMagneticInductionToMagneticField const linear(4.0);
+    similie::physics::magnetostatics::LinearMagneticInductionToMagneticField::State state {{2.0}};
+    EXPECT_DOUBLE_EQ(linear(state, 0)[0], 0.5);
+    EXPECT_DOUBLE_EQ(linear.jacobian(state, 0)[0], 0.25);
+    state.value[0] = 0.5;
+    EXPECT_DOUBLE_EQ(linear.inverse(state, 0)[0], 2.0);
+    EXPECT_DOUBLE_EQ(linear.inverse_value(state, 0)[0], 4.0);
+
+    similie::physics::magnetostatics::InterpolatedNonlinearBHCurve<3> const
+            curve(std::array<double, 3> {0.0, 1.0, 3.0}, std::array<double, 3> {0.0, 2.0, 10.0});
+    similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField const law(curve);
+    similie::physics::magnetostatics::NonlinearMagneticState const origin {};
+    std::array<double, 3> const field = law(origin, 0);
+    std::array<double, 3> const inverse = law.inverse(origin, 0);
+    std::array<double, 9> const jacobian = law.jacobian(origin, 0);
+    for (std::size_t row = 0; row < 3; ++row) {
+        EXPECT_DOUBLE_EQ(field[row], 0.0);
+        EXPECT_DOUBLE_EQ(inverse[row], 0.0);
+        for (std::size_t column = 0; column < 3; ++column)
+            EXPECT_DOUBLE_EQ(jacobian[3 * row + column], row == column ? 2.0 : 0.0);
+    }
+    similie::physics::magnetostatics::NonlinearMagneticState const induction {{1.2, 0.9, 0.0}};
+    std::array<double, 3> const response = law(induction, 0);
+    EXPECT_NEAR(response[0], 3.2, 1e-12);
+    EXPECT_NEAR(response[1], 2.4, 1e-12);
+    std::array<double, 9> const tangent = law.jacobian(induction, 0);
+    for (std::size_t row = 0; row < 3; ++row)
+        for (std::size_t column = 0; column < 3; ++column)
+            EXPECT_DOUBLE_EQ(tangent[3 * row + column], tangent[3 * column + row]);
 }
 
 TEST(PhysicsAPI, NonlinearHamiltonianRetainsCrossComponentDerivatives)
