@@ -37,7 +37,7 @@ TEST(Elasticity, ReconstructedGradientAndVirtualWork)
     EXPECT_NEAR(gradient[3], 0.04, 1e-14);
     double volume = 0.0;
     for (int corner = 0; corner < 4; ++corner) {
-        volume += reconstruction.volume_weights[corner];
+        volume += 0.25 * reconstruction.measures[corner];
         std::array<double, 4> local_gradient {};
         for (int input = 0; input < 8; ++input)
             for (int component = 0; component < 4; ++component)

@@ -93,3 +93,7 @@ gtest_discover_tests(unit_tests_weighted_levi_civita_discrete_hodge_star DISCOVE
 add_executable(unit_tests_scaling scaling.cpp ../../main.cpp)
 target_link_libraries(unit_tests_scaling PRIVATE GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_scaling DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_quadrature quadrature.cpp ../../main.cpp)
+target_link_libraries(unit_tests_quadrature PRIVATE GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_quadrature DISCOVERY_MODE PRE_TEST)
