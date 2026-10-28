@@ -21,16 +21,12 @@
 #include <utility>
 #include <vector>
 
-#include <ddc/ddc.hpp>
-
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/exterior/covariant_derivative/covariant_derivative.hpp>
-#include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
-#include <similie/exterior/volume.hpp>
+#include <similie/exterior/quadrature/quadrature.hpp>
+#include <similie/exterior/reduction_and_reconstruction/vertex_reconstructed_derivative.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
-#include <similie/tensor/tensor.hpp>
 
 #include <Kokkos_Core.hpp>
 
@@ -212,20 +208,6 @@ struct Y
     static constexpr bool PERIODIC = false;
 };
 
-struct DDimX
-{
-    using continuous_dimension_type = X;
-    static constexpr bool PERIODIC = false;
-};
-
-struct DDimY
-{
-    using continuous_dimension_type = Y;
-    static constexpr bool PERIODIC = false;
-};
-
-using PositionIndex2D = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y>>;
-
 inline bool has_tag(std::vector<int> const& tags, int physical_tag)
 {
     return std::find(tags.begin(), tags.end(), physical_tag) != tags.end();
@@ -264,140 +246,7 @@ template <class Equations>
     };
 }
 
-// Reconstruct the vector-valued displacement differential in each corner frame.
-// Corner volume weights integrate the pointwise virtual stress work. All
-// incidence, pullback, and volume calculations use the exterior operators.
-struct DisplacementCellReconstruction2D
-{
-    std::array<double, 4> volume_weights {};
-    std::array<std::array<std::array<double, 4>, 8>, 4> gradients {};
-
-    explicit DisplacementCellReconstruction2D(std::array<std::array<double, 2>, 4> const& positions)
-    {
-        using GradientIndex = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
-        using MetricIndex = sil::tensor::TensorSymmetricIndex<
-                sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
-                sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
-        [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
-        [[maybe_unused]] sil::tensor::TensorAccessor<GradientIndex> gradient_accessor;
-        [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY> const
-                nodes(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
-                      ddc::DiscreteVector<DDimX, DDimY>(2, 2));
-        std::array<double, 8> position_storage {};
-        sil::tensor::Tensor position(
-                ddc::ChunkSpan<
-                        double,
-                        ddc::DiscreteDomain<DDimX, DDimY, PositionIndex2D>,
-                        Kokkos::layout_right,
-                        Kokkos::HostSpace>(
-                        position_storage.data(),
-                        ddc::DiscreteDomain<
-                                DDimX,
-                                DDimY,
-                                PositionIndex2D>(nodes, position_accessor.domain())));
-        for (int corner = 0; corner < 4; ++corner) {
-            ddc::DiscreteElement<DDimX, DDimY> const element(corner & 1, corner >> 1);
-            position(element, position_accessor.template access_element<X>())
-                    = positions[corner][0];
-            position(element, position_accessor.template access_element<Y>())
-                    = positions[corner][1];
-        }
-        std::array<double, 3> metric_storage {};
-        sil::tensor::Tensor metric(
-                ddc::ChunkSpan<
-                        double,
-                        ddc::DiscreteDomain<MetricIndex>,
-                        Kokkos::layout_right,
-                        Kokkos::HostSpace>(metric_storage.data(), metric_accessor.domain()));
-        metric(metric_accessor.template access_element<X, X>()) = 1.0;
-        metric(metric_accessor.template access_element<X, Y>()) = 0.0;
-        metric(metric_accessor.template access_element<Y, Y>()) = 1.0;
-        for (int corner = 0; corner < 4; ++corner) {
-            ddc::DiscreteElement<DDimX, DDimY> const element(corner & 1, corner >> 1);
-            double const sx = corner & 1 ? -1.0 : 1.0;
-            double const sy = corner & 2 ? -1.0 : 1.0;
-            double const dx = sx * (positions[corner ^ 1][0] - positions[corner][0]);
-            double const dy = sx * (positions[corner ^ 1][1] - positions[corner][1]);
-            double const ex = sy * (positions[corner ^ 2][0] - positions[corner][0]);
-            double const ey = sy * (positions[corner ^ 2][1] - positions[corner][1]);
-            if (!(dx * ey - dy * ex > 0.0))
-                throw std::runtime_error("elasticity cell has folded or degenerate geometry");
-            volume_weights[corner] = 0.25
-                                     * sil::exterior::SimplexVolume<
-                                             sil::exterior::CellComplex::Primal,
-                                             2,
-                                             decltype(metric),
-                                             decltype(position),
-                                             ddc::DiscreteElement<DDimX, DDimY>>::template
-                                     operator()<2>(metric, position, element, {0, 1});
-            for (int input = 0; input < 8; ++input) {
-                std::array<std::array<double, 2>, 4> nodal {};
-                nodal[input / 2][input % 2] = 1.0;
-                std::array<double, 2> const horizontal
-                        = sil::exterior::CovariantDerivative<X, Y>::template cochain_value<
-                                0,
-                                2>({0}, corner & 2, [&](std::size_t, std::size_t vertex) {
-                              return nodal[vertex];
-                          });
-                std::array<double, 2> const vertical
-                        = sil::exterior::CovariantDerivative<X, Y>::template cochain_value<
-                                0,
-                                2>({1}, corner & 1, [&](std::size_t, std::size_t vertex) {
-                              return nodal[vertex];
-                          });
-                for (int fibre = 0; fibre < 2; ++fibre) {
-                    std::array<double, 2> cochain_storage {}, gradient_storage {};
-                    sil::tensor::Tensor cochain(
-                            ddc::ChunkSpan<
-                                    double,
-                                    ddc::DiscreteDomain<GradientIndex>,
-                                    Kokkos::layout_right,
-                                    Kokkos::HostSpace>(
-                                    cochain_storage.data(),
-                                    gradient_accessor.domain()));
-                    sil::tensor::Tensor gradient(
-                            ddc::ChunkSpan<
-                                    double,
-                                    ddc::DiscreteDomain<GradientIndex>,
-                                    Kokkos::layout_right,
-                                    Kokkos::HostSpace>(
-                                    gradient_storage.data(),
-                                    gradient_accessor.domain()));
-                    cochain(gradient_accessor.template access_element<X>()) = horizontal[fibre];
-                    cochain(gradient_accessor.template access_element<Y>()) = vertical[fibre];
-                    sil::exterior::Reconstruction<
-                            ddc::TypeSeq<GradientIndex>,
-                            decltype(position),
-                            ddc::DiscreteElement<DDimX, DDimY>>::
-                    operator()(gradient, cochain, position, element);
-                    gradients[corner][input][2 * fibre]
-                            = gradient(gradient_accessor.template access_element<X>());
-                    gradients[corner][input][2 * fibre + 1]
-                            = gradient(gradient_accessor.template access_element<Y>());
-                }
-            }
-        }
-    }
-
-    [[nodiscard]] std::array<double, 4> gradient(
-            std::array<std::array<double, 2>, 4> const& nodal) const
-    {
-        std::array<double, 4> result {};
-        double volume = 0.0;
-        for (int corner = 0; corner < 4; ++corner) {
-            volume += volume_weights[corner];
-            for (int input = 0; input < 8; ++input)
-                for (int component = 0; component < 4; ++component)
-                    result[component] += volume_weights[corner]
-                                         * gradients[corner][input][component]
-                                         * nodal[input / 2][input % 2];
-        }
-        for (double& component : result)
-            component /= volume;
-        return result;
-    }
-};
+using DisplacementCellReconstruction2D = sil::exterior::VertexReconstructedDerivative<2, X, Y>;
 
 struct CurvilinearStructuredGrid2D
 {
@@ -601,29 +450,39 @@ public:
                 for (std::size_t a = 0; a < 4; ++a)
                     positions[a] = {x(nodes[a]), y(nodes[a])};
                 DisplacementCellReconstruction2D const reconstruction(positions);
-                for (int corner = 0; corner < 4; ++corner)
-                    for (int input = 0; input < 8; ++input) {
-                        std::array<double, 4> const& gradient
-                                = reconstruction.gradients[corner][input];
-                        physics::elasticity::Strain2D const strain
-                                = physics::elasticity::DisplacementToStrain::from_gradient(
-                                        gradient[0],
-                                        gradient[3],
-                                        gradient[1],
-                                        gradient[2]);
-                        physics::elasticity::CauchyStress2D const stress
-                                = linear_elasticity_stress(equations, strain);
-                        for (int output = 0; output < 8; ++output) {
+                sil::exterior::assemble_bilinear_form(
+                        sil::exterior::VertexQuadrature<2>(),
+                        8,
+                        8,
+                        [&](auto const&, std::size_t sample) {
+                            return reconstruction.measures[sample];
+                        },
+                        [&](std::size_t input, auto const&, std::size_t sample) {
+                            std::array<double, 4> const& gradient
+                                    = reconstruction.gradients[sample][input];
+                            return linear_elasticity_stress(
+                                    equations,
+                                    physics::elasticity::DisplacementToStrain::from_gradient(
+                                            gradient[0],
+                                            gradient[3],
+                                            gradient[1],
+                                            gradient[2]));
+                        },
+                        [&](std::size_t output,
+                            physics::elasticity::CauchyStress2D const& stress,
+                            auto const&,
+                            std::size_t sample) {
                             std::array<double, 4> const& test_gradient
-                                    = reconstruction.gradients[corner][output];
-                            double const work = stress.xx * test_gradient[0]
-                                                + stress.xy * (test_gradient[1] + test_gradient[2])
-                                                + stress.yy * test_gradient[3];
+                                    = reconstruction.gradients[sample][output];
+                            return stress.xx * test_gradient[0]
+                                   + stress.xy * (test_gradient[1] + test_gradient[2])
+                                   + stress.yy * test_gradient[3];
+                        },
+                        [&](std::size_t output, std::size_t input, double work) {
                             rows[2 * nodes[output / 2] + output % 2]
                                 [2 * nodes[input / 2] + input % 2]
-                                    += reconstruction.volume_weights[corner] * work;
-                        }
-                    }
+                                    += work;
+                        });
             }
         }
 

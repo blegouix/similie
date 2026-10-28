@@ -42,3 +42,9 @@ if(BUILD_TESTING)
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/generator.py"
                 "${CMAKE_CXX_COMPILER}")
 endif()
+
+if(BUILD_TESTING)
+    add_executable(unit_tests_magnetic_forms magnetic_forms.cpp ../../main.cpp)
+    target_link_libraries(unit_tests_magnetic_forms PRIVATE GTest::gtest sil::sil physics)
+    gtest_discover_tests(unit_tests_magnetic_forms DISCOVERY_MODE PRE_TEST)
+endif()

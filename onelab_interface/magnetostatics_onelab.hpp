@@ -35,7 +35,7 @@
 #include <similie/misc/macros.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
-#include <similie/physics/magnetostatics/linear_magnetostatics_constitutive_law.hpp>
+#include <similie/physics/magnetostatics/magnetic_form_response.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -652,11 +652,11 @@ template <class Index, class Equations, class Elem>
 {
     typename Equations::State state {};
     state.moments = {moments.x, moments.y, moments.z};
-    return equations.template dpotential_dt<std::integral_constant<
-            std::size_t,
-            std::is_same_v<Index, X>   ? 0
-            : std::is_same_v<Index, Y> ? 1
-                                       : 2>>(state, elem);
+    return physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+            .field(equations, state, elem)
+                    [std::is_same_v<Index, X>   ? 0
+                     : std::is_same_v<Index, Y> ? 1
+                                                : 2];
 }
 
 template <class RowIndex, class ColumnIndex, class Equations, class Elem>
@@ -667,17 +667,15 @@ template <class RowIndex, class ColumnIndex, class Equations, class Elem>
 {
     typename Equations::State state {};
     state.moments = {moments.x, moments.y, moments.z};
-    return equations.template jacobian<
-            std::integral_constant<
-                    std::size_t,
-                    std::is_same_v<RowIndex, X>   ? 0
-                    : std::is_same_v<RowIndex, Y> ? 1
-                                                  : 2>,
-            std::integral_constant<
-                    std::size_t,
-                    std::is_same_v<ColumnIndex, X>   ? 0
-                    : std::is_same_v<ColumnIndex, Y> ? 1
-                                                     : 2>>(state, elem);
+    return physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+            .jacobian(equations, state, elem)
+                    [3
+                             * (std::is_same_v<RowIndex, X>   ? 0
+                                : std::is_same_v<RowIndex, Y> ? 1
+                                                              : 2)
+                     + (std::is_same_v<ColumnIndex, X>   ? 0
+                        : std::is_same_v<ColumnIndex, Y> ? 1
+                                                         : 2)];
 }
 
 struct DDimX
@@ -4260,17 +4258,15 @@ void fill_post_process_fields_on_cell_domain(
         };
         std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
         if (read_nonlinear_material(elem)) {
-            magnetic_field = nonlinear_constitutive_law(
-                    physics::magnetostatics::NonlinearMagneticState {magnetic_induction},
-                    elem);
+            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                                     .constitutive_field(
+                                             nonlinear_constitutive_law,
+                                             physics::magnetostatics::NonlinearMagneticState {
+                                                     magnetic_induction},
+                                             elem);
         } else {
-            physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
-                    read_mu(elem));
-            magnetic_field = {
-                    constitutive_law({{magnetic_induction[0]}}, elem)[0],
-                    constitutive_law({{magnetic_induction[1]}}, elem)[0],
-                    0.0,
-            };
+            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                                     .field(magnetic_induction, 1.0 / read_mu(elem));
         }
 
         write_cell_output(elem, magnetic_induction, magnetic_field);
@@ -4309,17 +4305,15 @@ void fill_post_process_fields_on_cell_domain_3d(
         };
         std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
         if (read_nonlinear_material(elem)) {
-            magnetic_field = nonlinear_constitutive_law(
-                    physics::magnetostatics::NonlinearMagneticState {magnetic_induction},
-                    elem);
+            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                                     .constitutive_field(
+                                             nonlinear_constitutive_law,
+                                             physics::magnetostatics::NonlinearMagneticState {
+                                                     magnetic_induction},
+                                             elem);
         } else {
-            physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
-                    read_mu(elem));
-            magnetic_field = {
-                    constitutive_law({{magnetic_induction[0]}}, elem)[0],
-                    constitutive_law({{magnetic_induction[1]}}, elem)[0],
-                    constitutive_law({{magnetic_induction[2]}}, elem)[0],
-            };
+            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                                     .field(magnetic_induction, 1.0 / read_mu(elem));
         }
 
         write_cell_output(elem, magnetic_induction, magnetic_field);
@@ -5141,7 +5135,10 @@ Result run_on_quadrilateral_grid(
         fill_cell_outputs(nonlinear_constitutive_law);
     } else {
         auto const dummy_nonlinear_constitutive_law
-                = [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; };
+                = physics::magnetostatics::NonlinearMagneticInductionToMagneticField(
+                        physics::magnetostatics::InterpolatedNonlinearBHCurve<2>(
+                                std::array<double, 2> {0.0, 1.0},
+                                std::array<double, 2> {0.0, 1.0}));
         fill_cell_outputs(dummy_nonlinear_constitutive_law);
     }
     for (CellPostProcessFields const& cell_output : cell_outputs) {
@@ -5669,7 +5666,10 @@ Result run_on_hexahedral_grid(
         fill_cell_outputs(nonlinear_constitutive_law);
     } else {
         auto const dummy_nonlinear_constitutive_law
-                = [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; };
+                = physics::magnetostatics::NonlinearMagneticInductionToMagneticField(
+                        physics::magnetostatics::InterpolatedNonlinearBHCurve<2>(
+                                std::array<double, 2> {0.0, 1.0},
+                                std::array<double, 2> {0.0, 1.0}));
         fill_cell_outputs(dummy_nonlinear_constitutive_law);
     }
     for (CellPostProcessFields const& cell_output : cell_outputs) {
