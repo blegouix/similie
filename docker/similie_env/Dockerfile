@@ -33,7 +33,7 @@ ENV EDITOR=vim
 RUN apt update && apt install -y ca-certificates gpg lsb-release wget
 
 # git
-RUN apt update && apt install -y git
+RUN apt update && apt install -y git git-lfs
 
 # ---------------------------
 # ----- BUILD TOOLCHAIN -----
