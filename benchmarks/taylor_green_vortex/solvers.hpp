@@ -553,20 +553,13 @@ public:
         if (!velocity_reconstructed)
             reconstruct_velocity(state, velocity);
         m_dec.reconstruct_two_form(state, vorticity);
-        Field const u = velocity, w = vorticity, transport = m_transport;
         similie::physics::fluid::IncompressibleNavierStokes const physics = m_physics;
-        Kokkos::parallel_for(
-                "vorticity_nonlinear_transport",
-                m_grid.cells,
-                KOKKOS_LAMBDA(int i) {
-                    std::array<double, 3> const values = physics.transport(
-                            {u(0, i), u(1, i), u(2, i)},
-                            {w(0, i), w(1, i), w(2, i)});
-                    for (int a = 0; a < 3; ++a)
-                        transport(a, i)
-                                = values[a] + (acceleration.data() ? acceleration(a, i) : 0);
-                });
-        m_dec.reduce_one_form(m_transport, m_transport_one);
+        m_dec.interior_product(m_one, state, m_transport_one, mean_velocity);
+        KokkosBlas::scal(m_transport_one, -1.0, m_transport_one);
+        if (acceleration.data()) {
+            m_dec.reduce_one_form(acceleration, m_transport);
+            KokkosBlas::axpby(1.0, m_transport, 1.0, m_transport_one);
+        }
         m_dec.derivative_one_form(m_transport_one, result);
         m_dec.positive_laplacian(state, m_lap);
         Field const lap = m_lap;

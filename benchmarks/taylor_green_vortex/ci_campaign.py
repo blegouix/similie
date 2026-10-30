@@ -24,6 +24,9 @@ MESH_SIZES = (64, 128)
 PERFORMANCE_STEPS = 5
 STRATEGY_RTOL = 1e-7
 STRATEGY_ATOL = 1e-9
+REFERENCE_HISTORY_TOLERANCE = 0.5
+REFERENCE_ENERGY_TOLERANCE = 0.1
+REFERENCE_SLICE_TOLERANCE = 1.0
 STRATEGIES = (
     (),
     ("--levi-civita-continuous-hodge-star",),
@@ -163,18 +166,23 @@ def validate_trajectory(path, configuration, n, reference=False):
                 else 0.125
             )
             if abs(monitors[0, 1] - initial_energy) > 1e-10:
-                raise ValueError(f"Incorrect initial Taylor-Green kinetic energy: {hdf}")
+                raise ValueError(
+                    f"Incorrect initial Taylor-Green kinetic energy: {hdf}"
+                )
             if np.max(np.abs(monitors[:, 8] - monitors[0, 8])) > 1e-8:
                 raise ValueError(f"Mass conservation exceeded tolerance: {hdf}")
             if (
                 configuration.startswith("incompressible")
                 and np.max(monitors[:, 10]) > 1e-8
             ):
-                raise ValueError(f"Incompressibility constraint exceeded tolerance: {hdf}")
+                raise ValueError(
+                    f"Incompressibility constraint exceeded tolerance: {hdf}"
+                )
             constraints = data["reconstruction_monitors"][:]
-            if not np.all(np.isfinite(constraints)) or np.max(
-                constraints[:, 1:]
-            ) > 1e-8:
+            if (
+                not np.all(np.isfinite(constraints))
+                or np.max(constraints[:, 1:]) > 1e-8
+            ):
                 raise ValueError(f"Reconstruction constraint exceeded tolerance: {hdf}")
             if "electromagnetic_monitors" in data:
                 electromagnetic = data["electromagnetic_monitors"][:]
@@ -263,16 +271,13 @@ def compare_strategies(
                 ),
             }
     if baseline_record is not None and candidate_record is not None:
-        difference = abs(
-            baseline_record["final_time"] - candidate_record["final_time"]
-        )
+        difference = abs(baseline_record["final_time"] - candidate_record["final_time"])
         results["final_time"] = {
             "max_absolute_error": difference,
             "relative_l2_error": difference
             / max(abs(baseline_record["final_time"]), STRATEGY_ATOL),
             "passed": difference
-            <= STRATEGY_ATOL
-            + STRATEGY_RTOL * abs(baseline_record["final_time"]),
+            <= STRATEGY_ATOL + STRATEGY_RTOL * abs(baseline_record["final_time"]),
         }
     return results
 
@@ -393,6 +398,58 @@ def compare_reference(hdf, reference, tolerance=None):
         json.dumps(metrics, indent=2) + "\n"
     )
     return metrics
+
+
+def validate_reference_comparisons(
+    comparisons,
+    history_tolerance=REFERENCE_HISTORY_TOLERANCE,
+    slice_tolerance=REFERENCE_SLICE_TOLERANCE,
+    energy_tolerance=REFERENCE_ENERGY_TOLERANCE,
+):
+    """Require bounded reference errors and improving HD history resolution.
+
+    The limits are regression guards for these under-resolved grids, not DNS
+    accuracy claims. A zero vorticity slice has relative error one and fails.
+    A small absolute floor allows reference/model differences near convergence.
+    """
+    for tolerance in (history_tolerance, slice_tolerance, energy_tolerance):
+        if not np.isfinite(tolerance) or tolerance <= 0:
+            raise ValueError("Reference tolerances must be finite and positive")
+    observables = ("kinetic_energy", "dissipation", "enstrophy", "vorticity_norm_t8")
+    if set(comparisons) != {f"N{n}" for n in MESH_SIZES}:
+        raise ValueError("Missing reference comparison resolution")
+    failures = []
+    for n in MESH_SIZES:
+        metrics = comparisons[f"N{n}"]
+        if set(metrics) != set(observables):
+            raise ValueError(f"Incomplete reference comparisons at N={n}")
+        for name in observables:
+            metric = metrics[name]
+            error = metric["relative_l2_error"]
+            limit = (
+                slice_tolerance if name == "vorticity_norm_t8" else history_tolerance
+            )
+            if name == "kinetic_energy":
+                limit = min(energy_tolerance, history_tolerance)
+            metric["passed"] = bool(
+                np.isfinite(error)
+                and 0 <= error < limit
+                and np.isfinite(metric["max_absolute_error"])
+                and metric["max_absolute_error"] >= 0
+            )
+            if not metric["passed"]:
+                failures.append(
+                    f"N={n} {name}: relative L2 error {error:g}, limit {limit:g}"
+                )
+    for name in observables[:3]:
+        coarse = comparisons[f"N{MESH_SIZES[0]}"][name]["relative_l2_error"]
+        fine = comparisons[f"N{MESH_SIZES[1]}"][name]["relative_l2_error"]
+        if fine > max(1.1 * coarse, 0.005):
+            failures.append(
+                f"{name}: reference error worsens with refinement ({coarse:g} -> {fine:g})"
+            )
+    if failures:
+        raise ValueError("HD reference validation failed: " + "; ".join(failures))
 
 
 def compare_vorticity_slice(hdf, reference_directory, tolerance=None):
@@ -556,12 +613,24 @@ def write_report(output, phase, entries, error=None):
         lines.extend(
             (
                 "",
-                "HD accuracy uses the original UCL 512³ pseudo-spectral data from https://cfd.ku.edu/hiocfd/data.tgz: kinetic energy, dissipation and enstrophy histories, plus the vorticity norm on x/L=-pi at t/tc=8. Slice errors compare matching nodes of the 512² reference and the simulation grid. Inputs and SHA-256 provenance are included in reference-data; comparison CSVs and PNGs accompany the results. Relative L2 errors are resolution-study metrics; --reference-relative-tolerance optionally gates all four observables.",
+                "HD accuracy uses the original UCL 512³ pseudo-spectral data from https://cfd.ku.edu/hiocfd/data.tgz: kinetic energy, dissipation and enstrophy histories, plus the vorticity norm on x/L=-pi at t/tc=8. Slice errors compare matching nodes of the 512² reference and the simulation grid. Inputs and SHA-256 provenance are included in reference-data; comparison CSVs and PNGs accompany the results. Reference-error limits are mandatory. History errors must also improve with refinement (10% slack, with an absolute relative-error floor of 0.005). These are regression guards for under-resolved grids, not DNS accuracy claims. The configured limits and pass/fail status are saved in reference-validation.json.",
                 "",
                 "HDF5 snapshots and their XDMF time series are saved every 0.033 seconds of simulation time, with additional snapshots at t=8 and t=10.",
             )
         )
     if phase == "validation":
+        gate_path = output / "reference-validation.json"
+        if gate_path.exists():
+            gate = json.loads(gate_path.read_text())
+            lines.extend(
+                (
+                    "",
+                    f"Reference accuracy gate: **{'PASS' if gate['passed'] else 'FAIL'}**. "
+                    f"Kinetic-energy relative L2 error must be below {min(gate['energy_relative_tolerance'], gate['history_relative_tolerance']):.1%}; "
+                    f"dissipation and enstrophy errors must be below {gate['history_relative_tolerance']:.1%}; "
+                    f"the vorticity-slice error must be below {gate['slice_relative_tolerance']:.1%}.",
+                )
+            )
         lines.extend(
             (
                 "",
@@ -595,9 +664,13 @@ def campaign(
     coupling,
     phase="performance",
     reference_relative_tolerance=None,
+    reference_slice_relative_tolerance=REFERENCE_SLICE_TOLERANCE,
+    reference_energy_relative_tolerance=REFERENCE_ENERGY_TOLERANCE,
 ):
     if phase == "validation" and coupling != "hd":
         raise ValueError("The long workshop validation is only defined for HD")
+    if reference_relative_tolerance is None:
+        reference_relative_tolerance = REFERENCE_HISTORY_TOLERANCE
     directory = output / phase
     directory.mkdir(parents=True, exist_ok=True)
     entries = []
@@ -748,21 +821,33 @@ def campaign(
                     hdf, reference, reference_relative_tolerance
                 )
                 comparisons[f"N{n}"]["vorticity_norm_t8"] = compare_vorticity_slice(
-                    hdf, directory / "reference-data", reference_relative_tolerance
+                    hdf,
+                    directory / "reference-data",
+                    reference_slice_relative_tolerance,
                 )
                 print(
                     f"Trajectory checks N={n}: PASS (mass, positivity, reconstruction and incompressibility where applicable)"
                 )
-            (directory / "reference-comparison.json").write_text(
-                json.dumps(comparisons, indent=2) + "\n"
-            )
-            if reference_relative_tolerance is not None and not all(
-                metric["passed"]
-                for comparison in comparisons.values()
-                for metric in comparison.values()
-            ):
-                raise ValueError(
-                    "HD reference accuracy exceeded the requested tolerance"
+            gate = {
+                "history_relative_tolerance": reference_relative_tolerance,
+                "slice_relative_tolerance": reference_slice_relative_tolerance,
+                "energy_relative_tolerance": reference_energy_relative_tolerance,
+                "passed": False,
+            }
+            try:
+                validate_reference_comparisons(
+                    comparisons,
+                    reference_relative_tolerance,
+                    reference_slice_relative_tolerance,
+                    reference_energy_relative_tolerance,
+                )
+                gate["passed"] = True
+            finally:
+                (directory / "reference-comparison.json").write_text(
+                    json.dumps(comparisons, indent=2) + "\n"
+                )
+                (directory / "reference-validation.json").write_text(
+                    json.dumps(gate, indent=2) + "\n"
                 )
     except Exception as error:
         write_report(directory, phase, entries, str(error))
@@ -787,7 +872,20 @@ def main():
     parser.add_argument(
         "--reference-relative-tolerance",
         type=float,
-        help="Optional relative L2 accuracy gate against UCL DNS; no workshop threshold is prescribed",
+        default=REFERENCE_HISTORY_TOLERANCE,
+        help="Strict relative L2 limit for all HD reference histories (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--reference-energy-relative-tolerance",
+        type=float,
+        default=REFERENCE_ENERGY_TOLERANCE,
+        help="Additional strict relative L2 limit for kinetic energy (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--reference-slice-relative-tolerance",
+        type=float,
+        default=REFERENCE_SLICE_TOLERANCE,
+        help="Strict relative L2 limit for the t=8 vorticity slice (default: %(default)s)",
     )
     args = parser.parse_args()
     if args.reference_relative_tolerance is not None and (
@@ -795,6 +893,16 @@ def main():
         or args.reference_relative_tolerance <= 0
     ):
         parser.error("Reference relative tolerance must be finite and positive")
+    if (
+        not np.isfinite(args.reference_energy_relative_tolerance)
+        or args.reference_energy_relative_tolerance <= 0
+    ):
+        parser.error("Reference energy relative tolerance must be finite and positive")
+    if (
+        not np.isfinite(args.reference_slice_relative_tolerance)
+        or args.reference_slice_relative_tolerance <= 0
+    ):
+        parser.error("Reference slice relative tolerance must be finite and positive")
     campaign(
         args.binary.resolve(),
         args.output.resolve(),
@@ -803,6 +911,8 @@ def main():
         args.coupling,
         args.phase,
         args.reference_relative_tolerance,
+        args.reference_slice_relative_tolerance,
+        args.reference_energy_relative_tolerance,
     )
 
 

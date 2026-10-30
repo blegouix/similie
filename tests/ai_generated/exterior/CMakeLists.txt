@@ -4,6 +4,10 @@
 
 include(GoogleTest)
 
+add_executable(unit_tests_interior_product interior_product.cpp ../../main.cpp)
+target_link_libraries(unit_tests_interior_product PRIVATE GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_interior_product DISCOVERY_MODE PRE_TEST)
+
 add_executable(unit_tests_integration integration.cpp ../../main.cpp)
 target_link_libraries(unit_tests_integration PRIVATE GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_integration DISCOVERY_MODE PRE_TEST)

@@ -29,8 +29,113 @@ from ci_campaign import (
     compare_strategies,
     execute,
     validate_trajectory,
+    validate_reference_comparisons,
     write_report,
 )
+
+
+class ReferenceAccuracyGate(unittest.TestCase):
+    def comparisons(self):
+        return {
+            f"N{n}": {
+                name: {
+                    "relative_l2_error": error / 4
+                    if name == "kinetic_energy"
+                    else error,
+                    "max_absolute_error": 0.01,
+                }
+                for name in (
+                    "kinetic_energy",
+                    "dissipation",
+                    "enstrophy",
+                    "vorticity_norm_t8",
+                )
+            }
+            for n, error in ((64, 0.2), (128, 0.1))
+        }
+
+    def test_consistent_refinement_passes(self):
+        comparisons = self.comparisons()
+        validate_reference_comparisons(comparisons)
+        self.assertTrue(
+            all(
+                metric["passed"]
+                for metrics in comparisons.values()
+                for metric in metrics.values()
+            )
+        )
+
+    def test_observed_ci_failure_is_rejected_without_explicit_tolerances(self):
+        comparisons = self.comparisons()
+        for n, energy, dissipation, vorticity in (
+            (64, 0.599826, 2.47418, 1.37982),
+            (128, 0.803107, 3.75165, 0.981704),
+        ):
+            for name, value in (
+                ("kinetic_energy", energy),
+                ("dissipation", dissipation),
+                ("enstrophy", dissipation),
+                ("vorticity_norm_t8", vorticity),
+            ):
+                comparisons[f"N{n}"][name]["relative_l2_error"] = value
+        with self.assertRaisesRegex(ValueError, "HD reference validation failed"):
+            validate_reference_comparisons(comparisons)
+
+    def test_refinement_must_improve_even_below_error_ceiling(self):
+        comparisons = self.comparisons()
+        comparisons["N128"]["kinetic_energy"]["relative_l2_error"] = 0.075
+        with self.assertRaisesRegex(ValueError, "worsens with refinement"):
+            validate_reference_comparisons(comparisons)
+
+    def test_small_reference_model_floor_is_allowed(self):
+        comparisons = self.comparisons()
+        comparisons["N64"]["kinetic_energy"]["relative_l2_error"] = 0.001
+        comparisons["N128"]["kinetic_energy"]["relative_l2_error"] = 0.004
+        validate_reference_comparisons(comparisons)
+
+    def test_zero_slice_at_the_error_limit_fails(self):
+        comparisons = self.comparisons()
+        comparisons["N128"]["vorticity_norm_t8"]["relative_l2_error"] = 1.0
+        with self.assertRaisesRegex(ValueError, "vorticity_norm_t8"):
+            validate_reference_comparisons(comparisons)
+
+    def test_energy_has_a_stricter_guard_than_under_resolved_dissipation(self):
+        comparisons = self.comparisons()
+        comparisons["N64"]["kinetic_energy"]["relative_l2_error"] = 0.15
+        with self.assertRaisesRegex(ValueError, "kinetic_energy"):
+            validate_reference_comparisons(comparisons)
+
+    def test_nonfinite_or_negative_metrics_fail(self):
+        for key in ("relative_l2_error", "max_absolute_error"):
+            for value in (float("nan"), float("inf"), -1.0):
+                with self.subTest(key=key, value=value):
+                    comparisons = self.comparisons()
+                    comparisons["N64"]["dissipation"][key] = value
+                    with self.assertRaises(ValueError):
+                        validate_reference_comparisons(comparisons)
+
+    def test_incomplete_comparisons_fail(self):
+        comparisons = self.comparisons()
+        del comparisons["N128"]["enstrophy"]
+        with self.assertRaisesRegex(ValueError, "Incomplete"):
+            validate_reference_comparisons(comparisons)
+        del comparisons["N128"]
+        with self.assertRaisesRegex(ValueError, "Missing"):
+            validate_reference_comparisons(comparisons)
+
+    def test_invalid_tolerances_fail(self):
+        for value in (0.0, -1.0, float("nan"), float("inf")):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    validate_reference_comparisons(self.comparisons(), value)
+                with self.assertRaises(ValueError):
+                    validate_reference_comparisons(
+                        self.comparisons(), slice_tolerance=value
+                    )
+                with self.assertRaises(ValueError):
+                    validate_reference_comparisons(
+                        self.comparisons(), energy_tolerance=value
+                    )
 
 
 class CampaignExecution(unittest.TestCase):
@@ -109,6 +214,89 @@ class CampaignExecution(unittest.TestCase):
 
 
 class CampaignConfiguration(unittest.TestCase):
+    def test_default_validation_gate_controls_campaign_status_and_report(self):
+        for inconsistent in (False, True):
+            with (
+                self.subTest(inconsistent=inconsistent),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                output = Path(temporary)
+                directory = output / "validation"
+                directory.mkdir()
+                flags = "+".join(STRATEGIES[3])
+                rows = []
+                trajectories = []
+                histories = []
+                for n, error in ((64, 0.05), (128, 0.025)):
+                    case = directory / f"N{n}"
+                    case.mkdir()
+                    (case / "trajectory.performance.json").touch()
+                    rows.append(
+                        {
+                            "run_name": f"TaylorGreen/incompressible_ideal_hd/N{n}/{flags}/iterations:1/repeats:1",
+                            "repetitions": 1,
+                            "iterations": 1,
+                        }
+                    )
+                    trajectories.append(
+                        ({"strategy": 3, "flags": flags}, case / "trajectory.h5")
+                    )
+                    histories.append(
+                        {
+                            name: {
+                                "relative_l2_error": 0.8 if inconsistent else error,
+                                "max_absolute_error": 0.01,
+                            }
+                            for name in ("kinetic_energy", "dissipation", "enstrophy")
+                        }
+                    )
+                (directory / "benchmark.json").write_text(
+                    json.dumps({"benchmarks": rows})
+                )
+                with (
+                    patch("ci_campaign.reference_history"),
+                    patch("ci_campaign.execute"),
+                    patch("ci_campaign.validate_trajectory", side_effect=trajectories),
+                    patch("ci_campaign.process"),
+                    patch("ci_campaign.compare_reference", side_effect=histories),
+                    patch(
+                        "ci_campaign.compare_vorticity_slice",
+                        return_value={
+                            "relative_l2_error": 0.2,
+                            "max_absolute_error": 0.01,
+                        },
+                    ),
+                ):
+                    if inconsistent:
+                        with self.assertRaisesRegex(
+                            ValueError, "HD reference validation failed"
+                        ):
+                            campaign(
+                                Path("unused"),
+                                output,
+                                "incompressible",
+                                "ideal",
+                                "hd",
+                                "validation",
+                            )
+                    else:
+                        campaign(
+                            Path("unused"),
+                            output,
+                            "incompressible",
+                            "ideal",
+                            "hd",
+                            "validation",
+                        )
+                gate = json.loads((directory / "reference-validation.json").read_text())
+                self.assertEqual(gate["passed"], not inconsistent)
+                self.assertIn(
+                    "**FAIL**" if inconsistent else "**PASS**",
+                    (directory / "report.md").read_text(),
+                )
+                manifest = json.loads((directory / "manifest.json").read_text())
+                self.assertEqual(manifest["error"] is not None, inconsistent)
+
     def test_summary_omits_the_solver_timing_table(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
@@ -217,9 +405,7 @@ class InitialDiscretization(unittest.TestCase):
             hdf = path.with_name("trajectory.h5")
             with h5py.File(hdf, "w") as data:
                 data["final_state"] = np.ones((3, 8**3))
-            actual, actual_hdf = validate_trajectory(
-                path, "incompressible_ideal_hd", 8
-            )
+            actual, actual_hdf = validate_trajectory(path, "incompressible_ideal_hd", 8)
             self.assertEqual(actual, record)
             self.assertEqual(actual_hdf, hdf)
             with h5py.File(hdf, "r+") as data:
@@ -361,15 +547,11 @@ class StrategyComparison(unittest.TestCase):
                 del data["electromagnetic_monitors"]
         baseline = {"final_time": 1.0}
         candidate = {"final_time": 1.0}
-        results = compare_strategies(
-            self.baseline, self.candidate, baseline, candidate
-        )
+        results = compare_strategies(self.baseline, self.candidate, baseline, candidate)
         self.assertNotIn("monitors", results)
         self.assertTrue(all(metric["passed"] for metric in results.values()))
         candidate["final_time"] += 1e-3
-        results = compare_strategies(
-            self.baseline, self.candidate, baseline, candidate
-        )
+        results = compare_strategies(self.baseline, self.candidate, baseline, candidate)
         self.assertTrue(results["final_state"]["passed"])
         self.assertFalse(results["final_time"]["passed"])
 

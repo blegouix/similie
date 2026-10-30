@@ -221,7 +221,9 @@ jobs:
             python3 "${BUILD_ROOT}/src/benchmarks/taylor_green_vortex/ci_campaign.py" \
               --binary "${BUILD_ROOT}/build/benchmarks/taylor_green_vortex/taylor_green_vortex" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
-              --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation
+              --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation \
+              --reference-energy-relative-tolerance 0.1 \
+              --reference-relative-tolerance 0.5 --reference-slice-relative-tolerance 1.0
           ' &
         wait $!
     - name: Upload Nsight timelines, Compute reports, combined tables, and reference outputs

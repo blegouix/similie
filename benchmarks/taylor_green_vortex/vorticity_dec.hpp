@@ -209,6 +209,32 @@ public:
                 sil::tensor::PeriodicExtrapolationRule {});
         unpack(m_two, two_cochain);
     }
+    void interior_product(
+            Field const& velocity_cochain,
+            Field const& two_cochain,
+            Field const& output,
+            std::array<double, 3> const& harmonic)
+    {
+        pack(velocity_cochain, m_one);
+        pack(two_cochain, m_two);
+        Field const one = m_one;
+        double const h = m_grid.h;
+        Kokkos::parallel_for(
+                "interior_product_harmonic_velocity",
+                m_grid.cells,
+                KOKKOS_LAMBDA(int i) {
+                    for (int a = 0; a < 3; ++a)
+                        one(0, 3 * i + a) += h * harmonic[a];
+                });
+        sil::exterior::InteriorProduct<Vector, TwoForm> {}(
+                Kokkos::DefaultExecutionSpace(),
+                tensor<Vector>(m_physical_one),
+                tensor<Vector>(m_one),
+                tensor<TwoForm>(m_two),
+                std::array<double, 3> {h, h, h},
+                sil::tensor::PeriodicExtrapolationRule {});
+        unpack(m_physical_one, output);
+    }
     void codifferential(Field const& two_cochain, Field const& one_cochain)
     {
         pack(two_cochain, m_two);

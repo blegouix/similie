@@ -5,6 +5,7 @@
 #pragma once
 
 #include <similie/exterior/chain.hpp>
+#include <similie/exterior/cochain_indices.hpp>
 #include <similie/exterior/local_chain.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 

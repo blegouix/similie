@@ -9,6 +9,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/coboundary/coboundary.hpp>
+#include <similie/exterior/cochain_indices.hpp>
 #include <similie/exterior/concepts.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 #include <similie/exterior/stencil.hpp>
