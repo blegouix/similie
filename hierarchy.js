@@ -80,6 +80,7 @@ var hierarchy =
     [ "sil::exterior::IdentityTransport< Rank >", "structsil_1_1exterior_1_1IdentityTransport.html", null ],
     [ "similie::physics::fluid::IncompressibleNavierStokes", "classsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes.html", null ],
     [ "sil::multidomains::IndexedScalarField< DDim >", "structsil_1_1multidomains_1_1IndexedScalarField.html", null ],
+    [ "sil::exterior::InteriorProduct< VelocityIndex, FormIndex >", "structsil_1_1exterior_1_1InteriorProduct.html", null ],
     [ "sil::tensor::InverseMetric< MetricIndex, MetricType, BatchElem >", "structsil_1_1tensor_1_1InverseMetric.html", null ],
     [ "sil::exterior::Laplacian< MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec, Hodge >", "classsil_1_1exterior_1_1Laplacian.html", null ],
     [ "sil::exterior::LeviCivitaContinuousHodgeStar< Indices1, Indices2, MetricType, BatchElem >", "classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar.html", null ],

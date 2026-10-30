@@ -68,6 +68,7 @@ var annotated_dup =
         [ "FillReductionOperatorMem", "structsil_1_1exterior_1_1FillReductionOperatorMem.html", "structsil_1_1exterior_1_1FillReductionOperatorMem" ],
         [ "IdentityTransport", "structsil_1_1exterior_1_1IdentityTransport.html", "structsil_1_1exterior_1_1IdentityTransport" ],
         [ "IndexForCodifferentialOfCoboundaryInLaplacian", "structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html", null ],
+        [ "InteriorProduct", "structsil_1_1exterior_1_1InteriorProduct.html", "structsil_1_1exterior_1_1InteriorProduct" ],
         [ "Laplacian", "classsil_1_1exterior_1_1Laplacian.html", "classsil_1_1exterior_1_1Laplacian" ],
         [ "LeviCivitaContinuousHodgeStar", "classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar.html", "classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar" ],
         [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
