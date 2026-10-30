@@ -201,7 +201,6 @@ CONSTITUTIVE_LAW_HEADER = """\
 struct NonlinearMagneticState
 {
     std::array<double, 3> value {};
-    std::array<double, 3> hodge_star {};
 };
 
 template <class BHCurve>
@@ -210,7 +209,6 @@ class NonlinearMagneticInductionToMagneticField
     BHCurve m_bh_curve;
 
     [[nodiscard]] KOKKOS_FUNCTION std::array<double, 9> jacobian_from_magnetic_induction(
-            std::span<double const, 3> hodge_star,
             std::span<double const, 3> magnetic_induction) const
     {
         double const q = magnetic_induction[0] * magnetic_induction[0]
@@ -220,15 +218,15 @@ class NonlinearMagneticInductionToMagneticField
         if (b_norm == 0.0) {
             double const dh_db = m_bh_curve.dh_db_from_b(0.0);
             return {
-                    hodge_star[0] * dh_db,
+                    dh_db,
                     0.0,
                     0.0,
                     0.0,
-                    hodge_star[1] * dh_db,
+                    dh_db,
                     0.0,
                     0.0,
                     0.0,
-                    hodge_star[2] * dh_db,
+                    dh_db,
             };
         }
         double const h_norm = m_bh_curve.h_from_b(b_norm);
@@ -239,9 +237,8 @@ class NonlinearMagneticInductionToMagneticField
         for (std::size_t row = 0; row < 3; ++row) {
             for (std::size_t column = 0; column < 3; ++column) {
                 jacobian[3 * row + column]
-                        = hodge_star[row]
-                          * ((row == column ? scale : 0.0)
-                             + radial_scale * magnetic_induction[row] * magnetic_induction[column]);
+                        = (row == column ? scale : 0.0)
+                          + radial_scale * magnetic_induction[row] * magnetic_induction[column];
             }
         }
         return jacobian;
@@ -294,7 +291,6 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> operator()(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
-        std::array<double, N> const& hodge_star = state.hodge_star;
         std::array<double, N> const& magnetic_induction = state.value;
         double const q = magnetic_induction[0] * magnetic_induction[0]
                          + magnetic_induction[1] * magnetic_induction[1]
@@ -305,9 +301,9 @@ public:
         }
         double const scale = m_bh_curve.h_from_b(b_norm) / b_norm;
         return {
-                hodge_star[0] * scale * magnetic_induction[0],
-                hodge_star[1] * scale * magnetic_induction[1],
-                hodge_star[2] * scale * magnetic_induction[2],
+                scale * magnetic_induction[0],
+                scale * magnetic_induction[1],
+                scale * magnetic_induction[2],
         };
     }
 
@@ -321,25 +317,21 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> inverse(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
-        std::array<double, N> const& hodge_star = state.hodge_star;
         std::array<double, N> const& magnetic_field = state.value;
-        double const unhodge_h0 = magnetic_field[0] / hodge_star[0];
-        double const unhodge_h1 = magnetic_field[1] / hodge_star[1];
-        double const unhodge_h2 = magnetic_field[2] / hodge_star[2];
         double const h_norm = std::sqrt(
-                unhodge_h0 * unhodge_h0 + unhodge_h1 * unhodge_h1 + unhodge_h2 * unhodge_h2);
+                magnetic_field[0] * magnetic_field[0] + magnetic_field[1] * magnetic_field[1] + magnetic_field[2] * magnetic_field[2]);
         if (h_norm == 0.0) {
             return {0.0, 0.0, 0.0};
         }
         double const b_norm = m_bh_curve.b_from_h(h_norm);
         double const scale = b_norm / h_norm;
-        return {scale * unhodge_h0, scale * unhodge_h1, scale * unhodge_h2};
+        return {scale * magnetic_field[0], scale * magnetic_field[1], scale * magnetic_field[2]};
     }
 
     template <class Elem>
     [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> inverse_value(State const& state, Elem const& elem) const
     {
-        State const inverse_state {inverse(state, elem), state.hodge_star};
+        State const inverse_state {inverse(state, elem)};
         return inverse_matrix3x3(jacobian(inverse_state, elem));
     }
 
@@ -347,7 +339,7 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> jacobian(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
-        return jacobian_from_magnetic_induction(state.hodge_star, state.value);
+        return jacobian_from_magnetic_induction(state.value);
     }
 };
 
@@ -373,7 +365,6 @@ class NonlinearMagnetostaticsHamiltonian:
             parameters=["bh_curve"],
             hamiltonian=hamiltonian,
             variables=[a, b, j],
-            includes=["<similie/physics/magnetostatics/magnetostatics_quantities.hpp>"],
             template_parameters=["class BHCurve"],
             parameter_types={"bh_curve": "BHCurve"},
             symbolic_functions={

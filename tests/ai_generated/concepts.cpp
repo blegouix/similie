@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // AI-GENERATED
 
+// Check the generated spatial model without relying on exterior transitive includes.
+#include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
+
 // Include each standardized family so its inline assertions run in every test build.
 #include <similie/exterior/codifferential/codifferential.hpp>
 #include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
@@ -10,7 +13,6 @@
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>
 #include <similie/physics/hamilton_equations.hpp>
-#include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics_constitutive_law.hpp>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
