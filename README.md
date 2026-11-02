@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2024 Baptiste Legouix
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# SimiLie
+# SimiLie: A versatile PDE solving and physics-oriented C++ library for HPC numerical simulation
 
 ![](docs/images/scalar_field_hamiltonian.gif)
 
