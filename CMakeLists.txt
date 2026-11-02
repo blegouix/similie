@@ -18,6 +18,12 @@ option(SIMILIE_BUILD_BENCHMARKS "Build SimiLie Google Benchmark executables" OFF
 option(SIMILIE_DEBUG_LOG "Enable logging of SimiLie internal kernels" OFF)
 option(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS "Assert example result correctness at runtime" OFF)
 
+# Young Tableau currently requires C++26, which is not supported by nvcc.
+if(SIMILIE_BUILD_YOUNG_TABLEAU AND Kokkos_ENABLE_CUDA)
+  message(FATAL_ERROR
+    "SIMILIE_BUILD_YOUNG_TABLEAU is not supported with CUDA: it requires C++26, which nvcc does not support. Disable CUDA or set SIMILIE_BUILD_YOUNG_TABLEAU=OFF.")
+endif()
+
 # Validate SIMILIE_BUILD_ONLY_DOCUMENTATION option
 if("${SIMILIE_BUILD_ONLY_DOCUMENTATION}" AND NOT "${SIMILIE_BUILD_DOCUMENTATION}")
   message(FATAL_ERROR "SIMILIE_BUILD_ONLY_DOCUMENTATION requires SIMILIE_BUILD_DOCUMENTATION=ON")
