@@ -447,7 +447,7 @@ class InitialDiscretization(unittest.TestCase):
                         else 0.125
                     )
                     with h5py.File(path.with_name("trajectory.h5"), "w") as data:
-                        components = 3 if fluid == "incompressible" else 4
+                        components = 3 if fluid == "incompressible" else 5
                         data["final_state"] = np.ones((components, n**3))
                         monitors = np.zeros((6, 14))
                         monitors[:, 0] = np.linspace(0, 1, 6)
@@ -483,7 +483,7 @@ class ReferenceSnapshots(unittest.TestCase):
             hdf = Path(temporary) / "trajectory.h5"
             times = sorted([i * 0.033 for i in range(304)] + [8.0, 10.0])
             with h5py.File(hdf, "w") as data:
-                data["final_state"] = np.ones((4, 8**3))
+                data["final_state"] = np.ones((5, 8**3))
                 monitors = np.zeros((2, 14))
                 monitors[:, 0] = [0, 10]
                 monitors[:, 1] = 0.125

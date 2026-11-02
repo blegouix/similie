@@ -140,7 +140,10 @@ def validate_trajectory(path, configuration, n, reference=False):
             raise ValueError(f"Invalid {key}: {path}")
     hdf = path.with_name(path.name.removesuffix(".performance.json") + ".h5")
     with h5py.File(hdf, "r") as data:
-        components = 4 if configuration.startswith("compressible") else 3
+        # Compressible states contain density, three momentum components, and
+        # total energy. Incompressible states contain only the three velocity
+        # components.
+        components = 5 if configuration.startswith("compressible") else 3
         state = data["final_state"][:]
         if state.shape != (components, n**3) or not np.all(np.isfinite(state)):
             raise ValueError(f"Invalid final state: {hdf}")
