@@ -172,7 +172,7 @@
 %=== DOCUMENT ==================================================================
 %===============================================================================
 
-\title[\textcolor{red}{SimiLie: a performance-portable library for physics build upon DDC}]{SimiLie: a performance-portable library for physics build upon DDC}
+\title[\textcolor{red}{SimiLie: a versatile PDE solving and physics-oriented C++ library for HPC simulation}]{SimiLie: a versatile PDE solving and physics-oriented C++ library for HPC simulation}
 
 \author[Baptiste Legouix]{
 LEGOUIX Baptiste
@@ -180,7 +180,7 @@ LEGOUIX Baptiste
 
 \institute[]{GPL-A License}
 	
-\date{15/07/2026}
+\date{04/11/2026}
 
 \begin{document}
 
@@ -211,7 +211,9 @@ LEGOUIX Baptiste
 
   \bigskip
 
+  \tiny
   \tableofcontents
+  \normalsize
 \end{frame}
 
 % Background for main slides
@@ -243,10 +245,56 @@ The current state of the HPC numerical simulation landscape can be summarized as
 \label{fig:landscape}
 \end{figure}
 
-There is a \textcolor{red}{huge variability in design choices of user codes}, depending on the developers backgrounds. Nowadays, there is \textbf{no well-identified solution} which is simultaneously \textcolor{red}{performant (and portable)}, which \textcolor{red}{suits the expectations of most users} (highly flexible, open-source, not too hard to configure for specialists of non-computing-science fields and ready for industry) and which has a \textcolor{red}{high level of generality} to cover a huge area of applications.
+Well-established libraries such as \textit{LAPACK} and \textit{NumPy} provide essential tools for numerical computation, but they are not specifically designed for \textcolor{red}{solving PDEs}. Most of the time, users still assemble these tools into numerical methods and develop much of the solver infrastructure themselves. \textbf{There is no equally universal foundation for building physics-based simulation software}: existing frameworks (ie. \textit{AnSys}, \textit{GetDP} or \textit{FeniCS}) are often proprietary or quite monolithic, or target particular applications/numerical methods and are rarely optimized for GPU.
 \end{tframe}
 
-\subsection{The DDC ecosystem for HPC numerical simulation}
+\begin{tframe}
+The emergence of AI agents capable of \textbf{efficiently assembling sophisticated software from low-level building blocks} creates a \textcolor{red}{major opportunity for open-source libraries}. Free access to core implementations and practical examples can help these agents make effective use of a physics-oriented library with a clear, consistent API. This could \textbf{dramatically shorten the path from a researcher’s or engineer’s physical model to a working simulation}.
+
+\vspace{0.5cm}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.9\textwidth]{imgs/ai_cahn_hilliard.png}
+\end{center}
+\label{fig:landscape}
+\end{figure}
+\end{tframe}
+
+\subsection{Hexaedric-only grids support to maximize efficiency on GPU}
+
+\begin{tframe}
+Nowadays, \textbf{Graphical processor units} (GPU) are widely recognized to constitute the backend hardware to process futur high-performance numerical simulations. Their specificity is to rely on an high number of threads able to process data in parallel with high bandwidth. This has important consequences for the design of numerical simulation codes, as \textcolor{red}{performance is maximized by coalesced memory accesses}. It implies that \textbf{designing solvers which act on hexahedric, rectilinear grids}, instead of relying on non-structured meshes whose topology is described by adjacency matrices becomes highly beneficial, but it prevents existing CPU-only solutions to be ported easily on GPU without deep restructuration.
+
+\vspace{0.1cm}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.8\textwidth]{imgs/memory_access.png}
+\end{center}
+\label{fig:memory_access}
+\end{figure}
+\end{tframe}
+
+\subsection{SimiLie: a versatile PDE solving and physics-oriented C++ library for HPC simulation}
+
+\begin{tframe}
+\textbf{SimiLie} aims to provide a common foundation for developing HPC numerical simulation codes. Its long-term goal is to \textbf{give researchers, engineers, and AI agents the building blocks to construct their own solvers}, including \textcolor{red}{PDE and physics-oriented operators}, with \textbf{GPUs as the primary execution target}.
+
+\vspace{0.2cm}
+
+Its scope is deliberately restricted to \textcolor{red}{structured hexahedral meshes and multi-block decompositions}, generalized to \textbf{arbitrary dimensions and non-trivial geometries}, including curved spaces. It supports tensor fields of arbitrary rank, provides generic differential operators, and integrates with external tools such as \textit{Gmsh/ONELAB} and \textit{Ginkgo}. SimiLie builds on \textit{DDC} (see the following slides), whose multidimensional abstractions provide a natural foundation: iteration over a field's discrete domain through \textit{ddc::parallel\_for\_each} makes the relationship between computation and data explicit. With an appropriate execution policy and memory layout, this enables coalesced memory access and supports \textbf{efficient GPU execution}.
+
+\vspace{0.1cm}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.4\textwidth]{imgs/hexalab.png}
+\end{center}
+\label{fig:hexmesh}
+\end{figure}
+\end{tframe}
+
+\section{The DDC ecosystem for HPC numerical simulation}
+
+\subsection{General DDC presentation}
 
 \begin{tframe}
 \textbf{\href{https://ddc.mdls.fr/}{DDC}} (for \emph{the Discrete Domain Decomposition library}), is a C++20 library maintained by \textcolor{red}{\textit{CEA/Maison de la simulation}} that aims to offer to the C++/MPI world an equivalent to the \textit{\href{https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html}{xarray.DataArray}}/\textit{\href{https://docs.dask.org/en/stable/array.html}{dask.Array}} python environment.
@@ -305,34 +353,6 @@ const double value = electric_field(
 \end{lstlisting}
 
 Where \texttt{i\_xyz} can only take three values corresponding to the X, Y and Z dimensions.
-\end{tframe}
-
-\subsection{SimiLie pitch: a physics simulation engine running efficiently on GPU}
-
-\begin{tframe}
-Nowadays, \textbf{Graphical processor units} (GPU) are widely recognized to constitute the backend hardware to process futur high-performance numerical simulations. Their specificity is to rely on an high number of threads able to process data in parallel with high bandwidth. This has important consequences for the design of numerical simulation codes, as \textcolor{red}{performance is maximized by coalesced memory accesses}. It implies that \textbf{designing solvers which act on hexahedric, rectilinear grids}, instead of relying on non-structured meshes whose topology is described by adjacency matrices becomes highly beneficial, but it prevents existing CPU-only solutions to be ported easily on GPU without deep restructuration.
-
-\vspace{0.1cm}
-\begin{figure}[H]
-\begin{center}
-\includegraphics[width=.8\textwidth]{imgs/memory_access.png}
-\end{center}
-\label{fig:memory_access}
-\end{figure}
-\end{tframe}
-
-\begin{tframe}
-This observation led to the development of SimiLie, which aims to propose a hexaedric-only (or - to address homology problems - multi-domains, almost-hexaedric-only) generic solution to \textcolor{red}{perform efficient numerical simulation for physics on GPU}. DDC was a very natural starting point for that, as iterating in the multidimensional domain (ie. with \textit{ddc::parallel\_for\_each}) supporting a multidimensional array naturally aligns threads indexing with data structure, leading to coalesced memory accesses and thus maximal performance. \textbf{That is why SimiLie is an extension of DDC}.
-
-\vspace{0.2cm}
-
-The desired final state of SimiLie is to \textbf{allow users to describe their problems and configure their solvers} according to an API similar to what is done in FEniCS or GetDP (let them write directly PDE and boundary conditions in a symbolic formulation), but \textcolor{red}{following the DDC philosophy} (named dimensions, most things determined at compile-time...) and intrinsic GPU-specific optimizations. For compatibility purpose SimiLie stays compatible with \textit{OpenMP} backend but it is not it's main target.
-
-\vspace{0.2cm}
-
-\begin{center}
-\textbf{\textcolor{red}{Equations + BC + Solver configuration $\Rightarrow$ Efficient problem solver on GPU}}
-\end{center}
 \end{tframe}
 
 \section{Tensor module}
@@ -400,9 +420,9 @@ There is also an external function dedicated to \textcolor{red}{metric inversion
 \subsection{Differential calculus}
 
 \begin{tframe}
-\textbf{SimiLie provides a module dedicated to differential calculus}. It is based on the Discrete Exterior Calculus (DEC) theory, whose building block is the differential form, that is stored as scalar, vector, or rank-$n$ antisymmetric tensor field. It aims to mostly reproduce the algorithms implemented in GetDP, but for a GPU-oriented, structured-grid optimized implementation.
+\textbf{SimiLie provides a module dedicated to differential calculus}. It is based on the Discrete Exterior Calculus (DEC) theory, whose building block is the differential form/cochain, that is stored as scalar, vector, or rank-$n$ antisymmetric tensor field. It has capability of generalization (arbitrary dimensionality, FEM extension, higher-order methods...) and intrinsequly handle both continuous and discrete geometries.
 
-Most operators (ie. \textit{Coboundary}, \textit{DiscreteHodgeStar}, \textit{Codifferential}...) are linear and have API standardized according to two key \textit{\_\_device\_\_}-annotated member functions:
+Most operators (ie. \textit{Coboundary}, \textit{DiscreteHodgeStar}, \textit{Codifferential}, \textit{Laplacian}...) are linear and have API standardized according to two key \textit{\_\_device\_\_}-annotated member functions:
 
 \begin{itemize}
 \item \textit{value()}, which builds and returns the operator itself, evaluated at a given node, which can be a scalar for pointwise operators or a stencil (containing the coefficients of the linear combination to perform on the neighbor nodes values) allocated with a static array by the thread for differential operators.
@@ -422,12 +442,22 @@ In the context of a real, production solver, \textit{value()} can be used to ass
 \textbf{\textcolor{red}{This part of the code is very WIP and may change substantially in the futur.}}
 \end{center}
 
-\textbf{SimiLie expects user to provide a \textit{sympy} formula encoding an Hamiltonian}. Non-Hamiltonian physics is currently not supported.
+\textbf{SimiLie expects user to provide a \textit{sympy} formula encoding an Hamiltonian}. Non-Hamiltonian physics is currently not supported via this module.
 
 SimiLie will internally perform the symbolic operations to \textcolor{red}{build differential equations} from it (using the Hamilton's or the DeDonder-Weyl equations). The intention is to provide a \textcolor{red}{general API covering any Hamiltonian physics}.
 
 This operation is called by a Python call made by CMake before the compilation. \textcolor{red}{The generated code is mostly \textit{constexpr}}, such that the compiler can afterward aggressively optimize it's calls.
 
+\end{tframe}
+
+\section{Domain decomposition module}
+
+\subsection{Domain decomposition}
+
+\begin{tframe}
+\begin{center}
+\textbf{\textcolor{red}{TODO.}}
+\end{center}
 \end{tframe}
 
 \section{Solver module}
@@ -439,7 +469,7 @@ This operation is called by a Python call made by CMake before the compilation. 
 \textbf{\textcolor{red}{This part of the code is very WIP and may change substantially in the futur.}}
 \end{center}
 
-There are two kind of differential equations: the stationnary and transcient ones. The second case has not been treated yet (but simple cases like scalar field can already be dealt with). Stationnary case is addressed using \textit{Ginkgo}, which is the state-of-the-art sparse optimizer running on GPU. Two paths are available:
+To solve stationary equation, a conveniant interface with \textit{Ginkgo} - which is the state-of-the-art sparse optimizer running on GPU - is provided. Two paths are available:
 
 \begin{itemize}
 \item The \textbf{matrix-assembly} path, which preassembles a CSR matrix using the \textit{value()} member functions of the differential operators.
@@ -512,13 +542,84 @@ The internal routine of SimiLie generates C++ code which exposes operators allow
 
 ONELAB is an API provided in the CAD software/mesher \textit{gmsh} to control any PDE solver. It is already used to interface with GetDP or Elmer. An AI has be used to build a proof-of-concept interface with ONELAB from the SimiLie side (this is non-reviewed, pure AI code but isolated in a particular folder), taking \textit{.silpro} configuration files. \textbf{A clone of the Inductor example provided by GetDP} has been build upon it. \textbf{It solves the magnetostatics physics for a 2D or 3D inductor}, computing quantities of interest such as inductance or stress. Every combinations of 2D/3D, linear/non-linear, assembled-matrix/matrix-free cases are tested. 
 
-\vspace{15pt}
+\vspace{10pt}
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth]{imgs/inductor.png}
 \end{center}
 \label{fig:inductor}
 \end{figure}
+
+Comparison with GetDP results reports a $\sim 15\%$ error, to be clarified.
+
+\end{tframe}
+
+\subsection{The ONELAB elasticity example}
+
+\begin{tframe}
+
+The \textbf{wrench elasticity} GetDP example is also reproduced:
+
+\vspace{15pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{imgs/onelab_wrench.png}
+\end{center}
+\label{fig:wrench}
+\end{figure}
+
+Comparison with GetDP results reports a $\sim 0.7\%$ error.
+
+\end{tframe}
+
+\subsection{The ONELAB potential flow example}
+
+\begin{tframe}
+
+The \textbf{potential flow} GetDP example is also reproduced:
+
+\vspace{15pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{imgs/airfoil.png}
+\end{center}
+\label{fig:airfoil}
+\end{figure}
+
+Comparison with GetDP results reports a $\leq 1\%$ error.
+
+\end{tframe}
+
+\subsection{The Taylor-Green Vortex benchmark}
+
+\begin{tframe}
+
+The \textbf{Taylor-Green Vortex} benchmark reproduces a case studied at the \href{https://how5.cenaero.be/content/ws1-dns-taylor-green-vortex-re1600}{HIoCFD5} conference. It involves 3D simulation of turbulence formation, in incompressible or compressible hydrodynamics:
+
+\vspace{15pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth]{imgs/tgv/tgv_anim.0006.png}
+\end{center}
+\label{fig:tgv}
+\end{figure}
+
+Validation is ongoing. The simulation has also been adjusted to cover plasma physics like electro-hydrodynamics, magneto-hydrodynamics or full-maxell+hydrodynamics, in ideal or resistive cases.
+
+\end{tframe}
+
+\begin{tframe}
+
+The Taylor-Green Vortex benchmark is used to benchmark different combinations of operator implementations, allowing to identify what is the best strategy to rely on for production case, and profile critical kernels with Nsight Compute:
+
+\vspace{10pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.9\textwidth]{imgs/tgv_benchmark.png}
+\end{center}
+\label{fig:tgv}
+\end{figure}
+
 \end{tframe}
 
 \section{Perspectives}
@@ -527,15 +628,13 @@ ONELAB is an API provided in the CAD software/mesher \textit{gmsh} to control an
 
 \begin{tframe}
 
-\textbf{SimiLie is still at a very early phase of it's development}, but essential building blocks are in place. If it's level of generality will allow to go toward efficient solvers for very advanced physics, like covering geometrodynamics, I believe the single-maintener, no-user, no-funding situation cannot last indefinitely, and finding some simple but concrete application to start building a community should be the main focus for growth perspective. Here is a proposal of short-term roadmap:
+\textbf{SimiLie is still at a early phase of it's development}, but essential building blocks are in place. If it's level of generality will allow to go toward efficient solvers for very advanced physics, like covering geometrodynamics, I believe the one-man, no-user, no-funding situation cannot last indefinitely, and finding some concrete application to start building a community should be the main focus for growth perspective. Here is a proposal of short-term roadmap:
 
 \begin{itemize}
-\item Generalize the ONELAB interface to cover more physics (solid mechanics, fluid mechanics).
-\item Implement Finite Elements Exterior Calculus which is a way more recognized solution than minimizing L2 residual between left-hand-side and right-hand-side to find stationnary state.
-\item Evaluate the performance on GPU through a benchmark which can be compared to other solutions (from both the precision and computation time perspectives).
+\item Stabilize code dedicated to domain decomposition.
+\item Implement Finite Elements Exterior Calculus which is a way more recognized solution than minimizing L2 residual between left-hand-side and right-hand-side to find stationnary state, and should help to consolidate the whole thing.
+\item Implement big production demonstrators like turbomachinery and tokamak simulations.
 \end{itemize}
-
-I believe that if the versatility, the precision of the results and the performance on a big, recognized case are proven, SimiLie may become interesting for industrials.
 
 \end{tframe}
 
