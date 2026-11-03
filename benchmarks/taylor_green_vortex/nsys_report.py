@@ -4,10 +4,8 @@
 """Capture CUDA/NVTX timelines and summarize TGV operations and their kernels."""
 
 import argparse
-import csv
 import html
 import json
-import math
 import os
 from pathlib import Path
 import sqlite3
@@ -41,25 +39,6 @@ def profile_command(command, directory):
         f"--output={directory / 'tgv'}",
         *map(str, command),
     ], profiling_environment()
-
-
-def number(row, label):
-    key = next(key for key in row if key.split(" (", 1)[0] == label)
-    value = float(row[key])
-    if not math.isfinite(value) or value < 0:
-        raise ValueError(f"Invalid nsys statistic {key}: {row[key]}")
-    return value
-
-
-def region_name(row, column):
-    name = row[column]
-    start = name.find("TaylorGreen/N=")
-    return name[start:] if start >= 0 else None
-
-
-def read_csv(path):
-    with path.open(newline="") as source:
-        return list(csv.DictReader(source))
 
 
 def iteration_case(name):
@@ -341,87 +320,69 @@ def markdown(value):
 
 
 def summarize_profile(directory, expected_cases=None):
-    """Use NVIDIA's launch-correlated reports; host scopes need not fence the GPU.
+    """Export the timeline and use the same launch attribution as the final report.
 
-    Host ranges, GPU spans, and kernel durations are inclusive. A kernel belongs
-    to all its ancestor ranges, so rows at different depths must never be added.
+    NVIDIA's generic NVTX GPU projection reports materialize expensive joins for
+    every Kokkos range. They are redundant with iteration_profiles and can exhaust
+    the CI runner on full strategy captures.
     """
     report = directory / "tgv.nsys-rep"
     if not report.is_file():
         raise FileNotFoundError(f"Missing nsys capture: {report}")
-    reports = ("nvtx_pushpop_sum", "nvtx_gpu_proj_sum", "nvtx_kern_sum")
+    database = report.with_suffix(".sqlite")
+    print("Exporting Nsight Systems timeline to SQLite", flush=True)
     with (directory / "statistics.log").open("w") as log:
-        subprocess.run(
-            [
-                "nsys",
-                "stats",
-                "--force-export=true",
-                "--force-overwrite=true",
-                "--report=" + ",".join(reports),
-                "--format=csv",
-                f"--output={directory / 'statistics'}",
-                str(report),
-            ],
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            check=True,
-        )
-    rows = {name: read_csv(directory / f"statistics_{name}.csv") for name in reports}
-    operations = {}
-    for row in rows["nvtx_pushpop_sum"]:
-        name = region_name(row, "Range")
-        if name:
-            operations[name] = {
-                "name": name,
-                "calls": int(number(row, "Instances")),
-                "host_ns": number(row, "Total Time"),
-                "gpu_span_ns": 0,
-                "gpu_operations": 0,
-                "kernel_ns": 0,
-                "kernel_calls": 0,
-            }
-    for row in rows["nvtx_gpu_proj_sum"]:
-        name = region_name(row, "Range")
-        if name in operations:
-            operations[name]["gpu_span_ns"] += number(row, "Total Proj Time")
-            operations[name]["gpu_operations"] += int(number(row, "Total GPU Ops"))
-    kernels = []
-    for row in rows["nvtx_kern_sum"]:
-        name = region_name(row, "NVTX Range")
-        if name not in operations:
-            continue
-        duration = number(row, "Total Time")
-        calls = int(number(row, "Kern Inst"))
-        operations[name]["kernel_ns"] += duration
-        operations[name]["kernel_calls"] += calls
-        kernels.append(
-            {
-                "operation": name,
-                "kernel": row["Kernel Name"],
-                "calls": calls,
-                "total_ns": duration,
-            }
-        )
-    if not operations or not kernels:
-        raise ValueError(
-            "nsys captured no TGV regions or no kernels within TGV regions"
-        )
-    if any(operation["host_ns"] <= 0 for operation in operations.values()):
-        raise ValueError("nsys captured an empty TGV host region")
-    cases = sorted({"/".join(name.split("/")[:3]) for name in operations})
+        try:
+            subprocess.run(
+                [
+                    "nsys",
+                    "export",
+                    "--type=sqlite",
+                    "--force-overwrite=true",
+                    f"--output={database}",
+                    str(report),
+                ],
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+        except subprocess.CalledProcessError:
+            print((directory / "statistics.log").read_text(), flush=True)
+            raise
+    with sqlite3.connect(database) as connection:
+        operations = {
+            name: (calls, duration)
+            for name, calls, duration in connection.execute("""
+                SELECT coalesce(s.value,n.text,''), count(*), sum(n.end-n.start)
+                FROM NVTX_EVENTS n LEFT JOIN StringIds s ON s.id=n.textId
+                WHERE n.eventType IN (59,70) AND n.end IS NOT NULL
+                  AND coalesce(n.domainId,0)=0
+                  AND coalesce(s.value,n.text,'') LIKE 'TaylorGreen/N=%'
+                GROUP BY coalesce(s.value,n.text,'')
+            """)
+        }
+    if not operations or any(duration <= 0 for _, duration in operations.values()):
+        raise ValueError("nsys captured no TGV regions or an empty TGV host region")
     if expected_cases is not None:
-        if set(cases) != set(expected_cases):
-            raise ValueError(f"Unexpected profiled cases: {cases}")
+        cases = {"/".join(name.split("/")[:3]) for name in operations}
+        if cases != set(expected_cases):
+            raise ValueError(f"Unexpected profiled cases: {sorted(cases)}")
         for case, iterations in expected_cases.items():
             for suffix, count in (("setup", 1), ("iteration", iterations)):
                 operation = operations.get(f"{case}/{suffix}")
-                if not operation or operation["calls"] != count:
+                if not operation or operation[0] != count:
                     raise ValueError(
                         f"Incorrect profiling range count for {case}/{suffix}"
                     )
-                if operation["gpu_span_ns"] <= 0 or operation["kernel_calls"] <= 0:
-                    raise ValueError(f"No GPU timings for {case}/{suffix}")
-    data = dict(cases=iteration_profiles(report.with_suffix(".sqlite")))
+    print("Attributing CUDA launches to TGV iteration regions", flush=True)
+    data = dict(cases=iteration_profiles(database))
+    if not data["cases"] or any(
+        not region["kernels"] or region["gpu_ns"] <= 0
+        for case, profile in data["cases"].items()
+        for region in profile["regions"]
+        if region["name"] == case + "/iteration"
+    ):
+        raise ValueError("nsys captured no kernels within TGV iteration regions")
     (directory / "timings.json").write_text(json.dumps(data, indent=2) + "\n")
     return data
 

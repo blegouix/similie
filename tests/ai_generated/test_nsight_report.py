@@ -38,7 +38,7 @@ from nsight_report import (
     read_compute_report,
     write_combined_report,
 )
-from nsys_report import iteration_profiles
+from nsys_report import iteration_profiles, summarize_profile
 
 CASE = "TaylorGreen/N=64/default"
 SYMBOL = "_Zprobe_full_symbol"
@@ -254,6 +254,50 @@ def capture_fixture(path):
                 gpu + 40 if base == 100 else gpu + 30,
             )
     return iteration_profiles(path)
+
+
+class SystemsSummary(unittest.TestCase):
+    def test_export_uses_launch_attribution_without_generic_projection_reports(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "tgv.nsys-rep").touch()
+            expected = capture_fixture(directory / "tgv.sqlite")
+            with patch("nsys_report.subprocess.run") as export:
+                actual = summarize_profile(directory, {CASE: 2})
+            command = export.call_args.args[0]
+            self.assertEqual(command[:2], ["nsys", "export"])
+            self.assertIn("--type=sqlite", command)
+            self.assertEqual(actual["cases"], expected)
+            self.assertEqual(
+                json.loads((directory / "timings.json").read_text()),
+                json.loads(json.dumps(actual)),
+            )
+
+    def test_incomplete_capture_is_rejected_before_timing_publication(self):
+        for failure in ("iterations", "setup", "case", "kernels"):
+            with (
+                self.subTest(failure=failure),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                directory = Path(temporary)
+                (directory / "tgv.nsys-rep").touch()
+                database = directory / "tgv.sqlite"
+                capture_fixture(database)
+                with sqlite3.connect(database) as connection:
+                    if failure == "setup":
+                        connection.execute(
+                            "DELETE FROM NVTX_EVENTS WHERE text=?", (CASE + "/setup",)
+                        )
+                    elif failure == "kernels":
+                        connection.execute("DELETE FROM CUPTI_ACTIVITY_KIND_KERNEL")
+                cases = (
+                    {CASE + "/unexpected": 2}
+                    if failure == "case"
+                    else {CASE: 3 if failure == "iterations" else 2}
+                )
+                with patch("nsys_report.subprocess.run"), self.assertRaises(ValueError):
+                    summarize_profile(directory, cases)
+                self.assertFalse((directory / "timings.json").exists())
 
 
 class HotKernelSelection(unittest.TestCase):
@@ -493,8 +537,17 @@ class IterationAttribution(unittest.TestCase):
             action(stack)
             for stack in (
                 (CASE + "/setup", "library_probe"),
-                (CASE + "/iteration", CASE + "/iteration/solver", CASE + "/iteration/solver/A"),
-                (CASE + "/iteration", CASE + "/iteration/solver", CASE + "/iteration/solver/A", "library_probe"),
+                (
+                    CASE + "/iteration",
+                    CASE + "/iteration/solver",
+                    CASE + "/iteration/solver/A",
+                ),
+                (
+                    CASE + "/iteration",
+                    CASE + "/iteration/solver",
+                    CASE + "/iteration/solver/A",
+                    "library_probe",
+                ),
             )
         ]
         section = SimpleNamespace(
@@ -663,7 +716,12 @@ class IterationAttribution(unittest.TestCase):
         regions = {region["name"]: region for region in profile["regions"]}
         self.assertEqual(
             set(regions),
-            {CASE + "/iteration", CASE + "/iteration/solver", CASE + "/iteration/solver/A", CASE + "/iteration/solver/B"},
+            {
+                CASE + "/iteration",
+                CASE + "/iteration/solver",
+                CASE + "/iteration/solver/A",
+                CASE + "/iteration/solver/B",
+            },
         )
         root = regions[CASE + "/iteration"]
         self.assertEqual(root["calls"], 2)
@@ -699,7 +757,12 @@ class IterationAttribution(unittest.TestCase):
         def action(region, value):
             domain = SimpleNamespace(
                 name=lambda: "<default domain>",
-                push_pop_ranges=lambda: (CASE + "/iteration", CASE + "/iteration/solver", region, "similie_probe"),
+                push_pop_ranges=lambda: (
+                    CASE + "/iteration",
+                    CASE + "/iteration/solver",
+                    region,
+                    "similie_probe",
+                ),
             )
             state = SimpleNamespace(domains=lambda: (0,), domain_by_id=lambda _: domain)
 
@@ -732,8 +795,12 @@ class IterationAttribution(unittest.TestCase):
         by_region = {sample["region"]: sample for sample in samples}
         self.assertEqual(len(by_region), 3)
         self.assertEqual(by_region[CASE + "/iteration/solver"]["metrics"]["SM (%)"], 10)
-        self.assertEqual(by_region[CASE + "/iteration/solver/A"]["metrics"]["SM (%)"], 10)
-        self.assertEqual(by_region[CASE + "/iteration/solver/B"]["metrics"]["SM (%)"], 90)
+        self.assertEqual(
+            by_region[CASE + "/iteration/solver/A"]["metrics"]["SM (%)"], 10
+        )
+        self.assertEqual(
+            by_region[CASE + "/iteration/solver/B"]["metrics"]["SM (%)"], 90
+        )
         self.assertIsNone(
             by_region[CASE + "/iteration/solver/A"]["metrics"]["Registers/thread"]
         )
@@ -1026,8 +1093,12 @@ class CombinedReport(unittest.TestCase):
             self.assertEqual(kernels[CASE + "/iteration/solver/A"]["calls"], 3)
             self.assertEqual(kernels[CASE + "/iteration/solver/A"]["mean_ns"], 10)
             self.assertEqual(kernels[CASE + "/iteration/solver/A"]["total_ns"], 30)
-            self.assertEqual(kernels[CASE + "/iteration/solver/A"]["metrics"]["SM (%)"], 10)
-            self.assertEqual(kernels[CASE + "/iteration/solver/B"]["metrics"]["SM (%)"], 90)
+            self.assertEqual(
+                kernels[CASE + "/iteration/solver/A"]["metrics"]["SM (%)"], 10
+            )
+            self.assertEqual(
+                kernels[CASE + "/iteration/solver/B"]["metrics"]["SM (%)"], 90
+            )
             self.assertIn(
                 "Long diagnostic detail",
                 kernels[CASE + "/iteration/solver/A"]["rules"][0]["message"],
