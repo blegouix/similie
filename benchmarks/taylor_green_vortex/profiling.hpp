@@ -10,7 +10,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace taylor_green_vortex {
-inline std::string profiling_path = "TaylorGreen";
+inline thread_local std::string profiling_path = "TaylorGreen";
 
 // Keep every range self-contained in nsys summaries, including nested operations.
 // Host-only scopes balance push/pop even when a solver throws.
