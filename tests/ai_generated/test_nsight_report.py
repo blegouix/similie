@@ -489,6 +489,102 @@ class HotKernelSelection(unittest.TestCase):
 
 
 class IterationAttribution(unittest.TestCase):
+    def test_later_api_with_same_correlation_does_not_steal_earlier_kernels(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            database = directory / "tgv.sqlite"
+            expected = capture_fixture(database)
+            (directory / "tgv.nsys-rep").touch()
+            with sqlite3.connect(database) as connection:
+                connection.executescript("""
+                    CREATE TABLE CUPTI_ACTIVITY_KIND_DRIVER AS
+                    SELECT start+10000 AS start, end+10000 AS end,
+                           globalTid, correlationId
+                    FROM CUPTI_ACTIVITY_KIND_RUNTIME;
+                """)
+            with patch("nsys_report.subprocess.run"):
+                actual = summarize_profile(directory, {CASE: 2})
+            self.assertEqual(actual["cases"], expected)
+
+    def test_reused_correlations_retain_both_sets_of_gpu_activities(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            database = Path(temporary) / "capture.sqlite"
+            expected = capture_fixture(database)[CASE]
+            with sqlite3.connect(database) as connection:
+                connection.executescript("""
+                    INSERT INTO NVTX_EVENTS
+                    SELECT start+10000, end+10000, eventType, text,
+                           globalTid, textId, domainId
+                    FROM NVTX_EVENTS;
+                    CREATE TABLE CUPTI_ACTIVITY_KIND_DRIVER AS
+                    SELECT start+10000 AS start, end+10000 AS end,
+                           globalTid, correlationId
+                    FROM CUPTI_ACTIVITY_KIND_RUNTIME;
+                    INSERT INTO CUPTI_ACTIVITY_KIND_KERNEL
+                    SELECT start+10000, end+10000, deviceId, correlationId,
+                           globalPid, mangledName, demangledName
+                    FROM CUPTI_ACTIVITY_KIND_KERNEL;
+                """)
+            actual = iteration_profiles(database)[CASE]
+            self.assertEqual(
+                actual["sample_invocations"], expected["sample_invocations"]
+            )
+            self.assertEqual(
+                actual["kernel_invocations"], expected["kernel_invocations"]
+            )
+            for before, after in zip(
+                expected["regions"], actual["regions"], strict=True
+            ):
+                self.assertEqual(after["name"], before["name"])
+                for field in (
+                    "calls",
+                    "host_ns",
+                    "gpu_ns",
+                    "others_ns",
+                    "others_host_ns",
+                ):
+                    self.assertEqual(after[field], 2 * before[field])
+                for first, second in zip(
+                    before["kernels"], after["kernels"], strict=True
+                ):
+                    self.assertEqual(second["symbol"], first["symbol"])
+                    self.assertEqual(second["calls"], 2 * first["calls"])
+                    self.assertEqual(second["total_ns"], 2 * first["total_ns"])
+
+    def test_diagnostics_distinguish_failed_attribution_stages(self):
+        for failure in (None, "correlation", "thread", "symbol"):
+            with (
+                self.subTest(failure=failure),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                path = Path(temporary) / "capture.sqlite"
+                capture_fixture(path)
+                with sqlite3.connect(path) as connection:
+                    if failure == "correlation":
+                        connection.execute("DELETE FROM CUPTI_ACTIVITY_KIND_RUNTIME")
+                    elif failure == "thread":
+                        connection.execute(
+                            "UPDATE CUPTI_ACTIVITY_KIND_RUNTIME SET globalTid=globalTid+1"
+                        )
+                    elif failure == "symbol":
+                        connection.execute("DELETE FROM StringIds")
+                diagnostics = {}
+                iteration_profiles(path, diagnostics)
+                self.assertEqual(
+                    diagnostics["correlated_activities"],
+                    0 if failure == "correlation" else 7,
+                )
+                self.assertEqual(
+                    diagnostics["unknown_thread"], 7 if failure == "thread" else 0
+                )
+                self.assertEqual(
+                    diagnostics["outside_iteration"],
+                    0 if failure in ("correlation", "thread") else 1,
+                )
+                self.assertEqual(
+                    diagnostics["attributed_kernels"], 6 if failure is None else 0
+                )
+
     def test_library_and_unlabelled_kernels_join_compute_metrics(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "capture.sqlite"

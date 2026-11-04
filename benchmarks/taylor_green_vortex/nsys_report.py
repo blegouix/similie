@@ -68,13 +68,21 @@ def covered_duration(intervals):
     return duration
 
 
-def iteration_profiles(database):
+def iteration_profiles(database, diagnostics=None):
     """Correlate GPU executions with the host NVTX stack at their launch.
 
     Region totals include nested scopes. Others uses the union of all kernel
     intervals, so overlapping kernels never produce a negative remainder.
     """
     with sqlite3.connect(database) as connection:
+        if diagnostics is None:
+            diagnostics = {}
+        diagnostics.update(
+            correlated_activities=0,
+            unknown_thread=0,
+            outside_iteration=0,
+            attributed_kernels=0,
+        )
         connection.row_factory = sqlite3.Row
         tables = {
             row[0]
@@ -174,13 +182,18 @@ def iteration_profiles(database):
                 SELECT a.start AS launch, a.globalTid AS tid, g.start, g.end,
                        g.deviceId AS device, {symbol} AS symbol, {kernel_name} AS name
                 FROM {table} g JOIN apis a ON a.correlationId=g.correlationId
-                  AND (a.globalTid & -16777216)=g.globalPid AND a.rank=1
+                  AND (a.globalTid & -16777216)=g.globalPid
+                  AND a.start<=g.start
+                  AND (a.next_start IS NULL OR g.start<a.next_start)
                 {names}
             """)
         if not api_query or not gpu_queries:
             raise ValueError("Systems export has no CUDA launch correlation data")
+        # Resolve repeated correlation IDs at each GPU activity's timestamp.
+        # Selecting the last API in the whole trace can attach an earlier
+        # kernel to a future call, outside its original iteration region.
         query = (
-            "WITH apis AS (SELECT *,row_number() OVER (PARTITION BY correlationId,(globalTid & -16777216) ORDER BY start DESC) AS rank FROM ("
+            "WITH apis AS (SELECT *,lead(start) OVER (PARTITION BY correlationId,(globalTid & -16777216) ORDER BY start) AS next_start FROM ("
             + api_query
             + ")) "
             + " UNION ALL ".join(gpu_queries)
@@ -189,8 +202,10 @@ def iteration_profiles(database):
         for state in threads.values():
             state.update(position=0, active=[])
         for activity in connection.execute(query):
+            diagnostics["correlated_activities"] += 1
             state = threads.get(activity["tid"])
             if state is None:
+                diagnostics["unknown_thread"] += 1
                 continue
             scopes = state["ranges"]
             active = state["active"]
@@ -206,7 +221,10 @@ def iteration_profiles(database):
             while active and active[-1]["end"] <= activity["launch"]:
                 active.pop()
             if not active or not active[-1].get("case"):
+                diagnostics["outside_iteration"] += 1
                 continue
+            if activity["symbol"] is not None:
+                diagnostics["attributed_kernels"] += 1
             profile = cases[active[-1]["case"]]
             # Preserve the innermost operation label, including library scopes.
             # Kernels launched directly in a TGV region use their CUDA name.
@@ -375,14 +393,29 @@ def summarize_profile(directory, expected_cases=None):
                         f"Incorrect profiling range count for {case}/{suffix}"
                     )
     print("Attributing CUDA launches to TGV iteration regions", flush=True)
-    data = dict(cases=iteration_profiles(database))
+    diagnostics = {}
+    data = dict(cases=iteration_profiles(database, diagnostics))
     if not data["cases"] or any(
         not region["kernels"] or region["gpu_ns"] <= 0
         for case, profile in data["cases"].items()
         for region in profile["regions"]
         if region["name"] == case + "/iteration"
     ):
-        raise ValueError("nsys captured no kernels within TGV iteration regions")
+        empty_cases = [
+            case
+            for case, profile in data["cases"].items()
+            if not any(
+                region["name"] == case + "/iteration"
+                and region["kernels"]
+                and region["gpu_ns"] > 0
+                for region in profile["regions"]
+            )
+        ]
+        raise ValueError(
+            "nsys captured no kernels within TGV iteration regions; "
+            f"empty cases={empty_cases}; attribution={diagnostics}; "
+            f"SQLite export retained at {database}"
+        )
     (directory / "timings.json").write_text(json.dumps(data, indent=2) + "\n")
     return data
 
