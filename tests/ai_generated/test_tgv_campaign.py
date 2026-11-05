@@ -5,6 +5,7 @@
 
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -28,10 +29,87 @@ from ci_campaign import (
     reference_history,
     compare_strategies,
     execute,
+    profile_performance,
     validate_trajectory,
     validate_reference_comparisons,
     write_report,
 )
+
+
+class IsolatedSystemsCaptures(unittest.TestCase):
+    def test_cases_are_validated_separately_and_merged(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            configuration = "incompressible_ideal_hd"
+            names = [
+                f"TaylorGreen/{configuration}/N{n}/{'+'.join(flags) or 'default'}"
+                for flags in STRATEGIES
+                for n in (64, 128)
+            ]
+            captures = []
+
+            def capture(command, output, environment):
+                name = names[len(captures)]
+                pattern = re.escape(name).replace(r"\-", "-")
+                self.assertIn(f"--benchmark_filter=^{pattern}(/|$)", command)
+                self.assertNotIn(r"\-", command[-1])
+                captures.append(output)
+                (directory / "benchmark.json").write_text(
+                    json.dumps({"context": {}, "benchmarks": [{"run_name": name}]})
+                )
+
+            def summarize(output, expected):
+                self.assertEqual(list(expected.values()), [5])
+                return {"cases": {case: {"regions": []} for case in expected}}
+
+            with (
+                patch(
+                    "ci_campaign.profile_command",
+                    side_effect=lambda cmd, out: (cmd, {}),
+                ),
+                patch("ci_campaign.execute", side_effect=capture),
+                patch(
+                    "ci_campaign.summarize_profile", side_effect=summarize
+                ) as summary,
+            ):
+                (directory / "nsys").mkdir()
+                profile_performance(
+                    ["binary", "--strategy-suite"], directory, configuration
+                )
+            self.assertEqual(len(set(captures)), 14)
+            self.assertEqual(summary.call_count, 14)
+            self.assertEqual(
+                [
+                    row["run_name"]
+                    for row in json.loads((directory / "benchmark.json").read_text())[
+                        "benchmarks"
+                    ]
+                ],
+                names,
+            )
+            self.assertEqual(
+                len(json.loads((directory / "nsys/timings.json").read_text())["cases"]),
+                14,
+            )
+
+    def test_failed_capture_stops_before_publishing_combined_timings(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "benchmark.json").write_text(json.dumps({"benchmarks": []}))
+            with (
+                patch("ci_campaign.profile_command", return_value=(["nsys"], {})),
+                patch("ci_campaign.execute") as execute_capture,
+                patch(
+                    "ci_campaign.summarize_profile",
+                    side_effect=ValueError("missing kernels"),
+                ),
+            ):
+                with self.assertRaisesRegex(ValueError, "missing kernels"):
+                    profile_performance(
+                        ["binary"], directory, "incompressible_ideal_hd"
+                    )
+            execute_capture.assert_called_once()
+            self.assertFalse((directory / "nsys/timings.json").exists())
 
 
 class ReferenceAccuracyGate(unittest.TestCase):

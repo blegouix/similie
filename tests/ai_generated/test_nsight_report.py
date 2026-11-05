@@ -32,6 +32,7 @@ from nsight_report import (
     hot_groups,
     hottest_kernels,
     limiting_metrics,
+    main as nsight_main,
     metric_cells,
     merge_hot_samples,
     profile_cases,
@@ -42,6 +43,33 @@ from nsys_report import iteration_profiles, summarize_profile
 
 CASE = "TaylorGreen/N=64/default"
 SYMBOL = "_Zprobe_full_symbol"
+
+
+class ComputeTimeoutDefault(unittest.TestCase):
+    def test_cli_allows_large_n128_counter_batches(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with (
+                patch(
+                    "sys.argv",
+                    [
+                        "nsight_report.py",
+                        "compute",
+                        "--output",
+                        temporary,
+                        "--binary",
+                        "unused",
+                        "--fluid",
+                        "incompressible",
+                        "--transport",
+                        "ideal",
+                        "--coupling",
+                        "hd",
+                    ],
+                ),
+                patch("nsight_report.profile_cases") as profile_cases,
+            ):
+                nsight_main()
+        self.assertEqual(profile_cases.call_args.args[5], 3600)
 
 
 class ComputeSamplingPlan(unittest.TestCase):

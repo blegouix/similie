@@ -68,7 +68,9 @@ def hottest_kernels(case, plan, count):
     if count == 0:
         return []
     root = next(
-        region for region in plan["regions"] if region["name"] == case + "/iteration/solver"
+        region
+        for region in plan["regions"]
+        if region["name"] == case + "/iteration/solver"
     )
     indices = {tuple(sample[:3]): sample[3] for sample in plan["sample_invocations"]}
     return [
@@ -458,7 +460,7 @@ def profile_cases(
     fluid,
     transport,
     coupling,
-    batch_timeout=1800,
+    batch_timeout=3600,
     detail="hybrid",
     hot_kernels=20,
 ):
@@ -843,7 +845,8 @@ def compact_report(systems, compute, visible_metrics):
             (
                 row
                 for row in rows
-                if row["kind"] == "kernel" and row["region"] == case + "/iteration/solver"
+                if row["kind"] == "kernel"
+                and row["region"] == case + "/iteration/solver"
             ),
             key=lambda row: (-row["total_ns"], row["label"], row["symbol"]),
         )[: max(10, len(compute.get("hot_kernels", {}).get(case, [])))]
@@ -1093,7 +1096,7 @@ def main():
         help="Hot kernels per case in hybrid mode",
     )
     parser.add_argument(
-        "--batch-timeout", type=int, default=1800, help="Maximum seconds per NCU batch"
+        "--batch-timeout", type=int, default=3600, help="Maximum seconds per NCU batch"
     )
     args = parser.parse_args()
     if args.phase == "read-compute":

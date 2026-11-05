@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -659,6 +660,40 @@ def write_report(output, phase, entries, error=None):
     )
 
 
+def profile_performance(command, directory, configuration):
+    """Bound CUPTI resource use by releasing the profiler after each case.
+
+    Long suite captures can lose GPU timestamps while retaining NVTX ranges.
+    Validate each independent timeline before publishing the combined timings.
+    """
+    timings = {"cases": {}}
+    benchmark = None
+    rows = []
+    for strategy, flags in enumerate(STRATEGIES, 1):
+        for n in MESH_SIZES:
+            name = f"TaylorGreen/{configuration}/N{n}/{'+'.join(flags) or 'default'}"
+            case = f"TaylorGreen/N={n}/{'+'.join(flags) or 'default'}"
+            capture = directory / "nsys" / f"strategy-{strategy}" / f"N{n}"
+            print(f"Nsight Systems: {name}", flush=True)
+            # Google Benchmark uses POSIX extended regex: \- is invalid
+            # outside brackets, while Python re.escape also escapes hyphens.
+            pattern = re.escape(name).replace(r"\-", "-")
+            profiled, environment = profile_command(
+                [*command, f"--benchmark_filter=^{pattern}(/|$)"], capture
+            )
+            execute(profiled, capture, environment)
+            current = json.loads((directory / "benchmark.json").read_text())
+            if benchmark is None:
+                benchmark = current
+            rows.extend(current["benchmarks"])
+            timings["cases"].update(
+                summarize_profile(capture, {case: PERFORMANCE_STEPS})["cases"]
+            )
+    benchmark["benchmarks"] = rows
+    (directory / "benchmark.json").write_text(json.dumps(benchmark, indent=2) + "\n")
+    (directory / "nsys/timings.json").write_text(json.dumps(timings, indent=2) + "\n")
+
+
 def campaign(
     binary,
     output,
@@ -699,10 +734,10 @@ def campaign(
     try:
         if phase == "validation":
             reference = reference_history(directory / "reference-data")
-        environment = None
         if phase == "performance":
-            command, environment = profile_command(command, directory / "nsys")
-        execute(command, directory, environment)
+            profile_performance(command, directory, configuration)
+        else:
+            execute(command, directory)
         benchmark = json.loads((directory / "benchmark.json").read_text())
         rows = [
             row
@@ -802,14 +837,6 @@ def campaign(
                     indent=2,
                 )
                 + "\n"
-            )
-            summarize_profile(
-                directory / "nsys",
-                {
-                    f"TaylorGreen/N={n}/{'+'.join(flags) or 'default'}": PERFORMANCE_STEPS
-                    for n in MESH_SIZES
-                    for flags in STRATEGIES
-                },
             )
             if not equivalence_passed:
                 raise ValueError(
