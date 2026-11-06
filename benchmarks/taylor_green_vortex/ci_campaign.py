@@ -74,8 +74,8 @@ REFERENCE_CHECKSUMS = {
 }
 
 
-def execute(command, directory, environment=None, timeout=None):
-    """Preserve the complete Google Benchmark output without campaign chatter."""
+def execute(command, directory, environment=None, timeout=None, stream_output=True):
+    """Preserve complete output in run.log, optionally streaming it to the console."""
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "command.json").write_text(
         json.dumps(list(map(str, command)), indent=2)
@@ -101,8 +101,9 @@ def execute(command, directory, environment=None, timeout=None):
                     status = child.wait(timeout=1)
                 except subprocess.TimeoutExpired:
                     status = None
-                sys.stdout.write(output.read())
-                sys.stdout.flush()
+                if stream_output:
+                    sys.stdout.write(output.read())
+                    sys.stdout.flush()
                 if status is not None:
                     break
         finally:
@@ -115,6 +116,9 @@ def execute(command, directory, environment=None, timeout=None):
                 pass
             child.wait()
         if status:
+            if not stream_output:
+                sys.stdout.write((directory / "run.log").read_text())
+                sys.stdout.flush()
             raise RuntimeError(
                 f"Benchmark exited with status {status}; see {directory / 'run.log'}"
             )
@@ -404,6 +408,10 @@ def compare_reference(hdf, reference, tolerance=None):
     return metrics
 
 
+class ReferenceValidationError(ValueError):
+    """Reference metrics failed the configured accuracy checks."""
+
+
 def validate_reference_comparisons(
     comparisons,
     history_tolerance=REFERENCE_HISTORY_TOLERANCE,
@@ -453,7 +461,9 @@ def validate_reference_comparisons(
                 f"{name}: reference error worsens with refinement ({coarse:g} -> {fine:g})"
             )
     if failures:
-        raise ValueError("HD reference validation failed: " + "; ".join(failures))
+        raise ReferenceValidationError(
+            "HD reference validation failed: " + "; ".join(failures)
+        )
 
 
 def compare_vorticity_slice(hdf, reference_directory, tolerance=None):
@@ -669,19 +679,27 @@ def profile_performance(command, directory, configuration):
     timings = {"cases": {}}
     benchmark = None
     rows = []
+    header_printed = False
     for strategy, flags in enumerate(STRATEGIES, 1):
         for n in MESH_SIZES:
             name = f"TaylorGreen/{configuration}/N{n}/{'+'.join(flags) or 'default'}"
             case = f"TaylorGreen/N={n}/{'+'.join(flags) or 'default'}"
             capture = directory / "nsys" / f"strategy-{strategy}" / f"N{n}"
-            print(f"Nsight Systems: {name}", flush=True)
             # Google Benchmark uses POSIX extended regex: \- is invalid
             # outside brackets, while Python re.escape also escapes hyphens.
             pattern = re.escape(name).replace(r"\-", "-")
             profiled, environment = profile_command(
                 [*command, f"--benchmark_filter=^{pattern}(/|$)"], capture
             )
-            execute(profiled, capture, environment)
+            execute(profiled, capture, environment, stream_output=False)
+            for line in (capture / "run.log").read_text().splitlines():
+                line = re.sub(r"\x1b\[[0-9;]*m", "", line)
+                if line.startswith("Benchmark ") and not header_printed:
+                    print(line)
+                    print("-" * len(line))
+                    header_printed = True
+                elif line.startswith("TaylorGreen/"):
+                    print(line, flush=True)
             current = json.loads((directory / "benchmark.json").read_text())
             if benchmark is None:
                 benchmark = current
@@ -933,17 +951,20 @@ def main():
         or args.reference_slice_relative_tolerance <= 0
     ):
         parser.error("Reference slice relative tolerance must be finite and positive")
-    campaign(
-        args.binary.resolve(),
-        args.output.resolve(),
-        args.fluid,
-        args.transport,
-        args.coupling,
-        args.phase,
-        args.reference_relative_tolerance,
-        args.reference_slice_relative_tolerance,
-        args.reference_energy_relative_tolerance,
-    )
+    try:
+        campaign(
+            args.binary.resolve(),
+            args.output.resolve(),
+            args.fluid,
+            args.transport,
+            args.coupling,
+            args.phase,
+            args.reference_relative_tolerance,
+            args.reference_slice_relative_tolerance,
+            args.reference_energy_relative_tolerance,
+        )
+    except ReferenceValidationError as error:
+        raise SystemExit(str(error)) from None
 
 
 if __name__ == "__main__":

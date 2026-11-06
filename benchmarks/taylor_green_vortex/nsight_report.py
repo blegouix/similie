@@ -436,6 +436,7 @@ def capture_groups(
             batch_directory,
             environment,
             timeout=timeout,
+            stream_output=False,
         )
         print(
             f"  Profiler process finished in {time.monotonic() - started:.1f} s",

@@ -3,6 +3,7 @@
 # AI-GENERATED
 """Check that the campaign detects changed physics while ignoring timing noise."""
 
+import io
 import json
 import os
 import re
@@ -24,11 +25,13 @@ sys.path.insert(
 )
 from ci_campaign import (
     STRATEGIES,
+    ReferenceValidationError,
     campaign,
     compare_vorticity_slice,
     reference_history,
     compare_strategies,
     execute,
+    main,
     profile_performance,
     validate_trajectory,
     validate_reference_comparisons,
@@ -48,8 +51,14 @@ class IsolatedSystemsCaptures(unittest.TestCase):
             ]
             captures = []
 
-            def capture(command, output, environment):
+            def capture(command, output, environment, stream_output=True):
+                self.assertFalse(stream_output)
+                output.mkdir(parents=True, exist_ok=True)
                 name = names[len(captures)]
+                (output / "run.log").write_text(
+                    "Profiler chatter\nBenchmark Time CPU Iterations\n"
+                    f"\x1b[0;32m{name} 1 s 1 s 5\x1b[m\nCollecting data...\n"
+                )
                 pattern = re.escape(name).replace(r"\-", "-")
                 self.assertIn(f"--benchmark_filter=^{pattern}(/|$)", command)
                 self.assertNotIn(r"\-", command[-1])
@@ -68,6 +77,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                     side_effect=lambda cmd, out: (cmd, {}),
                 ),
                 patch("ci_campaign.execute", side_effect=capture),
+                patch("sys.stdout", new_callable=io.StringIO) as console,
                 patch(
                     "ci_campaign.summarize_profile", side_effect=summarize
                 ) as summary,
@@ -76,6 +86,11 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                 profile_performance(
                     ["binary", "--strategy-suite"], directory, configuration
                 )
+            self.assertEqual(console.getvalue().count("Benchmark Time CPU Iterations"), 1)
+            self.assertEqual(console.getvalue().count("TaylorGreen/"), 14)
+            self.assertNotIn("Profiler chatter", console.getvalue())
+            self.assertNotIn("Collecting data", console.getvalue())
+            self.assertNotIn("\x1b", console.getvalue())
             self.assertEqual(len(set(captures)), 14)
             self.assertEqual(summary.call_count, 14)
             self.assertEqual(
@@ -99,6 +114,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
             with (
                 patch("ci_campaign.profile_command", return_value=(["nsys"], {})),
                 patch("ci_campaign.execute") as execute_capture,
+                patch("ci_campaign.Path.read_text", return_value=""),
                 patch(
                     "ci_campaign.summarize_profile",
                     side_effect=ValueError("missing kernels"),
@@ -113,6 +129,28 @@ class IsolatedSystemsCaptures(unittest.TestCase):
 
 
 class ReferenceAccuracyGate(unittest.TestCase):
+    def test_cli_reports_accuracy_failure_without_a_traceback(self):
+        message = "HD reference validation failed: N=64 vorticity_norm_t8"
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "ci_campaign.py",
+                    "--binary=unused",
+                    "--output=unused",
+                    "--fluid=incompressible",
+                    "--transport=ideal",
+                    "--coupling=hd",
+                    "--phase=validation",
+                ],
+            ),
+            patch("ci_campaign.campaign", side_effect=ReferenceValidationError(message)),
+            self.assertRaises(SystemExit) as failure,
+        ):
+            main()
+        self.assertEqual(failure.exception.code, message)
+        self.assertTrue(failure.exception.__suppress_context__)
+
     def comparisons(self):
         return {
             f"N{n}": {

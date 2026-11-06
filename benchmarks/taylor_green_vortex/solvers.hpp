@@ -11,6 +11,7 @@
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
 #include <KokkosBlas1_axpby.hpp>
+#include <KokkosBlas1_scal.hpp>
 
 #include "parameters.hpp"
 #include "poisson_solver.hpp"
@@ -555,7 +556,10 @@ public:
         m_dec.reconstruct_two_form(state, vorticity);
         similie::physics::fluid::IncompressibleNavierStokes const physics = m_physics;
         m_dec.interior_product(m_one, state, m_transport_one, mean_velocity);
-        KokkosBlas::scal(m_transport_one, -1.0, m_transport_one);
+        // Scale contiguous storage as one vector to avoid a kernel per column block.
+        Kokkos::View<double*, Field::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>> const
+                transport_one(m_transport_one.data(), m_transport_one.size());
+        KokkosBlas::scal(transport_one, -1.0, transport_one);
         if (acceleration.data()) {
             m_dec.reduce_one_form(acceleration, m_transport);
             KokkosBlas::axpby(1.0, m_transport, 1.0, m_transport_one);
