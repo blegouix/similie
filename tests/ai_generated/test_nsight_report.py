@@ -37,12 +37,48 @@ from nsight_report import (
     merge_hot_samples,
     profile_cases,
     read_compute_report,
+    reconcile_compute_labels,
     write_combined_report,
 )
 from nsys_report import iteration_profiles, summarize_profile
 
 CASE = "TaylorGreen/N=64/default"
 SYMBOL = "_Zprobe_full_symbol"
+
+
+class ComputeLabelReconciliation(unittest.TestCase):
+    def test_reconciles_a_unique_nvtx_label_mismatch(self):
+        plan = {"targets": [[CASE + "/iteration/solver", "operation", SYMBOL]]}
+        samples = [
+            dict(
+                region=CASE + "/iteration/solver",
+                label="different-nvtx-label",
+                symbol=SYMBOL,
+            )
+        ]
+
+        reconcile_compute_labels(plan, samples)
+
+        self.assertEqual(samples[0]["label"], "operation")
+
+    def test_keeps_ambiguous_nvtx_label_mismatches_unresolved(self):
+        plan = {
+            "targets": [
+                [CASE + "/iteration/solver", "operation-a", SYMBOL],
+                [CASE + "/iteration/solver", "operation-b", SYMBOL],
+            ]
+        }
+        samples = [
+            dict(
+                region=CASE + "/iteration/solver",
+                label="different-nvtx-label",
+                symbol=SYMBOL,
+            )
+        ]
+
+        reconcile_compute_labels(plan, samples)
+
+        self.assertEqual(samples[0]["label"], "different-nvtx-label")
 
 
 class ComputeTimeoutDefault(unittest.TestCase):

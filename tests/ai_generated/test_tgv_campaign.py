@@ -61,6 +61,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                 )
                 pattern = re.escape(name).replace(r"\-", "-")
                 self.assertIn(f"--benchmark_filter=^{pattern}(/|$)", command)
+                self.assertIn("--benchmark_color=true", command)
                 self.assertNotIn(r"\-", command[-1])
                 captures.append(output)
                 (directory / "benchmark.json").write_text(
@@ -92,7 +93,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
             self.assertEqual(console.getvalue().count("TaylorGreen/"), 14)
             self.assertNotIn("Profiler chatter", console.getvalue())
             self.assertNotIn("Collecting data", console.getvalue())
-            self.assertNotIn("\x1b", console.getvalue())
+            self.assertIn("\x1b[0;32m", console.getvalue())
             self.assertEqual(len(set(captures)), 14)
             self.assertEqual(summary.call_count, 14)
             self.assertEqual(

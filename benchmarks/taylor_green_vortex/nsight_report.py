@@ -392,6 +392,39 @@ def read_compute_report_isolated(path, directory, expected_launches, detail="ful
     )
 
 
+def reconcile_compute_labels(plan, samples):
+    """Align Compute NVTX labels when the Systems/Compute stacks differ.
+
+    Nsight Systems and Compute can expose different innermost NVTX labels for
+    the same captured launch. A region and symbol identify the expected label
+    only when that pair has exactly one missing target and one unmatched sample.
+    """
+    targets = {tuple(target) for target in plan["targets"]}
+    targets_by_kernel = {}
+    for region, label, symbol in targets:
+        targets_by_kernel.setdefault((region, symbol), set()).add(label)
+
+    exact = {
+        (sample["region"], sample["label"], sample["symbol"])
+        for sample in samples
+    }
+    unmatched_by_kernel = {}
+    for sample in samples:
+        key = (sample["region"], sample["label"], sample["symbol"])
+        if key not in targets:
+            unmatched_by_kernel.setdefault(
+                (sample["region"], sample["symbol"]), []
+            ).append(sample)
+
+    for kernel, unmatched in unmatched_by_kernel.items():
+        expected_labels = targets_by_kernel.get(kernel, set())
+        missing_labels = expected_labels - {
+            label for region, label, symbol in exact if (region, symbol) == kernel
+        }
+        if len(unmatched) == len(missing_labels) == 1:
+            unmatched[0]["label"] = next(iter(missing_labels))
+
+
 def capture_groups(
     binary,
     directory,
@@ -528,6 +561,7 @@ def profile_cases(
                     batch_timeout,
                     samples=results["cases"][case],
                 )
+                reconcile_compute_labels(plan, results["cases"][case])
                 (directory / "results.json").write_text(
                     json.dumps(results, indent=2) + "\n"
                 )

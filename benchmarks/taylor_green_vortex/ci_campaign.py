@@ -689,16 +689,21 @@ def profile_performance(command, directory, configuration):
             # outside brackets, while Python re.escape also escapes hyphens.
             pattern = re.escape(name).replace(r"\-", "-")
             profiled, environment = profile_command(
-                [*command, f"--benchmark_filter=^{pattern}(/|$)"], capture
+                [
+                    *command,
+                    "--benchmark_color=true",
+                    f"--benchmark_filter=^{pattern}(/|$)",
+                ],
+                capture,
             )
             execute(profiled, capture, environment, stream_output=False)
             for line in (capture / "run.log").read_text().splitlines():
-                line = re.sub(r"\x1b\[[0-9;]*m", "", line)
-                if line.startswith("Benchmark ") and not header_printed:
+                plain_line = re.sub(r"\x1b\[[0-9;]*m", "", line)
+                if plain_line.startswith("Benchmark ") and not header_printed:
                     print(line)
-                    print("-" * len(line))
+                    print("-" * len(plain_line))
                     header_printed = True
-                elif line.startswith("TaylorGreen/"):
+                elif plain_line.startswith("TaylorGreen/"):
                     print(line, flush=True)
             current = json.loads((directory / "benchmark.json").read_text())
             if benchmark is None:
