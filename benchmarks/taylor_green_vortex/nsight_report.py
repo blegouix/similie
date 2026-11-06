@@ -288,9 +288,11 @@ def report_api(directory):
     )
 
 
-def read_compute_report(path, api, expected_launches=None, detail="full"):
+def read_compute_report(
+    path, api, expected_launches=None, detail="full", preserve_launches=False
+):
     report = api.load_report(str(path))
-    kernels = {}
+    kernels = [] if preserve_launches else {}
     launches = 0
     for index in range(report.num_ranges()):
         section = report.range_by_idx(index)
@@ -343,19 +345,21 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
                         )
                     )
             for region in regions:
-                # Shared ancestors retain their first sample; sibling regions
-                # retain distinct samples even when they execute the same symbol.
-                kernels.setdefault(
-                    (region, label, symbol),
-                    dict(
-                        region=region,
-                        label=label,
-                        symbol=symbol,
-                        metrics=metrics,
-                        rules=rules,
-                        replay_passes=passes,
-                    ),
+                sample = dict(
+                    region=region,
+                    label=label,
+                    symbol=symbol,
+                    metrics=metrics,
+                    rules=rules,
+                    replay_passes=passes,
                 )
+                if preserve_launches:
+                    sample["action_index"] = launches
+                    kernels.append(sample)
+                else:
+                    # Shared ancestors retain their first sample; sibling
+                    # regions retain distinct samples for the same symbol.
+                    kernels.setdefault((region, label, symbol), sample)
     if expected_launches is not None and launches != expected_launches:
         raise ValueError(
             f"Compute captured {launches} launches; expected {expected_launches} first invocations: {path}"
@@ -364,7 +368,7 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
         raise ValueError(
             f"Compute captured no kernels inside the iteration NVTX region: {path}"
         )
-    return list(kernels.values())
+    return kernels if preserve_launches else list(kernels.values())
 
 
 def read_compute_report_isolated(path, directory, expected_launches, detail="full"):
@@ -385,6 +389,7 @@ def read_compute_report_isolated(path, directory, expected_launches, detail="ful
                 str(expected_launches),
                 "--detail",
                 detail,
+                "--preserve-launches",
             ],
             text=True,
             timeout=120,
@@ -392,37 +397,35 @@ def read_compute_report_isolated(path, directory, expected_launches, detail="ful
     )
 
 
-def reconcile_compute_labels(plan, samples):
-    """Align Compute NVTX labels when the Systems/Compute stacks differ.
-
-    Nsight Systems and Compute can expose different innermost NVTX labels for
-    the same captured launch. A region and symbol identify the expected label
-    only when that pair has exactly one missing target and one unmatched sample.
-    """
-    targets = {tuple(target) for target in plan["targets"]}
-    targets_by_kernel = {}
-    for region, label, symbol in targets:
-        targets_by_kernel.setdefault((region, symbol), set()).add(label)
-
-    exact = {
-        (sample["region"], sample["label"], sample["symbol"])
-        for sample in samples
+def reconcile_compute_invocations(plan, group, samples):
+    """Use selected launch indices to recover Systems NVTX labels exactly."""
+    labels = {
+        (region, symbol, invocation): label
+        for region, label, symbol, invocation in plan["sample_invocations"]
     }
-    unmatched_by_kernel = {}
+    selected = {
+        symbol: [
+            invocation
+            for invocation in group["invocations"]
+            if invocation <= plan["kernel_invocations"].get(symbol, 0)
+        ]
+        for symbol in group["symbols"]
+    }
+    action_numbers = {}
+    previous_action = {}
     for sample in samples:
-        key = (sample["region"], sample["label"], sample["symbol"])
-        if key not in targets:
-            unmatched_by_kernel.setdefault(
-                (sample["region"], sample["symbol"]), []
-            ).append(sample)
-
-    for kernel, unmatched in unmatched_by_kernel.items():
-        expected_labels = targets_by_kernel.get(kernel, set())
-        missing_labels = expected_labels - {
-            label for region, label, symbol in exact if (region, symbol) == kernel
-        }
-        if len(unmatched) == len(missing_labels) == 1:
-            unmatched[0]["label"] = next(iter(missing_labels))
+        symbol = sample["symbol"]
+        action_index = sample["action_index"]
+        if previous_action.get(symbol) != action_index:
+            action_numbers[symbol] = action_numbers.get(symbol, 0) + 1
+            previous_action[symbol] = action_index
+        number = action_numbers[symbol]
+        if number > len(selected.get(symbol, [])):
+            continue
+        invocation = selected[symbol][number - 1]
+        expected_label = labels.get((sample["region"], symbol, invocation))
+        if expected_label is not None:
+            sample["label"] = expected_label
 
 
 def capture_groups(
@@ -482,9 +485,16 @@ def capture_groups(
         ]
         if len(reports) != 1:
             raise FileNotFoundError(f"Expected one Compute report in {batch_directory}")
-        samples.extend(
-            read_compute_report_isolated(reports[0], directory, expected, detail)
+        captured = read_compute_report_isolated(
+            reports[0], directory, expected, detail
         )
+        reconcile_compute_invocations(plan, group, captured)
+        deduplicated = {}
+        for sample in captured:
+            sample.pop("action_index")
+            key = (sample["region"], sample["label"], sample["symbol"])
+            deduplicated.setdefault(key, sample)
+        samples.extend(deduplicated.values())
     return samples
 
 
@@ -561,7 +571,6 @@ def profile_cases(
                     batch_timeout,
                     samples=results["cases"][case],
                 )
-                reconcile_compute_labels(plan, results["cases"][case])
                 (directory / "results.json").write_text(
                     json.dumps(results, indent=2) + "\n"
                 )
@@ -1118,6 +1127,7 @@ def main():
     parser.add_argument("--coupling", choices=("hd", "ehd", "mhd", "fmhd"))
     parser.add_argument("--compute-report", type=Path)
     parser.add_argument("--expected-launches", type=int)
+    parser.add_argument("--preserve-launches", action="store_true")
     parser.add_argument(
         "--detail",
         choices=("hybrid", "core", "full"),
@@ -1148,6 +1158,7 @@ def main():
                     report_api(args.output),
                     args.expected_launches,
                     args.detail,
+                    args.preserve_launches,
                 )
             )
         )

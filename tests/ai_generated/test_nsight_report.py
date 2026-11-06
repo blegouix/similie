@@ -37,7 +37,7 @@ from nsight_report import (
     merge_hot_samples,
     profile_cases,
     read_compute_report,
-    reconcile_compute_labels,
+    reconcile_compute_invocations,
     write_combined_report,
 )
 from nsys_report import iteration_profiles, summarize_profile
@@ -47,38 +47,57 @@ SYMBOL = "_Zprobe_full_symbol"
 
 
 class ComputeLabelReconciliation(unittest.TestCase):
-    def test_reconciles_a_unique_nvtx_label_mismatch(self):
-        plan = {"targets": [[CASE + "/iteration/solver", "operation", SYMBOL]]}
+    def test_uses_invocation_to_reconcile_a_unique_label_mismatch(self):
+        plan = {
+            "kernel_invocations": {SYMBOL: 1},
+            "sample_invocations": [
+                [CASE + "/iteration/solver", "operation", SYMBOL, 1]
+            ],
+        }
+        group = {"symbols": [SYMBOL], "invocations": [1]}
         samples = [
             dict(
                 region=CASE + "/iteration/solver",
                 label="different-nvtx-label",
                 symbol=SYMBOL,
+                action_index=1,
             )
         ]
 
-        reconcile_compute_labels(plan, samples)
+        reconcile_compute_invocations(plan, group, samples)
 
         self.assertEqual(samples[0]["label"], "operation")
 
-    def test_keeps_ambiguous_nvtx_label_mismatches_unresolved(self):
+    def test_uses_distinct_invocations_to_resolve_repeated_symbol_labels(self):
         plan = {
-            "targets": [
-                [CASE + "/iteration/solver", "operation-a", SYMBOL],
-                [CASE + "/iteration/solver", "operation-b", SYMBOL],
-            ]
+            "kernel_invocations": {SYMBOL: 2},
+            "sample_invocations": [
+                [CASE + "/iteration/solver", "operation-a", SYMBOL, 1],
+                [CASE + "/iteration/solver", "operation-b", SYMBOL, 2],
+            ],
         }
+        group = {"symbols": [SYMBOL], "invocations": [1, 2]}
         samples = [
             dict(
                 region=CASE + "/iteration/solver",
                 label="different-nvtx-label",
                 symbol=SYMBOL,
-            )
+                action_index=1,
+            ),
+            dict(
+                region=CASE + "/iteration/solver",
+                label="different-nvtx-label",
+                symbol=SYMBOL,
+                action_index=2,
+            ),
         ]
 
-        reconcile_compute_labels(plan, samples)
+        reconcile_compute_invocations(plan, group, samples)
 
-        self.assertEqual(samples[0]["label"], "different-nvtx-label")
+        self.assertEqual(
+            [sample["label"] for sample in samples],
+            ["operation-a", "operation-b"],
+        )
 
 
 class ComputeTimeoutDefault(unittest.TestCase):
@@ -719,6 +738,13 @@ class IterationAttribution(unittest.TestCase):
         )
         samples = read_compute_report(Path("unused"), api, expected_launches=2)
         self.assertEqual(len(samples), 4)
+        launches = read_compute_report(
+            Path("unused"), api, expected_launches=2, preserve_launches=True
+        )
+        self.assertEqual(len(launches), 4)
+        self.assertEqual(
+            {sample["action_index"] for sample in launches}, {1, 2}
+        )
         rows = list(combined_rows(CASE, profile, samples))
         direct = next(
             row
