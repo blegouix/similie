@@ -628,6 +628,12 @@ public:
     void snapshot(Simulation& simulation, double time)
     {
         simulation.compute_pressure();
+        if (simulation.incompressible)
+            simulation.incompressible->observe_fields(
+                    simulation.state,
+                    simulation.velocity,
+                    simulation.vorticity,
+                    simulation.vector_potential);
         std::vector<std::pair<char const*, Field>>
                 fields {{"velocity", simulation.velocity},
                         std::pair {"vorticity", simulation.vorticity},
@@ -909,8 +915,12 @@ void validate()
         Kokkos::deep_copy(saved, simulation.state);
         simulation.compute_pressure();
         simulation.incompressible->monitor_constraints(simulation.state);
-        Field const q = simulation.state, p = simulation.pressure,
-                    u = simulation.incompressible->velocity;
+        simulation.incompressible->observe_fields(
+                simulation.state,
+                simulation.velocity,
+                simulation.vorticity,
+                simulation.vector_potential);
+        Field const q = simulation.state, p = simulation.pressure, u = simulation.velocity;
         double mean_pressure;
         Kokkos::parallel_reduce(
                 "reconstructed_pressure_mean",

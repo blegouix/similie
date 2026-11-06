@@ -410,8 +410,8 @@ public:
     {
         // The analytic vector potential A_z=sin(x) sin(y) cos(z) gives the
         // Taylor-Green velocity. Reduce *A, then initialize U=delta(*A) and W=dU.
-        // This preserves both discrete constraints without shifted samples or
-        // mesh-dependent amplitude corrections.
+        // Project the nodal potential over its faces before applying delta
+        // and d. This preserves both discrete constraints and cell placement.
         int const n = m_grid.n;
         double const h = m_grid.h;
         Field const potential = m_transport;
@@ -426,7 +426,7 @@ public:
                     potential(1, i) = 0;
                     potential(2, i) = sin(x) * sin(y) * cos(z);
                 });
-        m_dec.reduce_two_form(potential, m_potential);
+        m_dec.reduce_two_form(potential, m_potential, true);
         m_dec.codifferential(m_potential, m_one);
         m_dec.derivative_one_form(m_one, state);
     }
@@ -595,6 +595,24 @@ public:
     void divergence(Field const& output)
     {
         m_dec.negative_codifferential_one_form(m_one, output);
+    }
+    void observe_fields(
+            Field const& state,
+            Field const& observed_velocity,
+            Field const& observed_vorticity,
+            Field const& observed_potential)
+    {
+        m_dec.reconstruct_one_form(m_one, observed_velocity, true);
+        m_dec.reconstruct_two_form(state, observed_vorticity, true);
+        m_dec.reconstruct_two_form(m_potential, observed_potential, true);
+        std::array<double, 3> const harmonic = mean_velocity;
+        Kokkos::parallel_for(
+                "observed_velocity_harmonic",
+                m_grid.cells,
+                KOKKOS_LAMBDA(int i) {
+                    for (int a = 0; a < 3; ++a)
+                        observed_velocity(a, i) += harmonic[a];
+                });
     }
     void monitor_constraints(Field const& state)
     {

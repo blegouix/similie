@@ -6,6 +6,7 @@
 
 #include <cmath>
 
+#include <similie/exterior/reduction_and_reconstruction/vertex_form_transfer.hpp>
 #include <similie/tensor/periodic_extrapolation_rule.hpp>
 
 #include "structured_grid.hpp"
@@ -145,7 +146,7 @@ public:
         unpack(m_one, cochain);
     }
 
-    void reduce_two_form(Field const& values, Field const& cochain)
+    void reduce_two_form(Field const& values, Field const& cochain, bool project_vertices = false)
     {
         pack(values, m_axial);
         TwoFormTensor const physical = tensor<TwoForm>(m_physical_two),
@@ -164,23 +165,72 @@ public:
                             SpatialDomain::discrete_element_type>::
                     operator()(physical[element], axial[element], metric, element);
                 });
-        m_grid.reduce(reduced, physical);
+        if (project_vertices) {
+            PositionTensor const geometry = m_grid.geometry();
+            ddc::parallel_for_each(
+                    "project_two_form",
+                    Kokkos::DefaultExecutionSpace(),
+                    m_grid.domain(),
+                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                        sil::exterior::VertexFormProjection<
+                                ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>>::
+                        operator()(
+                                reduced[element],
+                                physical,
+                                geometry,
+                                element,
+                                sil::tensor::PeriodicExtrapolationRule {});
+                    });
+        } else
+            m_grid.reduce(reduced, physical);
         unpack(m_two, cochain);
     }
-    void reconstruct_one_form(Field const& cochain, Field const& output)
+    void reconstruct_one_form(Field const& cochain, Field const& output, bool at_vertices = false)
     {
         pack(cochain, m_one);
         VectorTensor const reduced = tensor<Vector>(m_one),
                            physical = tensor<Vector>(m_physical_one);
-        m_grid.reconstruct(physical, reduced);
+        if (at_vertices) {
+            PositionTensor const geometry = m_grid.geometry();
+            ddc::parallel_for_each(
+                    "observe_one_form",
+                    Kokkos::DefaultExecutionSpace(),
+                    m_grid.domain(),
+                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                        sil::exterior::VertexFormReconstruction<ddc::TypeSeq<Vector>>::operator()(
+                                physical[element],
+                                reduced,
+                                geometry,
+                                element,
+                                sil::tensor::PeriodicExtrapolationRule {});
+                    });
+        } else
+            m_grid.reconstruct(physical, reduced);
         unpack(m_physical_one, output);
     }
-    void reconstruct_two_form(Field const& cochain, Field const& output)
+    void reconstruct_two_form(Field const& cochain, Field const& output, bool at_vertices = false)
     {
         pack(cochain, m_two);
         TwoFormTensor const reduced = tensor<TwoForm>(m_two),
                             physical = tensor<TwoForm>(m_physical_two);
-        m_grid.reconstruct(physical, reduced);
+        if (at_vertices) {
+            PositionTensor const geometry = m_grid.geometry();
+            ddc::parallel_for_each(
+                    "observe_two_form",
+                    Kokkos::DefaultExecutionSpace(),
+                    m_grid.domain(),
+                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                        sil::exterior::VertexFormReconstruction<
+                                ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>>::
+                        operator()(
+                                physical[element],
+                                reduced,
+                                geometry,
+                                element,
+                                sil::tensor::PeriodicExtrapolationRule {});
+                    });
+        } else
+            m_grid.reconstruct(physical, reduced);
         sil::tensor::Tensor const axial = tensor<sil::tensor::Covariant<VolumeDirection>>(m_axial);
         MetricTensor const metric = m_grid.euclidean_metric();
         ddc::parallel_for_each(
