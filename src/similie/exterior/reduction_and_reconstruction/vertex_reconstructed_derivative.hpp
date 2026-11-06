@@ -26,11 +26,15 @@ namespace sil::exterior {
 template <std::size_t FibreRank, class... SpatialIndex>
 class VertexReconstructedDerivative
 {
+public:
+    // NVCC requires types used by extended device lambdas to be accessible.
     template <class Dimension>
     struct Grid
     {
         using continuous_dimension_type = Dimension;
     };
+
+private:
     static constexpr std::size_t dimension = sizeof...(SpatialIndex);
     static constexpr std::size_t vertex_count = std::size_t(1) << dimension;
     static constexpr std::size_t basis_count = vertex_count * FibreRank;

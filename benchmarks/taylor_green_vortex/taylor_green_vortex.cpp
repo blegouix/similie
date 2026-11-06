@@ -861,12 +861,17 @@ void validate()
     Simulation simulation(nodes, physics);
     Monitor const initial = simulation.monitor(0);
     double const symbol = 2 * std::sin(simulation.dec.h / 2) / simulation.dec.h;
-    double const expected = physics == Physics::Incompressible ? 0.125 * symbol * symbol : 0.125;
+    // Vertex quadrature of sin(x) sin(y) multiplies the face-centred
+    // potential by cos(h/2)^2. Quadratic cochain monitors inherit its square.
+    double const projection_norm = std::pow(std::cos(simulation.dec.h / 2), 4);
+    double const expected = physics == Physics::Incompressible
+                                    ? 0.125 * symbol * symbol * projection_norm
+                                    : 0.125;
     if (std::abs(initial.energy - expected) > 1e-10
         || (physics == Physics::Incompressible && initial.divergence > 1e-10))
         throw std::runtime_error("Initial kinetic energy or periodic divergence is incorrect");
     if (physics == Physics::Incompressible
-        && std::abs(initial.enstrophy - 0.375 * std::pow(symbol, 4)) > 1e-10)
+        && std::abs(initial.enstrophy - 0.375 * std::pow(symbol, 4) * projection_norm) > 1e-10)
         throw std::runtime_error("Initial DEC enstrophy is incorrect");
     double initial_velocity_rms = 0;
     Field constant("constant", 1, simulation.dec.cells), lap("lap", 1, simulation.dec.cells);

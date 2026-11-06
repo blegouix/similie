@@ -28,6 +28,8 @@ namespace similie::physics::magnetostatics {
 template <class X, class Y, class Z>
 class MagneticFormResponse
 {
+public:
+    // NVCC requires types used by extended device lambdas to be accessible.
     struct First : sil::tensor::TensorNaturalIndex<X, Y, Z>
     {
     };
@@ -38,6 +40,7 @@ class MagneticFormResponse
     {
     };
 
+private:
     std::array<double, 9> m_star {};
     double m_volume = 1.0;
 

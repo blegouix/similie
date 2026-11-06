@@ -136,7 +136,14 @@ struct VertexFormProjection
                         vertex |= offset << axes[axis];
                         ddc::detail::array(node)[axes[axis]] += offset;
                     }
-                    auto const coefficients = extrapolation(input, node);
+                    // Keep the sampled storage alive while Reduction uses its view.
+                    auto const sampled = extrapolation(input, node);
+                    tensor::Tensor<
+                            double,
+                            typename Input::indices_domain_t,
+                            Kokkos::layout_right,
+                            typename Input::memory_space> const& coefficients
+                            = sampled;
                     Reduction<Indices, typename Cell::Geometry, Element>::
                     operator()(reduced, coefficients, cell.geometry, Cell::corner(vertex));
                     value += rule.weight(sample) * reduced.get(reduced.access_element(natural));

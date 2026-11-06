@@ -86,7 +86,9 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                 profile_performance(
                     ["binary", "--strategy-suite"], directory, configuration
                 )
-            self.assertEqual(console.getvalue().count("Benchmark Time CPU Iterations"), 1)
+            self.assertEqual(
+                console.getvalue().count("Benchmark Time CPU Iterations"), 1
+            )
             self.assertEqual(console.getvalue().count("TaylorGreen/"), 14)
             self.assertNotIn("Profiler chatter", console.getvalue())
             self.assertNotIn("Collecting data", console.getvalue())
@@ -111,10 +113,14 @@ class IsolatedSystemsCaptures(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             (directory / "benchmark.json").write_text(json.dumps({"benchmarks": []}))
+
+            def capture(command, output, environment, stream_output=True):
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "run.log").write_text("")
+
             with (
                 patch("ci_campaign.profile_command", return_value=(["nsys"], {})),
-                patch("ci_campaign.execute") as execute_capture,
-                patch("ci_campaign.Path.read_text", return_value=""),
+                patch("ci_campaign.execute", side_effect=capture) as execute_capture,
                 patch(
                     "ci_campaign.summarize_profile",
                     side_effect=ValueError("missing kernels"),
@@ -144,7 +150,9 @@ class ReferenceAccuracyGate(unittest.TestCase):
                     "--phase=validation",
                 ],
             ),
-            patch("ci_campaign.campaign", side_effect=ReferenceValidationError(message)),
+            patch(
+                "ci_campaign.campaign", side_effect=ReferenceValidationError(message)
+            ),
             self.assertRaises(SystemExit) as failure,
         ):
             main()
