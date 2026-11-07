@@ -163,7 +163,7 @@ void check_hodge(
             Field<MetricIndex>,
             Field<PositionIndex>,
             SpatialDomain::discrete_element_type>>
-            staged(Exec(), metric, position);
+            staged {Exec(), metric, position};
     using Direct = sil::exterior::DiscreteHodgeStar<
             Complex,
             SourceIndices,
@@ -176,14 +176,19 @@ void check_hodge(
     ddc::Chunk staged_alloc(domain, ddc::KokkosAllocator<double, Memory>());
     ddc::Chunk direct_alloc(domain, ddc::KokkosAllocator<double, Memory>());
     Field<Target> staged_output(staged_alloc), direct_output(direct_alloc);
-    staged(staged_output, input);
+    staged(sil::exterior::Cochain(staged_output), sil::exterior::Cochain(input));
     Kokkos::View<double*, Memory>
             errors("hodge_coefficient_error", input.non_indices_domain().size());
     ddc::parallel_for_each(
             Exec(),
             input.non_indices_domain(),
             KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
-                Direct {}(direct_output[element], input[element], metric, position, element);
+                Direct {}(
+                        sil::exterior::Cochain(direct_output[element]),
+                        sil::exterior::Cochain(input[element]),
+                        metric,
+                        position,
+                        element);
                 sil::tensor::tensor_accessor_for_domain_t<
                         sil::exterior::hodge_star_domain_t<SourceIndices, TargetIndices>> const
                         accessor;
@@ -271,12 +276,16 @@ void check_codifferential(
     auto staged = sil::exterior::make_staged_codifferential<
             MetricIndex,
             OneForm,
-            Form>(Exec(), input, metric, position, rules);
-    sil::exterior::codifferential<
-            MetricIndex,
-            OneForm,
-            Form>(Exec(), expected, input, hodge, inverse, Field<DualIndex>(dual_alloc), rules);
-    staged(actual, input);
+            Form>(Exec(), sil::exterior::Cochain(input), metric, position, rules);
+    sil::exterior::codifferential<MetricIndex, OneForm, Form>(
+            Exec(),
+            sil::exterior::Cochain(expected),
+            sil::exterior::Cochain(input),
+            hodge,
+            inverse,
+            sil::exterior::Cochain(Field<DualIndex>(dual_alloc)),
+            rules);
+    staged(sil::exterior::Cochain(actual), sil::exterior::Cochain(input));
     auto a = Kokkos::
             create_mirror_view_and_copy(Kokkos::HostSpace(), actual_alloc.allocation_kokkos_view());
     auto e = Kokkos::create_mirror_view_and_copy(
@@ -295,11 +304,12 @@ void compare(bool curved, Primal const& primal, Dual const& dual, std::size_t si
             MetricIndex,
             OneForm,
             Form,
-            Field<Form>,
+            sil::exterior::Cochain<Field<Form>>,
             Field<MetricIndex>,
             Field<PositionIndex>,
             Exec>>;
-    static_assert(sil::exterior::StagedOperatorConcept<Operator, Field<Form>>);
+    static_assert(
+            sil::exterior::StagedOperatorConcept<Operator, sil::exterior::Cochain<Field<Form>>>);
     SpatialDomain const
             domain(ddc::DiscreteElement<GridX, GridY, GridZ>(7, 7, 7),
                    ddc::DiscreteVector<GridX, GridY, GridZ>(size, size, size));
@@ -342,27 +352,33 @@ void compare(bool curved, Primal const& primal, Dual const& dual, std::size_t si
     ddc::Chunk expected_alloc(form_domain, ddc::KokkosAllocator<double, Memory>());
     ddc::Chunk actual_alloc(form_domain, ddc::KokkosAllocator<double, Memory>());
     ddc::Chunk dynamic_alloc(form_domain, ddc::KokkosAllocator<double, Memory>());
-    Field<Form> input(input_alloc), expected(expected_alloc), actual(actual_alloc);
+    sil::exterior::Cochain<Field<Form>> input {Field<Form>(input_alloc)},
+            expected {Field<Form>(expected_alloc)}, actual {Field<Form>(actual_alloc)};
     sil::exterior::Laplacian<
             MetricIndex,
             OneForm,
             Form,
-            Field<Form>,
+            sil::exterior::Cochain<Field<Form>>,
             Field<MetricIndex>,
             Field<PositionIndex>,
             Exec,
             CachedHodgeStar>
-            reference(Exec(), expected, input, metric, position);
+            reference {Exec(), expected, input, metric, position};
     Operator operation(Exec(), actual, input, metric, position, primal, dual);
     sil::exterior::Laplacian<
             MetricIndex,
             OneForm,
             Form,
-            Field<Form>,
+            sil::exterior::Cochain<Field<Form>>,
             Field<MetricIndex>,
             Field<PositionIndex>,
             Exec>
-            dynamic(Exec(), Field<Form>(dynamic_alloc), input, metric, position);
+            dynamic {
+                    Exec(),
+                    sil::exterior::Cochain(Field<Form>(dynamic_alloc)),
+                    input,
+                    metric,
+                    position};
     // Prescribed dual values carry geometry-dependent units, so a fixed nonzero
     // dual closure does not obey the homogeneous coordinate scaling below.
     int const trials = std::is_same_v<Dual, sil::tensor::ConstantScalarExtrapolationRule> ? 3 : 4;
@@ -403,7 +419,7 @@ void compare(bool curved, Primal const& primal, Dual const& dual, std::size_t si
         }
         reference(expected, input, primal, dual);
         operation(actual, input);
-        dynamic(Field<Form>(dynamic_alloc), input, primal, dual);
+        dynamic(sil::exterior::Cochain(Field<Form>(dynamic_alloc)), input, primal, dual);
         auto a = Kokkos::create_mirror_view_and_copy(
                 Kokkos::HostSpace(),
                 actual_alloc.allocation_kokkos_view());

@@ -34,14 +34,14 @@ class StructuredGrid
                     MetricIndex,
                     Vector,
                     Vector,
-                    VectorTensor,
+                    sil::exterior::Cochain<VectorTensor>,
                     MetricTensor,
                     PositionTensor>,
             typename sil::exterior::Codifferential<
                     MetricIndex,
                     Vector,
                     Vector,
-                    VectorTensor,
+                    sil::exterior::Cochain<VectorTensor>,
                     MetricTensor,
                     PositionTensor>::staged_storage_type::
                     template rebind<Kokkos::DefaultExecutionSpace>>;
@@ -77,7 +77,7 @@ class StructuredGrid
     SpatialDomain m_geometry_domain;
     Field m_position, m_metric, m_oneform, m_pointwise, m_twoform, m_face_pointwise, m_scalar,
             m_gradient_cochains, m_gradient_coefficients;
-    std::unique_ptr<LaplacianOperator<ScalarTensor>> m_laplacian;
+    std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>> m_laplacian;
     std::unique_ptr<VectorCodifferential> m_codifferential;
     std::unique_ptr<OneReconstruction<>> m_one_reconstruction;
     std::unique_ptr<OneReconstruction<sil::tensor::TensorDiagonalIndex>>
@@ -143,12 +143,14 @@ public:
     void reduce_one_form()
     {
         VectorTensor const form = vector(m_pointwise), cochain = vector(m_oneform);
-        reduce(cochain, form);
+        reduce(sil::exterior::Cochain(cochain), sil::exterior::Form(form));
     }
     void negative_reduced_codifferential(Field const& output, int component)
     {
         reduce_one_form();
-        (*m_codifferential)(scalar(output, component), vector(m_oneform));
+        (*m_codifferential)(
+                sil::exterior::Cochain(scalar(output, component)),
+                sil::exterior::Cochain(vector(m_oneform)));
         Kokkos::parallel_for(
                 "codifferential_to_divergence",
                 cells,
@@ -159,10 +161,10 @@ public:
         VectorTensor const cochain = vector(m_oneform), pointwise = vector(m_pointwise);
         sil::exterior::deriv<Vector, Scalar>(
                 Kokkos::DefaultExecutionSpace(),
-                cochain,
-                scalar(input, component),
+                sil::exterior::Cochain(cochain),
+                sil::exterior::Cochain(scalar(input, component)),
                 sil::tensor::PeriodicExtrapolationRule {});
-        reconstruct(pointwise, cochain);
+        reconstruct(sil::exterior::Form(pointwise), sil::exterior::Cochain(cochain));
     }
 
     Configuration const configuration;
@@ -207,62 +209,62 @@ public:
             m_one_diagonal_reconstruction
                     = std::make_unique<OneReconstruction<sil::tensor::TensorDiagonalIndex>>(
                             Kokkos::DefaultExecutionSpace(),
-                            vector(m_pointwise),
-                            vector(m_oneform),
+                            sil::exterior::Form(vector(m_pointwise)),
+                            sil::exterior::Cochain(vector(m_oneform)),
                             geometry);
             m_two_diagonal_reconstruction
                     = std::make_unique<TwoReconstruction<sil::tensor::TensorDiagonalIndex>>(
                             Kokkos::DefaultExecutionSpace(),
-                            twoform(m_face_pointwise),
-                            twoform(m_twoform),
+                            sil::exterior::Form(twoform(m_face_pointwise)),
+                            sil::exterior::Cochain(twoform(m_twoform)),
                             geometry);
         } else if (configuration.staged_reconstruction) {
             m_one_reconstruction = std::make_unique<OneReconstruction<>>(
                     Kokkos::DefaultExecutionSpace(),
-                    vector(m_pointwise),
-                    vector(m_oneform),
+                    sil::exterior::Form(vector(m_pointwise)),
+                    sil::exterior::Cochain(vector(m_oneform)),
                     geometry);
             m_two_reconstruction = std::make_unique<TwoReconstruction<>>(
                     Kokkos::DefaultExecutionSpace(),
-                    twoform(m_face_pointwise),
-                    twoform(m_twoform),
+                    sil::exterior::Form(twoform(m_face_pointwise)),
+                    sil::exterior::Cochain(twoform(m_twoform)),
                     geometry);
         }
         if (configuration.reduction_mode() == 2) {
             m_one_diagonal_reduction
                     = std::make_unique<OneReduction<sil::tensor::TensorDiagonalIndex>>(
                             Kokkos::DefaultExecutionSpace(),
-                            vector(m_oneform),
-                            vector(m_pointwise),
+                            sil::exterior::Cochain(vector(m_oneform)),
+                            sil::exterior::Form(vector(m_pointwise)),
                             geometry);
             m_two_diagonal_reduction
                     = std::make_unique<TwoReduction<sil::tensor::TensorDiagonalIndex>>(
                             Kokkos::DefaultExecutionSpace(),
-                            twoform(m_twoform),
-                            twoform(m_face_pointwise),
+                            sil::exterior::Cochain(twoform(m_twoform)),
+                            sil::exterior::Form(twoform(m_face_pointwise)),
                             geometry);
         } else if (configuration.staged_reduction) {
             m_one_reduction = std::make_unique<OneReduction<>>(
                     Kokkos::DefaultExecutionSpace(),
-                    vector(m_oneform),
-                    vector(m_pointwise),
+                    sil::exterior::Cochain(vector(m_oneform)),
+                    sil::exterior::Form(vector(m_pointwise)),
                     geometry);
             m_two_reduction = std::make_unique<TwoReduction<>>(
                     Kokkos::DefaultExecutionSpace(),
-                    twoform(m_twoform),
-                    twoform(m_face_pointwise),
+                    sil::exterior::Cochain(twoform(m_twoform)),
+                    sil::exterior::Form(twoform(m_face_pointwise)),
                     geometry);
         }
         m_laplacian = make_scalar_laplacian(
                 configuration,
-                scalar(m_scalar),
-                scalar(m_scalar),
+                sil::exterior::Cochain(scalar(m_scalar)),
+                sil::exterior::Cochain(scalar(m_scalar)),
                 metric(),
                 geometry);
         m_codifferential = std::make_unique<VectorCodifferential>(
                 Kokkos::DefaultExecutionSpace(),
-                vector(m_oneform),
-                metric(),
+                sil::exterior::Cochain(vector(m_oneform)),
+                sil::exterior::Cochain(metric()),
                 geometry,
                 sil::tensor::PeriodicExtrapolationRule {});
     }
@@ -312,14 +314,14 @@ public:
                 ddc::remove_dims_of<Vector>(output.domain()),
                 KOKKOS_LAMBDA(typename BatchDomain::discrete_element_type element) {
                     operation(
-                            output[element],
-                            input[element],
+                            sil::exterior::Form(output[element]),
+                            sil::exterior::Cochain(input[element]),
                             geometry,
                             SpatialDomain::discrete_element_type(element));
                 });
     }
 
-    template <class Output, class Input>
+    template <sil::exterior::FormType Output, sil::exterior::CochainType Input>
     void reconstruct(Output const& output, Input const& input) const
     {
         if (m_one_diagonal_reconstruction)
@@ -345,7 +347,9 @@ public:
                     output,
                     input);
     }
-    void reduce(VectorTensor const& output, VectorTensor const& input) const
+    void reduce(
+            sil::exterior::Cochain<VectorTensor> const& output,
+            sil::exterior::Form<VectorTensor> const& input) const
     {
         if (m_one_diagonal_reduction)
             (*m_one_diagonal_reduction)(output, input);
@@ -377,7 +381,9 @@ public:
                     });
         }
     }
-    void reconstruct(TwoFormTensor const& output, TwoFormTensor const& input) const
+    void reconstruct(
+            sil::exterior::Form<TwoFormTensor> const& output,
+            sil::exterior::Cochain<TwoFormTensor> const& input) const
     {
         if (m_two_diagonal_reconstruction)
             (*m_two_diagonal_reconstruction)(output, input);
@@ -409,7 +415,9 @@ public:
                     });
         }
     }
-    void reduce(TwoFormTensor const& output, TwoFormTensor const& input) const
+    void reduce(
+            sil::exterior::Cochain<TwoFormTensor> const& output,
+            sil::exterior::Form<TwoFormTensor> const& input) const
     {
         if (m_two_diagonal_reduction)
             (*m_two_diagonal_reduction)(output, input);
@@ -492,10 +500,10 @@ public:
                         Field::memory_space>(m_gradient_coefficients.data(), gradient_domain));
         sil::exterior::deriv<Vector, Scalar>(
                 Kokkos::DefaultExecutionSpace(),
-                cochains,
-                values,
+                sil::exterior::Cochain(cochains),
+                sil::exterior::Cochain(values),
                 sil::tensor::PeriodicExtrapolationRule {});
-        reconstruct(coefficients, cochains);
+        reconstruct(sil::exterior::Form(coefficients), sil::exterior::Cochain(cochains));
         Field const storage = m_gradient_coefficients;
         int const count = cells;
         Kokkos::parallel_for(
@@ -537,7 +545,9 @@ public:
 
     void laplacian(Field const& input, int component, Field const& output, int out_component)
     {
-        m_laplacian->apply(scalar(output, out_component), scalar(input, component));
+        m_laplacian
+                ->apply(sil::exterior::Cochain(scalar(output, out_component)),
+                        sil::exterior::Cochain(scalar(input, component)));
         // exterior uses the positive Hodge Laplacian; viscosity uses its negative.
         Kokkos::parallel_for(
                 "hodge_laplacian_to_diffusion",
@@ -559,10 +569,10 @@ public:
                             reconstructed = twoform(m_face_pointwise);
         sil::exterior::deriv<sil::tensor::Covariant<CurlDirection>, Vector>(
                 Kokkos::DefaultExecutionSpace(),
-                rotation,
-                cochain,
+                sil::exterior::Cochain(rotation),
+                sil::exterior::Cochain(cochain),
                 sil::tensor::PeriodicExtrapolationRule {});
-        reconstruct(reconstructed, rotation);
+        reconstruct(sil::exterior::Form(reconstructed), sil::exterior::Cochain(rotation));
         ddc::DiscreteDomain<GridX, GridY, GridZ, sil::tensor::Covariant<VolumeDirection>> const
                 axial_domain(
                         m_domain,
@@ -591,7 +601,11 @@ public:
                             ddc::TypeSeq<sil::tensor::Covariant<VolumeDirection>>,
                             MetricTensor,
                             SpatialDomain::discrete_element_type>::
-                    operator()(axial[element], reconstructed[element], metric, element);
+                    operator()(
+                            sil::exterior::Form(axial[element]),
+                            sil::exterior::Form(reconstructed[element]),
+                            metric,
+                            element);
                 });
         Kokkos::parallel_for(
                 "unpack_curl_coefficients",

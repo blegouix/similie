@@ -49,12 +49,12 @@ class LeviCivitaContinuousHodgeStar
     }
 
 public:
+    static constexpr bool input_is_form = true;
+    static constexpr bool output_is_form = true;
     using staged_storage_type
             = detail::ImplicitLocalOperatorStorage<LeviCivitaContinuousHodgeStar, MetricType>;
 
-    template <
-            misc::Specialization<tensor::Tensor> HodgeTensorType,
-            misc::Specialization<tensor::Tensor> FormTensorType>
+    template <FormType HodgeTensorType, FormType FormTensorType>
     KOKKOS_FUNCTION static void operator()(
             HodgeTensorType const& hodge_tensor,
             FormTensorType const& form_tensor,
@@ -72,9 +72,12 @@ public:
                             typename FormTensorType::memory_space>(
                             form_tensor.data_handle(),
                             ddc::DiscreteDomain<>()));
-            tensor::tensor_prod(hodge_tensor, levi_civita(), scalar);
+            tensor::tensor_prod(hodge_tensor.coefficients(), levi_civita(), scalar);
         } else {
-            tensor::tensor_prod(hodge_tensor, levi_civita(), form_tensor);
+            tensor::tensor_prod(
+                    hodge_tensor.coefficients(),
+                    levi_civita(),
+                    form_tensor.coefficients());
         }
         ddc::device_for_each(hodge_tensor.domain(), [&](auto element) {
             hodge_tensor.mem(element) /= misc::factorial(ddc::type_seq_size_v<Indices1>);
@@ -96,8 +99,8 @@ public:
         for (std::size_t source = 0; source < Source::mem_size(); ++source) {
             unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
             operator()(
-                    tensor::Tensor(output.span_view()),
-                    tensor::Tensor(unit.span_view()),
+                    Form(tensor::Tensor(output.span_view())),
+                    Form(tensor::Tensor(unit.span_view())),
                     metric,
                     element);
             for (std::size_t target = 0; target < Target::mem_size(); ++target)
@@ -122,8 +125,8 @@ static_assert(ContinuousHodgeStarConcept<
                       ddc::TypeSeq<>,
                       detail::FieldConcept<detail::MetricIndexConcept>,
                       ddc::DiscreteElement<detail::GridConcept>>,
-              detail::FieldConcept<detail::ScalarConcept>,
-              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FormFieldConcept<detail::ScalarConcept>,
+              detail::FormFieldConcept<detail::DirectionConcept>,
               detail::FieldConcept<detail::MetricIndexConcept>,
               ddc::DiscreteElement<detail::GridConcept>,
               ddc::DiscreteElement<detail::DirectionConcept>>);

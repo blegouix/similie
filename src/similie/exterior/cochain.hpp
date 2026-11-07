@@ -25,7 +25,9 @@ template <
         class ChainType,
         class ElementType = double,
         class LayoutStridedPolicy = Kokkos::LayoutRight>
-    requires(misc::Specialization<ChainType, Chain> || misc::Specialization<ChainType, LocalChain>)
+    requires(
+            misc::Specialization<ChainType, Chain> || misc::Specialization<ChainType, LocalChain>
+            || misc::Specialization<ChainType, tensor::Tensor>)
 class Cochain
 {
 public:
@@ -210,6 +212,50 @@ public:
         return out;
     }
 };
+
+// A structured cochain field retains its integral semantics when sliced.
+template <class T, class Domain, class Layout, class Memory, class ElementType, class ChainLayout>
+class Cochain<tensor::Tensor<T, Domain, Layout, Memory>, ElementType, ChainLayout>
+    : public tensor::Tensor<T, Domain, Layout, Memory>
+{
+    using Tensor = tensor::Tensor<T, Domain, Layout, Memory>;
+
+public:
+    using coefficients_type = Tensor;
+    KOKKOS_DEFAULTED_FUNCTION Cochain() = default;
+    KOKKOS_FUNCTION explicit Cochain(Tensor const& tensor) : Tensor(tensor) {}
+    KOKKOS_FUNCTION Tensor const& coefficients() const
+    {
+        return *this;
+    }
+    KOKKOS_FUNCTION Tensor& coefficients()
+    {
+        return *this;
+    }
+
+    KOKKOS_FUNCTION Cochain& operator+=(Cochain const& other)
+    {
+        coefficients() += other.coefficients();
+        return *this;
+    }
+    KOKKOS_FUNCTION Cochain& operator*=(T scalar)
+    {
+        coefficients() *= scalar;
+        return *this;
+    }
+
+    template <class Element>
+    KOKKOS_FUNCTION auto operator[](Element const& element) const
+    {
+        return ::sil::exterior::Cochain(Tensor::operator[](element));
+    }
+};
+
+template <misc::Specialization<tensor::Tensor> Tensor>
+Cochain(Tensor const&) -> Cochain<Tensor>;
+
+template <class T>
+concept CochainType = misc::Specialization<std::remove_cvref_t<T>, Cochain>;
 
 template <class ChainType, misc::Specialization<tensor::Tensor> TensorType>
 Cochain(ChainType, TensorType) -> Cochain<

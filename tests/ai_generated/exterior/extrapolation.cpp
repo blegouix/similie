@@ -78,9 +78,11 @@ void test_callable_rules_and_connected_derivative()
             2.0};
     sil::tensor::ExtrapolationRules const connected_rules(
             std::pair {sil::tensor::ZeroExtrapolationRule {}, connected});
-    sil::exterior::deriv<
-            Vector,
-            Scalar>(Kokkos::DefaultExecutionSpace(), derivative, potential, connected_rules);
+    sil::exterior::deriv<Vector, Scalar>(
+            Kokkos::DefaultExecutionSpace(),
+            sil::exterior::Cochain(derivative),
+            sil::exterior::Cochain(potential),
+            connected_rules);
     auto host_alloc = ddc::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace(),
             derivative_alloc.span_view());
@@ -89,28 +91,31 @@ void test_callable_rules_and_connected_derivative()
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(12, 0)), 5.0);
     sil::exterior::deriv<Vector, Scalar>(
             Kokkos::DefaultExecutionSpace(),
-            derivative,
-            potential,
+            sil::exterior::Cochain(derivative),
+            sil::exterior::Cochain(potential),
             sil::tensor::NaturalScalarExtrapolationRule {});
     ddc::parallel_deepcopy(host, derivative);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 7.0);
     sil::exterior::deriv<Vector, Scalar>(
             Kokkos::DefaultExecutionSpace(),
-            derivative,
-            potential,
+            sil::exterior::Cochain(derivative),
+            sil::exterior::Cochain(potential),
             ConstantExteriorRule {30.0});
     ddc::parallel_deepcopy(host, derivative);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 14.0);
     // Automatic broadcasting invokes this rule only for exterior samples.
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(12, 0)), 5.0);
-    sil::exterior::deriv<Vector, Scalar>(Kokkos::DefaultExecutionSpace(), derivative, potential);
+    sil::exterior::deriv<Vector, Scalar>(
+            Kokkos::DefaultExecutionSpace(),
+            sil::exterior::Cochain(derivative),
+            sil::exterior::Cochain(potential));
     ddc::parallel_deepcopy(host, derivative);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 0.0);
 
     sil::exterior::transposed_coboundary<Vector, Scalar>(
             Kokkos::DefaultExecutionSpace(),
-            derivative,
-            potential,
+            sil::exterior::Cochain(derivative),
+            sil::exterior::Cochain(potential),
             sil::tensor::ConstantScalarExtrapolationRule {3.0});
     ddc::parallel_deepcopy(host, derivative);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(10, 0)), -3.0);
@@ -148,11 +153,12 @@ void test_laplacian_agrees_with_composition()
                 potential.mem(elem, ddc::DiscreteElement<Scalar>(0)) = x * x;
                 position.mem(elem, ddc::DiscreteElement<Position>(0)) = x;
             });
-    auto laplacian = sil::exterior::make_laplacian<
-            Metric,
-            Vector,
-            Scalar,
-            CachedHodgeStar>(Kokkos::DefaultExecutionSpace(), result, potential, metric, position);
+    auto laplacian = sil::exterior::make_laplacian<Metric, Vector, Scalar, CachedHodgeStar>(
+            Kokkos::DefaultExecutionSpace(),
+            sil::exterior::Cochain(result),
+            sil::exterior::Cochain(potential),
+            metric,
+            position);
     sil::tensor::ExtrapolationRules const primal(
             std::
                     pair {sil::tensor::ZeroExtrapolationRule {},
@@ -161,13 +167,19 @@ void test_laplacian_agrees_with_composition()
             std::
                     pair {sil::tensor::ConstantScalarExtrapolationRule {3.0},
                           sil::tensor::ZeroExtrapolationRule {}});
-    laplacian(result, potential, primal, dual);
-    sil::exterior::
-            deriv<Vector, Scalar>(Kokkos::DefaultExecutionSpace(), derivative, potential, primal);
-    sil::exterior::codifferential<
-            Metric,
-            Vector,
-            Vector>(Kokkos::DefaultExecutionSpace(), composed, derivative, metric, position, dual);
+    laplacian(sil::exterior::Cochain(result), sil::exterior::Cochain(potential), primal, dual);
+    sil::exterior::deriv<Vector, Scalar>(
+            Kokkos::DefaultExecutionSpace(),
+            sil::exterior::Cochain(derivative),
+            sil::exterior::Cochain(potential),
+            primal);
+    sil::exterior::codifferential<Metric, Vector, Vector>(
+            Kokkos::DefaultExecutionSpace(),
+            sil::exterior::Cochain(composed),
+            sil::exterior::Cochain(derivative),
+            metric,
+            position,
+            dual);
     // Keep a snapshot: a mirror view aliases the result allocation on CPU.
     auto result_host = ddc::
             create_mirror_and_copy(Kokkos::DefaultHostExecutionSpace(), result_alloc.span_view());
@@ -178,7 +190,7 @@ void test_laplacian_agrees_with_composition()
         EXPECT_NEAR(result_host(elem), composed_host(elem), 1.0e-12);
     });
     // Cached Hodge coefficients must still allow changing the boundary closure.
-    laplacian(result, potential);
+    laplacian(sil::exterior::Cochain(result), sil::exterior::Cochain(potential));
     auto default_host = ddc::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace(),
             result_alloc.span_view());

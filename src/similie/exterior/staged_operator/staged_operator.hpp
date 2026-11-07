@@ -38,14 +38,17 @@ public:
     }
 
     template <class Output, class Input>
-        requires StagingStorageConcept<Storage, Output, Input>
+        requires(
+                StagingStorageConcept<Storage, Output, Input> && OperatorInputType<Operator, Input>
+                && OperatorOutputType<Operator, Output>)
     Output operator()(Output const& output, Input const& input) const
     {
         return m_storage.apply(m_exec(), output, input);
     }
 
     template <class Output, class Input, class... Arguments>
-        requires(sizeof...(Arguments) > 0 && requires(Storage const& storage, Output const& output,
+        requires(sizeof...(Arguments) > 0 && OperatorInputType<Operator, Input>
+                 && OperatorOutputType<Operator, Output> && requires(Storage const& storage, Output const& output,
                 Input const& input, Arguments const&... arguments) {
             storage.apply_pointwise(output, input, arguments...);
         })

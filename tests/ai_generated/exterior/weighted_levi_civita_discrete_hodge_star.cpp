@@ -37,8 +37,8 @@ void check_weighted_hodge()
             sil::exterior::LeviCivitaContinuousHodgeStar>;
     static_assert(sil::exterior::DiscreteHodgeStarConcept<
                   Weighted,
-                  Field<Target>,
-                  Field<Source>,
+                  sil::exterior::Cochain<Field<Target>>,
+                  sil::exterior::Cochain<Field<Source>>,
                   Field<MetricIndex>,
                   Field<PositionIndex>,
                   Domain::discrete_element_type,
@@ -58,18 +58,34 @@ void check_weighted_hodge()
     fill_geometry(position, false);
     fill_form(input);
     Reference const reference_operator(Exec(), metric, position);
-    sil::exterior::StagedOperator<Weighted> const staged(Exec(), metric, position);
-    static_assert(
-            sil::exterior::StagedOperatorConcept<decltype(staged), Field<Target>, Field<Source>>);
+    sil::exterior::StagedOperator<Weighted> const staged {Exec(), metric, position};
+    static_assert(sil::exterior::StagedOperatorConcept<
+                  decltype(staged),
+                  sil::exterior::Cochain<Field<Target>>,
+                  sil::exterior::Cochain<Field<Source>>>);
     Kokkos::View<double*, Memory> errors("weighted_hodge_errors", domain().size());
     Domain const nodes = domain();
     ddc::parallel_for_each(
             Exec(),
             nodes,
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                reference_operator(reference[element], input[element], metric, position, element);
-                Weighted::operator()(output[element], input[element], metric, position, element);
-                staged(staged_output[element], input[element], metric, position, element);
+                reference_operator(
+                        sil::exterior::Cochain(reference[element]),
+                        sil::exterior::Cochain(input[element]),
+                        metric,
+                        position,
+                        element);
+                Weighted::operator()(
+                        sil::exterior::Cochain(output[element]),
+                        sil::exterior::Cochain(input[element]),
+                        metric,
+                        position,
+                        element);
+                staged(sil::exterior::Cochain(staged_output[element]),
+                       sil::exterior::Cochain(input[element]),
+                       metric,
+                       position,
+                       element);
                 auto const full = reference_operator.value(metric, position, element);
                 auto const direct = Weighted::value(metric, position, element);
                 auto const cached = staged.value(metric, position, element);
@@ -114,7 +130,7 @@ void check_weighted_hodge()
         EXPECT_LT(host(i), 1.e-11);
     // Cached coefficients remain tied to their construction geometry.
     fill_geometry(position, false, 1.3);
-    staged(output, input);
+    staged(sil::exterior::Cochain(output), sil::exterior::Cochain(input));
     auto host_output = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), outputs.span_view());
     auto host_staged = ddc::create_mirror_view_and_copy(

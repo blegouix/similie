@@ -285,10 +285,7 @@ public:
         return cache(exec, domain, first, second);
     }
 
-    template <
-            misc::Specialization<tensor::Tensor> Output,
-            misc::Specialization<tensor::Tensor> Input,
-            class... Geometry>
+    template <ExteriorFieldType Output, ExteriorFieldType Input, class... Geometry>
         requires(
                 sizeof...(Geometry) > 0
                 && requires(
@@ -335,9 +332,7 @@ public:
         apply_pointwise(output, input, element);
     }
 
-    template <
-            misc::Specialization<tensor::Tensor> Output,
-            misc::Specialization<tensor::Tensor> Input>
+    template <ExteriorFieldType Output, ExteriorFieldType Input>
     Output apply(Exec const& exec, Output const& output, Input const& input) const
     {
         LocalOperatorStorage const storage = *this;
@@ -463,9 +458,7 @@ public:
         apply_pointwise(output, input, element);
     }
 
-    template <
-            misc::Specialization<tensor::Tensor> Output,
-            misc::Specialization<tensor::Tensor> Input>
+    template <ExteriorFieldType Output, ExteriorFieldType Input>
     Output apply(Exec const& exec, Output const& output, Input const& input) const
     {
         ImplicitLocalOperatorStorage const storage = *this;

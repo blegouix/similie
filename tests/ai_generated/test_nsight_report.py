@@ -37,12 +37,107 @@ from nsight_report import (
     merge_hot_samples,
     profile_cases,
     read_compute_report,
+    reconcile_compute_invocations,
     write_combined_report,
 )
-from nsys_report import iteration_profiles, summarize_profile
+from nsys_report import (
+    iteration_profiles,
+    profile_command,
+    summarize_profile,
+    validate_iteration_setup,
+)
 
 CASE = "TaylorGreen/N=64/default"
 SYMBOL = "_Zprobe_full_symbol"
+
+
+class IterationSetupExclusion(unittest.TestCase):
+    def test_rejects_lazy_cache_builds_in_iterations(self):
+        for label in (
+            "similie_cache_operator_stencils",
+            "periodic_poisson_preconditioner",
+        ):
+            with self.subTest(label=label):
+                cases = {
+                    CASE: {
+                        "regions": [
+                            {
+                                "name": CASE + "/iteration/solver",
+                                "kernels": [{"label": label}],
+                            }
+                        ]
+                    }
+                }
+                with self.assertRaisesRegex(ValueError, "Setup kernel"):
+                    validate_iteration_setup(cases)
+
+    def test_rejects_monitoring_inside_iteration(self):
+        cases = {
+            CASE: {
+                "regions": [
+                    {
+                        "name": CASE + "/iteration/monitoring",
+                        "kernels": [],
+                    }
+                ]
+            }
+        }
+        with self.assertRaisesRegex(ValueError, "Non-iteration work"):
+            validate_iteration_setup(cases)
+
+
+class ComputeLabelReconciliation(unittest.TestCase):
+    def test_uses_invocation_to_reconcile_a_unique_label_mismatch(self):
+        plan = {
+            "kernel_invocations": {SYMBOL: 1},
+            "sample_invocations": [
+                [CASE + "/iteration/solver", "operation", SYMBOL, 1]
+            ],
+        }
+        group = {"symbols": [SYMBOL], "invocations": [1]}
+        samples = [
+            dict(
+                region=CASE + "/iteration/solver",
+                label="different-nvtx-label",
+                symbol=SYMBOL,
+                action_index=1,
+            )
+        ]
+
+        reconcile_compute_invocations(plan, group, samples)
+
+        self.assertEqual(samples[0]["label"], "operation")
+
+    def test_uses_distinct_invocations_to_resolve_repeated_symbol_labels(self):
+        plan = {
+            "kernel_invocations": {SYMBOL: 2},
+            "sample_invocations": [
+                [CASE + "/iteration/solver", "operation-a", SYMBOL, 1],
+                [CASE + "/iteration/solver", "operation-b", SYMBOL, 2],
+            ],
+        }
+        group = {"symbols": [SYMBOL], "invocations": [1, 2]}
+        samples = [
+            dict(
+                region=CASE + "/iteration/solver",
+                label="different-nvtx-label",
+                symbol=SYMBOL,
+                action_index=1,
+            ),
+            dict(
+                region=CASE + "/iteration/solver",
+                label="different-nvtx-label",
+                symbol=SYMBOL,
+                action_index=2,
+            ),
+        ]
+
+        reconcile_compute_invocations(plan, group, samples)
+
+        self.assertEqual(
+            [sample["label"] for sample in samples],
+            ["operation-a", "operation-b"],
+        )
 
 
 class ComputeTimeoutDefault(unittest.TestCase):
@@ -285,11 +380,24 @@ def capture_fixture(path):
 
 
 class SystemsSummary(unittest.TestCase):
+    def test_capture_starts_after_setup_and_stops_before_finalization(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch("nsys_report.profiling_environment", return_value={}):
+                command, environment = profile_command(["binary"], Path(temporary))
+        self.assertIn("--capture-range=nvtx", command)
+        self.assertIn("--nvtx-capture=similie_tgv_iterations", command)
+        self.assertIn("--capture-range-end=stop", command)
+        self.assertEqual(environment["NSYS_NVTX_PROFILER_REGISTER_ONLY"], "0")
+
     def test_export_uses_launch_attribution_without_generic_projection_reports(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             (directory / "tgv.nsys-rep").touch()
             expected = capture_fixture(directory / "tgv.sqlite")
+            with sqlite3.connect(directory / "tgv.sqlite") as connection:
+                connection.execute(
+                    "DELETE FROM NVTX_EVENTS WHERE text=?", (CASE + "/setup",)
+                )
             with patch("nsys_report.subprocess.run") as export:
                 actual = summarize_profile(directory, {CASE: 2})
             command = export.call_args.args[0]
@@ -302,7 +410,7 @@ class SystemsSummary(unittest.TestCase):
             )
 
     def test_incomplete_capture_is_rejected_before_timing_publication(self):
-        for failure in ("iterations", "setup", "case", "kernels"):
+        for failure in ("iterations", "case", "kernels"):
             with (
                 self.subTest(failure=failure),
                 tempfile.TemporaryDirectory() as temporary,
@@ -312,11 +420,7 @@ class SystemsSummary(unittest.TestCase):
                 database = directory / "tgv.sqlite"
                 capture_fixture(database)
                 with sqlite3.connect(database) as connection:
-                    if failure == "setup":
-                        connection.execute(
-                            "DELETE FROM NVTX_EVENTS WHERE text=?", (CASE + "/setup",)
-                        )
-                    elif failure == "kernels":
+                    if failure == "kernels":
                         connection.execute("DELETE FROM CUPTI_ACTIVITY_KIND_KERNEL")
                 cases = (
                     {CASE + "/unexpected": 2}
@@ -683,6 +787,11 @@ class IterationAttribution(unittest.TestCase):
         )
         samples = read_compute_report(Path("unused"), api, expected_launches=2)
         self.assertEqual(len(samples), 4)
+        launches = read_compute_report(
+            Path("unused"), api, expected_launches=2, preserve_launches=True
+        )
+        self.assertEqual(len(launches), 4)
+        self.assertEqual({sample["action_index"] for sample in launches}, {1, 2})
         rows = list(combined_rows(CASE, profile, samples))
         direct = next(
             row
@@ -984,7 +1093,14 @@ class CombinedReport(unittest.TestCase):
                 json.dumps(dict(cases=profiles))
             )
             (output / "ncu/results.json").write_text(
-                json.dumps(dict(detail="hybrid", cases=samples, errors=[]))
+                json.dumps(
+                    dict(
+                        detail="hybrid",
+                        cases=samples,
+                        errors=[],
+                        hot_kernel_skips={CASE: "multipass replay skipped"},
+                    )
+                )
             )
             self.assertEqual(write_combined_report(output), [])
             self.assertGreater(
@@ -992,6 +1108,12 @@ class CombinedReport(unittest.TestCase):
             )
             summary = (output / "nsight/summary.md").read_text()
             self.assertLess(len(summary.encode()), 1024 * 1024)
+            self.assertNotIn("Red/bold marks", summary)
+            self.assertNotIn("Detailed profiling skipped", summary)
+            self.assertIn(
+                "Detailed profiling skipped",
+                (output / "nsight/report.md").read_text(),
+            )
             self.assertEqual(summary.count("\n## "), 14)
             self.assertIn("\n\n\n## ", summary)
             for case, _, _, _ in case_specs():

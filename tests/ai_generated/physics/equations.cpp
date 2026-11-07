@@ -10,6 +10,7 @@
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>
 #include <similie/physics/hamilton_equations.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics_constitutive_law.hpp>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 
@@ -40,15 +41,17 @@ struct SpatialHamiltonian
     static constexpr bool IS_LINEAR = true;
     struct State
     {
-        std::array<double, 1> potential {};
-        std::array<double, N> moments {};
+        sil::exterior::Form<std::array<double, 1>> potential {};
+        sil::exterior::Form<std::array<double, N>> moments {};
     };
     template <class Elem>
-    KOKKOS_FUNCTION constexpr double hamiltonian(State const& state, Elem elem) const
+    KOKKOS_FUNCTION constexpr sil::exterior::Form<double> hamiltonian(State const& state, Elem elem)
+            const
     {
-        return elem
-               * (state.potential[0] * state.potential[0] + state.moments[0] * state.moments[0])
-               / 2;
+        return sil::exterior::Form<double>(
+                elem
+                * (state.potential[0] * state.potential[0] + state.moments[0] * state.moments[0])
+                / 2);
     }
     template <class Index, class Elem>
     KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(State const& state, Elem elem) const
@@ -156,23 +159,23 @@ TEST(PhysicsAPI, VectorConstitutiveLawRetainsInverseAndJacobian)
                   std::array<double, 4> {0.0, 2.0, 7.0, 20.0});
     similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField law(curve);
     similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField<
-            decltype(curve)>::State state {{1.25, 0.5, 0.2}, {1.0, 2.0, 3.0}};
-    std::array<double, 3> const response = law(state, 0);
+            decltype(curve)>::State state {{1.25, 0.5, 0.2}};
+    sil::exterior::Form<std::array<double, 3>> const response = law(state, 0);
     std::array<double, 9> const jacobian = law.jacobian(state, 0);
     for (std::size_t column = 0; column < 3; ++column) {
         double const step = 1e-6;
         state.value[column] += step;
-        std::array<double, 3> const upper = law(state, 0);
+        sil::exterior::Form<std::array<double, 3>> const upper = law(state, 0);
         state.value[column] -= 2 * step;
-        std::array<double, 3> const lower = law(state, 0);
+        sil::exterior::Form<std::array<double, 3>> const lower = law(state, 0);
         state.value[column] += step;
         for (std::size_t row = 0; row < 3; ++row) {
             EXPECT_NEAR(jacobian[3 * row + column], (upper[row] - lower[row]) / (2 * step), 1e-8);
         }
     }
-    std::array<double, 3> const original = state.value;
+    sil::exterior::Form<std::array<double, 3>> const original = state.value;
     state.value = response;
-    std::array<double, 3> const inverse = law.inverse(state, 0);
+    sil::exterior::Form<std::array<double, 3>> const inverse = law.inverse(state, 0);
     std::array<double, 9> const inverse_jacobian = law.inverse_value(state, 0);
     for (std::size_t row = 0; row < 3; ++row) {
         EXPECT_NEAR(inverse[row], original[row], 1e-12);
@@ -184,6 +187,40 @@ TEST(PhysicsAPI, VectorConstitutiveLawRetainsInverseAndJacobian)
             EXPECT_NEAR(product, row == column ? 1.0 : 0.0, 1e-12);
         }
     }
+}
+
+TEST(PhysicsAPI, MagneticConstitutiveLawsUsePointwiseFields)
+{
+    similie::physics::magnetostatics::LinearMagneticInductionToMagneticField const linear(4.0);
+    similie::physics::magnetostatics::LinearMagneticInductionToMagneticField::State state {{2.0}};
+    EXPECT_DOUBLE_EQ(linear(state, 0)[0], 0.5);
+    EXPECT_DOUBLE_EQ(linear.jacobian(state, 0)[0], 0.25);
+    state.value[0] = 0.5;
+    EXPECT_DOUBLE_EQ(linear.inverse(state, 0)[0], 2.0);
+    EXPECT_DOUBLE_EQ(linear.inverse_value(state, 0)[0], 4.0);
+
+    similie::physics::magnetostatics::InterpolatedNonlinearBHCurve<3> const
+            curve(sil::exterior::Form<std::array<double, 3>> {0.0, 1.0, 3.0},
+                  sil::exterior::Form<std::array<double, 3>> {0.0, 2.0, 10.0});
+    similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField const law(curve);
+    similie::physics::magnetostatics::NonlinearMagneticState const origin {};
+    sil::exterior::Form<std::array<double, 3>> const field = law(origin, 0);
+    sil::exterior::Form<std::array<double, 3>> const inverse = law.inverse(origin, 0);
+    std::array<double, 9> const jacobian = law.jacobian(origin, 0);
+    for (std::size_t row = 0; row < 3; ++row) {
+        EXPECT_DOUBLE_EQ(field[row], 0.0);
+        EXPECT_DOUBLE_EQ(inverse[row], 0.0);
+        for (std::size_t column = 0; column < 3; ++column)
+            EXPECT_DOUBLE_EQ(jacobian[3 * row + column], row == column ? 2.0 : 0.0);
+    }
+    similie::physics::magnetostatics::NonlinearMagneticState const induction {{1.2, 0.9, 0.0}};
+    sil::exterior::Form<std::array<double, 3>> const response = law(induction, 0);
+    EXPECT_NEAR(response[0], 2.65, 1e-12);
+    EXPECT_NEAR(response[1], 1.9875, 1e-12);
+    std::array<double, 9> const tangent = law.jacobian(induction, 0);
+    for (std::size_t row = 0; row < 3; ++row)
+        for (std::size_t column = 0; column < 3; ++column)
+            EXPECT_DOUBLE_EQ(tangent[3 * row + column], tangent[3 * column + row]);
 }
 
 TEST(PhysicsAPI, NonlinearHamiltonianRetainsCrossComponentDerivatives)
@@ -212,3 +249,21 @@ TEST(PhysicsAPI, NonlinearHamiltonianRetainsCrossComponentDerivatives)
 }
 
 } // namespace physics_api_test
+
+TEST(PhysicsAPI, NonlinearCurveMatchesGetDPReluctivityInterpolation)
+{
+    similie::physics::magnetostatics::InterpolatedNonlinearBHCurve<3> const
+            curve(std::array<double, 3> {0.0, 1.0, 2.0}, std::array<double, 3> {0.0, 2.0, 10.0});
+    // GetDP interpolates nu=H/B against q=B^2. Here nu=2 below B=1,
+    // then nu=1+q, so H=B+B^3, including final-segment extrapolation.
+    for (double b : {0.0, 0.5, 1.5, 2.0, 3.0}) {
+        double const q = b * b;
+        double const expected_h = b <= 1.0 ? 2.0 * b : b + b * q;
+        double const expected_energy = b <= 1.0 ? q : 0.25 + 0.5 * q + 0.25 * q * q;
+        EXPECT_DOUBLE_EQ(curve.h_from_b(b), expected_h);
+        EXPECT_DOUBLE_EQ(curve.dh_db_from_b(b), b <= 1.0 ? 2.0 : 1.0 + 3.0 * q);
+        EXPECT_DOUBLE_EQ(curve.magnetic_energy_from_q(q), expected_energy);
+        EXPECT_NEAR(curve.b_from_h(expected_h), b, 1e-14);
+        EXPECT_NEAR(curve.db_dh(expected_h), 1.0 / curve.dh_db_from_b(b), 1e-14);
+    }
+}

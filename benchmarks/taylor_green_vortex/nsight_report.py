@@ -288,9 +288,11 @@ def report_api(directory):
     )
 
 
-def read_compute_report(path, api, expected_launches=None, detail="full"):
+def read_compute_report(
+    path, api, expected_launches=None, detail="full", preserve_launches=False
+):
     report = api.load_report(str(path))
-    kernels = {}
+    kernels = [] if preserve_launches else {}
     launches = 0
     for index in range(report.num_ranges()):
         section = report.range_by_idx(index)
@@ -343,19 +345,21 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
                         )
                     )
             for region in regions:
-                # Shared ancestors retain their first sample; sibling regions
-                # retain distinct samples even when they execute the same symbol.
-                kernels.setdefault(
-                    (region, label, symbol),
-                    dict(
-                        region=region,
-                        label=label,
-                        symbol=symbol,
-                        metrics=metrics,
-                        rules=rules,
-                        replay_passes=passes,
-                    ),
+                sample = dict(
+                    region=region,
+                    label=label,
+                    symbol=symbol,
+                    metrics=metrics,
+                    rules=rules,
+                    replay_passes=passes,
                 )
+                if preserve_launches:
+                    sample["action_index"] = launches
+                    kernels.append(sample)
+                else:
+                    # Shared ancestors retain their first sample; sibling
+                    # regions retain distinct samples for the same symbol.
+                    kernels.setdefault((region, label, symbol), sample)
     if expected_launches is not None and launches != expected_launches:
         raise ValueError(
             f"Compute captured {launches} launches; expected {expected_launches} first invocations: {path}"
@@ -364,7 +368,7 @@ def read_compute_report(path, api, expected_launches=None, detail="full"):
         raise ValueError(
             f"Compute captured no kernels inside the iteration NVTX region: {path}"
         )
-    return list(kernels.values())
+    return kernels if preserve_launches else list(kernels.values())
 
 
 def read_compute_report_isolated(path, directory, expected_launches, detail="full"):
@@ -385,11 +389,43 @@ def read_compute_report_isolated(path, directory, expected_launches, detail="ful
                 str(expected_launches),
                 "--detail",
                 detail,
+                "--preserve-launches",
             ],
             text=True,
             timeout=120,
         )
     )
+
+
+def reconcile_compute_invocations(plan, group, samples):
+    """Use selected launch indices to recover Systems NVTX labels exactly."""
+    labels = {
+        (region, symbol, invocation): label
+        for region, label, symbol, invocation in plan["sample_invocations"]
+    }
+    selected = {
+        symbol: [
+            invocation
+            for invocation in group["invocations"]
+            if invocation <= plan["kernel_invocations"].get(symbol, 0)
+        ]
+        for symbol in group["symbols"]
+    }
+    action_numbers = {}
+    previous_action = {}
+    for sample in samples:
+        symbol = sample["symbol"]
+        action_index = sample["action_index"]
+        if previous_action.get(symbol) != action_index:
+            action_numbers[symbol] = action_numbers.get(symbol, 0) + 1
+            previous_action[symbol] = action_index
+        number = action_numbers[symbol]
+        if number > len(selected.get(symbol, [])):
+            continue
+        invocation = selected[symbol][number - 1]
+        expected_label = labels.get((sample["region"], symbol, invocation))
+        if expected_label is not None:
+            sample["label"] = expected_label
 
 
 def capture_groups(
@@ -449,9 +485,16 @@ def capture_groups(
         ]
         if len(reports) != 1:
             raise FileNotFoundError(f"Expected one Compute report in {batch_directory}")
-        samples.extend(
-            read_compute_report_isolated(reports[0], directory, expected, detail)
+        captured = read_compute_report_isolated(
+            reports[0], directory, expected, detail
         )
+        reconcile_compute_invocations(plan, group, captured)
+        deduplicated = {}
+        for sample in captured:
+            sample.pop("action_index")
+            key = (sample["region"], sample["label"], sample["symbol"])
+            deduplicated.setdefault(key, sample)
+        samples.extend(deduplicated.values())
     return samples
 
 
@@ -873,21 +916,6 @@ def compact_report(systems, compute, visible_metrics):
             end = [markdown(analysis)]
             ansi_lines[len(lines)] = "| " + " | ".join(start + ansi + end) + " |"
             lines.append("| " + " | ".join(start + cells + end) + " |")
-    lines += [
-        "",
-        "Red/bold marks at least 85% of sustained throughput or a high-priority Nsight focus metric; "
-        f"green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
-        "Compute SOL is measured only for the selected hot samples in hybrid mode; — means not measured. "
-        "SM active is activity, not Compute SOL. Cache BW is normalized sector throughput, not cache hit rate.",
-    ]
-    for case, reason in compute.get("hot_kernel_skips", {}).items():
-        lines += [
-            "",
-            "Detailed profiling skipped for "
-            + markdown(case)
-            + ": "
-            + markdown(reason),
-        ]
     if compute.get("errors"):
         lines += ["", "Collection errors: " + markdown("; ".join(compute["errors"]))]
     text = "\n".join(lines) + "\n"
@@ -1084,6 +1112,7 @@ def main():
     parser.add_argument("--coupling", choices=("hd", "ehd", "mhd", "fmhd"))
     parser.add_argument("--compute-report", type=Path)
     parser.add_argument("--expected-launches", type=int)
+    parser.add_argument("--preserve-launches", action="store_true")
     parser.add_argument(
         "--detail",
         choices=("hybrid", "core", "full"),
@@ -1114,6 +1143,7 @@ def main():
                     report_api(args.output),
                     args.expected_launches,
                     args.detail,
+                    args.preserve_launches,
                 )
             )
         )

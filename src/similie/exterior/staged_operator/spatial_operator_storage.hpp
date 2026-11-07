@@ -103,7 +103,7 @@ public:
         return result;
     }
 
-    template <misc::Specialization<tensor::Tensor> Output>
+    template <ExteriorFieldType Output>
     Output apply(Exec const& exec, Output const& output, Tensor const& input) const
     {
         if constexpr (EqualDomains) {

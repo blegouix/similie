@@ -58,12 +58,16 @@ int probe(int argc, char** argv)
                     Exec(),
                     domain(),
                     KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                        Weighted::
-                        operator()(output[element], input[element], metric, position, element);
+                        Weighted::operator()(
+                                sil::exterior::Cochain(output[element]),
+                                sil::exterior::Cochain(input[element]),
+                                metric,
+                                position,
+                                element);
                     });
         } else {
             sil::exterior::StagedOperator<Weighted> const cached(Exec(), metric, position);
-            cached(output, input);
+            cached(sil::exterior::Cochain(output), sil::exterior::Cochain(input));
         }
         Exec().fence();
         return 0;
@@ -84,7 +88,11 @@ int probe(int argc, char** argv)
                                 Domain::discrete_element_type,
                                 sil::exterior::CellComplex::Primal,
                                 Coefficients>::
-                        operator()(output[element], input[element], position, element);
+                        operator()(
+                                sil::exterior::Cochain(output[element]),
+                                sil::exterior::Form(input[element]),
+                                position,
+                                element);
                     else
                         sil::exterior::Reconstruction<
                                 Indices,
@@ -92,7 +100,11 @@ int probe(int argc, char** argv)
                                 Domain::discrete_element_type,
                                 sil::exterior::CellComplex::Primal,
                                 Coefficients>::
-                        operator()(output[element], input[element], position, element);
+                        operator()(
+                                sil::exterior::Form(output[element]),
+                                sil::exterior::Cochain(input[element]),
+                                position,
+                                element);
                 });
         Exec().fence();
     } else if (reduce) {

@@ -477,7 +477,7 @@ TEST(Coboundary, NativeStencilOrientation)
         auto result = sil::exterior::detail::make_stencil<Kokkos::HostSpace, Output>(
                 ddc::DiscreteElement<>());
         operation(
-                sil::tensor::Tensor(result.span_view()),
+                sil::exterior::Cochain(sil::tensor::Tensor(result.span_view())),
                 sample,
                 chain,
                 lower,

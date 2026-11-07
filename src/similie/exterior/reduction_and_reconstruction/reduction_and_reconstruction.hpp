@@ -378,6 +378,9 @@ private:
             LocalCoefficientIndex<ComponentSource, reduction_index_t<Indices>, Coefficients>;
 
 public:
+    static constexpr bool input_is_form = true;
+    static constexpr bool output_is_form = false;
+
     using staged_storage_type = detail::LocalOperatorStorage<
             Reduction,
             reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
@@ -398,9 +401,7 @@ public:
     using position_index_type = ddc::
             type_seq_element_t<0, ddc::to_type_seq_t<typename PositionType::indices_domain_t>>;
 
-    template <
-            misc::Specialization<tensor::Tensor> ReductionTensorType,
-            misc::Specialization<tensor::Tensor> FormTensorType>
+    template <CochainType ReductionTensorType, FormType FormTensorType>
     KOKKOS_FUNCTION static void operator()(
             ReductionTensorType const& reduced_tensor,
             FormTensorType const& form_tensor,
@@ -456,8 +457,8 @@ public:
     }
 
     template <
-            misc::Specialization<tensor::Tensor> ReductionTensorType,
-            misc::Specialization<tensor::Tensor> FormTensorType,
+            CochainType ReductionTensorType,
+            FormType FormTensorType,
             misc::Specialization<tensor::Tensor> MetricType>
     KOKKOS_FUNCTION static void operator()(
             ReductionTensorType const& reduced_tensor,
@@ -696,8 +697,8 @@ public:
         for (std::size_t source = 0; source < Source::mem_size(); ++source) {
             unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
             operator()(
-                    tensor::Tensor(output.span_view()),
-                    tensor::Tensor(unit.span_view()),
+                    Cochain(tensor::Tensor(output.span_view())),
+                    Form(tensor::Tensor(unit.span_view())),
                     position,
                     element);
             for (std::size_t target = 0; target < target_index_type::mem_size(); ++target)
@@ -734,8 +735,8 @@ public:
         for (std::size_t source = 0; source < Source::mem_size(); ++source) {
             unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
             operator()(
-                    tensor::Tensor(output.span_view()),
-                    tensor::Tensor(unit.span_view()),
+                    Cochain(tensor::Tensor(output.span_view())),
+                    Form(tensor::Tensor(unit.span_view())),
                     metric,
                     position,
                     element);
@@ -1065,6 +1066,9 @@ private:
             Coefficients>;
 
 public:
+    static constexpr bool input_is_form = false;
+    static constexpr bool output_is_form = true;
+
     using staged_storage_type = detail::LocalOperatorStorage<
             Reconstruction,
             reduction_index_t<Indices>,
@@ -1085,9 +1089,7 @@ public:
     using target_natural_elem_type =
             typename tensor::natural_domain_t<target_index_type>::discrete_element_type;
 
-    template <
-            misc::Specialization<tensor::Tensor> ReconstructedTensorType,
-            misc::Specialization<tensor::Tensor> CochainTensorType>
+    template <FormType ReconstructedTensorType, CochainType CochainTensorType>
     KOKKOS_FUNCTION static void operator()(
             ReconstructedTensorType const& reconstructed_tensor,
             CochainTensorType const& cochain_tensor,

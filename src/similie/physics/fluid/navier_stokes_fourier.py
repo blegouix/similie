@@ -139,11 +139,18 @@ class ThermodynamicRelation:
         if initializers:
             constructor += f" : {initializers}"
         constructor += " {}"
-        functions = "\n".join(
-            f"    KOKKOS_FUNCTION double {name}(double density, double specific_internal_energy) const\n"
-            f"    {{ return {_cpp(expression, replacements)}; }}"
-            for name, expression in methods.items()
-        )
+        functions = []
+        for name, expression in methods.items():
+            code = _cpp(expression, replacements)
+            result_type = "double"
+            if name in {"pressure", "temperature", "sound_speed_squared"}:
+                result_type = "Scalar"
+                code = f"Scalar({code})"
+            functions.append(
+                f"    KOKKOS_FUNCTION {result_type} {name}(Scalar const& density, Scalar const& specific_internal_energy) const\n"
+                f"    {{ return {code}; }}"
+            )
+        functions = "\n".join(functions)
         output = Path(output_path)
         output.parent.mkdir(parents=True, exist_ok=True)
         _write_header(
@@ -154,6 +161,7 @@ class ThermodynamicRelation:
 // Generated from caller-supplied SymPy thermodynamics. Do not edit.
 #pragma once
 #include <cmath>
+#include <similie/exterior/form.hpp>
 #include <Kokkos_Core.hpp>
 namespace {namespace} {{
 /** Thermodynamics in (rho,e), including analytic cv, cp, and isentropic c^2.
@@ -162,6 +170,7 @@ namespace {namespace} {{
  */
 class {class_name} {{
 public:
+    using Scalar = sil::exterior::Form<double>;
 {members}
 {constructor}
 {functions}
@@ -285,7 +294,9 @@ _CPP_HEADER = """// SPDX-FileCopyrightText: 2026 Baptiste Legouix
 #pragma once
 #include <array>
 #include <cmath>
+#include <similie/exterior/form.hpp>
 #include <Kokkos_Core.hpp>
+#include <similie/exterior/form.hpp>
 #include <similie/physics/concepts.hpp>
 namespace similie::physics::fluid {{
 /** Explicit mass, momentum, and energy conservation with Newtonian/Fourier fluxes.
@@ -298,11 +309,12 @@ namespace similie::physics::fluid {{
 template<class Thermodynamics>
 class NavierStokesFourier {{
 public:
+    using Scalar = sil::exterior::Form<double>;
     static constexpr std::size_t N = 5;
     static constexpr bool IS_LINEAR = false;
-    struct State {{ double density; std::array<double,3> momentum; double total_energy; }};
-    struct PrimitiveVariables {{ double density; std::array<double,3> velocity; double pressure; double temperature; }};
-    struct Flux {{ double mass; std::array<double,3> momentum; double total_energy; }};
+    struct State {{ Scalar density; sil::exterior::Form<std::array<double,3>> momentum; Scalar total_energy; }};
+    struct PrimitiveVariables {{ Scalar density; sil::exterior::Form<std::array<double,3>> velocity; Scalar pressure; Scalar temperature; }};
+    struct Flux {{ Scalar mass; sil::exterior::Form<std::array<double,3>> momentum; Scalar total_energy; }};
     using VelocityGradient=std::array<std::array<double,3>,3>;
     Thermodynamics const thermodynamics;
     double const prandtl, viscosity;
@@ -314,14 +326,14 @@ public:
         // PhysicsConcept when this model is first used as a constrained argument.
         static_assert(PhysicsConcept<NavierStokesFourier>);
     }}
-    KOKKOS_FUNCTION double specific_internal_energy(State const& state) const
-    {{ return {energy}; }}
-    KOKKOS_FUNCTION double pressure(State const& state) const
-    {{ return thermodynamics.pressure(state.density,specific_internal_energy(state)); }}
+    KOKKOS_FUNCTION Scalar specific_internal_energy(State const& state) const
+    {{ return Scalar({energy}); }}
+    KOKKOS_FUNCTION Scalar pressure(State const& state) const
+    {{ return Scalar(thermodynamics.pressure(state.density,specific_internal_energy(state))); }}
     KOKKOS_FUNCTION PrimitiveVariables primitives(State const& state) const
     {{
-        double const e=specific_internal_energy(state);
-        PrimitiveVariables result{{state.density,{{}},thermodynamics.pressure(state.density,e),thermodynamics.temperature(state.density,e)}};
+        Scalar const e=specific_internal_energy(state);
+        PrimitiveVariables result{{state.density,{{}},Scalar(thermodynamics.pressure(state.density,e)),Scalar(thermodynamics.temperature(state.density,e))}};
         for(int a=0;a<3;++a) result.velocity[a]=state.momentum[a]/state.density;
         return result;
     }}
@@ -329,17 +341,17 @@ public:
     {{ return thermodynamics.heat_capacity_at_constant_volume(state.density,specific_internal_energy(state)); }}
     KOKKOS_FUNCTION double heat_capacity_at_constant_pressure(State const& state) const
     {{ return thermodynamics.heat_capacity_at_constant_pressure(state.density,specific_internal_energy(state)); }}
-    KOKKOS_FUNCTION double sound_speed_squared(State const& state) const
-    {{ return thermodynamics.sound_speed_squared(state.density,specific_internal_energy(state)); }}
+    KOKKOS_FUNCTION Scalar sound_speed_squared(State const& state) const
+    {{ return Scalar(thermodynamics.sound_speed_squared(state.density,specific_internal_energy(state))); }}
     KOKKOS_FUNCTION double conductivity(State const& state) const
     {{ return viscosity*heat_capacity_at_constant_pressure(state)/prandtl; }}
-    KOKKOS_FUNCTION std::array<double,3> temperature_gradient(State const& state,
-            std::array<double,3> const& density_gradient, std::array<double,3> const& energy_gradient) const
+    KOKKOS_FUNCTION sil::exterior::Form<std::array<double,3>> temperature_gradient(State const& state,
+            sil::exterior::Form<std::array<double,3>> const& density_gradient, sil::exterior::Form<std::array<double,3>> const& energy_gradient) const
     {{
-        double const e=specific_internal_energy(state);
+        Scalar const e=specific_internal_energy(state);
         double const dr=thermodynamics.temperature_density_derivative(state.density,e);
         double const de=thermodynamics.temperature_energy_derivative(state.density,e);
-        std::array<double,3> result{{}};
+        sil::exterior::Form<std::array<double,3>> result{{}};
         for(int a=0;a<3;++a) result[a]=dr*density_gradient[a]+de*energy_gradient[a];
         return result;
     }}
@@ -349,20 +361,20 @@ public:
 {stress}
         return result;
     }}
-    KOKKOS_FUNCTION std::array<double,3> heat_flux(State const& state,
-            std::array<double,3> const& temperature_gradient) const
+    KOKKOS_FUNCTION sil::exterior::Form<std::array<double,3>> heat_flux(State const& state,
+            sil::exterior::Form<std::array<double,3>> const& temperature_gradient) const
     {{
         double const kappa=conductivity(state);
-        std::array<double,3> result{{}};
+        sil::exterior::Form<std::array<double,3>> result{{}};
         for(int a=0;a<3;++a) result[a]=-kappa*temperature_gradient[a];
         return result;
     }}
     KOKKOS_FUNCTION Flux flux(State const& state, PrimitiveVariables const& primitive,
-            VelocityGradient const& velocity_gradient, std::array<double,3> const& temperature_gradient,
+            VelocityGradient const& velocity_gradient, sil::exterior::Form<std::array<double,3>> const& temperature_gradient,
             int normal) const
     {{
         VelocityGradient const tau=stress(velocity_gradient);
-        std::array<double,3> const q=heat_flux(state,temperature_gradient);
+        sil::exterior::Form<std::array<double,3>> const q=heat_flux(state,temperature_gradient);
         Flux result{{}};
 {flux}
         return result;
@@ -373,7 +385,7 @@ public:
      */
     KOKKOS_FUNCTION Flux two_point_flux(State const& left, State const& right,
             VelocityGradient const& face_velocity_gradient,
-            std::array<double,3> const& face_temperature_gradient, int normal) const
+            sil::exterior::Form<std::array<double,3>> const& face_temperature_gradient, int normal) const
     {{
         KOKKOS_ASSERT(normal>=0 && normal<3);
         PrimitiveVariables const l=primitives(left), r=primitives(right);
@@ -382,9 +394,9 @@ public:
         double const internal=0.5*(specific_internal_energy(left)+specific_internal_energy(right));
         double kinetic=0, work=0;
         VelocityGradient const tau=stress(face_velocity_gradient);
-        std::array<double,3> const ql=heat_flux(left,face_temperature_gradient),
+        sil::exterior::Form<std::array<double,3>> const ql=heat_flux(left,face_temperature_gradient),
                 qr=heat_flux(right,face_temperature_gradient);
-        Flux result{{mass,{{}},0}};
+        Flux result{{Scalar(mass),{{}},Scalar(0)}};
         for(int a=0;a<3;++a) {{
             kinetic+=0.5*l.velocity[a]*r.velocity[a];
             work+=tau[a][normal]*0.5*(l.velocity[a]+r.velocity[a]);
@@ -398,7 +410,7 @@ public:
     }}
     KOKKOS_FUNCTION State operator()(Flux const& divergence) const
     {{
-        return {{-divergence.mass,{{-divergence.momentum[0],-divergence.momentum[1],-divergence.momentum[2]}},-divergence.total_energy}};
+        return {{Scalar(-divergence.mass),{{-divergence.momentum[0],-divergence.momentum[1],-divergence.momentum[2]}},Scalar(-divergence.total_energy)}};
     }}
 }};
 }} // namespace similie::physics::fluid

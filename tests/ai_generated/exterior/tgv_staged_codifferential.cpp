@@ -80,29 +80,33 @@ void compare()
             MetricIndex,
             Index,
             Form,
-            Tensor,
+            sil::exterior::Cochain<Tensor>,
             MetricTensor,
             PositionTensor,
             Kokkos::DefaultExecutionSpace,
             sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>
-            direct(Kokkos::DefaultExecutionSpace(), expected, input, metric, position);
+            direct {Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Cochain(expected),
+                    sil::exterior::Cochain(input),
+                    metric,
+                    position};
     using StagedLaplacian = sil::exterior::StagedOperator<sil::exterior::Laplacian<
             MetricIndex,
             Index,
             Form,
-            Tensor,
+            sil::exterior::Cochain<Tensor>,
             MetricTensor,
             PositionTensor,
             Kokkos::DefaultExecutionSpace,
             sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>>;
     StagedLaplacian
-            staged(Kokkos::DefaultExecutionSpace(),
-                   actual,
-                   input,
-                   metric,
-                   position,
-                   Periodic {},
-                   Periodic {});
+            staged {Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Cochain(actual),
+                    sil::exterior::Cochain(input),
+                    metric,
+                    position,
+                    Periodic {},
+                    Periodic {}};
     for (int trial = 0; trial < 2; ++trial) {
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
@@ -115,8 +119,11 @@ void compare()
                                                               + 0.3 * element.template uid<GridZ>()
                                                               + element.template uid<Form>());
                 });
-        direct(expected, input, Periodic {}, Periodic {});
-        staged(actual, input);
+        direct(sil::exterior::Cochain(expected),
+               sil::exterior::Cochain(input),
+               Periodic {},
+               Periodic {});
+        staged(sil::exterior::Cochain(actual), sil::exterior::Cochain(input));
         Kokkos::View<double*, Field::memory_space, Kokkos::MemoryUnmanaged> const
                 expected_view(expected.data_handle(), expected.size()),
                 actual_view(actual.data_handle(), actual.size());

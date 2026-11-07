@@ -29,16 +29,22 @@ def profiling_environment():
 
 def profile_command(command, directory):
     directory.mkdir(parents=True, exist_ok=True)
+    environment = profiling_environment()
+    # The Kokkos connector emits ordinary NVTX string ranges.
+    environment["NSYS_NVTX_PROFILER_REGISTER_ONLY"] = "0"
     return [
         "nsys",
         "profile",
         "--trace=cuda,nvtx",
         "--sample=none",
         "--cpuctxsw=none",
+        "--capture-range=nvtx",
+        "--nvtx-capture=similie_tgv_iterations",
+        "--capture-range-end=stop",
         "--force-overwrite=true",
         f"--output={directory / 'tgv'}",
         *map(str, command),
-    ], profiling_environment()
+    ], environment
 
 
 def iteration_case(name):
@@ -337,6 +343,29 @@ def markdown(value):
     )
 
 
+def validate_iteration_setup(cases):
+    for case, profile in cases.items():
+        for region in profile["regions"]:
+            if any(
+                name in region["name"]
+                for name in (
+                    "/preconditioner/build",
+                    "/iteration/monitoring",
+                    "/iteration/export",
+                )
+            ):
+                raise ValueError(f"Non-iteration work was captured in {region['name']}")
+            for kernel in region["kernels"]:
+                label = kernel["label"]
+                if (
+                    label.startswith("similie_cache_")
+                    or label == "periodic_poisson_preconditioner"
+                ):
+                    raise ValueError(
+                        f"Setup kernel {label} was captured in {case}: prepare operators before iterations"
+                    )
+
+
 def summarize_profile(directory, expected_cases=None):
     """Export the timeline and use the same launch attribution as the final report.
 
@@ -386,15 +415,13 @@ def summarize_profile(directory, expected_cases=None):
         if cases != set(expected_cases):
             raise ValueError(f"Unexpected profiled cases: {sorted(cases)}")
         for case, iterations in expected_cases.items():
-            for suffix, count in (("setup", 1), ("iteration", iterations)):
-                operation = operations.get(f"{case}/{suffix}")
-                if not operation or operation[0] != count:
-                    raise ValueError(
-                        f"Incorrect profiling range count for {case}/{suffix}"
-                    )
+            operation = operations.get(f"{case}/iteration")
+            if not operation or operation[0] != iterations:
+                raise ValueError(f"Incorrect profiling range count for {case}/iteration")
     print("Attributing CUDA launches to TGV iteration regions", flush=True)
     diagnostics = {}
     data = dict(cases=iteration_profiles(database, diagnostics))
+    validate_iteration_setup(data["cases"])
     if not data["cases"] or any(
         not region["kernels"] or region["gpu_ns"] <= 0
         for case, profile in data["cases"].items()

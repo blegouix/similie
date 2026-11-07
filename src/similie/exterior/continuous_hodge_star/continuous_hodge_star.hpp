@@ -224,6 +224,8 @@ template <
         class BatchElem>
 struct ContinuousHodgeStar
 {
+    static constexpr bool input_is_form = true;
+    static constexpr bool output_is_form = true;
     using staged_storage_type = detail::LocalOperatorStorage<
             ContinuousHodgeStar,
             tensor::lower_t<reduction_index_t<Indices1>>,
@@ -235,9 +237,7 @@ struct ContinuousHodgeStar
             misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>,
             misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>>;
 
-    template <
-            misc::Specialization<tensor::Tensor> HodgeTensorType,
-            misc::Specialization<tensor::Tensor> FormTensorType>
+    template <FormType HodgeTensorType, FormType FormTensorType>
     KOKKOS_FUNCTION static void operator()(
             HodgeTensorType const& hodge_tensor,
             FormTensorType const& form_tensor,
@@ -260,7 +260,8 @@ struct ContinuousHodgeStar
         ddc::device_for_each(hodge_star.domain(), [&](auto it) {
             hodge_star.mem(it) = value(metric, elem, hodge_star.canonical_natural_element(it));
         });
-        sil::tensor::tensor_prod(hodge_tensor, hodge_star, form_tensor);
+        sil::tensor::
+                tensor_prod(hodge_tensor.coefficients(), hodge_star, form_tensor.coefficients());
     }
 
     KOKKOS_FUNCTION static detail::LocalOperatorStencil<
@@ -278,8 +279,8 @@ struct ContinuousHodgeStar
         for (std::size_t source = 0; source < Source::mem_size(); ++source) {
             unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
             operator()(
-                    tensor::Tensor(output.span_view()),
-                    tensor::Tensor(unit.span_view()),
+                    Form(tensor::Tensor(output.span_view())),
+                    Form(tensor::Tensor(unit.span_view())),
                     metric,
                     element);
             for (std::size_t target = 0; target < Target::mem_size(); ++target)
@@ -352,8 +353,8 @@ static_assert(ContinuousHodgeStarConcept<
                       ddc::TypeSeq<>,
                       detail::FieldConcept<detail::MetricIndexConcept>,
                       ddc::DiscreteElement<detail::GridConcept>>,
-              detail::FieldConcept<detail::ScalarConcept>,
-              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FormFieldConcept<detail::ScalarConcept>,
+              detail::FormFieldConcept<detail::DirectionConcept>,
               detail::FieldConcept<detail::MetricIndexConcept>,
               ddc::DiscreteElement<detail::GridConcept>,
               ddc::DiscreteElement<detail::DirectionConcept>>);
@@ -866,7 +867,7 @@ struct DualHodgeCochain
     }
 
     /** Inverse zero-form Hodge with the physical, truncated dual volume. */
-    template <class TopTensor, class Element>
+    template <CochainType TopTensor, class Element>
     KOKKOS_FUNCTION double inverse_zero_form(TopTensor const& top, Element elem) const
     {
         using TopIndices = ddc::type_seq_merge_t<ddc::TypeSeq<Direction>, dual_indices>;
@@ -895,7 +896,12 @@ struct DualHodgeCochain
                 decltype(metric),
                 decltype(local_position),
                 Element> {}
-                .operator()(ScalarTensor(scalar), top, metric, local_position, elem);
+                .operator()(
+                        ::sil::exterior::Cochain(ScalarTensor(scalar)),
+                        top,
+                        metric,
+                        local_position,
+                        elem);
         double const local_volume = SimplexVolume<
                 CellComplex::Primal,
                 Direction::size(),
@@ -918,7 +924,7 @@ struct DualHodgeCochain
     /** Apply the inverse zero-form Hodge to a pointwise top cochain.
      * \important This operator and documentation is fully AI-generated.
      */
-    template <class Output, class TopTensor, class Element>
+    template <CochainType Output, CochainType TopTensor, class Element>
     KOKKOS_FUNCTION void operator()(Output const& output, TopTensor const& top, Element elem) const
     {
         output.mem(ddc::DiscreteElement<tensor::Covariant<tensor::ScalarIndex>>(0))

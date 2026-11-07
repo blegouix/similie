@@ -25,8 +25,7 @@ class LinearMagnetostaticsHamiltonian:
             parameters=["mu"],
             hamiltonian=hamiltonian,
             variables=[A, B, j],
-            includes=["<similie/physics/magnetostatics/magnetostatics_quantities.hpp>"],
-            moments_computer="MagneticVectorPotentialToMagneticInduction<SpatialIndex...>",
+            includes=["<ddc/ddc.hpp>", "<similie/tensor/tensor.hpp>"],
             template_parameters=["class MuTensor", "class... SpatialIndex"],
             parameter_types={"mu": "MuTensor"},
             parameter_value_expressions={
@@ -39,12 +38,12 @@ class LinearMagnetostaticsHamiltonian:
 class LinearMagneticInductionToMagneticField:
     @staticmethod
     def __call__() -> ConstitutiveLawDefinition:
-        hodge_star, b, h, mu = symbols("hodge_star b h mu")
+        b, h, mu = symbols("b h mu")
         return ConstitutiveLawDefinition(
             namespace="similie::physics::magnetostatics",
             class_name="LinearMagneticInductionToMagneticField",
             parameters=["mu"],
-            variables=[str(hodge_star), str(b)],
+            variables=[str(b)],
             output_variable=str(h),
-            constitutive_law=hodge_star * b / mu,
+            constitutive_law=b / mu,
         )

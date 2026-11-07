@@ -6,23 +6,25 @@
 
 #include <array>
 
+#include <similie/exterior/form.hpp>
+
 #include <Kokkos_Core.hpp>
 
 namespace similie::physics::coupling {
 
 struct ElectromagneticCouplingState
 {
-    double charge_density {};
-    std::array<double, 3> electric_field {};
-    std::array<double, 3> induction {};
-    std::array<double, 3> current {};
+    sil::exterior::Form<double> charge_density {};
+    sil::exterior::Form<std::array<double, 3>> electric_field {};
+    sil::exterior::Form<std::array<double, 3>> induction {};
+    sil::exterior::Form<std::array<double, 3>> current {};
 };
 
 struct ElectromagneticExchange
 {
-    std::array<double, 3> momentum_source {};
-    double fluid_energy_source {};
-    double field_energy_source {};
+    sil::exterior::Form<std::array<double, 3>> momentum_source {};
+    sil::exterior::Form<double> fluid_energy_source {};
+    sil::exterior::Form<double> field_energy_source {};
 
     KOKKOS_FUNCTION ElectromagneticExchange& operator+=(ElectromagneticExchange const& other)
     {

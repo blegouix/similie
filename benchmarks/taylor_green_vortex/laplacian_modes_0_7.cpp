@@ -6,20 +6,22 @@
 
 namespace taylor_green_vortex::detail {
 
-std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian_modes_0_7(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>>
+make_scalar_laplacian_modes_0_7(
         int selected,
-        ScalarTensor const& output,
-        ScalarTensor const& input,
+        sil::exterior::Cochain<ScalarTensor> const& output,
+        sil::exterior::Cochain<ScalarTensor> const& input,
         MetricTensor const& metric,
         PositionTensor const& position)
 {
     return make_laplacian_mode_in_range<0, 7>(selected, output, input, metric, position);
 }
 
-std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian_modes_0_7(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>>
+make_two_form_laplacian_modes_0_7(
         int selected,
-        TwoFormTensor const& output,
-        TwoFormTensor const& input,
+        sil::exterior::Cochain<TwoFormTensor> const& output,
+        sil::exterior::Cochain<TwoFormTensor> const& input,
         MetricTensor const& metric,
         PositionTensor const& position)
 {
