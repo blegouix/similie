@@ -12,7 +12,7 @@
 #include <similie/exterior/cochain_indices.hpp>
 #include <similie/misc/signed_discrete_element.hpp>
 #include <similie/tensor/scalar_extrapolation_rules.hpp>
-#include <similie/tensor/tensor_impl.hpp>
+#include <similie/tensor/tensor_prod/tensor_prod.hpp>
 
 namespace sil::exterior {
 
@@ -40,6 +40,100 @@ namespace sil::exterior {
 template <tensor::TensorNatIndex VelocityIndex, tensor::TensorIndex FormIndex>
 struct InteriorProduct
 {
+private:
+    template <
+            class Index,
+            class Local,
+            class Field,
+            class Vertex,
+            class Spacing,
+            class Extrapolation>
+    KOKKOS_FUNCTION static void reconstruct(
+            Local const& local,
+            Field const& field,
+            Vertex const& vertex,
+            Spacing const& spacing,
+            Extrapolation const& extrapolation)
+    {
+        ddc::device_for_each(local.domain(), [&](auto component) {
+            auto const natural = local.accessor().canonical_natural_element(component);
+            std::array const axes = detail::flat_natural_elem_ids(natural);
+            double volume = 1;
+            for (std::size_t axis : axes)
+                volume *= spacing[axis];
+            double coefficient = 0;
+            for (std::size_t sample = 0; sample < (std::size_t(1) << Index::rank()); ++sample) {
+                Vertex neighbor(vertex);
+                for (std::size_t j = 0; j < axes.size(); ++j)
+                    ddc::detail::array(neighbor)[axes[j]] -= (sample >> j) & 1;
+                auto const sampled = extrapolation(field, neighbor);
+                coefficient += sampled.get(sampled.access_element(natural));
+            }
+            local.mem(component) = coefficient / ((std::size_t(1) << Index::rank()) * volume);
+        });
+    }
+
+    template <
+            class Memory,
+            class Vertex,
+            class Velocity,
+            class Form,
+            class Spacing,
+            class Extrapolation,
+            class Contracted,
+            class... Free>
+    KOKKOS_FUNCTION static double contract(
+            Vertex const& vertex,
+            Velocity const& velocity,
+            Form const& form,
+            Spacing const& spacing,
+            Extrapolation const& extrapolation,
+            std::array<std::size_t, sizeof...(Free)> const& axes,
+            ddc::DiscreteDomain<Contracted, Free...>)
+    {
+        std::array<double, VelocityIndex::mem_size()> velocity_storage {};
+        std::array<double, FormIndex::mem_size()> form_storage {};
+        std::array<double, (std::size_t(1) * ... * Free::mem_size())> output_storage {};
+        tensor::Tensor const local_velocity(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<VelocityIndex>,
+                        Kokkos::layout_right,
+                        Memory>(
+                        velocity_storage.data(),
+                        tensor::TensorAccessor<VelocityIndex>::domain()));
+        tensor::Tensor const local_form(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<FormIndex>,
+                        Kokkos::layout_right,
+                        Memory>(form_storage.data(), tensor::TensorAccessor<FormIndex>::domain()));
+        tensor::Tensor const local_output(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<Free...>,
+                        Kokkos::layout_right,
+                        Memory>(output_storage.data(), tensor::TensorAccessor<Free...>::domain()));
+        reconstruct<VelocityIndex>(local_velocity, velocity, vertex, spacing, extrapolation);
+        reconstruct<FormIndex>(local_form, form, vertex, spacing, extrapolation);
+        // Edge integrals give covector components. The existing spacing-based
+        // operator uses their Euclidean dual as the insertion vector.
+        tensor::Tensor const insertion(
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<
+                                tensor::TensorFullIndex<tensor::swap_character_t<Contracted>>>,
+                        Kokkos::layout_right,
+                        Memory>(
+                        velocity_storage.data(),
+                        tensor::TensorAccessor<tensor::TensorFullIndex<
+                                tensor::swap_character_t<Contracted>>>::domain()));
+        tensor::tensor_prod(local_output, insertion, local_form);
+        return local_output.get(local_output.access_element(
+                detail::natural_elem_from_flat_ids<ddc::DiscreteElement<Free...>>(axes)));
+    }
+
+public:
     template <
             class ExecSpace,
             class Output,
@@ -87,46 +181,14 @@ struct InteriorProduct
                         SignedElement vertex {Element(element)};
                         for (std::size_t j = 0; j < axes.size(); ++j)
                             ddc::detail::array(vertex)[axes[j]] += (corner >> j) & 1;
-                        for (std::size_t b = 0; b < VelocityIndex::size(); ++b) {
-                            bool repeated = false;
-                            for (std::size_t axis : axes)
-                                repeated = repeated || axis == b;
-                            if (repeated)
-                                continue;
-                            SignedElement previous(vertex);
-                            --ddc::detail::array(previous)[b];
-                            auto const current_velocity = extrapolation(velocity, vertex);
-                            auto const previous_velocity = extrapolation(velocity, previous);
-                            double const speed
-                                    = (current_velocity.get(current_velocity.access_element(
-                                               ddc::DiscreteElement<VelocityIndex>(b)))
-                                       + previous_velocity.get(previous_velocity.access_element(
-                                               ddc::DiscreteElement<VelocityIndex>(b))))
-                                      / (2 * spacing[b]);
-                            std::array<std::size_t, FormIndex::rank()> form_axes {};
-                            form_axes[0] = b;
-                            for (std::size_t j = 0; j < axes.size(); ++j)
-                                form_axes[j + 1] = axes[j];
-                            typename tensor::natural_domain_t<
-                                    FormIndex>::discrete_element_type const component
-                                    = detail::natural_elem_from_flat_ids<
-                                            typename tensor::natural_domain_t<
-                                                    FormIndex>::discrete_element_type>(form_axes);
-                            double coefficient = 0;
-                            for (std::size_t sample = 0;
-                                 sample < (std::size_t(1) << FormIndex::rank());
-                                 ++sample) {
-                                SignedElement neighbor(vertex);
-                                for (std::size_t j = 0; j < form_axes.size(); ++j)
-                                    ddc::detail::array(neighbor)[form_axes[j]] -= (sample >> j) & 1;
-                                auto const sampled_form = extrapolation(form, neighbor);
-                                coefficient
-                                        += sampled_form.get(sampled_form.access_element(component));
-                            }
-                            contraction += speed * coefficient
-                                           / ((std::size_t(1) << FormIndex::rank()) * spacing[b]
-                                              * volume);
-                        }
+                        contraction += contract<typename Output::memory_space>(
+                                vertex,
+                                velocity,
+                                form,
+                                spacing,
+                                extrapolation,
+                                axes,
+                                tensor::natural_domain_t<FormIndex>());
                     }
                     output.mem(element)
                             = volume * contraction / (std::size_t(1) << OutputIndex::rank());
