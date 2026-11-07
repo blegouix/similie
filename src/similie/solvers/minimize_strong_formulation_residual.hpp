@@ -1606,6 +1606,9 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                               ? 0.0
                               : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
             detail::log_nonlinear_progress(iteration, diagnostics);
+            if (!std::isfinite(diagnostics.final_residual_l2)) {
+                break;
+            }
             if (diagnostics.final_relative_residual <= settings.relative_tolerance) {
                 diagnostics.converged = true;
                 break;
@@ -1686,6 +1689,9 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 diagnostics.iterations += inner.iterations;
             }
             double const current_residual_l2 = detail::residual_norm_l2(exec_space, residual);
+            if (!std::isfinite(detail::residual_norm_l2(exec_space, delta))) {
+                break;
+            }
             double alpha = 1.0;
             double best_alpha = 0.0;
             double best_residual_l2 = std::numeric_limits<double>::infinity();
@@ -1716,6 +1722,11 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                     break;
                 }
                 alpha *= line_search_reduction;
+            }
+            // Keep the last valid iterate when no finite, improving step exists.
+            // In particular, a zero step cannot neutralize a NaN correction.
+            if (!std::isfinite(best_residual_l2) || best_residual_l2 >= current_residual_l2) {
+                break;
             }
             if (best_alpha != alpha) {
                 alpha = best_alpha;

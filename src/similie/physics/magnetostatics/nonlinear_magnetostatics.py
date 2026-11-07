@@ -24,7 +24,6 @@ struct InterpolatedNonlinearBHCurve
     std::array<double, MAX_SAMPLES> m_nu {};
     std::array<double, MAX_SAMPLES> m_energy {};
     std::array<double, MAX_SAMPLES - 1> m_dnu_dq {};
-    std::array<double, MAX_SAMPLES - 1> m_dh_db {};
 
     template <std::size_t NumSamples>
     explicit InterpolatedNonlinearBHCurve(
@@ -50,13 +49,12 @@ struct InterpolatedNonlinearBHCurve
         }
         for (std::size_t i = 0; i + 1 < m_num_samples; ++i) {
             m_dnu_dq[i] = (m_nu[i + 1] - m_nu[i]) / (m_q[i + 1] - m_q[i]);
-            m_dh_db[i] = (m_h[i + 1] - m_h[i]) / (m_b[i + 1] - m_b[i]);
         }
-        m_energy[0] = 0.5 * m_dh_db[0] * m_b[0] * m_b[0];
+        m_energy[0] = 0.0;
         for (std::size_t i = 0; i + 1 < m_num_samples; ++i) {
-            double const delta_b = m_b[i + 1] - m_b[i];
-            m_energy[i + 1]
-                    = m_energy[i] + 0.5 * (m_h[i] + m_h[i + 1]) * delta_b;
+            double const delta_q = m_q[i + 1] - m_q[i];
+            m_energy[i + 1] = m_energy[i] + 0.5 * m_nu[i] * delta_q
+                              + 0.25 * m_dnu_dq[i] * delta_q * delta_q;
         }
     }
 
@@ -99,84 +97,51 @@ struct InterpolatedNonlinearBHCurve
 
     [[nodiscard]] KOKKOS_FUNCTION double h_from_b(double b_value) const
     {
-        if (b_value <= m_b[0]) {
-            return m_h[0];
-        }
-        if (b_value >= m_b[m_num_samples - 1]) {
-            std::size_t const interval = m_num_samples - 2;
-            return m_h[interval] + m_dh_db[interval] * (b_value - m_b[interval]);
-        }
-        std::size_t const interval = bracket_q(b_value * b_value);
-        return m_h[interval] + m_dh_db[interval] * (b_value - m_b[interval]);
+        return nu_from_q(b_value * b_value) * b_value;
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double dh_db_from_b(double b_value) const
     {
-        if (b_value <= m_b[0]) {
-            return m_dh_db[0];
-        }
-        if (b_value >= m_b[m_num_samples - 1]) {
-            return m_dh_db[m_num_samples - 2];
-        }
-        return m_dh_db[bracket_q(b_value * b_value)];
+        double const q = b_value * b_value;
+        return nu_from_q(q) + 2.0 * q * dnu_dq(q);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double h_over_b_from_b(double b_value) const
     {
-        if (b_value == 0.0) {
-            return dh_db_from_b(0.0);
-        }
-        return h_from_b(b_value) / b_value;
+        return nu_from_q(b_value * b_value);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double d_h_over_b_db_from_b(double b_value) const
     {
-        if (b_value == 0.0) {
-            return 0.0;
-        }
-        return (dh_db_from_b(b_value) * b_value - h_from_b(b_value)) / (b_value * b_value);
+        return 2.0 * b_value * dnu_dq(b_value * b_value);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double d2_h_over_b_db2_from_b(double b_value) const
     {
-        if (b_value == 0.0) {
-            return 0.0;
-        }
-        double const intercept = h_from_b(b_value) - dh_db_from_b(b_value) * b_value;
-        return 2.0 * intercept / (b_value * b_value * b_value);
+        return 2.0 * dnu_dq(b_value * b_value);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double h_over_b_from_q(double q_value) const
     {
-        return h_over_b_from_b(std::sqrt(q_value));
+        return nu_from_q(q_value);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double d_h_over_b_dq_from_q(double q_value) const
     {
-        if (q_value == 0.0) {
-            return 0.0;
-        }
-        double const b_value = std::sqrt(q_value);
-        return d_h_over_b_db_from_b(b_value) / (2.0 * b_value);
+        return dnu_dq(q_value);
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION double d2_h_over_b_dq2_from_q(double q_value) const
+    [[nodiscard]] KOKKOS_FUNCTION double d2_h_over_b_dq2_from_q(double) const
     {
-        if (q_value == 0.0) {
-            return 0.0;
-        }
-        double const b_value = std::sqrt(q_value);
-        return d2_h_over_b_db2_from_b(b_value) / (4.0 * q_value)
-               - d_h_over_b_db_from_b(b_value) / (4.0 * q_value * b_value);
+        return 0.0;
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double magnetic_energy_from_q(double q_value) const
     {
-        double const b_value = std::sqrt(q_value);
         std::size_t const interval = bracket_q(q_value);
-        double const delta_b = b_value - m_b[interval];
-        return m_energy[interval] + m_h[interval] * delta_b
-               + 0.5 * m_dh_db[interval] * delta_b * delta_b;
+        double const delta_q = q_value - m_q[interval];
+        return m_energy[interval] + 0.5 * m_nu[interval] * delta_q
+               + 0.25 * m_dnu_dq[interval] * delta_q * delta_q;
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double b_from_h(double h_value) const
@@ -185,12 +150,27 @@ struct InterpolatedNonlinearBHCurve
             return m_b[0];
         }
         std::size_t const interval = bracket_h(h_value);
-        return m_b[interval] + (h_value - m_h[interval]) / m_dh_db[interval];
+        double lower = m_b[interval];
+        double upper = m_b[interval + 1];
+        // Extend the bracket for the extrapolated final polynomial segment.
+        for (unsigned int i = 0; i < 64 && h_from_b(upper) < h_value; ++i) {
+            upper *= 2.0;
+        }
+        // Inverting H(B) requires solving a cubic on each nu(B^2) segment.
+        for (unsigned int i = 0; i < 64; ++i) {
+            double const middle = lower + 0.5 * (upper - lower);
+            if (h_from_b(middle) < h_value) {
+                lower = middle;
+            } else {
+                upper = middle;
+            }
+        }
+        return lower + 0.5 * (upper - lower);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double db_dh(double h_value) const
     {
-        return 1.0 / m_dh_db[bracket_h(h_value)];
+        return 1.0 / dh_db_from_b(b_from_h(h_value));
     }
 
 };

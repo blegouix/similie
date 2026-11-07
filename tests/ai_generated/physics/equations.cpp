@@ -215,8 +215,8 @@ TEST(PhysicsAPI, MagneticConstitutiveLawsUsePointwiseFields)
     }
     similie::physics::magnetostatics::NonlinearMagneticState const induction {{1.2, 0.9, 0.0}};
     sil::exterior::Form<std::array<double, 3>> const response = law(induction, 0);
-    EXPECT_NEAR(response[0], 3.2, 1e-12);
-    EXPECT_NEAR(response[1], 2.4, 1e-12);
+    EXPECT_NEAR(response[0], 2.65, 1e-12);
+    EXPECT_NEAR(response[1], 1.9875, 1e-12);
     std::array<double, 9> const tangent = law.jacobian(induction, 0);
     for (std::size_t row = 0; row < 3; ++row)
         for (std::size_t column = 0; column < 3; ++column)
@@ -249,3 +249,21 @@ TEST(PhysicsAPI, NonlinearHamiltonianRetainsCrossComponentDerivatives)
 }
 
 } // namespace physics_api_test
+
+TEST(PhysicsAPI, NonlinearCurveMatchesGetDPReluctivityInterpolation)
+{
+    similie::physics::magnetostatics::InterpolatedNonlinearBHCurve<3> const
+            curve(std::array<double, 3> {0.0, 1.0, 2.0}, std::array<double, 3> {0.0, 2.0, 10.0});
+    // GetDP interpolates nu=H/B against q=B^2. Here nu=2 below B=1,
+    // then nu=1+q, so H=B+B^3, including final-segment extrapolation.
+    for (double b : {0.0, 0.5, 1.5, 2.0, 3.0}) {
+        double const q = b * b;
+        double const expected_h = b <= 1.0 ? 2.0 * b : b + b * q;
+        double const expected_energy = b <= 1.0 ? q : 0.25 + 0.5 * q + 0.25 * q * q;
+        EXPECT_DOUBLE_EQ(curve.h_from_b(b), expected_h);
+        EXPECT_DOUBLE_EQ(curve.dh_db_from_b(b), b <= 1.0 ? 2.0 : 1.0 + 3.0 * q);
+        EXPECT_DOUBLE_EQ(curve.magnetic_energy_from_q(q), expected_energy);
+        EXPECT_NEAR(curve.b_from_h(expected_h), b, 1e-14);
+        EXPECT_NEAR(curve.db_dh(expected_h), 1.0 / curve.dh_db_from_b(b), 1e-14);
+    }
+}
