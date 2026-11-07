@@ -254,20 +254,30 @@ class VertexFormReconstructionField
 
 public:
     VertexFormReconstructionField(Position const& position, Extrapolation const& extrapolation = {})
-        : m_position(position), m_extrapolation(extrapolation) {}
+        : m_position(position)
+        , m_extrapolation(extrapolation)
+    {
+    }
 
     template <class Exec, FormType Output, CochainType Input>
     void operator()(Exec const& exec, Output const& output, Input const& input) const
     {
-        using Index = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Input::indices_domain_t>>;
-        using Indices = std::conditional_t<Index::rank() == 0, ddc::TypeSeq<>,
+        using Index
+                = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Input::indices_domain_t>>;
+        using Indices = std::conditional_t<
+                Index::rank() == 0,
+                ddc::TypeSeq<>,
                 ddc::to_type_seq_t<tensor::natural_domain_t<Index>>>;
         Position const position = m_position;
         Extrapolation const extrapolation = m_extrapolation;
         ddc::parallel_for_each(
-                "similie_vertex_form_transfer", exec, output.non_indices_domain(),
-                KOKKOS_LAMBDA(typename Output::non_indices_domain_t::discrete_element_type element) {
-                    VertexFormReconstruction<Indices>::operator()(output[element], input, position, element, extrapolation);
+                "similie_vertex_form_transfer",
+                exec,
+                output.non_indices_domain(),
+                KOKKOS_LAMBDA(
+                        typename Output::non_indices_domain_t::discrete_element_type element) {
+                    VertexFormReconstruction<Indices>::
+                    operator()(output[element], input, position, element, extrapolation);
                 });
     }
 };
@@ -282,20 +292,30 @@ class VertexFormProjectionField
 
 public:
     VertexFormProjectionField(Position const& position, Extrapolation const& extrapolation = {})
-        : m_position(position), m_extrapolation(extrapolation) {}
+        : m_position(position)
+        , m_extrapolation(extrapolation)
+    {
+    }
 
     template <class Exec, CochainType Output, FormType Input>
     void operator()(Exec const& exec, Output const& output, Input const& input) const
     {
-        using Index = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Output::indices_domain_t>>;
-        using Indices = std::conditional_t<Index::rank() == 0, ddc::TypeSeq<>,
+        using Index
+                = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Output::indices_domain_t>>;
+        using Indices = std::conditional_t<
+                Index::rank() == 0,
+                ddc::TypeSeq<>,
                 ddc::to_type_seq_t<tensor::natural_domain_t<Index>>>;
         Position const position = m_position;
         Extrapolation const extrapolation = m_extrapolation;
         ddc::parallel_for_each(
-                "similie_vertex_form_transfer", exec, output.non_indices_domain(),
-                KOKKOS_LAMBDA(typename Output::non_indices_domain_t::discrete_element_type element) {
-                    VertexFormProjection<Indices>::operator()(output[element], input, position, element, extrapolation);
+                "similie_vertex_form_transfer",
+                exec,
+                output.non_indices_domain(),
+                KOKKOS_LAMBDA(
+                        typename Output::non_indices_domain_t::discrete_element_type element) {
+                    VertexFormProjection<Indices>::
+                    operator()(output[element], input, position, element, extrapolation);
                 });
     }
 };

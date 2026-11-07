@@ -12,18 +12,58 @@
 
 namespace sil::exterior {
 namespace detail {
-template <class Operator, class Output, class Forms, class Element, std::size_t... I, class Arguments>
+template <
+        class Operator,
+        class Output,
+        class Forms,
+        class Element,
+        std::size_t... I,
+        class Arguments>
 KOKKOS_FUNCTION void apply_form_tuple(
-        Operator const& operation, Output const& output, Forms const& forms,
-        Element element, std::index_sequence<I...>, Arguments const& arguments)
+        Operator const& operation,
+        Output const& output,
+        Forms const& forms,
+        Element element,
+        std::index_sequence<I...>,
+        Arguments const& arguments)
 {
     [&]<std::size_t... A>(std::index_sequence<A...>) {
-        if constexpr (requires { operation(output[element], std::get<I>(forms)[element]..., std::get<A>(arguments)..., element); })
-            operation(output[element], std::get<I>(forms)[element]..., std::get<A>(arguments)..., element);
+        if constexpr (requires {
+                          operation(
+                                  output[element],
+                                  std::get<I>(forms)[element]...,
+                                  std::get<A>(arguments)...,
+                                  element);
+                      })
+            operation(
+                    output[element],
+                    std::get<I>(forms)[element]...,
+                    std::get<A>(arguments)...,
+                    element);
         else
             operation(output[element], std::get<I>(forms)[element]..., std::get<A>(arguments)...);
     }(std::make_index_sequence<std::tuple_size_v<Arguments>>());
 }
+template <class Operator, class Output, class Buffers, class Arguments>
+struct ApplyRepresentation
+{
+    Operator operation;
+    Output output;
+    Buffers buffers;
+    Arguments arguments;
+
+    KOKKOS_FUNCTION void operator()(
+            typename Output::non_indices_domain_t::discrete_element_type element) const
+    {
+        apply_form_tuple(
+                operation,
+                output,
+                buffers,
+                element,
+                std::make_index_sequence<std::tuple_size_v<Buffers>>(),
+                arguments);
+    }
+};
 } // namespace detail
 
 
@@ -35,7 +75,7 @@ class OperatorActingOnCochainInPlaceOfForm
     Operator m_operator;
 
 public:
-    OperatorActingOnCochainInPlaceOfForm() = default;
+    KOKKOS_DEFAULTED_FUNCTION OperatorActingOnCochainInPlaceOfForm() = default;
     KOKKOS_FUNCTION explicit OperatorActingOnCochainInPlaceOfForm(Operator const& operation)
         : m_operator(operation)
     {
@@ -64,28 +104,42 @@ public:
     }
     // Value operators can return an owned result (including scalar forms).
     // Transfers return values, so no mutable-view convention is imposed here.
-    template <class Reconstruct, class Reduce, class... Inputs>
+    template <class TransferIn, class TransferOut, class... Inputs>
         requires(sizeof...(Inputs) > 0
                  && ((CochainType<Inputs> || misc::Specialization<Inputs, Cosimplex>) && ...)
-                 && requires(Operator const& operation, Reconstruct const& reconstruct,
-                             Reduce const& reduce, Inputs const&... inputs) {
-                     reduce(operation(reconstruct(inputs)...));
+                 && requires(Operator const& operation, TransferIn const& transfer_in,
+                             TransferOut const& transfer_out, Inputs const&... inputs) {
+                     requires (FormType<decltype(transfer_in(inputs))> && ...);
+                     requires FormType<decltype(operation(transfer_in(inputs)...))>;
+                     requires (CochainType<decltype(transfer_out(operation(transfer_in(inputs)...)))>
+                               || misc::Specialization<decltype(transfer_out(operation(transfer_in(inputs)...))), Cosimplex>);
                  })
     KOKKOS_FUNCTION auto operator()(
-            Reconstruct const& reconstruct, Reduce const& reduce, Inputs const&... inputs) const
+            TransferIn const& transfer_in, TransferOut const& transfer_out, Inputs const&... inputs) const
     {
-        return reduce(m_operator(reconstruct(inputs)...));
+        return transfer_out(m_operator(transfer_in(inputs)...));
     }
 
     // Multiple operands share one geometric transfer policy. Its overloads
     // select the appropriate form degree and placement for each operand.
-    template <class Exec, CochainType Output, class... Inputs, class... Buffers,
-              FormType Transformed, class TransferIn, class TransferOut, class... Arguments>
+    template <
+            class Exec,
+            CochainType Output,
+            class... Inputs,
+            class... Buffers,
+            FormType Transformed,
+            class TransferIn,
+            class TransferOut,
+            class... Arguments>
     Output operator()(
-            Exec const& exec, Output const& output,
-            std::tuple<Inputs...> const& inputs, std::tuple<Buffers...> const& buffers,
-            Transformed const& transformed, TransferIn const& transfer_in,
-            TransferOut const& transfer_out, Arguments const&... arguments) const
+            Exec const& exec,
+            Output const& output,
+            std::tuple<Inputs...> const& inputs,
+            std::tuple<Buffers...> const& buffers,
+            Transformed const& transformed,
+            TransferIn const& transfer_in,
+            TransferOut const& transfer_out,
+            Arguments const&... arguments) const
     {
         static_assert(sizeof...(Inputs) == sizeof...(Buffers));
         static_assert((CochainType<Inputs> && ...));
@@ -93,18 +147,20 @@ public:
         [&]<std::size_t... I>(std::index_sequence<I...>) {
             (transfer_in(exec, std::get<I>(buffers), std::get<I>(inputs)), ...);
         }(std::index_sequence_for<Inputs...>());
-        Operator const operation = m_operator;
         std::tuple<Arguments...> const argument_tuple(arguments...);
         ddc::parallel_for_each(
-                "similie_apply_representation_adapter", exec, transformed.non_indices_domain(),
-                KOKKOS_LAMBDA(typename Transformed::non_indices_domain_t::discrete_element_type element) {
-                    detail::apply_form_tuple(operation, transformed, buffers, element,
-                                             std::index_sequence_for<Inputs...>(), argument_tuple);
-                });
+                "similie_apply_representation_adapter",
+                exec,
+                transformed.non_indices_domain(),
+                detail::ApplyRepresentation<
+                        Operator,
+                        Transformed,
+                        std::tuple<Buffers...>,
+                        std::tuple<
+                                Arguments...>> {m_operator, transformed, buffers, argument_tuple});
         transfer_out(exec, output, transformed);
         return output;
     }
-
 };
 
 template <class Operator>
@@ -115,7 +171,7 @@ class OperatorActingOnFormInPlaceOfCochain
 public:
     static constexpr bool input_is_form = true;
     static constexpr bool output_is_form = true;
-    OperatorActingOnFormInPlaceOfCochain() = default;
+    KOKKOS_DEFAULTED_FUNCTION OperatorActingOnFormInPlaceOfCochain() = default;
     KOKKOS_FUNCTION explicit OperatorActingOnFormInPlaceOfCochain(Operator const& operation)
         : m_operator(operation)
     {
@@ -144,28 +200,41 @@ public:
     }
     // Value operators can return an owned result (including scalar forms).
     // Transfers return values, so no mutable-view convention is imposed here.
-    template <class Reconstruct, class Reduce, class... Inputs>
+    template <class TransferIn, class TransferOut, class... Inputs>
         requires(sizeof...(Inputs) > 0
                  && (FormType<Inputs> && ...)
-                 && requires(Operator const& operation, Reconstruct const& reconstruct,
-                             Reduce const& reduce, Inputs const&... inputs) {
-                     reduce(operation(reconstruct(inputs)...));
+                 && requires(Operator const& operation, TransferIn const& transfer_in,
+                             TransferOut const& transfer_out, Inputs const&... inputs) {
+                     requires ((CochainType<decltype(transfer_in(inputs))>
+                                || misc::Specialization<decltype(transfer_in(inputs)), Cosimplex>) && ...);
+                     requires FormType<decltype(transfer_out(operation(transfer_in(inputs)...)))>;
                  })
     KOKKOS_FUNCTION auto operator()(
-            Reconstruct const& reconstruct, Reduce const& reduce, Inputs const&... inputs) const
+            TransferIn const& transfer_in, TransferOut const& transfer_out, Inputs const&... inputs) const
     {
-        return reduce(m_operator(reconstruct(inputs)...));
+        return transfer_out(m_operator(transfer_in(inputs)...));
     }
 
     // Multiple operands share one geometric transfer policy. Its overloads
     // select the appropriate form degree and placement for each operand.
-    template <class Exec, FormType Output, class... Inputs, class... Buffers,
-              CochainType Transformed, class TransferIn, class TransferOut, class... Arguments>
+    template <
+            class Exec,
+            FormType Output,
+            class... Inputs,
+            class... Buffers,
+            CochainType Transformed,
+            class TransferIn,
+            class TransferOut,
+            class... Arguments>
     Output operator()(
-            Exec const& exec, Output const& output,
-            std::tuple<Inputs...> const& inputs, std::tuple<Buffers...> const& buffers,
-            Transformed const& transformed, TransferIn const& transfer_in,
-            TransferOut const& transfer_out, Arguments const&... arguments) const
+            Exec const& exec,
+            Output const& output,
+            std::tuple<Inputs...> const& inputs,
+            std::tuple<Buffers...> const& buffers,
+            Transformed const& transformed,
+            TransferIn const& transfer_in,
+            TransferOut const& transfer_out,
+            Arguments const&... arguments) const
     {
         static_assert(sizeof...(Inputs) == sizeof...(Buffers));
         static_assert((FormType<Inputs> && ...));
@@ -173,18 +242,20 @@ public:
         [&]<std::size_t... I>(std::index_sequence<I...>) {
             (transfer_in(exec, std::get<I>(buffers), std::get<I>(inputs)), ...);
         }(std::index_sequence_for<Inputs...>());
-        Operator const operation = m_operator;
         std::tuple<Arguments...> const argument_tuple(arguments...);
         ddc::parallel_for_each(
-                "similie_apply_representation_adapter", exec, transformed.non_indices_domain(),
-                KOKKOS_LAMBDA(typename Transformed::non_indices_domain_t::discrete_element_type element) {
-                    detail::apply_form_tuple(operation, transformed, buffers, element,
-                                             std::index_sequence_for<Inputs...>(), argument_tuple);
-                });
+                "similie_apply_representation_adapter",
+                exec,
+                transformed.non_indices_domain(),
+                detail::ApplyRepresentation<
+                        Operator,
+                        Transformed,
+                        std::tuple<Buffers...>,
+                        std::tuple<
+                                Arguments...>> {m_operator, transformed, buffers, argument_tuple});
         transfer_out(exec, output, transformed);
         return output;
     }
-
 };
 
 } // namespace sil::exterior

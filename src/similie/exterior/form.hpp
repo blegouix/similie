@@ -120,15 +120,47 @@ public:
     using coefficients_type = double;
     KOKKOS_DEFAULTED_FUNCTION constexpr Form() = default;
     KOKKOS_FUNCTION constexpr explicit Form(double value) : m_value(value) {}
-    KOKKOS_FUNCTION constexpr operator double() const { return m_value; }
-    KOKKOS_FUNCTION constexpr double value() const { return m_value; }
-    KOKKOS_FUNCTION constexpr double const& coefficients() const { return m_value; }
-    KOKKOS_FUNCTION constexpr double& coefficients() { return m_value; }
-    KOKKOS_FUNCTION constexpr Form& operator=(double value) { m_value = value; return *this; }
-    KOKKOS_FUNCTION constexpr Form& operator+=(double value) { m_value += value; return *this; }
-    KOKKOS_FUNCTION constexpr Form& operator-=(double value) { m_value -= value; return *this; }
-    KOKKOS_FUNCTION constexpr Form& operator*=(double value) { m_value *= value; return *this; }
-    KOKKOS_FUNCTION constexpr Form& operator/=(double value) { m_value /= value; return *this; }
+    KOKKOS_FUNCTION constexpr operator double() const
+    {
+        return m_value;
+    }
+    KOKKOS_FUNCTION constexpr double value() const
+    {
+        return m_value;
+    }
+    KOKKOS_FUNCTION constexpr double const& coefficients() const
+    {
+        return m_value;
+    }
+    KOKKOS_FUNCTION constexpr double& coefficients()
+    {
+        return m_value;
+    }
+    KOKKOS_FUNCTION constexpr Form& operator=(double value)
+    {
+        m_value = value;
+        return *this;
+    }
+    KOKKOS_FUNCTION constexpr Form& operator+=(double value)
+    {
+        m_value += value;
+        return *this;
+    }
+    KOKKOS_FUNCTION constexpr Form& operator-=(double value)
+    {
+        m_value -= value;
+        return *this;
+    }
+    KOKKOS_FUNCTION constexpr Form& operator*=(double value)
+    {
+        m_value *= value;
+        return *this;
+    }
+    KOKKOS_FUNCTION constexpr Form& operator/=(double value)
+    {
+        m_value /= value;
+        return *this;
+    }
 };
 
 template <class Coefficients>
@@ -145,10 +177,13 @@ template <class Domain>
 struct FormDegree;
 template <class... Index>
 struct FormDegree<ddc::DiscreteDomain<Index...>>
-    : std::integral_constant<std::size_t, (Index::rank() + ... + 0)> {};
+    : std::integral_constant<std::size_t, (Index::rank() + ... + 0)>
+{
+};
 } // namespace detail
 
 template <TensorFormType T>
-inline constexpr std::size_t form_degree_v = detail::FormDegree<typename T::indices_domain_t>::value;
+inline constexpr std::size_t form_degree_v
+        = detail::FormDegree<typename T::indices_domain_t>::value;
 
 } // namespace sil::exterior

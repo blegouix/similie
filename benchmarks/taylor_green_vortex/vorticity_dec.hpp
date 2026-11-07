@@ -288,18 +288,27 @@ public:
         MetricTensor const metric = m_grid.euclidean_metric();
         auto const inverse_metric = sil::tensor::relabelize_indices_of<
                 ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>,
-                sil::tensor::upper_t<ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>>>(metric);
-        sil::exterior::OperatorActingOnCochainInPlaceOfForm<
-                sil::exterior::InteriorProduct<sil::tensor::Contravariant<CurlDirection>, TwoForm>> {}(
+                sil::tensor::upper_t<
+                        ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>>>(
+                metric);
+        sil::exterior::OperatorActingOnCochainInPlaceOfForm<sil::exterior::InteriorProduct<
+                sil::tensor::Contravariant<CurlDirection>,
+                TwoForm>> {}(
                 Kokkos::DefaultExecutionSpace(),
                 sil::exterior::Cochain(tensor<Vector>(m_one)),
-                std::tuple {sil::exterior::Cochain(tensor<Vector>(m_one)),
-                            sil::exterior::Cochain(tensor<TwoForm>(m_two))},
-                std::tuple {sil::exterior::Form(tensor<Vector>(m_physical_one)),
-                            sil::exterior::Form(tensor<TwoForm>(m_physical_two))},
+                std::
+                        tuple {sil::exterior::Cochain(tensor<Vector>(m_one)),
+                               sil::exterior::Cochain(tensor<TwoForm>(m_two))},
+                std::
+                        tuple {sil::exterior::Form(tensor<Vector>(m_physical_one)),
+                               sil::exterior::Form(tensor<TwoForm>(m_physical_two))},
                 sil::exterior::Form(tensor<Vector>(m_axial)),
-                sil::exterior::VertexFormReconstructionField(geometry, sil::tensor::PeriodicExtrapolationRule {}),
-                sil::exterior::VertexFormProjectionField(geometry, sil::tensor::PeriodicExtrapolationRule {}),
+                sil::exterior::VertexFormReconstructionField(
+                        geometry,
+                        sil::tensor::PeriodicExtrapolationRule {}),
+                sil::exterior::VertexFormProjectionField(
+                        geometry,
+                        sil::tensor::PeriodicExtrapolationRule {}),
                 inverse_metric);
         unpack(m_one, output);
     }

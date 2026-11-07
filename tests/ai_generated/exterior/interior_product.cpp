@@ -36,6 +36,15 @@ concept CanInsertTwoForm = requires(
 static_assert(!CanInsertTwoForm<sil::exterior::Form<Field<Two>>, sil::exterior::Form<Field<Two>>>);
 static_assert(!CanInsertTwoForm<sil::exterior::Form<Field<One>>, sil::exterior::Form<Field<One>>>);
 
+template <class Output>
+concept CanInsertOneForm = requires(
+        Output const& output,
+        Field<sil::tensor::upper_t<One>> const& vector,
+        sil::exterior::Form<Field<One>> const& input) {
+    sil::exterior::InteriorProduct<sil::tensor::upper_t<One>, One> {}(output, vector, input);
+};
+static_assert(!CanInsertOneForm<sil::exterior::Form<Field<One>>>);
+
 template <class InputIndex, class OutputIndex>
 void apply_cochain_interior(
         Field<OutputIndex> const& output,
@@ -384,6 +393,67 @@ struct DirectFormCheck
         EXPECT_DOUBLE_EQ(host(2), -17.0);
     }
 };
+
+using ScalarForm = sil::exterior::Form<double>;
+using PointCell = sil::exterior::Simplex<0, GridX, GridY, GridZ>;
+using CellScalar = sil::exterior::Cosimplex<PointCell>;
+struct ScalarSum
+{
+    KOKKOS_FUNCTION ScalarForm operator()(ScalarForm const& a, ScalarForm const& b) const
+    {
+        return ScalarForm(a.value() + b.value());
+    }
+};
+struct CellSum
+{
+    KOKKOS_FUNCTION CellScalar operator()(CellScalar const& a, CellScalar const& b) const
+    {
+        return CellScalar(a.simplex(), a.value() + b.value());
+    }
+};
+struct ObserveScalar
+{
+    KOKKOS_FUNCTION ScalarForm operator()(CellScalar const& a) const
+    {
+        return ScalarForm(a.value());
+    }
+};
+struct IntegrateScalar
+{
+    KOKKOS_FUNCTION CellScalar operator()(ScalarForm const& a) const
+    {
+        PointCell const
+                cell(ddc::DiscreteElement<GridX, GridY, GridZ>(1, 1, 1), ddc::DiscreteVector<>());
+        return CellScalar(cell, a.value());
+    }
+};
+struct ValueAdapterCheck
+{
+    static void run()
+    {
+        Kokkos::View<double*, Memory> result("value_adapters", 2);
+        Kokkos::parallel_for(
+                "value_adapters",
+                1,
+                KOKKOS_LAMBDA(int) {
+                    ScalarForm const a(2.0), b(3.0);
+                    CellScalar const ca = IntegrateScalar {}(a), cb = IntegrateScalar {}(b);
+                    result(0) = sil::exterior::OperatorActingOnCochainInPlaceOfForm<
+                                        ScalarSum> {}(ObserveScalar {}, IntegrateScalar {}, ca, cb)
+                                        .value();
+                    result(1) = sil::exterior::OperatorActingOnFormInPlaceOfCochain<
+                                        CellSum> {}(IntegrateScalar {}, ObserveScalar {}, a, b)
+                                        .value();
+                });
+        auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result);
+        EXPECT_DOUBLE_EQ(host(0), 5.0);
+        EXPECT_DOUBLE_EQ(host(1), 5.0);
+    }
+};
+TEST(Form, ValueAdaptersSupportSeveralOperandsAndCosimplices)
+{
+    ValueAdapterCheck::run();
+}
 
 struct OwningFormCheck
 {
