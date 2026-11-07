@@ -6,6 +6,7 @@
 
 #include <array>
 
+#include <similie/exterior/form.hpp>
 #include <similie/physics/concepts.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -24,11 +25,12 @@ namespace similie::physics::fluid {
 class IncompressibleNavierStokes
 {
 public:
+    using Scalar = sil::exterior::Form<double>;
     static constexpr std::size_t N = 3;
     static constexpr bool IS_LINEAR = false;
     struct State
     {
-        std::array<double, N> vorticity {};
+        sil::exterior::Form<std::array<double, N>> vorticity {};
     };
     double const density;
     double const viscosity;
@@ -40,43 +42,51 @@ public:
     {
     }
 
-    KOKKOS_FUNCTION double operator()(double transport_curl, double vorticity_laplacian) const
+    KOKKOS_FUNCTION sil::exterior::Form<std::array<double, N>> operator()(
+            sil::exterior::Form<std::array<double, N>> const& transport_curl,
+            sil::exterior::Form<std::array<double, N>> const& vorticity_laplacian) const
     {
-        return transport_curl + viscosity / density * vorticity_laplacian;
+        sil::exterior::Form<std::array<double, N>> result {};
+        for (std::size_t component = 0; component < N; ++component)
+            result[component] = transport_curl[component]
+                                + viscosity / density * vorticity_laplacian[component];
+        return result;
     }
-    KOKKOS_FUNCTION std::array<double, 3> transport(
-            std::array<double, 3> const& velocity,
-            std::array<double, 3> const& vorticity) const
+    KOKKOS_FUNCTION sil::exterior::Form<std::array<double, 3>> transport(
+            sil::exterior::Form<std::array<double, 3>> const& velocity,
+            sil::exterior::Form<std::array<double, 3>> const& vorticity) const
     {
-        std::array<double, 3> result {};
+        sil::exterior::Form<std::array<double, 3>> result {};
         for (int a = 0; a < 3; ++a) {
             int const b = (a + 1) % 3, c = (a + 2) % 3;
             result[a] = velocity[b] * vorticity[c] - velocity[c] * vorticity[b];
         }
         return result;
     }
-    KOKKOS_FUNCTION std::array<double, 3> momentum_rate(
-            std::array<double, 3> const& velocity,
-            std::array<double, 3> const& vorticity,
-            std::array<double, 3> const& bernoulli_gradient,
-            std::array<double, 3> const& velocity_laplacian) const
+    KOKKOS_FUNCTION sil::exterior::Form<std::array<double, 3>> momentum_rate(
+            sil::exterior::Form<std::array<double, 3>> const& velocity,
+            sil::exterior::Form<std::array<double, 3>> const& vorticity,
+            sil::exterior::Form<std::array<double, 3>> const& bernoulli_gradient,
+            sil::exterior::Form<std::array<double, 3>> const& velocity_laplacian) const
     {
-        std::array<double, 3> result = transport(velocity, vorticity);
+        sil::exterior::Form<std::array<double, 3>> result = transport(velocity, vorticity);
         for (int a = 0; a < 3; ++a) {
             result[a] += -bernoulli_gradient[a] + viscosity / density * velocity_laplacian[a];
         }
         return result;
     }
-    KOKKOS_FUNCTION double incompressibility(double velocity_divergence) const
+    KOKKOS_FUNCTION Scalar incompressibility(Scalar const& velocity_divergence) const
     {
-        return velocity_divergence;
+        return Scalar(velocity_divergence);
     }
-    KOKKOS_FUNCTION double pressure(double bernoulli, std::array<double, 3> const& velocity) const
+    KOKKOS_FUNCTION Scalar pressure(
+            Scalar const& bernoulli,
+            sil::exterior::Form<std::array<double, 3>> const& velocity) const
     {
         double kinetic = 0;
         for (double value : velocity)
             kinetic += 0.5 * value * value;
-        return density * (bernoulli - kinetic);
+        return Scalar(density * (bernoulli - kinetic));
     }
 };
 

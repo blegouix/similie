@@ -110,6 +110,7 @@ def write_cpp_constitutive_law_header(
 #include <cmath>
 #include <cstddef>
 #include <Kokkos_Core.hpp>
+#include <similie/exterior/form.hpp>
 #include <similie/physics/concepts.hpp>
 
 namespace {namespace} {{
@@ -122,7 +123,7 @@ public:
     static constexpr std::size_t N = 1;
     struct State
     {{
-        std::array<double, N> value {{}};
+        sil::exterior::Form<std::array<double, N>> value {{}};
 {context_members}
     }};
 
@@ -146,7 +147,7 @@ public:
     }}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> operator()(State const& state, Elem const& elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr sil::exterior::Form<std::array<double, N>> operator()(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
         return {{{render(constitutive_law)}}};
@@ -160,7 +161,7 @@ public:
     }}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> inverse(State const& state, Elem const& elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr sil::exterior::Form<std::array<double, N>> inverse(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
         return {{{render(inverse_expression, True)}}};

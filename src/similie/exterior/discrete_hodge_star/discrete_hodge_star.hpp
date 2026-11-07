@@ -5,6 +5,7 @@
 #pragma once
 
 #include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
+#include <similie/exterior/operator_representation.hpp>
 
 namespace sil::exterior {
 namespace detail {
@@ -56,7 +57,7 @@ private:
     using HodgeOperator = HodgePolicy<Indices1, Indices2, MetricType, BatchElem>;
     ReconstructionOperator m_reconstruction;
     ReductionOperator m_reduction;
-    HodgeOperator m_hodge;
+    OperatorActingOnCochainInPlaceOfForm<HodgeOperator> m_hodge;
 
 public:
     using staged_storage_type = detail::LocalOperatorStorage<
@@ -82,7 +83,7 @@ public:
     {
     }
 
-    template <class Output, class Input>
+    template <CochainType Output, CochainType Input>
     KOKKOS_FUNCTION void operator()(
             Output const& output,
             Input const& input,
@@ -94,12 +95,19 @@ public:
                 ddc::DiscreteElement<>());
         auto transformed = detail::make_stencil<typename MetricType::memory_space, Target>(
                 ddc::DiscreteElement<>());
-        m_reconstruction(tensor::Tensor(reconstructed.span_view()), input, position, element);
-        m_hodge(tensor::Tensor(transformed.span_view()),
-                tensor::Tensor(reconstructed.span_view()),
+        m_hodge(
+                output,
+                input,
+                Form(tensor::Tensor(reconstructed.span_view())),
+                Form(tensor::Tensor(transformed.span_view())),
+                [&](auto const& form, auto const& cochain) {
+                    m_reconstruction(form, cochain, position, element);
+                },
+                [&](auto const& cochain, auto const& form) {
+                    m_reduction(cochain, form, metric, position, element);
+                },
                 metric,
                 element);
-        m_reduction(output, tensor::Tensor(transformed.span_view()), metric, position, element);
     }
 
     KOKKOS_FUNCTION detail::LocalOperatorStencil<Source, Target> value(
@@ -115,8 +123,8 @@ public:
         for (std::size_t source = 0; source < Source::mem_size(); ++source) {
             unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
             operator()(
-                    tensor::Tensor(output.span_view()),
-                    tensor::Tensor(unit.span_view()),
+                    Cochain(tensor::Tensor(output.span_view())),
+                    Cochain(tensor::Tensor(unit.span_view())),
                     metric,
                     position,
                     element);
@@ -152,8 +160,8 @@ static_assert(DiscreteHodgeStarConcept<
                       detail::FieldConcept<detail::MetricIndexConcept>,
                       detail::FieldConcept<detail::PositionIndexConcept>,
                       ddc::DiscreteElement<detail::GridConcept>>,
-              detail::FieldConcept<detail::ScalarConcept>,
-              detail::FieldConcept<detail::DirectionConcept>,
+              detail::CochainFieldConcept<detail::ScalarConcept>,
+              detail::CochainFieldConcept<detail::DirectionConcept>,
               detail::FieldConcept<detail::MetricIndexConcept>,
               detail::FieldConcept<detail::PositionIndexConcept>,
               ddc::DiscreteElement<detail::GridConcept>,

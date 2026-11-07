@@ -110,7 +110,13 @@ private:
                 face_mask |= std::size_t(ddc::detail::array(face->discrete_vector())[d]) << d;
                 face_vertex |= ddc::detail::array(face->discrete_element())[d] << d;
             }
-            auto const sampled = sampler(face_mask, face_vertex);
+            auto const sample = sampler(face_mask, face_vertex);
+            auto const sampled = [&]() {
+                if constexpr (misc::Specialization<std::remove_cv_t<decltype(sample)>, Cosimplex>)
+                    return sample.value();
+                else
+                    return sample;
+            }();
             if (face_vertex == vertex) {
                 values[face_id] = sampled;
             } else {
@@ -134,7 +140,7 @@ private:
                     cochain(faces, span);
             result[a] = cochain.integrate();
         }
-        return result;
+        return Cosimplex(cell, result);
     }
 };
 

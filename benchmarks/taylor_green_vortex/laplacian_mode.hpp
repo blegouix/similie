@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include <similie/exterior/cochain.hpp>
+
 #include "configuration.hpp"
 #include "grid_types.hpp"
 
@@ -20,79 +22,89 @@ public:
 };
 
 namespace detail {
-std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian_modes_0_7(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>>
+make_scalar_laplacian_modes_0_7(
         int,
-        ScalarTensor const&,
-        ScalarTensor const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian_modes_8_15(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>>
+make_scalar_laplacian_modes_8_15(
         int,
-        ScalarTensor const&,
-        ScalarTensor const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian_modes_16_23(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>>
+make_scalar_laplacian_modes_16_23(
         int,
-        ScalarTensor const&,
-        ScalarTensor const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian_modes_24_31(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>>
+make_scalar_laplacian_modes_24_31(
         int,
-        ScalarTensor const&,
-        ScalarTensor const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian_modes_32_38(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>>
+make_scalar_laplacian_modes_32_38(
         int,
-        ScalarTensor const&,
-        ScalarTensor const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
+        sil::exterior::Cochain<ScalarTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
 
-std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian_modes_0_7(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>>
+make_two_form_laplacian_modes_0_7(
         int,
-        TwoFormTensor const&,
-        TwoFormTensor const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian_modes_8_15(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>>
+make_two_form_laplacian_modes_8_15(
         int,
-        TwoFormTensor const&,
-        TwoFormTensor const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian_modes_16_23(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>>
+make_two_form_laplacian_modes_16_23(
         int,
-        TwoFormTensor const&,
-        TwoFormTensor const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian_modes_24_31(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>>
+make_two_form_laplacian_modes_24_31(
         int,
-        TwoFormTensor const&,
-        TwoFormTensor const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
-std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian_modes_32_38(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>>
+make_two_form_laplacian_modes_32_38(
         int,
-        TwoFormTensor const&,
-        TwoFormTensor const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
+        sil::exterior::Cochain<TwoFormTensor> const&,
         MetricTensor const&,
         PositionTensor const&);
 } // namespace detail
 
-std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<ScalarTensor>>> make_scalar_laplacian(
         Configuration const& selected,
-        ScalarTensor const& output,
-        ScalarTensor const& input,
+        sil::exterior::Cochain<ScalarTensor> const& output,
+        sil::exterior::Cochain<ScalarTensor> const& input,
         MetricTensor const& metric,
         PositionTensor const& position);
-std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian(
+std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>> make_two_form_laplacian(
         Configuration const& selected,
-        TwoFormTensor const& output,
-        TwoFormTensor const& input,
+        sil::exterior::Cochain<TwoFormTensor> const& output,
+        sil::exterior::Cochain<TwoFormTensor> const& input,
         MetricTensor const& metric,
         PositionTensor const& position);
 } // namespace taylor_green_vortex

@@ -93,31 +93,18 @@ namespace detail {
 
 template <
         tensor::TensorNatIndex TagToAddToCochain,
-        tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType>
-struct CoboundaryTensorType;
-
-template <
-        tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainIndex,
-        class ElementType,
-        class... DDim,
-        class SupportType,
-        class MemorySpace>
-struct CoboundaryTensorType<
-        TagToAddToCochain,
-        CochainIndex,
-        tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
+        CochainType TensorType>
+struct CoboundaryTensorType
 {
-    static_assert(ddc::type_seq_contains_v<ddc::TypeSeq<CochainIndex>, ddc::TypeSeq<DDim...>>);
-    using type = tensor::Tensor<
-            ElementType,
+    using type = ::sil::exterior::Cochain<tensor::Tensor<
+            typename TensorType::element_type,
             ddc::replace_dim_of_t<
-                    ddc::DiscreteDomain<DDim...>,
+                    typename TensorType::discrete_domain_type,
                     CochainIndex,
                     coboundary_index_t<TagToAddToCochain, CochainIndex>>,
-            SupportType,
-            MemorySpace>;
+            typename TensorType::layout_type,
+            typename TensorType::memory_space>>;
 };
 
 } // namespace detail
@@ -125,7 +112,7 @@ struct CoboundaryTensorType<
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType>
+        CochainType TensorType>
 using coboundary_tensor_t =
         typename detail::CoboundaryTensorType<TagToAddToCochain, CochainTag, TensorType>::type;
 
@@ -436,7 +423,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
     }
 
     template <
-            class CoboundaryTensorType,
+            CochainType CoboundaryTensorType,
             class Evaluator,
             class ChainType,
             class LowerChainType,
@@ -457,11 +444,11 @@ struct Coboundary<TagToAddToCochain, CochainTag>
 
 static_assert(CoboundaryConcept<
               Coboundary<detail::DirectionConcept, detail::ScalarConcept>,
-              tensor::Tensor<
+              Cochain<tensor::Tensor<
                       double,
                       ddc::DiscreteDomain<detail::DirectionConcept>,
                       Kokkos::layout_right,
-                      Kokkos::HostSpace>,
+                      Kokkos::HostSpace>>,
               detail::EvaluatorConcept,
               LocalChain<Simplex<1, detail::GridConcept>>,
               LocalChain<Simplex<0, detail::GridConcept>>,
@@ -485,7 +472,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
     }
 
     template <
-            class CoboundaryTensorType,
+            CochainType CoboundaryTensorType,
             class Evaluator,
             class ChainType,
             class LowerChainType,
@@ -506,11 +493,11 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 
 static_assert(CoboundaryConcept<
               TransposedCoboundary<detail::DirectionConcept, detail::ScalarConcept>,
-              tensor::Tensor<
+              Cochain<tensor::Tensor<
                       double,
                       ddc::DiscreteDomain<detail::DirectionConcept>,
                       Kokkos::layout_right,
-                      Kokkos::HostSpace>,
+                      Kokkos::HostSpace>>,
               detail::EvaluatorConcept,
               LocalChain<Simplex<1, detail::GridConcept>>,
               LocalChain<Simplex<0, detail::GridConcept>>,
@@ -539,7 +526,7 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType const& cochain)
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
+        CochainType TensorType,
         class ExecSpace,
         class ExtrapolationRules = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
@@ -593,7 +580,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
+        CochainType TensorType,
         class ExecSpace,
         class ExtrapolationRules = tensor::ZeroExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboundary(
@@ -647,7 +634,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
+        CochainType TensorType,
         class ExecSpace,
         class ExtrapolationRules = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(

@@ -35,7 +35,7 @@ public:
         return result;
     }
     KOKKOS_FUNCTION Vector
-    current(double charge_density,
+    current(Scalar const& charge_density,
             Vector const& velocity,
             Vector const& displacement,
             Vector const& induction) const
@@ -45,13 +45,11 @@ public:
             result[a] += charge_density * velocity[a];
         return result;
     }
-    KOKKOS_FUNCTION double ohmic_heating(
-            Vector const& velocity,
-            Vector const& displacement,
-            Vector const& induction) const
+    KOKKOS_FUNCTION Scalar
+    ohmic_heating(Vector const& velocity, Vector const& displacement, Vector const& induction) const
     {
         Vector const rest_electric = rest_frame_electric_field(velocity, displacement, induction);
-        return dot(rest_electric, rest_electric) / resistivity;
+        return Scalar(dot(rest_electric, rest_electric) / resistivity);
     }
     KOKKOS_FUNCTION double charge_relaxation_rate() const
     {

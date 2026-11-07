@@ -86,9 +86,17 @@ void check_hodge()
                             Kokkos::HostSpace>(
                             host_input[element].data_handle(),
                             ddc::DiscreteDomain<>()));
-            Direct::operator()(host_reference[element], scalar, host_metric, element);
+            Direct::operator()(
+                    sil::exterior::Form(host_reference[element]),
+                    sil::exterior::Form(scalar),
+                    host_metric,
+                    element);
         } else {
-            Direct::operator()(host_reference[element], host_input[element], host_metric, element);
+            Direct::operator()(
+                    sil::exterior::Form(host_reference[element]),
+                    sil::exterior::Form(host_input[element]),
+                    host_metric,
+                    element);
         }
         sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<SourceIndices, TargetIndices>>
@@ -110,13 +118,21 @@ void check_hodge()
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                Levi::operator()(result[element], input[element], metric, element);
+                Levi::operator()(
+                        sil::exterior::Form(result[element]),
+                        sil::exterior::Form(input[element]),
+                        metric,
+                        element);
             });
     ddc::parallel_for_each(
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                Inverse::operator()(inverse[element], result[element], metric, element);
+                Inverse::operator()(
+                        sil::exterior::Form(inverse[element]),
+                        sil::exterior::Form(result[element]),
+                        metric,
+                        element);
             });
     ddc::parallel_for_each(
             Exec(),

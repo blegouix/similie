@@ -50,7 +50,9 @@ public:
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) {
                     CompressiblePhysics::PrimitiveVariables const values = physics.primitives(
-                            {state(0, i), {state(1, i), state(2, i), state(3, i)}, state(4, i)});
+                            {CompressiblePhysics::Scalar(state(0, i)),
+                             {state(1, i), state(2, i), state(3, i)},
+                             CompressiblePhysics::Scalar(state(4, i))});
                     primitive(0, i) = values.density;
                     for (int a = 0; a < 3; ++a)
                         primitive(a + 1, i) = values.velocity[a];
@@ -81,7 +83,7 @@ public:
                         for (int a = 0; a < 3; ++a)
                             for (int b = 0; b < 3; ++b)
                                 strain[a][b] = gradient(3 * a + b, i);
-                        std::array<double, 3> const
+                        sil::exterior::Form<std::array<double, 3>> const
                                 temperature_gradient {normal(0, i), normal(1, i), normal(2, i)};
                         CompressiblePhysics::Flux const values = physics.two_point_flux(
                                 left,
@@ -106,9 +108,9 @@ public:
                     m_dec.cells,
                     KOKKOS_LAMBDA(int i) {
                         CompressiblePhysics::State const rate = physics(
-                                {divergence(0, i),
+                                {CompressiblePhysics::Scalar(divergence(0, i)),
                                  {divergence(1, i), divergence(2, i), divergence(3, i)},
-                                 divergence(4, i)});
+                                 CompressiblePhysics::Scalar(divergence(4, i))});
                         result(0, i) += rate.density;
                         for (int a = 0; a < 3; ++a)
                             result(a + 1, i) += rate.momentum[a];
@@ -197,7 +199,7 @@ public:
                 "incompressible_momentum",
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) {
-                    std::array<double, 3> const rate = physics.momentum_rate(
+                    sil::exterior::Form<std::array<double, 3>> const rate = physics.momentum_rate(
                             {velocity(0, i), velocity(1, i), velocity(2, i)},
                             {rotation(0, i), rotation(1, i), rotation(2, i)},
                             {},
@@ -215,7 +217,7 @@ public:
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) {
                     output(0, i) = physics.pressure(
-                            potential(0, i),
+                            sil::exterior::Form<double>(potential(0, i)),
                             {velocity(0, i), velocity(1, i), velocity(2, i)});
                 });
         double sum;
@@ -573,8 +575,14 @@ public:
                 "vorticity_evolution",
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) {
+                    sil::exterior::Form<std::array<double, 3>> const
+                            transport {curl(0, i), curl(1, i), curl(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const
+                            diffusion {-lap(0, i), -lap(1, i), -lap(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const rate
+                            = physics(transport, diffusion);
                     for (int c = 0; c < 3; ++c)
-                        curl(c, i) = physics(curl(c, i), -lap(c, i));
+                        curl(c, i) = rate[c];
                 });
         m_dec.reduce_two_form(m_transport, result);
         if (reconstruct_pressure) {

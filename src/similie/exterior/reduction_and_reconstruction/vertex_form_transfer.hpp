@@ -90,8 +90,8 @@ template <misc::Specialization<ddc::TypeSeq> Indices>
 struct VertexFormProjection
 {
     template <
-            class Output,
-            class Input,
+            CochainType Output,
+            FormType Input,
             class Position,
             class Element,
             class Extrapolation = tensor::ClampExtrapolationRule>
@@ -144,8 +144,11 @@ struct VertexFormProjection
                             Kokkos::layout_right,
                             typename Input::memory_space> const& coefficients
                             = sampled;
-                    Reduction<Indices, typename Cell::Geometry, Element>::
-                    operator()(reduced, coefficients, cell.geometry, Cell::corner(vertex));
+                    Reduction<Indices, typename Cell::Geometry, Element>::operator()(
+                            Cochain(reduced),
+                            Form(coefficients),
+                            cell.geometry,
+                            Cell::corner(vertex));
                     value += rule.weight(sample) * reduced.get(reduced.access_element(natural));
                 }
                 output.mem(component) = value;
@@ -169,8 +172,8 @@ template <misc::Specialization<ddc::TypeSeq> Indices>
 struct VertexFormReconstruction
 {
     template <
-            class Output,
-            class Input,
+            FormType Output,
+            CochainType Input,
             class Position,
             class Element,
             class Extrapolation = tensor::ClampExtrapolationRule>
@@ -226,8 +229,11 @@ struct VertexFormReconstruction
                     auto const sample = extrapolation(input, node);
                     cochain.mem(component) = sample.get(sample.access_element(natural));
                 });
-                Reconstruction<Indices, typename Cell::Geometry, Element>::
-                operator()(coefficients, cochain, cell.geometry, Cell::corner(vertex));
+                Reconstruction<Indices, typename Cell::Geometry, Element>::operator()(
+                        Form(coefficients),
+                        Cochain(cochain),
+                        cell.geometry,
+                        Cell::corner(vertex));
                 ddc::device_for_each(output.domain(), [&](auto component) {
                     auto const natural = output.accessor().canonical_natural_element(component);
                     output.mem(component) += coefficients.get(coefficients.access_element(natural))
@@ -235,6 +241,62 @@ struct VertexFormReconstruction
                 });
             }
         }
+    }
+};
+
+// Apply the geometric vertex transfer to a complete field. The same policy
+// can reconstruct/project several form degrees in a representation adapter.
+template <class Position, class Extrapolation = tensor::ClampExtrapolationRule>
+class VertexFormReconstructionField
+{
+    Position m_position;
+    Extrapolation m_extrapolation;
+
+public:
+    VertexFormReconstructionField(Position const& position, Extrapolation const& extrapolation = {})
+        : m_position(position), m_extrapolation(extrapolation) {}
+
+    template <class Exec, FormType Output, CochainType Input>
+    void operator()(Exec const& exec, Output const& output, Input const& input) const
+    {
+        using Index = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Input::indices_domain_t>>;
+        using Indices = std::conditional_t<Index::rank() == 0, ddc::TypeSeq<>,
+                ddc::to_type_seq_t<tensor::natural_domain_t<Index>>>;
+        Position const position = m_position;
+        Extrapolation const extrapolation = m_extrapolation;
+        ddc::parallel_for_each(
+                "similie_vertex_form_transfer", exec, output.non_indices_domain(),
+                KOKKOS_LAMBDA(typename Output::non_indices_domain_t::discrete_element_type element) {
+                    VertexFormReconstruction<Indices>::operator()(output[element], input, position, element, extrapolation);
+                });
+    }
+};
+
+// Apply the geometric vertex transfer to a complete field. The same policy
+// can reconstruct/project several form degrees in a representation adapter.
+template <class Position, class Extrapolation = tensor::ClampExtrapolationRule>
+class VertexFormProjectionField
+{
+    Position m_position;
+    Extrapolation m_extrapolation;
+
+public:
+    VertexFormProjectionField(Position const& position, Extrapolation const& extrapolation = {})
+        : m_position(position), m_extrapolation(extrapolation) {}
+
+    template <class Exec, CochainType Output, FormType Input>
+    void operator()(Exec const& exec, Output const& output, Input const& input) const
+    {
+        using Index = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Output::indices_domain_t>>;
+        using Indices = std::conditional_t<Index::rank() == 0, ddc::TypeSeq<>,
+                ddc::to_type_seq_t<tensor::natural_domain_t<Index>>>;
+        Position const position = m_position;
+        Extrapolation const extrapolation = m_extrapolation;
+        ddc::parallel_for_each(
+                "similie_vertex_form_transfer", exec, output.non_indices_domain(),
+                KOKKOS_LAMBDA(typename Output::non_indices_domain_t::discrete_element_type element) {
+                    VertexFormProjection<Indices>::operator()(output[element], input, position, element, extrapolation);
+                });
     }
 };
 

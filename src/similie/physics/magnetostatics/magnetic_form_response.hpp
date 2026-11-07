@@ -9,6 +9,7 @@
 
 #include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
 #include <similie/exterior/continuous_hodge_star/levi_civita_continuous_hodge_star.hpp>
+#include <similie/exterior/form.hpp>
 
 namespace similie::physics::magnetostatics {
 
@@ -44,10 +45,10 @@ private:
     std::array<double, 9> m_star {};
     double m_volume = 1.0;
 
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, 3> dual(
-            std::array<double, 3> const& induction) const
+    [[nodiscard]] KOKKOS_FUNCTION sil::exterior::Form<std::array<double, 3>> dual(
+            sil::exterior::Form<std::array<double, 3>> const& induction) const
     {
-        std::array<double, 3> result {};
+        sil::exterior::Form<std::array<double, 3>> result {};
         for (std::size_t row = 0; row < 3; ++row)
             for (std::size_t column = 0; column < 3; ++column)
                 result[row] += m_star[3 * row + column] * induction[column];
@@ -55,8 +56,8 @@ private:
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double norm_squared(
-            std::array<double, 3> const& induction,
-            std::array<double, 3> const& dual_induction) const
+            sil::exterior::Form<std::array<double, 3>> const& induction,
+            sil::exterior::Form<std::array<double, 3>> const& dual_induction) const
     {
         // B wedge star B = |B|_g^2 vol_g in signed complementary order.
         double result = 0.0;
@@ -88,24 +89,24 @@ public:
                 (return euclidean_impl<typename Kokkos::DefaultExecutionSpace::memory_space>();))
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, 3> field(
-            std::array<double, 3> const& induction,
+    [[nodiscard]] KOKKOS_FUNCTION sil::exterior::Form<std::array<double, 3>> field(
+            sil::exterior::Form<std::array<double, 3>> const& induction,
             double reluctivity) const
     {
-        std::array<double, 3> result = dual(induction);
+        sil::exterior::Form<std::array<double, 3>> result = dual(induction);
         for (double& component : result)
             component *= reluctivity;
         return result;
     }
 
     template <class Law, class Element>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, 3> constitutive_field(
+    [[nodiscard]] KOKKOS_FUNCTION sil::exterior::Form<std::array<double, 3>> constitutive_field(
             Law const& law,
             typename Law::State const& state,
             Element const& element) const
     {
         static_assert(Law::N == 3);
-        std::array<double, 3> const dual_induction = dual(state.value);
+        sil::exterior::Form<std::array<double, 3>> const dual_induction = dual(state.value);
         double const norm = Kokkos::sqrt(norm_squared(state.value, dual_induction));
         typename Law::State radial = state;
         radial.value = {norm, 0.0, 0.0};
@@ -156,12 +157,12 @@ public:
     }
 
     template <class Equations, class Element>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, 3> field(
+    [[nodiscard]] KOKKOS_FUNCTION sil::exterior::Form<std::array<double, 3>> field(
             Equations const& equations,
             typename Equations::State const& state,
             Element const& element) const
     {
-        std::array<double, 3> result = dual(state.moments);
+        sil::exterior::Form<std::array<double, 3>> result = dual(state.moments);
         double const norm = Kokkos::sqrt(norm_squared(state.moments, result));
         typename Equations::State radial = state;
         radial.moments = {norm, 0.0, 0.0};
@@ -183,7 +184,7 @@ public:
             typename Equations::State const& state,
             Element const& element) const
     {
-        std::array<double, 3> const dual_induction = dual(state.moments);
+        sil::exterior::Form<std::array<double, 3>> const dual_induction = dual(state.moments);
         double const q = norm_squared(state.moments, dual_induction);
         double const norm = Kokkos::sqrt(q);
         typename Equations::State radial = state;

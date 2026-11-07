@@ -47,10 +47,11 @@ struct MagneticChecks
         metric(metric.template access_element<Z, Z>()) = 16.0;
         similie::physics::magnetostatics::MagneticFormResponse<X, Y, Z> const
                 response(metric, ddc::DiscreteElement<>());
-        std::array<double, 3> const induction {8.0, -3.0, 6.0};
-        std::array<double, 3> const dual {26.0 / 24.0, -14.0 / 24.0, 96.0 / 24.0};
+        sil::exterior::Form<std::array<double, 3>> const induction {8.0, -3.0, 6.0};
+        sil::exterior::Form<std::array<double, 3>> const
+                dual {26.0 / 24.0, -14.0 / 24.0, 96.0 / 24.0};
         double field_error = 0.0;
-        std::array<double, 3> const linear = response.field(induction, 0.5);
+        sil::exterior::Form<std::array<double, 3>> const linear = response.field(induction, 0.5);
         for (int component = 0; component < 3; ++component)
             field_error += Kokkos::abs(linear[component] - 0.5 * dual[component]);
 
@@ -61,7 +62,8 @@ struct MagneticChecks
         double const q = 826.0 / (24.0 * 24.0);
         double const norm = Kokkos::sqrt(q);
         double const reluctivity = curve.h_from_b(norm) / norm;
-        std::array<double, 3> const field = response.field(equations, state, 0);
+        sil::exterior::Form<std::array<double, 3>> const field
+                = response.field(equations, state, 0);
         std::array<double, 9> const tangent = response.jacobian(equations, state, 0);
         for (int component = 0; component < 3; ++component)
             field_error += Kokkos::abs(field[component] - reluctivity * dual[component]);
@@ -71,8 +73,10 @@ struct MagneticChecks
             Equations::State upper = state, lower = state;
             upper.moments[column] += step;
             lower.moments[column] -= step;
-            std::array<double, 3> const plus = response.field(equations, upper, 0);
-            std::array<double, 3> const minus = response.field(equations, lower, 0);
+            sil::exterior::Form<std::array<double, 3>> const plus
+                    = response.field(equations, upper, 0);
+            sil::exterior::Form<std::array<double, 3>> const minus
+                    = response.field(equations, lower, 0);
             for (int row = 0; row < 3; ++row)
                 tangent_error += Kokkos::abs(
                         tangent[3 * row + column] - (plus[row] - minus[row]) / (2.0 * step));
@@ -88,7 +92,8 @@ struct MagneticChecks
             energy_error += Kokkos::abs(field[column] - energy_derivative);
         }
         Equations::State const zero {};
-        std::array<double, 3> const zero_field = response.field(equations, zero, 0);
+        sil::exterior::Form<std::array<double, 3>> const zero_field
+                = response.field(equations, zero, 0);
         std::array<double, 9> const zero_tangent = response.jacobian(equations, zero, 0);
         field_error += Kokkos::abs(zero_field[0]) + Kokkos::abs(zero_field[1])
                        + Kokkos::abs(zero_field[2]);
@@ -96,7 +101,7 @@ struct MagneticChecks
 
         similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField<Curve> const
                 law(curve);
-        std::array<double, 3> const constitutive
+        sil::exterior::Form<std::array<double, 3>> const constitutive
                 = response.constitutive_field(law, typename decltype(law)::State {induction}, 0);
         for (int component = 0; component < 3; ++component)
             field_error += Kokkos::abs(constitutive[component] - field[component]);

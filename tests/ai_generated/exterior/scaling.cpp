@@ -73,19 +73,35 @@ void check_scaling(double spacing = 0.75, double origin = 0.)
                         = origin + spacing * element.uid<GridZ>();
             });
     fill_form(input);
-    sil::exterior::StagedOperator<Reduction> const
-            reduction(Exec(), cached, input, metric, position);
-    sil::exterior::StagedOperator<Reconstruction> const
-            reconstruction(Exec(), cached, input, position);
+    sil::exterior::StagedOperator<Reduction> const reduction {
+            Exec(),
+            sil::exterior::Cochain(cached),
+            sil::exterior::Form(input),
+            metric,
+            position};
+    sil::exterior::StagedOperator<Reconstruction> const reconstruction {
+            Exec(),
+            sil::exterior::Form(cached),
+            sil::exterior::Cochain(input),
+            position};
     Kokkos::View<double*, Memory> errors("scaling_coefficient_errors", domain().size());
     Domain const nodes = domain();
     ddc::parallel_for_each(
             Exec(),
             nodes,
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                ReferenceReduction::
-                operator()(expected[element], input[element], metric, position, element);
-                Reduction::operator()(direct[element], input[element], metric, position, element);
+                ReferenceReduction::operator()(
+                        sil::exterior::Cochain(expected[element]),
+                        sil::exterior::Form(input[element]),
+                        metric,
+                        position,
+                        element);
+                Reduction::operator()(
+                        sil::exterior::Cochain(direct[element]),
+                        sil::exterior::Form(input[element]),
+                        metric,
+                        position,
+                        element);
                 // value() must expand the shared coefficient onto every diagonal
                 // entry, including components other than the stored representative.
                 std::array const reference
@@ -116,7 +132,7 @@ void check_scaling(double spacing = 0.75, double origin = 0.)
                 errors(sil::exterior::detail::stencil_node(nodes, element)) = error;
             });
     expect_equal(direct, expected);
-    reduction(cached, input);
+    reduction(sil::exterior::Cochain(cached), sil::exterior::Form(input));
     expect_equal(cached, expected);
     Kokkos::View<double*, Kokkos::HostSpace> const errors_host
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), errors);
@@ -126,12 +142,19 @@ void check_scaling(double spacing = 0.75, double origin = 0.)
             Exec(),
             nodes,
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                ReferenceReconstruction::
-                operator()(expected[element], input[element], position, element);
-                Reconstruction::operator()(direct[element], input[element], position, element);
+                ReferenceReconstruction::operator()(
+                        sil::exterior::Form(expected[element]),
+                        sil::exterior::Cochain(input[element]),
+                        position,
+                        element);
+                Reconstruction::operator()(
+                        sil::exterior::Form(direct[element]),
+                        sil::exterior::Cochain(input[element]),
+                        position,
+                        element);
             });
     expect_equal(direct, expected);
-    reconstruction(cached, input);
+    reconstruction(sil::exterior::Form(cached), sil::exterior::Cochain(input));
     expect_equal(cached, expected);
 }
 

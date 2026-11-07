@@ -215,7 +215,7 @@ def write_cpp_hamiltonian_header(
     for i, entry in enumerate(variable_entries):
         field_name = "potential" if i == 0 else "moments" if i == 1 else entry["name"]
         state_members.append(
-            f"        std::array<double, {len(entry['symbols'])}> {field_name} {{}};"
+            f"        sil::exterior::Form<std::array<double, {len(entry['symbols'])}>> {field_name} {{}};"
         )
         replacements.update(
             {
@@ -304,6 +304,7 @@ def write_cpp_hamiltonian_header(
 #include <span>
 #include <type_traits>
 #include <Kokkos_Core.hpp>
+#include <similie/exterior/form.hpp>
 #include <similie/physics/concepts.hpp>
 {rendered_includes}
 
@@ -327,10 +328,10 @@ public:
 {constructor}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double hamiltonian(State const& state, Elem const& elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr sil::exterior::Form<double> hamiltonian(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
-        return {_render_cxx_expression(hamiltonian, replacements, symbolic_functions)};
+        return sil::exterior::Form<double>({_render_cxx_expression(hamiltonian, replacements, symbolic_functions)});
     }}
 {potential_method}{moment_method}{inverse_method}
     template <class RowIndex, class ColumnIndex, class Elem>

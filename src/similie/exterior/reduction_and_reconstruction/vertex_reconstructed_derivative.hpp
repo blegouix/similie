@@ -132,10 +132,11 @@ private:
                 std::array<std::array<double, FibreRank>, dimension> differential {};
                 for (std::size_t axis = 0; axis < dimension; ++axis)
                     differential[axis] = CovariantDerivative<SpatialIndex...>::
-                            template cochain_value<0, FibreRank>(
-                                    {axis},
-                                    vertex & ~(std::size_t(1) << axis),
-                                    NodalBasis {input});
+                                                 template cochain_value<0, FibreRank>(
+                                                         {axis},
+                                                         vertex & ~(std::size_t(1) << axis),
+                                                         NodalBasis {input})
+                                                         .value();
                 for (std::size_t fibre = 0; fibre < FibreRank; ++fibre)
                     for (std::size_t physical = 0; physical < dimension; ++physical)
                         for (std::size_t axis = 0; axis < dimension; ++axis)

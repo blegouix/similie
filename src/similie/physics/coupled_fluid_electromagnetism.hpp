@@ -6,6 +6,7 @@
 
 #include <array>
 
+#include <similie/exterior/form.hpp>
 #include <similie/physics/combine_physics.hpp>
 #include <similie/physics/coupling/electric_coupling_physics.hpp>
 #include <similie/physics/coupling/magnetic_coupling_physics.hpp>
@@ -53,7 +54,8 @@ class CoupledFluidElectromagnetism
             = requires(typename ElectromagneticPhysics::State state) { state.induction; };
 
 public:
-    using Vector = std::array<double, 3>;
+    using Scalar = sil::exterior::Form<double>;
+    using Vector = sil::exterior::Form<std::array<double, 3>>;
     static constexpr std::size_t N = FluidPhysics::N + ElectromagneticPhysics::N;
     static constexpr bool IS_LINEAR = false;
     struct State
@@ -113,20 +115,20 @@ public:
         return coupling_sources(state, total_current, {});
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION double field_energy(State const& state) const
+    [[nodiscard]] KOKKOS_FUNCTION Scalar field_energy(State const& state) const
     {
         if constexpr (has_electric && has_magnetic)
-            return this->template get<1>().hamiltonian(
+            return Scalar(this->template get<1>().hamiltonian(
                     state.electromagnetic.displacement,
-                    state.electromagnetic.induction);
+                    state.electromagnetic.induction));
         else if constexpr (has_electric)
-            return this->template get<1>().hamiltonian(state.electromagnetic.displacement);
+            return Scalar(this->template get<1>().hamiltonian(state.electromagnetic.displacement));
         else
-            return this->template get<1>().hamiltonian(state.electromagnetic.induction);
+            return Scalar(this->template get<1>().hamiltonian(state.electromagnetic.induction));
     }
 
     [[nodiscard]] KOKKOS_FUNCTION typename ElectromagneticPhysics::State field_rate(
-            double current_divergence,
+            Scalar const& current_divergence,
             Vector const& curl_magnetic_field,
             Vector const& curl_electric_field,
             Vector const& total_current) const
@@ -226,7 +228,7 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION State operator()(
             State const& state,
             FluidFlux const& fluid_flux_divergence,
-            double current_divergence,
+            Scalar const& current_divergence,
             Vector const& curl_magnetic_field,
             Vector const& curl_electric_field,
             Vector const& total_current) const
@@ -248,12 +250,12 @@ public:
                         total_current)};
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION double combined_energy(State const& state) const
+    [[nodiscard]] KOKKOS_FUNCTION Scalar combined_energy(State const& state) const
     {
         if constexpr (Energy == EnergyConvention::FluidAndField)
-            return state.fluid.total_energy;
+            return Scalar(state.fluid.total_energy);
         else
-            return state.fluid.total_energy + field_energy(state);
+            return Scalar(state.fluid.total_energy + field_energy(state));
     }
 
     [[nodiscard]] KOKKOS_FUNCTION Vector
@@ -289,14 +291,13 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION State operator()(
             Vector const& transport_curl,
             Vector const& vorticity_laplacian,
-            double current_divergence,
+            Scalar const& current_divergence,
             Vector const& curl_magnetic_field,
             Vector const& curl_electric_field,
             Vector const& total_current) const
     {
         typename FluidPhysics::State rate {};
-        for (int a = 0; a < 3; ++a)
-            rate.vorticity[a] = this->template get<0>()(transport_curl[a], vorticity_laplacian[a]);
+        rate.vorticity = this->template get<0>()(transport_curl, vorticity_laplacian);
         return {rate,
                 field_rate(
                         current_divergence,

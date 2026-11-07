@@ -278,8 +278,10 @@ public:
                 "electromagnetic_transport",
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) {
-                    std::array<double, 3> const u {velocity(0, i), velocity(1, i), velocity(2, i)};
-                    std::array<double, 3> const magnetic {bn(0, i), bn(1, i), bn(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const
+                            u {velocity(0, i), velocity(1, i), velocity(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const
+                            magnetic {bn(0, i), bn(1, i), bn(2, i)};
                     similie::physics::magnetodynamics::Magnetodynamics const magnetic_model(
                             ElectromagneticReference::permeability);
                     similie::physics::electromagnetism::Electromagnetism const maxwell_model(
@@ -287,12 +289,13 @@ public:
                             ElectromagneticReference::permeability);
                     similie::physics::electrodynamics::Electrodynamics const electric_model(
                             ElectromagneticReference::permittivity);
-                    std::array<double, 3> const motional
+                    sil::exterior::Form<std::array<double, 3>> const motional
                             = coupling == Coupling::MHD
                                       ? magnetic_model.ohm_electric_field(u, magnetic, {})
                                       : maxwell_model.rest_frame_electric_field(u, {}, magnetic);
-                    std::array<double, 3> const advected
-                            = electric_model.current(charge(0, i), u, {});
+                    sil::exterior::Form<std::array<double, 3>> const advected
+                            = electric_model
+                                      .current(sil::exterior::Form<double>(charge(0, i)), u, {});
                     for (int a = 0; a < 3; ++a) {
                         motion(a, i) = motional[a];
                         work(a, i) = advected[a];
@@ -311,10 +314,13 @@ public:
                         similie::physics::magnetodynamics::ResistiveMagnetodynamics const
                                 model(ElectromagneticReference::permeability,
                                       ElectromagneticReference::magnetic_resistivity);
-                        std::array<double, 3> const conduction = model.ohm_electric_field(
-                                {},
-                                {},
-                                {current_value(0, i), current_value(1, i), current_value(2, i)});
+                        sil::exterior::Form<std::array<double, 3>> const conduction
+                                = model.ohm_electric_field(
+                                        {},
+                                        {},
+                                        {current_value(0, i),
+                                         current_value(1, i),
+                                         current_value(2, i)});
                         for (int a = 0; a < 3; ++a)
                             work(a, i) = motion(a, i) + (resistive ? conduction[a] : 0.0);
                     });
@@ -328,16 +334,16 @@ public:
                         similie::physics::electrodynamics::ResistiveElectrodynamics const
                                 model(ElectromagneticReference::permittivity,
                                       ElectromagneticReference::electric_resistivity);
-                        std::array<double, 3> effective_displacement {};
+                        sil::exterior::Form<std::array<double, 3>> effective_displacement {};
                         for (int a = 0; a < 3; ++a)
                             effective_displacement[a]
                                     = dn(a, i)
                                       + (coupling == Coupling::FMHD
                                                  ? model.permittivity * motion(a, i)
                                                  : 0);
-                        std::array<double, 3> const electric
+                        sil::exterior::Form<std::array<double, 3>> const electric
                                 = model.electric_field({dn(0, i), dn(1, i), dn(2, i)});
-                        std::array<double, 3> const conduction
+                        sil::exterior::Form<std::array<double, 3>> const conduction
                                 = model.conduction_current(effective_displacement);
                         for (int a = 0; a < 3; ++a) {
                             electric_values(a, i) = electric[a];
@@ -355,9 +361,11 @@ public:
                 "lorentz_force",
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) {
-                    std::array<double, 3> const current_value {jn(0, i), jn(1, i), jn(2, i)};
-                    std::array<double, 3> const magnetic {bn(0, i), bn(1, i), bn(2, i)};
-                    std::array<double, 3> const
+                    sil::exterior::Form<std::array<double, 3>> const
+                            current_value {jn(0, i), jn(1, i), jn(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const
+                            magnetic {bn(0, i), bn(1, i), bn(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const
                             electric_displacement {dn(0, i), dn(1, i), dn(2, i)};
                     similie::physics::CoupledFluidElectromagnetism<
                             CompressiblePhysics,
@@ -366,9 +374,12 @@ public:
                                   similie::physics::electromagnetism::Electromagnetism(
                                           ElectromagneticReference::permittivity,
                                           ElectromagneticReference::permeability));
-                    std::array<double, 3> const force_value
+                    sil::exterior::Form<std::array<double, 3>> const force_value
                             = model.coupling_sources(
-                                           {{}, {charge(0, i), electric_displacement, magnetic}},
+                                           {{},
+                                            {sil::exterior::Form<double>(charge(0, i)),
+                                             electric_displacement,
+                                             magnetic}},
                                            current_value)
                                       .momentum_source;
                     for (int a = 0; a < 3; ++a)
@@ -416,11 +427,13 @@ public:
                             model(ElectromagneticReference::permittivity,
                                   ElectromagneticReference::permeability);
                     similie::physics::electromagnetism::Electromagnetism::State const update
-                            = model(div(0, i),
+                            = model(sil::exterior::Form<double>(div(0, i)),
                                     {ampere_value(0, i), ampere_value(1, i), ampere_value(2, i)},
                                     {curl(0, i), curl(1, i), curl(2, i)},
                                     {jn(0, i), jn(1, i), jn(2, i)});
-                    rate(0, i) = coupling == Coupling::MHD ? 0 : update.charge_density;
+                    rate(0, i) = coupling == Coupling::MHD
+                                         ? 0
+                                         : static_cast<double>(update.charge_density);
                     for (int a = 0; a < 3; ++a) {
                         electric_rate(a, i)
                                 = coupling == Coupling::FMHD ? update.displacement[a] : 0;

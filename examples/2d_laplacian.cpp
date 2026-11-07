@@ -208,14 +208,14 @@ int main(int argc, char** argv)
             DummyIndex,
             sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>(
             Kokkos::DefaultExecutionSpace(),
-            laplacian_tensor,
-            potential,
+            sil::exterior::Cochain(laplacian_tensor),
+            sil::exterior::Cochain(potential),
             metric,
             position);
     // A single rule is broadcast to both boundaries of each grid dimension.
     laplacian(
-            laplacian_tensor,
-            potential,
+            sil::exterior::Cochain(laplacian_tensor),
+            sil::exterior::Cochain(potential),
             sil::tensor::NaturalScalarExtrapolationRule {},
             sil::tensor::ZeroExtrapolationRule {});
     Kokkos::fence();

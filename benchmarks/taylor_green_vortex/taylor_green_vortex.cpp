@@ -1155,11 +1155,10 @@ double run_trajectory(benchmark::State* benchmark_state)
                 ProfilingRegion monitor_region("monitoring");
                 Monitor const m = simulation.monitor(time, step_seconds);
                 monitor_region.end();
-                monitor_seconds
-                        += std::chrono::duration<double>(Clock::now() - begin).count();
+                monitor_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
                 monitors.push_back(m);
-                energy << m.time << " " << m.energy << " " << m.derivative << " "
-                       << m.dissipation << "\n";
+                energy << m.time << " " << m.energy << " " << m.derivative << " " << m.dissipation
+                       << "\n";
             }
             Clock::time_point const begin = Clock::now();
             ProfilingRegion const export_region("export");
@@ -1300,8 +1299,7 @@ double run_trajectory(benchmark::State* benchmark_state)
                     << configuration.staging_name() << "\",\"operators\":\""
                     << configuration.operator_name() << "\",\"mode\":\""
                     << (benchmark_state ? "performance" : "reference")
-                    << "\",\"monitoring_enabled\":"
-                    << (monitoring_enabled ? "true" : "false")
+                    << "\",\"monitoring_enabled\":" << (monitoring_enabled ? "true" : "false")
                     << ",\"strategy\":" << strategy_index << ",\"flags\":\""
                     << configuration.strategy_flags() << "\",\"N\":" << nodes
                     << ",\"steps\":" << steps << ",\"final_time\":" << time

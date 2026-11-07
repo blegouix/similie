@@ -9,6 +9,8 @@
 #include <cstddef>
 #include <type_traits>
 
+#include <similie/exterior/form.hpp>
+
 #include <Kokkos_Core.hpp>
 
 namespace similie::physics {
@@ -41,14 +43,17 @@ struct HamiltonianPhysicsConcept
     static constexpr bool IS_LINEAR = true;
     struct State
     {
-        std::array<double, 1> potential {};
-        std::array<double, N> moments {};
+        sil::exterior::Form<std::array<double, 1>> potential {};
+        sil::exterior::Form<std::array<double, N>> moments {};
     };
 
     template <class Element>
-    KOKKOS_FUNCTION constexpr double hamiltonian(State const& state, Element) const
+    KOKKOS_FUNCTION constexpr sil::exterior::Form<double> hamiltonian(State const& state, Element)
+            const
     {
-        return (state.potential[0] * state.potential[0] + state.moments[0] * state.moments[0]) / 2;
+        return sil::exterior::Form<double>(
+                (state.potential[0] * state.potential[0] + state.moments[0] * state.moments[0])
+                / 2);
     }
     template <class Index, class Element>
     KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(State const& state, Element) const
@@ -113,7 +118,9 @@ concept HamiltonianPhysicsConcept
                   Physics const& physics,
                   typename Physics::State const& state,
                   Element element) {
-                 { physics.hamiltonian(state, element) } -> std::same_as<double>;
+                 {
+                     physics.hamiltonian(state, element)
+                 } -> std::same_as<sil::exterior::Form<double>>;
                  {
                      physics.template dhamiltonian_dmoments<
                              std::integral_constant<std::size_t, 0>>(state, element)
@@ -165,10 +172,14 @@ template <class Law, class Element>
 concept ConstitutiveLawConcept
         = requires(Law const& law, typename Law::State const& state, Element element) {
               typename std::integral_constant<std::size_t, Law::N>;
-              { law(state, element) } -> std::same_as<std::array<double, Law::N>>;
+              {
+                  law(state, element)
+              } -> std::same_as<sil::exterior::Form<std::array<double, Law::N>>>;
               { law.value(state, element) } -> std::same_as<std::array<double, Law::N * Law::N>>;
               { law.jacobian(state, element) } -> std::same_as<std::array<double, Law::N * Law::N>>;
-              { law.inverse(state, element) } -> std::same_as<std::array<double, Law::N>>;
+              {
+                  law.inverse(state, element)
+              } -> std::same_as<sil::exterior::Form<std::array<double, Law::N>>>;
               {
                   law.inverse_value(state, element)
               } -> std::same_as<std::array<double, Law::N * Law::N>>;

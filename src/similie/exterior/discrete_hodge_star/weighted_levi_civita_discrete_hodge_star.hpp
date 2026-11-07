@@ -231,7 +231,7 @@ public:
             Indices2,
             MetricType>;
 
-    template <class Output, class Input>
+    template <CochainType Output, CochainType Input>
     KOKKOS_FUNCTION static void operator()(
             Output const& output,
             Input const& input,

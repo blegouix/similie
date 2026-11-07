@@ -27,7 +27,8 @@ struct CovariantDerivativeKernel
             return std::array<double, 2> {2.0 * vertex, 3.0 * vertex};
         };
         std::array<double, 2> const differential
-                = sil::exterior::CovariantDerivative<X, Y>::cochain_value<0, 2>({0}, 0, sampler);
+                = sil::exterior::CovariantDerivative<X, Y>::cochain_value<0, 2>({0}, 0, sampler)
+                          .value();
         result(0) = differential[0];
         result(1) = differential[1];
     }
@@ -47,7 +48,7 @@ TEST(CovariantDerivative, CochainStokesAndFlatSquareZero)
     };
     for (std::size_t i = 0; i < 3; ++i)
         for (std::size_t j = i + 1; j < 3; ++j) {
-            EXPECT_NEAR((D::cochain_value<1, 1>({i, j}, 0, edge)[0]), 0, 2e-15);
+            EXPECT_NEAR((D::cochain_value<1, 1>({i, j}, 0, edge).value()[0]), 0, 2e-15);
         }
     auto arbitrary_edges = [](std::size_t mask, std::size_t v) {
         return std::array<double, 1> {std::cos(mask + 0.2 * v)};
@@ -60,12 +61,12 @@ TEST(CovariantDerivative, CochainStokesAndFlatSquareZero)
                 axes[j++] = i;
         return D::cochain_value<1, 1>(axes, v, arbitrary_edges);
     };
-    EXPECT_NEAR((D::cochain_value<2, 1>({0, 1, 2}, 0, face)[0]), 0, 2e-15);
+    EXPECT_NEAR((D::cochain_value<2, 1>({0, 1, 2}, 0, face).value()[0]), 0, 2e-15);
     auto linear = [](std::size_t mask, std::size_t v) {
         // omega = x dy, integral around the unit xy face equals 1.
         return std::array<double, 1> {mask == 2 ? double(v & 1) : 0};
     };
-    EXPECT_DOUBLE_EQ((D::cochain_value<1, 1>({0, 1}, 0, linear)[0]), 1);
+    EXPECT_DOUBLE_EQ((D::cochain_value<1, 1>({0, 1}, 0, linear).value()[0]), 1);
 }
 
 TEST(CovariantDerivative, OrientedFaceValuesForTwoComponentBundle)
@@ -77,13 +78,13 @@ TEST(CovariantDerivative, OrientedFaceValuesForTwoComponentBundle)
     // with the opposite signs on the three lower faces.
     auto const volume = sil::exterior::CovariantDerivative<X, Y, Z>::
             cochain_value<2, 2>({0, 1, 2}, 0, sampler);
-    EXPECT_DOUBLE_EQ(volume[0], 6 - 5 * 4 + 3 * 16);
-    EXPECT_DOUBLE_EQ(volume[1], 7 - 6 * 2 + 4 * 4);
+    EXPECT_DOUBLE_EQ(volume.value()[0], 6 - 5 * 4 + 3 * 16);
+    EXPECT_DOUBLE_EQ(volume.value()[1], 7 - 6 * 2 + 4 * 4);
     // A yz face based at x=1 also exercises nonzero base vertices.
     auto const face
             = sil::exterior::CovariantDerivative<X, Y, Z>::cochain_value<1, 2>({1, 2}, 1, sampler);
-    EXPECT_DOUBLE_EQ(face[0], 4 * (9 - 1) - 2 * (25 - 1));
-    EXPECT_DOUBLE_EQ(face[1], 5 * (3 - 1) - 3 * (5 - 1));
+    EXPECT_DOUBLE_EQ(face.value()[0], 4 * (9 - 1) - 2 * (25 - 1));
+    EXPECT_DOUBLE_EQ(face.value()[1], 5 * (3 - 1) - 3 * (5 - 1));
 }
 
 TEST(CovariantDerivative, CurvatureIsNotForcedToZero)
@@ -97,7 +98,7 @@ TEST(CovariantDerivative, CurvatureIsNotForcedToZero)
     auto edge = [&](std::size_t mask, std::size_t v) {
         return D::cochain_value<0, 1>({mask == 1 ? 0UL : 1UL}, v, section, transport);
     };
-    EXPECT_DOUBLE_EQ((D::cochain_value<1, 1>({0, 1}, 0, edge, transport)[0]), 1);
+    EXPECT_DOUBLE_EQ((D::cochain_value<1, 1>({0, 1}, 0, edge, transport).value()[0]), 1);
 }
 
 TEST(CovariantDerivative, LocalStorageInCallingExecutionSpace)

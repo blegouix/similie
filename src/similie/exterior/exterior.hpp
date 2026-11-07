@@ -14,6 +14,7 @@
 #include <similie/exterior/integration/integration.hpp>
 #include <similie/exterior/interior_product/interior_product.hpp>
 #include <similie/exterior/laplacian/laplacian.hpp>
+#include <similie/exterior/operator_representation.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 #include <similie/exterior/staged_operator/staged_operator.hpp>
 #include <similie/tensor/external_domain_extrapolation_rule.hpp>

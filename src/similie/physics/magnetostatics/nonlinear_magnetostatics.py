@@ -200,7 +200,7 @@ struct InterpolatedNonlinearBHCurve
 CONSTITUTIVE_LAW_HEADER = """\
 struct NonlinearMagneticState
 {
-    std::array<double, 3> value {};
+    sil::exterior::Form<std::array<double, 3>> value {};
 };
 
 template <class BHCurve>
@@ -288,10 +288,10 @@ public:
     explicit NonlinearMagneticInductionToMagneticField(BHCurve bh_curve) : m_bh_curve(bh_curve) {}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> operator()(State const& state, Elem const& elem) const
+    [[nodiscard]] KOKKOS_FUNCTION sil::exterior::Form<std::array<double, N>> operator()(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
-        std::array<double, N> const& magnetic_induction = state.value;
+        sil::exterior::Form<std::array<double, N>> const& magnetic_induction = state.value;
         double const q = magnetic_induction[0] * magnetic_induction[0]
                          + magnetic_induction[1] * magnetic_induction[1]
                          + magnetic_induction[2] * magnetic_induction[2];
@@ -314,10 +314,10 @@ public:
     }
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> inverse(State const& state, Elem const& elem) const
+    [[nodiscard]] KOKKOS_FUNCTION sil::exterior::Form<std::array<double, N>> inverse(State const& state, Elem const& elem) const
     {
         static_cast<void>(elem);
-        std::array<double, N> const& magnetic_field = state.value;
+        sil::exterior::Form<std::array<double, N>> const& magnetic_field = state.value;
         double const h_norm = std::sqrt(
                 magnetic_field[0] * magnetic_field[0] + magnetic_field[1] * magnetic_field[1] + magnetic_field[2] * magnetic_field[2]);
         if (h_norm == 0.0) {

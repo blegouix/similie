@@ -75,25 +75,44 @@ struct TransferChecks
                 Exec(),
                 cells,
                 KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                    sil::exterior::VertexFormProjection<ddc::TypeSeq<One>>::
-                    operator()(cochain[element], nodal, position, element);
-                    sil::exterior::VertexFormProjection<ddc::TypeSeq<One>>::
-                    operator()(potential_cochain[element], potential, position, element);
+                    sil::exterior::VertexFormProjection<ddc::TypeSeq<One>>::operator()(
+                            sil::exterior::Cochain(cochain[element]),
+                            sil::exterior::Form(nodal),
+                            position,
+                            element);
+                    sil::exterior::VertexFormProjection<ddc::TypeSeq<One>>::operator()(
+                            sil::exterior::Cochain(potential_cochain[element]),
+                            sil::exterior::Form(potential),
+                            position,
+                            element);
                     sil::exterior::VertexFormProjection<
                             ddc::TypeSeq<sil::tensor::Covariant<Other>, One>>::
-                    operator()(two_cochain[element], two, position, element);
+                    operator()(
+                            sil::exterior::Cochain(two_cochain[element]),
+                            sil::exterior::Form(two),
+                            position,
+                            element);
                 });
-        sil::exterior::
-                deriv<sil::tensor::Covariant<Other>, One>(Exec(), derivative, potential_cochain);
+        sil::exterior::deriv<sil::tensor::Covariant<Other>, One>(
+                Exec(),
+                sil::exterior::Cochain(derivative),
+                sil::exterior::Cochain(potential_cochain));
         ddc::parallel_for_each(
                 Exec(),
                 vertices,
                 KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                    sil::exterior::VertexFormReconstruction<ddc::TypeSeq<One>>::
-                    operator()(observed[element], cochain, position, element);
+                    sil::exterior::VertexFormReconstruction<ddc::TypeSeq<One>>::operator()(
+                            sil::exterior::Form(observed[element]),
+                            sil::exterior::Cochain(cochain),
+                            position,
+                            element);
                     sil::exterior::VertexFormReconstruction<
                             ddc::TypeSeq<sil::tensor::Covariant<Other>, One>>::
-                    operator()(observed_two[element], two_cochain, position, element);
+                    operator()(
+                            sil::exterior::Form(observed_two[element]),
+                            sil::exterior::Cochain(two_cochain),
+                            position,
+                            element);
                 });
         double const one_error = ddc::parallel_transform_reduce(
                 Exec(),

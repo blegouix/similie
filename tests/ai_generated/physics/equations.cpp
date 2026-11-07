@@ -41,15 +41,17 @@ struct SpatialHamiltonian
     static constexpr bool IS_LINEAR = true;
     struct State
     {
-        std::array<double, 1> potential {};
-        std::array<double, N> moments {};
+        sil::exterior::Form<std::array<double, 1>> potential {};
+        sil::exterior::Form<std::array<double, N>> moments {};
     };
     template <class Elem>
-    KOKKOS_FUNCTION constexpr double hamiltonian(State const& state, Elem elem) const
+    KOKKOS_FUNCTION constexpr sil::exterior::Form<double> hamiltonian(State const& state, Elem elem)
+            const
     {
-        return elem
-               * (state.potential[0] * state.potential[0] + state.moments[0] * state.moments[0])
-               / 2;
+        return sil::exterior::Form<double>(
+                elem
+                * (state.potential[0] * state.potential[0] + state.moments[0] * state.moments[0])
+                / 2);
     }
     template <class Index, class Elem>
     KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(State const& state, Elem elem) const
@@ -158,22 +160,22 @@ TEST(PhysicsAPI, VectorConstitutiveLawRetainsInverseAndJacobian)
     similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField law(curve);
     similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField<
             decltype(curve)>::State state {{1.25, 0.5, 0.2}};
-    std::array<double, 3> const response = law(state, 0);
+    sil::exterior::Form<std::array<double, 3>> const response = law(state, 0);
     std::array<double, 9> const jacobian = law.jacobian(state, 0);
     for (std::size_t column = 0; column < 3; ++column) {
         double const step = 1e-6;
         state.value[column] += step;
-        std::array<double, 3> const upper = law(state, 0);
+        sil::exterior::Form<std::array<double, 3>> const upper = law(state, 0);
         state.value[column] -= 2 * step;
-        std::array<double, 3> const lower = law(state, 0);
+        sil::exterior::Form<std::array<double, 3>> const lower = law(state, 0);
         state.value[column] += step;
         for (std::size_t row = 0; row < 3; ++row) {
             EXPECT_NEAR(jacobian[3 * row + column], (upper[row] - lower[row]) / (2 * step), 1e-8);
         }
     }
-    std::array<double, 3> const original = state.value;
+    sil::exterior::Form<std::array<double, 3>> const original = state.value;
     state.value = response;
-    std::array<double, 3> const inverse = law.inverse(state, 0);
+    sil::exterior::Form<std::array<double, 3>> const inverse = law.inverse(state, 0);
     std::array<double, 9> const inverse_jacobian = law.inverse_value(state, 0);
     for (std::size_t row = 0; row < 3; ++row) {
         EXPECT_NEAR(inverse[row], original[row], 1e-12);
@@ -198,11 +200,12 @@ TEST(PhysicsAPI, MagneticConstitutiveLawsUsePointwiseFields)
     EXPECT_DOUBLE_EQ(linear.inverse_value(state, 0)[0], 4.0);
 
     similie::physics::magnetostatics::InterpolatedNonlinearBHCurve<3> const
-            curve(std::array<double, 3> {0.0, 1.0, 3.0}, std::array<double, 3> {0.0, 2.0, 10.0});
+            curve(sil::exterior::Form<std::array<double, 3>> {0.0, 1.0, 3.0},
+                  sil::exterior::Form<std::array<double, 3>> {0.0, 2.0, 10.0});
     similie::physics::magnetostatics::NonlinearMagneticInductionToMagneticField const law(curve);
     similie::physics::magnetostatics::NonlinearMagneticState const origin {};
-    std::array<double, 3> const field = law(origin, 0);
-    std::array<double, 3> const inverse = law.inverse(origin, 0);
+    sil::exterior::Form<std::array<double, 3>> const field = law(origin, 0);
+    sil::exterior::Form<std::array<double, 3>> const inverse = law.inverse(origin, 0);
     std::array<double, 9> const jacobian = law.jacobian(origin, 0);
     for (std::size_t row = 0; row < 3; ++row) {
         EXPECT_DOUBLE_EQ(field[row], 0.0);
@@ -211,7 +214,7 @@ TEST(PhysicsAPI, MagneticConstitutiveLawsUsePointwiseFields)
             EXPECT_DOUBLE_EQ(jacobian[3 * row + column], row == column ? 2.0 : 0.0);
     }
     similie::physics::magnetostatics::NonlinearMagneticState const induction {{1.2, 0.9, 0.0}};
-    std::array<double, 3> const response = law(induction, 0);
+    sil::exterior::Form<std::array<double, 3>> const response = law(induction, 0);
     EXPECT_NEAR(response[0], 3.2, 1e-12);
     EXPECT_NEAR(response[1], 2.4, 1e-12);
     std::array<double, 9> const tangent = law.jacobian(induction, 0);

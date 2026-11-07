@@ -1776,7 +1776,8 @@ public:
                        vector_potential_index,
                        vector_potential_index>(
                     std::declval<ExecSpace const&>(),
-                    std::declval<matrix_free_vector_potential_tensor_type>(),
+                    std::declval<
+                            sil::exterior::Cochain<matrix_free_vector_potential_tensor_type>>(),
                     std::declval<matrix_free_metric_tensor_type>(),
                     std::declval<matrix_free_position_tensor_type>()));
     template <class ExecSpace>
@@ -2136,10 +2137,10 @@ public:
                             MetricIndex3D,
                             vector_potential_index,
                             vector_potential_index,
-                            matrix_free_vector_potential_tensor_type,
+                            sil::exterior::Cochain<matrix_free_vector_potential_tensor_type>,
                             matrix_free_metric_tensor_type,
                             matrix_free_position_tensor_type>::
-                            value(vector_potential_tensor,
+                            value(sil::exterior::Cochain(vector_potential_tensor),
                                   metric,
                                   position,
                                   codifferential_chain,
@@ -2360,7 +2361,7 @@ public:
                         vector_potential_index,
                         vector_potential_index>(
                         exec_space,
-                        workspace.potential,
+                        sil::exterior::Cochain(workspace.potential),
                         workspace.metric,
                         workspace.position));
 
@@ -2401,10 +2402,10 @@ public:
                             MetricIndex3D,
                             vector_potential_index,
                             vector_potential_index,
-                            matrix_free_vector_potential_tensor_type,
+                            sil::exterior::Cochain<matrix_free_vector_potential_tensor_type>,
                             matrix_free_metric_tensor_type,
                             matrix_free_position_tensor_type>::
-                            value(workspace.potential,
+                            value(sil::exterior::Cochain(workspace.potential),
                                   workspace.metric,
                                   workspace.position,
                                   codifferential_chain,
@@ -2704,9 +2705,10 @@ public:
                     divergence_tensor(elem, scalar_accessor.domain().front()) = 0.0;
                 });
 
-        sil::exterior::coboundary<
-                CoboundaryIndex3D,
-                vector_potential_index>(exec_space, magnetic_induction_tensor, potential_tensor);
+        sil::exterior::coboundary<CoboundaryIndex3D, vector_potential_index>(
+                exec_space,
+                sil::exterior::Cochain(magnetic_induction_tensor),
+                sil::exterior::Cochain(potential_tensor));
 
         ddc::parallel_for_each(
                 "similie_3d_matrix_free_magnetic_response",
@@ -2760,7 +2762,9 @@ public:
 
         bool const use_divergence_gauge = use_divergence_gauge_3d();
         if (use_divergence_gauge) {
-            (*workspace.staged_codifferential)(divergence_tensor, potential_tensor);
+            (*workspace.staged_codifferential)(
+                    sil::exterior::Cochain(divergence_tensor),
+                    sil::exterior::Cochain(potential_tensor));
         }
 
         double const gauge_penalty = m_gauge_penalty;
@@ -4247,7 +4251,11 @@ void fill_post_process_fields_on_cell_domain(
                 InPlaneInductionIndexSeq,
                 decltype(position),
                 ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>>::
-        operator()(reconstructed_induction, reduced_induction, position, elem);
+        operator()(
+                sil::exterior::Form(reconstructed_induction),
+                sil::exterior::Cochain(reduced_induction),
+                position,
+                elem);
 
         std::array<double, 3> const magnetic_induction {
                 reconstructed_induction(
@@ -4262,11 +4270,12 @@ void fill_post_process_fields_on_cell_domain(
                                      .constitutive_field(
                                              nonlinear_constitutive_law,
                                              physics::magnetostatics::NonlinearMagneticState {
-                                                     magnetic_induction},
+                                                     sil::exterior::Form(magnetic_induction)},
                                              elem);
         } else {
-            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
-                                     .field(magnetic_induction, 1.0 / read_mu(elem));
+            magnetic_field
+                    = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                              .field(sil::exterior::Form(magnetic_induction), 1.0 / read_mu(elem));
         }
 
         write_cell_output(elem, magnetic_induction, magnetic_field);
@@ -4309,11 +4318,12 @@ void fill_post_process_fields_on_cell_domain_3d(
                                      .constitutive_field(
                                              nonlinear_constitutive_law,
                                              physics::magnetostatics::NonlinearMagneticState {
-                                                     magnetic_induction},
+                                                     sil::exterior::Form(magnetic_induction)},
                                              elem);
         } else {
-            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
-                                     .field(magnetic_induction, 1.0 / read_mu(elem));
+            magnetic_field
+                    = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                              .field(sil::exterior::Form(magnetic_induction), 1.0 / read_mu(elem));
         }
 
         write_cell_output(elem, magnetic_induction, magnetic_field);
@@ -4405,20 +4415,22 @@ void fill_force_density_on_cell_domain(
         }
     });
 
-    auto staged_codifferential = sil::exterior::make_staged_codifferential<
-            StressMetricIndex,
-            StressRowIndex,
-            StressRowIndex>(Kokkos::DefaultHostExecutionSpace(), one_form_tensor, metric, position);
+    auto staged_codifferential = sil::exterior::
+            make_staged_codifferential<StressMetricIndex, StressRowIndex, StressRowIndex>(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    sil::exterior::Cochain(one_form_tensor),
+                    metric,
+                    position);
 
     sil::exterior::StagedOperator<sil::exterior::Reduction<
             ddc::TypeSeq<StressRowIndex>,
             decltype(position),
             ddc::DiscreteElement<DDim...>>>
-            reduce_stress(
+            reduce_stress {
                     Kokkos::DefaultHostExecutionSpace(),
-                    one_form_tensor,
-                    stress_form,
-                    position);
+                    sil::exterior::Cochain(one_form_tensor),
+                    sil::exterior::Form(stress_form),
+                    position};
 
     auto fill_force_component = [&](auto select_components, auto assign_output) {
         ddc::host_for_each(cell_domain, [&](auto elem) {
@@ -4430,8 +4442,10 @@ void fill_force_density_on_cell_domain(
                 stress_form(elem, stress_form.accessor().template access_element<Z>())
                         = one_form[2];
         });
-        reduce_stress(one_form_tensor, stress_form);
-        staged_codifferential(scalar_tensor, one_form_tensor);
+        reduce_stress(sil::exterior::Cochain(one_form_tensor), sil::exterior::Form(stress_form));
+        staged_codifferential(
+                sil::exterior::Cochain(scalar_tensor),
+                sil::exterior::Cochain(one_form_tensor));
         ddc::host_for_each(cell_domain, [&](auto elem) {
             assign_output(elem, -scalar_tensor(elem, ddc::DiscreteElement<ScalarIndex>(0)));
         });
@@ -4710,7 +4724,8 @@ void integrate_diagnostics(
                                 .z
                                 = planar ? z_coords.front() : 0.5 * (z_coords[k] + z_coords[k + 1]),
                                 .measure = sil::exterior::integrate<ddc::TypeSeq<First, Second>>(
-                                        forms[ddc::DiscreteElement<DiagnosticQuantity>(2)],
+                                        sil::exterior::Form(
+                                                forms[ddc::DiscreteElement<DiagnosticQuantity>(2)]),
                                         position,
                                         face),
                                 .traction = traction});
@@ -4720,7 +4735,7 @@ void integrate_diagnostics(
     auto integral = [&](std::size_t quantity, Chain const& chain) {
         return sil::exterior::integrate<ddc::TypeSeq<First, Second>>(
                 Kokkos::DefaultHostExecutionSpace(),
-                forms[ddc::DiscreteElement<DiagnosticQuantity>(quantity)],
+                sil::exterior::Form(forms[ddc::DiscreteElement<DiagnosticQuantity>(quantity)]),
                 position,
                 chain);
     };
