@@ -542,7 +542,7 @@ class InitialDiscretization(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "requires monitoring"):
                 validate_trajectory(path, "incompressible_ideal_hd", 8, reference=True)
 
-    def test_potential_based_energy_without_resolution_compensation(self):
+    def test_potential_based_energy_includes_vertex_quadrature_projection(self):
         for fluid in ("incompressible", "compressible"):
             for n in (8, 16):
                 with (
@@ -567,7 +567,9 @@ class InitialDiscretization(unittest.TestCase):
                     )
                     h = 2 * np.pi / n
                     expected = (
-                        0.125 * (np.sin(h / 2) / (h / 2)) ** 2
+                        0.125
+                        * (np.sin(h / 2) / (h / 2)) ** 2
+                        * np.cos(h / 2) ** 4
                         if fluid == "incompressible"
                         else 0.125
                     )

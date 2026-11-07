@@ -916,21 +916,6 @@ def compact_report(systems, compute, visible_metrics):
             end = [markdown(analysis)]
             ansi_lines[len(lines)] = "| " + " | ".join(start + ansi + end) + " |"
             lines.append("| " + " | ".join(start + cells + end) + " |")
-    lines += [
-        "",
-        "Red/bold marks at least 85% of sustained throughput or a high-priority Nsight focus metric; "
-        f"green/bold Compute SOL marks at least {COMPUTE_SOL_GREEN_THRESHOLD}% of peak. "
-        "Compute SOL is measured only for the selected hot samples in hybrid mode; — means not measured. "
-        "SM active is activity, not Compute SOL. Cache BW is normalized sector throughput, not cache hit rate.",
-    ]
-    for case, reason in compute.get("hot_kernel_skips", {}).items():
-        lines += [
-            "",
-            "Detailed profiling skipped for "
-            + markdown(case)
-            + ": "
-            + markdown(reason),
-        ]
     if compute.get("errors"):
         lines += ["", "Collection errors: " + markdown("; ".join(compute["errors"]))]
     text = "\n".join(lines) + "\n"

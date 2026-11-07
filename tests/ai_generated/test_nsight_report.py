@@ -1046,7 +1046,14 @@ class CombinedReport(unittest.TestCase):
                 json.dumps(dict(cases=profiles))
             )
             (output / "ncu/results.json").write_text(
-                json.dumps(dict(detail="hybrid", cases=samples, errors=[]))
+                json.dumps(
+                    dict(
+                        detail="hybrid",
+                        cases=samples,
+                        errors=[],
+                        hot_kernel_skips={CASE: "multipass replay skipped"},
+                    )
+                )
             )
             self.assertEqual(write_combined_report(output), [])
             self.assertGreater(
@@ -1054,6 +1061,12 @@ class CombinedReport(unittest.TestCase):
             )
             summary = (output / "nsight/summary.md").read_text()
             self.assertLess(len(summary.encode()), 1024 * 1024)
+            self.assertNotIn("Red/bold marks", summary)
+            self.assertNotIn("Detailed profiling skipped", summary)
+            self.assertIn(
+                "Detailed profiling skipped",
+                (output / "nsight/report.md").read_text(),
+            )
             self.assertEqual(summary.count("\n## "), 14)
             self.assertIn("\n\n\n## ", summary)
             for case, _, _, _ in case_specs():
