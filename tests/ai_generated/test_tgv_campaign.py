@@ -90,7 +90,13 @@ class IsolatedSystemsCaptures(unittest.TestCase):
             self.assertEqual(
                 console.getvalue().count("Benchmark Time CPU Iterations"), 1
             )
-            self.assertEqual(console.getvalue().count("TaylorGreen/"), 14)
+            self.assertEqual(
+                sum(
+                    re.sub(r"\x1b\[[0-9;]*m", "", line).startswith("TaylorGreen/")
+                    for line in console.getvalue().splitlines()
+                ),
+                14,
+            )
             self.assertNotIn("Profiler chatter", console.getvalue())
             self.assertNotIn("Collecting data", console.getvalue())
             self.assertIn("\x1b[0;32m", console.getvalue())
@@ -110,7 +116,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                 14,
             )
 
-    def test_failed_capture_stops_before_publishing_combined_timings(self):
+    def test_failed_summary_stops_before_publishing_combined_timings(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             (directory / "benchmark.json").write_text(json.dumps({"benchmarks": []}))
@@ -131,7 +137,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                     profile_performance(
                         ["binary"], directory, "incompressible_ideal_hd"
                     )
-            execute_capture.assert_called_once()
+            self.assertEqual(execute_capture.call_count, 14)
             self.assertFalse((directory / "nsys/timings.json").exists())
 
 
@@ -567,9 +573,7 @@ class InitialDiscretization(unittest.TestCase):
                     )
                     h = 2 * np.pi / n
                     expected = (
-                        0.125
-                        * (np.sin(h / 2) / (h / 2)) ** 2
-                        * np.cos(h / 2) ** 4
+                        0.125 * (np.sin(h / 2) / (h / 2)) ** 2 * np.cos(h / 2) ** 4
                         if fluid == "incompressible"
                         else 0.125
                     )

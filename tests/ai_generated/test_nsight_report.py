@@ -40,10 +40,50 @@ from nsight_report import (
     reconcile_compute_invocations,
     write_combined_report,
 )
-from nsys_report import iteration_profiles, summarize_profile
+from nsys_report import (
+    iteration_profiles,
+    profile_command,
+    summarize_profile,
+    validate_iteration_setup,
+)
 
 CASE = "TaylorGreen/N=64/default"
 SYMBOL = "_Zprobe_full_symbol"
+
+
+class IterationSetupExclusion(unittest.TestCase):
+    def test_rejects_lazy_cache_builds_in_iterations(self):
+        for label in (
+            "similie_cache_operator_stencils",
+            "periodic_poisson_preconditioner",
+        ):
+            with self.subTest(label=label):
+                cases = {
+                    CASE: {
+                        "regions": [
+                            {
+                                "name": CASE + "/iteration/solver",
+                                "kernels": [{"label": label}],
+                            }
+                        ]
+                    }
+                }
+                with self.assertRaisesRegex(ValueError, "Setup kernel"):
+                    validate_iteration_setup(cases)
+
+    def test_rejects_monitoring_inside_iteration(self):
+        cases = {
+            CASE: {
+                "regions": [
+                    {
+                        "name": CASE + "/iteration/monitoring",
+                        "kernels": [],
+                    }
+                ]
+            }
+        }
+        with self.assertRaisesRegex(ValueError, "Non-iteration work"):
+            validate_iteration_setup(cases)
 
 
 class ComputeLabelReconciliation(unittest.TestCase):
@@ -340,11 +380,24 @@ def capture_fixture(path):
 
 
 class SystemsSummary(unittest.TestCase):
+    def test_capture_starts_after_setup_and_stops_before_finalization(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch("nsys_report.profiling_environment", return_value={}):
+                command, environment = profile_command(["binary"], Path(temporary))
+        self.assertIn("--capture-range=nvtx", command)
+        self.assertIn("--nvtx-capture=similie_tgv_iterations", command)
+        self.assertIn("--capture-range-end=stop", command)
+        self.assertEqual(environment["NSYS_NVTX_PROFILER_REGISTER_ONLY"], "0")
+
     def test_export_uses_launch_attribution_without_generic_projection_reports(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             (directory / "tgv.nsys-rep").touch()
             expected = capture_fixture(directory / "tgv.sqlite")
+            with sqlite3.connect(directory / "tgv.sqlite") as connection:
+                connection.execute(
+                    "DELETE FROM NVTX_EVENTS WHERE text=?", (CASE + "/setup",)
+                )
             with patch("nsys_report.subprocess.run") as export:
                 actual = summarize_profile(directory, {CASE: 2})
             command = export.call_args.args[0]
@@ -357,7 +410,7 @@ class SystemsSummary(unittest.TestCase):
             )
 
     def test_incomplete_capture_is_rejected_before_timing_publication(self):
-        for failure in ("iterations", "setup", "case", "kernels"):
+        for failure in ("iterations", "case", "kernels"):
             with (
                 self.subTest(failure=failure),
                 tempfile.TemporaryDirectory() as temporary,
@@ -367,11 +420,7 @@ class SystemsSummary(unittest.TestCase):
                 database = directory / "tgv.sqlite"
                 capture_fixture(database)
                 with sqlite3.connect(database) as connection:
-                    if failure == "setup":
-                        connection.execute(
-                            "DELETE FROM NVTX_EVENTS WHERE text=?", (CASE + "/setup",)
-                        )
-                    elif failure == "kernels":
+                    if failure == "kernels":
                         connection.execute("DELETE FROM CUPTI_ACTIVITY_KIND_KERNEL")
                 cases = (
                     {CASE + "/unexpected": 2}
@@ -742,9 +791,7 @@ class IterationAttribution(unittest.TestCase):
             Path("unused"), api, expected_launches=2, preserve_launches=True
         )
         self.assertEqual(len(launches), 4)
-        self.assertEqual(
-            {sample["action_index"] for sample in launches}, {1, 2}
-        )
+        self.assertEqual({sample["action_index"] for sample in launches}, {1, 2})
         rows = list(combined_rows(CASE, profile, samples))
         direct = next(
             row
