@@ -106,8 +106,7 @@ jobs:
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
           -e HOME="${BUILD_ROOT}/home" \
-          -e CACHE_ROOT="${BUILD_ROOT}" \
-          -v "${CACHE_ROOT}:/similie-ci" \
+          -e BUILD_ROOT="${BUILD_ROOT}" \
           -v "${CACHE_ROOT}:${BUILD_ROOT}" \
           -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
@@ -118,7 +117,6 @@ jobs:
             git config --global --add safe.directory "*"
             nvidia-smi
 
-            export HOME=/similie-ci/home
             mkdir -p "${HOME}"
             case_name="${{ matrix.case.name }}"
             # Use the library's algebraic multigrid for the scalar 2D problem.
@@ -138,7 +136,7 @@ jobs:
             SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_magnetostatics_inputs.pos" \
             SIMILIE_PARAVIEW_H5_FILE="${output_dir}/inductor.h5" \
             SIMILIE_PARAVIEW_XMF_FILE="${output_dir}/inductor.xmf" \
-              "/similie-ci/src/examples/onelab_inductor/run_similie_onelab.sh" \
+              "${BUILD_ROOT}/src/examples/onelab_inductor/run_similie_onelab.sh" \
               "--dim=${{ matrix.case.dimension }}" \
               "--${{ matrix.case.physics }}" \
               "--${{ matrix.case.backend }}" \

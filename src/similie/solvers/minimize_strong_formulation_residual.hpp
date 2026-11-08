@@ -886,6 +886,13 @@ class StateDependentMatrixFreeLinOp
     mutable Kokkos::View<double**, Kokkos::LayoutRight, memory_space> m_advanced_applied;
 
 public:
+    static constexpr bool IS_SYMMETRIC = [] {
+        if constexpr (requires { OperatorModel::IS_SYMMETRIC; }) {
+            return OperatorModel::IS_SYMMETRIC;
+        }
+        return true;
+    }();
+
     explicit StateDependentMatrixFreeLinOp(std::shared_ptr<gko::Executor const> exec)
         : base_type(std::move(exec))
         , m_exec_space()
@@ -1163,12 +1170,10 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
             = gko::stop::Iteration::build().with_max_iters(settings.max_iterations).on(gko_exec);
     std::unique_ptr<gko::LinOpFactory> solver_factory;
     bool const nonsymmetric_operator = [] {
-        if constexpr (std::is_base_of_v<gko::LinOp, OperatorModel>)
-            return true;
-        else if constexpr (requires { OperatorModel::IS_SYMMETRIC; }) {
+        if constexpr (requires { OperatorModel::IS_SYMMETRIC; }) {
             return !OperatorModel::IS_SYMMETRIC;
         }
-        return false;
+        return std::is_base_of_v<gko::LinOp, OperatorModel>;
     }();
     bool const default_to_gmres = nonsymmetric_operator && std::getenv("SIMILIE_SOLVER") == nullptr;
     gko::size_type const gmres_krylov_dim = static_cast<gko::size_type>(std::max(
@@ -1621,61 +1626,25 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                     settings);
 
             detail::copy(exec_space, correction_rhs, residual);
+            StrongFormulationSolverSettings correction_settings = settings;
+            correction_settings.use_initial_guess = false;
             if (settings.use_matrix_free) {
-                using solver_type = gko::solver::Cg<double>;
-                auto residual_criterion
-                        = gko::stop::ResidualNorm<double>::build()
-                                  .with_reduction_factor(settings.relative_tolerance)
-                                  .on(gko_exec);
-                auto iterations_criterion = gko::stop::Iteration::build()
-                                                    .with_max_iters(settings.max_iterations)
-                                                    .on(gko_exec);
-                auto solver_factory = solver_type::build()
-                                              .with_generated_preconditioner(preconditioner)
-                                              .with_criteria(
-                                                      std::move(residual_criterion),
-                                                      std::move(iterations_criterion))
-                                              .on(gko_exec);
                 auto operator_model_ptr = std::shared_ptr<
                         OperatorModel const>(&operator_model, [](OperatorModel const*) {});
-                auto system_matrix = std::shared_ptr<gko::LinOp const>(
-                        std::make_shared<detail::StateDependentMatrixFreeLinOp<
-                                ExecSpace,
-                                OperatorModel,
-                                SolutionViewType>>(
-                                gko_exec,
-                                exec_space,
-                                operator_model_ptr,
-                                solution));
-                auto solver = solver_factory->generate(system_matrix);
-                auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
-                        gko::log::Convergence<double>::create().release());
-                solver->add_logger(convergence_logger);
-                std::shared_ptr<detail::SolverProgressLogger> progress_logger;
-                if (unsigned int const progress_stride = detail::solver_progress_stride();
-                    progress_stride != 0U) {
-                    progress_logger = std::make_shared<detail::SolverProgressLogger>(
-                            gko_exec->get_master(),
-                            detail::residual_norm_l2(exec_space, correction_rhs),
-                            progress_stride);
-                    solver->add_logger(progress_logger);
-                }
-                detail::fill(exec_space, delta, 0.0);
-                auto rhs_gko = detail::to_gko_dense(gko_exec, correction_rhs);
-                auto delta_gko = detail::to_gko_dense(gko_exec, delta);
-                if (detail::env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
-                    std::cout << "SimiLie nonlinear linear solve stage: applying solver"
-                              << std::endl;
-                }
-                solver->apply(rhs_gko.dense, delta_gko.dense);
-                gko_exec->synchronize();
-                detail::copy_back_from_gko_dense_bridge(delta, delta_gko);
-                if (progress_logger != nullptr) {
-                    solver->remove_logger(progress_logger);
-                }
-                solver->remove_logger(convergence_logger);
-                diagnostics.iterations
-                        += static_cast<unsigned int>(convergence_logger->get_num_iterations());
+                auto system_matrix = std::make_shared<detail::StateDependentMatrixFreeLinOp<
+                        ExecSpace,
+                        OperatorModel,
+                        SolutionViewType>>(gko_exec, exec_space, operator_model_ptr, solution);
+                auto const inner = detail::solve_linearized_system(
+                        exec_space,
+                        gko_exec,
+                        *system_matrix,
+                        correction_rhs,
+                        delta,
+                        correction_settings,
+                        system_matrix,
+                        preconditioner);
+                diagnostics.iterations += inner.iterations;
             } else {
                 auto inner = detail::solve_linearized_system(
                         exec_space,
@@ -1683,7 +1652,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                         operator_model,
                         correction_rhs,
                         delta,
-                        settings,
+                        correction_settings,
                         std::static_pointer_cast<gko::LinOp const>(matrix),
                         preconditioner);
                 diagnostics.iterations += inner.iterations;

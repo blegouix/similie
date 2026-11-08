@@ -7,6 +7,7 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <string>
 
 #include <similie/exterior/quadrature/quadrature.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
@@ -251,11 +252,16 @@ class VertexFormReconstructionField
 {
     Position m_position;
     Extrapolation m_extrapolation;
+    std::string m_label;
 
 public:
-    VertexFormReconstructionField(Position const& position, Extrapolation const& extrapolation = {})
+    VertexFormReconstructionField(
+            Position const& position,
+            Extrapolation const& extrapolation = {},
+            std::string const& label = "similie_vertex_form_transfer")
         : m_position(position)
         , m_extrapolation(extrapolation)
+        , m_label(label)
     {
     }
 
@@ -271,7 +277,7 @@ public:
         Position const position = m_position;
         Extrapolation const extrapolation = m_extrapolation;
         ddc::parallel_for_each(
-                "similie_vertex_form_transfer",
+                m_label,
                 exec,
                 output.non_indices_domain(),
                 KOKKOS_LAMBDA(
@@ -289,11 +295,16 @@ class VertexFormProjectionField
 {
     Position m_position;
     Extrapolation m_extrapolation;
+    std::string m_label;
 
 public:
-    VertexFormProjectionField(Position const& position, Extrapolation const& extrapolation = {})
+    VertexFormProjectionField(
+            Position const& position,
+            Extrapolation const& extrapolation = {},
+            std::string const& label = "similie_vertex_form_transfer")
         : m_position(position)
         , m_extrapolation(extrapolation)
+        , m_label(label)
     {
     }
 
@@ -309,7 +320,7 @@ public:
         Position const position = m_position;
         Extrapolation const extrapolation = m_extrapolation;
         ddc::parallel_for_each(
-                "similie_vertex_form_transfer",
+                m_label,
                 exec,
                 output.non_indices_domain(),
                 KOKKOS_LAMBDA(
