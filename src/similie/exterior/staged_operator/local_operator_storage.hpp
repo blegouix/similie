@@ -6,7 +6,7 @@
 
 #include <similie/exterior/concepts.hpp>
 #include <similie/exterior/stencil.hpp>
-#include <similie/tensor/tensor_prod/tensor_prod.hpp>
+#include <similie/tensor/tensor_prod.hpp>
 
 namespace sil::exterior {
 namespace detail {

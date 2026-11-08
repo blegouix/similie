@@ -215,6 +215,19 @@ TEST(TensorProdStructured, DiagonalBothSides)
 {
     equal_index_cases<TensorDiagonalIndex>();
 }
+// Obtain zeros and signs from the ordinary index access API for both families.
+TEST(TensorProdStructured, GenericAccessTransformations)
+{
+    compare<I>(
+            ddc::TypeSeq<TensorLorentzianSignIndex<
+                    std::integral_constant<std::size_t, 1>,
+                    I,
+                    upper_t<J>>>(),
+            ddc::TypeSeq<J>());
+    compare<TensorFullIndex<I, J>>(
+            ddc::TypeSeq<TensorAntisymmetricIndex<I, upper_t<K>>>(),
+            ddc::TypeSeq<TensorFullIndex<K, J>>());
+}
 TEST(TensorProdStructured, LeviCivitaBothSides)
 {
     compare<TensorAntisymmetricIndex<

@@ -1,15 +1,17 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
+
+#include <array>
+#include <utility>
 
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/tensor_indices/character.hpp>
-
-#include "structured.hpp"
 #if defined BUILD_YOUNG_TABLEAU
 #include <similie/tensor/tensor_indices/young_tableau_tensor.hpp>
 #endif
@@ -95,6 +97,192 @@ constexpr void check_tensors_compatibility()
     return detail::CheckTensorsCompatibility<ProdDDims, Indices1, Indices2>::operator()();
 }
 
+namespace detail {
+
+// Evaluate the index's existing access transformation with a unit coefficient.
+// This resolves structural zeros, ones and signs without reading tensor storage.
+// In particular, access ID zero need not mean a structural zero for every index.
+struct TensorProductUnitAccess
+{
+    using element_type = double;
+
+    template <class Tensor, class Element>
+    KOKKOS_FUNCTION constexpr double operator()(Tensor const&, Element const&) const
+    {
+        return 1.;
+    }
+};
+
+template <class Index, class Element>
+KOKKOS_FUNCTION constexpr double tensor_product_access_coefficient(Element const& element)
+{
+    return Index::template process_access<
+            TensorProductUnitAccess,
+            Element,
+            Index>(TensorProductUnitAccess(), TensorProductUnitAccess(), element);
+}
+
+// A structural zero is a property of the access transformation, independent of
+// the index family and of the values stored in a tensor.
+template <class Index>
+KOKKOS_FUNCTION constexpr bool tensor_product_has_structural_zeros()
+{
+    for (std::size_t id = 0; id < Index::access_size(); ++id) {
+        if (tensor_product_access_coefficient<Index>(ddc::DiscreteElement<Index>(id)) == 0.)
+            return true;
+    }
+    return false;
+}
+
+template <class... Free, class... Contracted>
+KOKKOS_FUNCTION constexpr ddc::DiscreteElement<Free..., Contracted...> tensor_product_known_element(
+        ddc::DiscreteElement<Free...> free,
+        ddc::DiscreteElement<Contracted...> contracted)
+{
+    return ddc::DiscreteElement<Free..., Contracted...>(free, contracted);
+}
+
+template <class ProductIndices, class LeftIndices, class RightIndices, class ContractedIndices>
+class TensorProdUnrolled;
+
+// Unfold the canonical output components and contractions for any index types.
+// Accessor conversions see constant indices and resolve storage offsets and signs
+// at compile time. The index access transformations identify structural zeros.
+template <class... Product, class... Left, class... Right, class... Contracted>
+class TensorProdUnrolled<
+        ddc::TypeSeq<Product...>,
+        ddc::TypeSeq<Left...>,
+        ddc::TypeSeq<Right...>,
+        ddc::TypeSeq<Contracted...>>
+{
+    template <std::size_t Output>
+    KOKKOS_FUNCTION static constexpr ddc::DiscreteElement<Product...> output_element()
+    {
+        std::array<std::size_t, sizeof...(Product)> const sizes {Product::mem_size()...};
+        std::array<std::size_t, sizeof...(Product)> ids {};
+        std::size_t remaining = Output;
+        for (std::size_t i = sizes.size(); i > 0; --i) {
+            ids[i - 1] = remaining % sizes[i - 1];
+            remaining /= sizes[i - 1];
+        }
+        ddc::DiscreteElement<Product...> element;
+        ddc::detail::array(element) = ids;
+        return element;
+    }
+
+    template <std::size_t... Values, std::size_t... Positions>
+    KOKKOS_FUNCTION static constexpr ddc::DiscreteElement<
+            ddc::type_seq_element_t<Positions, ddc::TypeSeq<Contracted...>>...>
+    contracted_element(std::index_sequence<Values...>, std::index_sequence<Positions...>)
+    {
+        return ddc::DiscreteElement<
+                ddc::type_seq_element_t<Positions, ddc::TypeSeq<Contracted...>>...>(Values...);
+    }
+
+    template <
+            std::size_t Output,
+            class Tensor1,
+            class Tensor2,
+            std::size_t... Values,
+            std::size_t... Next>
+    KOKKOS_FORCEINLINE_FUNCTION static void extend(
+            Tensor1 const& left,
+            Tensor2 const& right,
+            std::remove_const_t<typename Tensor1::element_type>& sum,
+            bool& initialized,
+            std::index_sequence<Values...>,
+            std::index_sequence<Next...>)
+    {
+        (contract<Output>(left, right, sum, initialized, std::index_sequence<Values..., Next>()),
+         ...);
+    }
+
+    template <std::size_t Output, class Tensor1, class Tensor2, std::size_t... Values>
+    KOKKOS_FORCEINLINE_FUNCTION static void contract(
+            Tensor1 const& left,
+            Tensor2 const& right,
+            std::remove_const_t<typename Tensor1::element_type>& sum,
+            bool& initialized,
+            std::index_sequence<Values...> assigned)
+    {
+        constexpr auto known = tensor_product_known_element(
+                TensorAccessor<Product...>::canonical_natural_element(output_element<Output>()),
+                contracted_element(
+                        std::index_sequence<Values...>(),
+                        std::make_index_sequence<sizeof...(Values)>()));
+        if constexpr (sizeof...(Values) == sizeof...(Contracted)) {
+            constexpr auto left_element = TensorAccessor<Left...>::access_element(known);
+            constexpr auto right_element = TensorAccessor<Right...>::access_element(known);
+            if constexpr (
+                    ((tensor_product_access_coefficient<Left>(left_element) != 0.) && ...)
+                    && ((tensor_product_access_coefficient<Right>(right_element) != 0.) && ...)) {
+                if (initialized)
+                    sum += left.get(left_element) * right.get(right_element);
+                else {
+                    sum = left.get(left_element) * right.get(right_element);
+                    initialized = true;
+                }
+            }
+        } else {
+            extend<Output>(
+                    left,
+                    right,
+                    sum,
+                    initialized,
+                    assigned,
+                    std::make_index_sequence<ddc::type_seq_element_t<
+                            sizeof...(Values),
+                            ddc::TypeSeq<Contracted...>>::size()>());
+        }
+    }
+
+    template <std::size_t Output, class ProductTensor, class Tensor1, class Tensor2>
+    KOKKOS_FORCEINLINE_FUNCTION static void write(
+            ProductTensor const& product,
+            Tensor1 const& left,
+            Tensor2 const& right)
+    {
+        constexpr ddc::DiscreteElement<Product...> element = output_element<Output>();
+        // Tensor views may select only a subset of the stored output components.
+        if (product.domain().contains(element)) {
+            typename ProductTensor::element_type sum = 0.;
+            // The general reduction starts from zero. Preserve that addition
+            // (including signed zeros). Products with structural zeros start from
+            // their first retained term, preserving copies and signed zeros.
+            bool initialized = sizeof...(Contracted) > 0
+                               && !((tensor_product_has_structural_zeros<Left>() || ...)
+                                    || (tensor_product_has_structural_zeros<Right>() || ...));
+            contract<Output>(left, right, sum, initialized, std::index_sequence<>());
+            product.mem(element) = sum;
+        }
+    }
+
+    template <class ProductTensor, class Tensor1, class Tensor2, std::size_t... Outputs>
+    KOKKOS_FORCEINLINE_FUNCTION static void write(
+            ProductTensor const& product,
+            Tensor1 const& left,
+            Tensor2 const& right,
+            std::index_sequence<Outputs...>)
+    {
+        (write<Outputs>(product, left, right), ...);
+    }
+
+public:
+    template <class ProductTensor, class Tensor1, class Tensor2>
+    KOKKOS_FUNCTION static void operator()(
+            ProductTensor const& product,
+            Tensor1 const& left,
+            Tensor2 const& right)
+    {
+        write(product,
+              left,
+              right,
+              std::make_index_sequence<(Product::mem_size() * ... * std::size_t(1))>());
+    }
+};
+
+} // namespace detail
+
 // Any-any product into Any; unfold small contractions at compile time.
 namespace detail {
 
@@ -150,8 +338,8 @@ struct TensorProdAnyAnyAny<
         // Bound expansion of the general case by the number of scalar products.
         // Larger products retain the loop implementation to limit generated code.
         if constexpr (
-                (StructuredTensorProductIndex<Index1> || ...)
-                || (StructuredTensorProductIndex<Index2> || ...)
+                (tensor_product_has_structural_zeros<Index1>() || ...)
+                || (tensor_product_has_structural_zeros<Index2>() || ...)
                 || ((ProdDDim::mem_size() * ... * 1) <= 128
                     && (ContractDDim::size() * ... * 1) <= 128
                     && (ProdDDim::mem_size() * ... * 1) * (ContractDDim::size() * ... * 1)
@@ -298,10 +486,6 @@ struct TensorProdNatYoungNat<
                    LayoutStridedPolicy,
                    MemorySpace> const& tensor2)
     {
-        /*
-        typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-        csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
-	 */
         std::array<ElementType, Index1::subindices_domain().size()> uncompressed_tensor1_alloc;
         tensor::Tensor uncompressed_tensor1(
                 uncompressed_tensor1_alloc.data(),
@@ -336,12 +520,6 @@ tensor_prod(
         Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace> const&
                 tensor2)
 {
-    /*
-    check_tensors_compatibility<
-            ddc::TypeSeq<ProdDDim...>,
-            ddc::TypeSeq<Index1>,
-            ddc::TypeSeq<DDim2...>>();
-    */
     // TODO DDim2 -> Index2, characterize
     return detail::TensorProdNatYoungNat<
             Index1,
@@ -394,10 +572,6 @@ struct TensorProdNatYoungYoung<
                    LayoutStridedPolicy,
                    MemorySpace> const& tensor2)
     {
-        /*
-        typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-        csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
-	 */
         std::array<ElementType, Index1::subindices_domain().size()> uncompressed_tensor1_alloc;
         tensor::Tensor uncompressed_tensor1(
                 uncompressed_tensor1_alloc.data(),
@@ -512,10 +686,6 @@ struct TensorProdYoungAnyAny<
                    LayoutStridedPolicy,
                    MemorySpace> const& tensor2)
     {
-        /*
-        typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-        csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
-         */
         std::array<ElementType, ddc::DiscreteDomain(ProdDDim::subindices_domain()...).size()>
                 uncompressed_prod_alloc;
         tensor::Tensor uncompressed_prod(

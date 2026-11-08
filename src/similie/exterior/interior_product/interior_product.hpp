@@ -9,7 +9,7 @@
 #include <similie/exterior/form.hpp>
 #include <similie/tensor/metric.hpp>
 #include <similie/tensor/tensor_indices/full_tensor.hpp>
-#include <similie/tensor/tensor_prod/tensor_prod.hpp>
+#include <similie/tensor/tensor_prod.hpp>
 
 namespace sil::exterior {
 
