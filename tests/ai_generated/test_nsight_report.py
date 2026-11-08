@@ -258,7 +258,7 @@ class ComputeSamplingPlan(unittest.TestCase):
             captured, {(SYMBOL, 1), (SYMBOL, 4), (SYMBOL, 5), ("_Zshort_kernel", 1)}
         )
 
-    def test_core_union_respects_capture_limit(self):
+    def test_core_union_amortizes_setup_across_large_capture(self):
         plan = dict(
             sample_groups=[
                 dict(symbols=["first"], invocations=list(range(1, 17))),
@@ -267,9 +267,8 @@ class ComputeSamplingPlan(unittest.TestCase):
             kernel_invocations={"first": 32, "second": 32},
         )
         groups = compute_groups(plan, combine=True)
-        self.assertEqual(len(groups), 2)
-        self.assertTrue(all(group["launches"] <= 32 for group in groups))
-        self.assertEqual(sum(group["launches"] for group in groups), 32)
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["launches"], 64)
 
     def test_failed_capture_stops_before_starting_another_case(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -569,6 +568,7 @@ class HotKernelSelection(unittest.TestCase):
                     "ideal",
                     "hd",
                     hot_kernels=1,
+                    detail="hybrid",
                 )
             self.assertEqual(
                 [call.args[10] for call in capture.call_args_list], ["core", "full"]
@@ -578,7 +578,7 @@ class HotKernelSelection(unittest.TestCase):
             self.assertEqual(len(result["hot_kernels"][CASE]), 1)
             self.assertEqual(result["errors"], [])
 
-    def test_hybrid_keeps_n128_core_metrics_when_multipass_is_unsupported(self):
+    def test_default_profiles_full_metrics_at_n128_without_hot_kernel_limit(self):
         case = CASE.replace("N=64", "N=128")
         plan = self.plan()
 
@@ -597,7 +597,7 @@ class HotKernelSelection(unittest.TestCase):
                 region=region,
                 label=label,
                 symbol=symbol,
-                metrics=dict.fromkeys(CORE_METRICS, 42),
+                metrics=dict.fromkeys({**METRICS, **CORE_METRICS}, 42),
                 rules=[],
                 replay_passes=1,
             )
@@ -626,11 +626,12 @@ class HotKernelSelection(unittest.TestCase):
                     hot_kernels=1,
                 )
             self.assertEqual(capture.call_count, 1)
-            self.assertEqual(capture.call_args.args[10], "core")
+            self.assertEqual(capture.call_args.args[10], "full")
             result = json.loads((output / "ncu/results.json").read_text())
             self.assertEqual(result["errors"], [])
             self.assertEqual(result["hot_kernels"], {})
-            self.assertIn("device-memory snapshot", result["hot_kernel_skips"][case])
+            self.assertEqual(result["hot_kernel_skips"], {})
+            self.assertEqual(result["detail"], "full")
 
 
 class IterationAttribution(unittest.TestCase):

@@ -181,9 +181,8 @@ def compute_groups(plan, max_launches=32, combine=False):
                     )
                 )
     if combine and batches and "kernel_invocations" in plan:
-        # One-pass counters need no device-memory backups. Combine small unions
-        # to amortize setup, but bound the actual capture (including extra calls
-        # selected by the Cartesian product of symbols and invocation indices).
+        # One-pass counters need no device-memory backups. Combine their union
+        # so that expensive application setup runs only once per core capture.
         symbols = sorted({symbol for group in batches for symbol in group["symbols"]})
         invocations = sorted(
             {index for group in batches for index in group["invocations"]}
@@ -193,8 +192,7 @@ def compute_groups(plan, max_launches=32, combine=False):
             for symbol in symbols
             for index in invocations
         )
-        if count <= max_launches:
-            return [dict(symbols=symbols, invocations=invocations, launches=count)]
+        return [dict(symbols=symbols, invocations=invocations, launches=count)]
     return batches
 
 
@@ -506,7 +504,7 @@ def profile_cases(
     transport,
     coupling,
     batch_timeout=3600,
-    detail="hybrid",
+    detail="full",
     hot_kernels=20,
 ):
     directory = output / "ncu"
@@ -585,41 +583,32 @@ def profile_cases(
                         f"Missing Compute samples for {len(missing)} first-iteration region/kernel pairs"
                     )
                 if needs_hot:
-                    if n >= 128:
-                        reason = (
-                            "multipass kernel replay skipped at N=128 and above: "
-                            "Nsight Compute could not save the staged-Laplacian N128 "
-                            "device-memory snapshot; single-pass metrics are retained"
-                        )
-                        results["hot_kernel_skips"][case] = reason
-                        print(f"  Detailed analysis skipped: {reason}", flush=True)
-                    else:
-                        selected = hottest_kernels(case, plan, hot_kernels)
-                        results["hot_kernels"][case] = selected
-                        focused_groups = hot_groups(plan, selected)
-                        print(
-                            f"  Detailed analysis: {len(selected)} hottest kernels by cumulative GPU time; "
-                            f"{len(focused_groups)} application executions",
-                            flush=True,
-                        )
-                        detailed = capture_groups(
-                            binary,
-                            case_directory / "hot",
-                            case,
-                            n,
-                            flags,
-                            fluid,
-                            transport,
-                            coupling,
-                            plan,
-                            focused_groups,
-                            "full",
-                            environment,
-                            batch_timeout,
-                        )
-                        merge_hot_samples(
-                            plan, results["cases"][case], detailed, selected
-                        )
+                    selected = hottest_kernels(case, plan, hot_kernels)
+                    results["hot_kernels"][case] = selected
+                    focused_groups = hot_groups(plan, selected)
+                    print(
+                        f"  Detailed analysis: {len(selected)} hottest kernels by cumulative GPU time; "
+                        f"{len(focused_groups)} application executions",
+                        flush=True,
+                    )
+                    detailed = capture_groups(
+                        binary,
+                        case_directory / "hot",
+                        case,
+                        n,
+                        flags,
+                        fluid,
+                        transport,
+                        coupling,
+                        plan,
+                        focused_groups,
+                        "full",
+                        environment,
+                        batch_timeout,
+                    )
+                    merge_hot_samples(
+                        plan, results["cases"][case], detailed, selected
+                    )
             except Exception as error:
                 results["errors"].append(f"{case}: {error}")
                 print(results["errors"][-1], flush=True)
@@ -1117,7 +1106,7 @@ def main():
     parser.add_argument(
         "--detail",
         choices=("hybrid", "core", "full"),
-        default="hybrid",
+        default="full",
         help="Hybrid adds detailed hot-kernel analysis; core is one pass; full analyzes all kernels",
     )
     parser.add_argument(
