@@ -165,7 +165,7 @@ struct ComposedInteriorChecks
                 staged(Exec(),
                        A(result),
                        A(velocity),
-                       sil::exterior::Cochain(input),
+                       sil::exterior::Cochain<Field<Two>>(input),
                        position,
                        inverse);
         for (int pass = 0; pass < 2; ++pass) {
@@ -174,7 +174,7 @@ struct ComposedInteriorChecks
             sil::exterior::OperatorActingOnCochainInPlaceOfForm<Operation> {}(
                     Exec(),
                     A(reference),
-                    std::tuple {A(velocity), sil::exterior::Cochain(input)},
+                    std::tuple {A(velocity), sil::exterior::Cochain<Field<Two>>(input)},
                     std::
                             tuple {sil::exterior::Form(velocity_form),
                                    sil::exterior::Form(input_form)},
@@ -186,7 +186,7 @@ struct ComposedInteriorChecks
                             position,
                             sil::tensor::PeriodicExtrapolationRule {}),
                     inverse);
-            staged(A(result), A(velocity), sil::exterior::Cochain(input));
+            staged(A(result), A(velocity), sil::exterior::Cochain<Field<Two>>(input));
             auto host = Kokkos::create_mirror_view_and_copy(
                     Kokkos::HostSpace(),
                     result_alloc.allocation_kokkos_view());

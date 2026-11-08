@@ -126,7 +126,6 @@ jobs:
             if [ "${{ matrix.case.dimension }}" = 2 ]; then
               export SIMILIE_PRECONDITIONER=multigrid
             fi
-            cd /similie-ci/build
             output_dir="${PWD}/onelab_inductor_cases/${case_name}"
             mkdir -p "${output_dir}"
             # Keep the 3D GetDP reference system small enough for the CI runner.
