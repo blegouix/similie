@@ -107,7 +107,6 @@ jobs:
           --user "$(id -u):$(id -g)" \
           -e HOME="${BUILD_ROOT}/home" \
           -e BUILD_ROOT="${BUILD_ROOT}" \
-          -e GMSH_EXECUTABLE=/usr/local/bin/gmsh \
           -v "${CACHE_ROOT}:${BUILD_ROOT}" \
           -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
@@ -120,7 +119,7 @@ jobs:
 
             mkdir -p "${HOME}"
             case_name="${{ matrix.case.name }}"
-            # Use the library's algebraic multigrid for the scalar 2D problem.
+            # Use the library algebraic multigrid for the scalar 2D problem.
             # The 3D vector problem retains its configured SpdIsai preconditioner.
             if [ "${{ matrix.case.dimension }}" = 2 ]; then
               export SIMILIE_PRECONDITIONER=multigrid
