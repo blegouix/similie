@@ -107,6 +107,7 @@ jobs:
           --user "$(id -u):$(id -g)" \
           -e HOME="${BUILD_ROOT}/home" \
           -e BUILD_ROOT="${BUILD_ROOT}" \
+          -e GMSH_EXECUTABLE=/usr/local/bin/gmsh \
           -v "${CACHE_ROOT}:${BUILD_ROOT}" \
           -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
