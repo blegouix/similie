@@ -73,13 +73,13 @@ KOKKOS_FUNCTION constexpr ddc::DiscreteElement<Free..., Contracted...> tensor_pr
 }
 
 template <class ProductIndices, class LeftIndices, class RightIndices, class ContractedIndices>
-class TensorProdStructured;
+class TensorProdUnrolled;
 
-// Unfold the canonical output components and structurally possible contractions.
-// Accessor conversions then see constant indices, including antisymmetric signs.
-// This works for a structured index in either operand, alongside other indices.
+// Unfold the canonical output components and contractions for any index types.
+// Accessor conversions see constant indices and resolve storage offsets and signs
+// at compile time. Existing structured matchers also prune impossible terms.
 template <class... Product, class... Left, class... Right, class... Contracted>
-class TensorProdStructured<
+class TensorProdUnrolled<
         ddc::TypeSeq<Product...>,
         ddc::TypeSeq<Left...>,
         ddc::TypeSeq<Right...>,
@@ -176,7 +176,12 @@ class TensorProdStructured<
         // Tensor views may select only a subset of the stored output components.
         if (product.domain().contains(element)) {
             typename ProductTensor::element_type sum = 0.;
-            bool initialized = false;
+            // The general reduction starts from zero. Preserve that addition
+            // (including signed zeros); structured products keep their existing
+            // first-term initialization and structural pruning.
+            bool initialized = sizeof...(Contracted) > 0
+                               && !((StructuredTensorProductIndex<Left> || ...)
+                                    || (StructuredTensorProductIndex<Right> || ...));
             contract<Output>(left, right, sum, initialized, std::index_sequence<>());
             product.mem(element) = sum;
         }

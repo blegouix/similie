@@ -95,7 +95,7 @@ constexpr void check_tensors_compatibility()
     return detail::CheckTensorsCompatibility<ProdDDims, Indices1, Indices2>::operator()();
 }
 
-// Any-any product into Any (general case not optimized)
+// Any-any product into Any; unfold small contractions at compile time.
 namespace detail {
 
 template <
@@ -147,10 +147,16 @@ struct TensorProdAnyAnyAny<
                    LayoutStridedPolicy,
                    MemorySpace> const& tensor2)
     {
+        // Bound expansion of the general case by the number of scalar products.
+        // Larger products retain the loop implementation to limit generated code.
         if constexpr (
                 (StructuredTensorProductIndex<Index1> || ...)
-                || (StructuredTensorProductIndex<Index2> || ...)) {
-            TensorProdStructured<
+                || (StructuredTensorProductIndex<Index2> || ...)
+                || ((ProdDDim::mem_size() * ... * 1) <= 128
+                    && (ContractDDim::size() * ... * 1) <= 128
+                    && (ProdDDim::mem_size() * ... * 1) * (ContractDDim::size() * ... * 1)
+                               <= 128)) {
+            TensorProdUnrolled<
                     ddc::TypeSeq<ProdDDim...>,
                     ddc::TypeSeq<Index1...>,
                     ddc::TypeSeq<Index2...>,
