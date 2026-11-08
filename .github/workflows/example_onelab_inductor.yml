@@ -121,6 +121,11 @@ jobs:
             export HOME=/similie-ci/home
             mkdir -p "${HOME}"
             case_name="${{ matrix.case.name }}"
+            # Use the library's algebraic multigrid for the scalar 2D problem.
+            # The 3D vector problem retains its configured SpdIsai preconditioner.
+            if [ "${{ matrix.case.dimension }}" = 2 ]; then
+              export SIMILIE_PRECONDITIONER=multigrid
+            fi
             cd /similie-ci/build
             output_dir="${PWD}/onelab_inductor_cases/${case_name}"
             mkdir -p "${output_dir}"

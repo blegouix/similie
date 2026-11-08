@@ -466,11 +466,10 @@ mu0 = 4.0e-7 * math.pi
 # SimiLie reports conventional inductance N*Phi/I for the represented geometry.
 # GetDP's post-processing additionally restores the inherited symmetry copies.
 similie_l = similie_logged_l * symmetry_factor
-# The two symmetric return branches of the EI core contribute to the linked
-# flux, and GetDP restores the selected half-model symmetry in its result.
-analytical_l = (
-    2.0 * mu0 * surface_measure * num_turns**2 / gap_length
-)
+# AIRGAP covers the entire central pole of the full device. With zero core
+# reluctance, its reluctance is g/(mu0*S); the two return legs are not extra
+# parallel air gaps (they are tagged ECORE). Do not count this area twice.
+analytical_l = mu0 * surface_measure * num_turns**2 / gap_length
 similie_getdp_relative_error = abs(similie_l - getdp_l) / abs(getdp_l)
 getdp_analytical_relative_error = abs(getdp_l - analytical_l) / abs(analytical_l)
 similie_analytical_relative_error = abs(similie_l - analytical_l) / abs(analytical_l)
@@ -490,7 +489,7 @@ print(
 print(
     "Analytical air-gap estimate converted to conventional coil inductance:"
     f" analytical={analytical_l:.9e} H"
-    f" (2*mu0*S*N^2/l, S={surface_measure:.9e} m^2,"
+    f" (mu0*S*N^2/l, full gap S={surface_measure:.9e} m^2,"
     f" l={gap_length:.9e} m, Lz={length_z:.9e} m, N={num_turns:.9e},"
     f" inherited SymmetryFactor={symmetry_factor:.9e})"
 )

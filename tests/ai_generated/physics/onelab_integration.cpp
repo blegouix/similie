@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "magnetostatics_onelab.hpp"
+#include "minimize_strong_formulation_residual_onelab.hpp"
 
 namespace magnetostatics = similie::onelab_interface::magnetostatics_onelab;
 
@@ -206,3 +207,96 @@ TEST(OnelabIntegration, HexahedralMaxwellStressUsesAllSpatialDerivatives)
 }
 
 } // namespace
+
+TEST(OnelabIntegration, NonlinearMagneticSolveOnNonuniformGrid)
+{
+    using namespace magnetostatics::detail::magnetostatics_local;
+    using Curve = similie::physics::magnetostatics::InterpolatedNonlinearBHCurve<4>;
+    using Equations = similie::physics::HamiltonEquations<
+            similie::physics::magnetostatics::NonlinearMagnetostaticsHamiltonian<Curve>>;
+    Curve const
+            curve(std::array<double, 4> {0.0, 0.4, 1.3, 3.0},
+                  std::array<double, 4> {0.0, 0.5, 3.0, 10.0});
+    Equations const equations {
+            similie::physics::magnetostatics::NonlinearMagnetostaticsHamiltonian<Curve>(curve)};
+    Kokkos::View<double*> x("x", 5), y("y", 5);
+    auto host_x = Kokkos::create_mirror_view(x);
+    auto host_y = Kokkos::create_mirror_view(y);
+    for (int i = 0; i < 5; ++i) {
+        host_x(i) = 0.15 * i + 0.1 * i * i;
+        host_y(i) = 0.25 * i + 0.05 * i * i;
+    }
+    Kokkos::deep_copy(x, host_x);
+    Kokkos::deep_copy(y, host_y);
+    MagnetostaticsOperator2D<
+            Kokkos::DefaultExecutionSpace::memory_space,
+            Equations,
+            PotentialCoboundary2D> const
+            op(equations, x, y, similie::solvers::Criterion::MomentsTemporalDerivative);
+    Kokkos::View<double**> exact("exact", 25, 1), rhs("rhs", 25, 1), solution("solution", 25, 1),
+            response("response", 25, 1);
+    auto host_exact = Kokkos::create_mirror_view(exact);
+    for (int j = 0; j < 5; ++j)
+        for (int i = 0; i < 5; ++i)
+            host_exact(i + 5 * j, 0) = i == 0 || j == 0 || i == 4 || j == 4
+                                               ? 0.0
+                                               : 0.1 * std::sin(0.7 * i) * std::sin(0.6 * j);
+    Kokkos::deep_copy(exact, host_exact);
+    op.apply(Kokkos::DefaultExecutionSpace(), exact, rhs);
+    auto const matrix = assemble_matrix_data(op, exact);
+    std::array<double, 625> entries {};
+    for (auto const& entry : matrix.nonzeros)
+        entries[25 * entry.row + entry.column] += entry.value;
+    double asymmetry = 0.0;
+    for (int i = 0; i < 25; ++i)
+        for (int j = 0; j < 25; ++j)
+            asymmetry = std::max(asymmetry, std::abs(entries[25 * i + j] - entries[25 * j + i]));
+    EXPECT_LT(asymmetry, 1e-10);
+    Kokkos::View<double**> direction("direction", 25, 1), tangent("tangent", 25, 1);
+    auto host_direction = Kokkos::create_mirror_view(direction);
+    for (int row = 0; row < 25; ++row)
+        host_direction(row, 0) = std::cos(0.37 * row);
+    Kokkos::deep_copy(direction, host_direction);
+    apply_jacobian(Kokkos::DefaultExecutionSpace(), op, exact, direction, tangent);
+    auto const host_tangent = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), tangent);
+    double quadratic_form = 0.0;
+    for (int row = 0; row < 25; ++row) {
+        double assembled_action = 0.0;
+        for (int column = 0; column < 25; ++column)
+            assembled_action += entries[25 * row + column] * host_direction(column, 0);
+        EXPECT_NEAR(host_tangent(row, 0), assembled_action, 1e-10);
+        quadratic_form += host_direction(row, 0) * assembled_action;
+    }
+    EXPECT_GT(quadratic_form, 0.0);
+    for (bool matrix_free : {false, true}) {
+        similie::solvers::StrongFormulationSolverSettings settings;
+        settings.preconditioner = similie::solvers::PreconditionerType::Identity;
+        settings.use_matrix_free = matrix_free;
+        settings.max_iterations = 200;
+        settings.relative_tolerance = 1e-9;
+        auto const diagnostics = similie::solvers::minimize_strong_formulation_residual(
+                Kokkos::DefaultExecutionSpace(),
+                op,
+                rhs,
+                solution,
+                settings);
+        EXPECT_TRUE(diagnostics.converged);
+        op.apply(Kokkos::DefaultExecutionSpace(), solution, response);
+        auto const host_rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), rhs);
+        auto const host_response
+                = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), response);
+        for (int i = 0; i < 25; ++i)
+            EXPECT_NEAR(host_response(i, 0), host_rhs(i, 0), 1e-8);
+    }
+}
+
+TEST(OnelabIntegration, MultigridPreconditionerControlRoundTrip)
+{
+    using namespace similie::onelab_interface::minimize_strong_formulation_residual_onelab;
+    EXPECT_DOUBLE_EQ(
+            preconditioner_to_control_value(similie::solvers::PreconditionerType::Multigrid),
+            8.0);
+    EXPECT_EQ(
+            preconditioner_from_control_value(8.0),
+            similie::solvers::PreconditionerType::Multigrid);
+}

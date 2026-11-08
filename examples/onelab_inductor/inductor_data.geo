@@ -8,9 +8,11 @@ DefineConstant[
     Name "Input/00FE model", Highlight "Blue"},
   Flag_boolean = {0, Choices{0,1},
     Name "Input/00OpenCASCADE model?", Visible Flag_3Dmodel, Highlight "Blue"},
-  Flag_Symmetry2D = {1, Choices{0="Full",1="Half"},
+  // These structured geometries contain the complete device in 2D and 3D.
+  // Symmetry multipliers from the original reduced GetDP meshes do not apply.
+  Flag_Symmetry2D = {0, Choices{0="Full"}, ReadOnly 1,
     Name "Input/00Symmetry type", Highlight "Blue", Visible (Flag_3Dmodel == 0)},
-  Flag_Symmetry3D = {2, Choices{0="Full",1="Half",2="One fourth"},
+  Flag_Symmetry3D = {0, Choices{0="Full"}, ReadOnly 1,
     Name "Input/01Symmetry type", Highlight "Blue", Visible (Flag_3Dmodel == 1)},
   Flag_OpenCore = {1, Choices{0,1}, ReadOnly Flag_boolean,
     Name "Input/02Core with air gap"}
