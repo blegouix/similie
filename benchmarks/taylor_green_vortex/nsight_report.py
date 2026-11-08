@@ -181,9 +181,9 @@ def compute_groups(plan, max_launches=32, combine=False):
                     )
                 )
     if combine and batches and "kernel_invocations" in plan:
-        # One-pass counters need no device-memory backups. Collect their union
-        # in one execution so the expensive initial Poisson solve happens once
-        # per case, rather than once per exact invocation-pattern group.
+        # One-pass counters need no device-memory backups. Combine small unions
+        # to amortize setup, but bound the actual capture (including extra calls
+        # selected by the Cartesian product of symbols and invocation indices).
         symbols = sorted({symbol for group in batches for symbol in group["symbols"]})
         invocations = sorted(
             {index for group in batches for index in group["invocations"]}
@@ -193,7 +193,8 @@ def compute_groups(plan, max_launches=32, combine=False):
             for symbol in symbols
             for index in invocations
         )
-        return [dict(symbols=symbols, invocations=invocations, launches=count)]
+        if count <= max_launches:
+            return [dict(symbols=symbols, invocations=invocations, launches=count)]
     return batches
 
 

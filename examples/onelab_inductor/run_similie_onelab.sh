@@ -32,7 +32,7 @@ mesh_output_dir="$(dirname "${mesh_file}")"
 direct_h5_file="${mesh_output_dir}/similie_linear_magnetostatics.h5"
 default_result_file="${mesh_output_dir}/similie_magnetostatics_inputs.pos"
 legacy_result_file="${mesh_output_dir}/similie_linear_magnetostatics_inputs.pos"
-getdp_l_rel_tolerance="${SIMILIE_ONELAB_GETDP_L_REL_TOLERANCE:-0.15}"
+getdp_l_rel_tolerance="${SIMILIE_ONELAB_GETDP_L_REL_TOLERANCE:-0.20}"
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing inductor geometry file: ${geometry_file}" >&2

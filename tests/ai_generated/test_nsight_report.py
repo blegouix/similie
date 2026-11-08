@@ -258,6 +258,19 @@ class ComputeSamplingPlan(unittest.TestCase):
             captured, {(SYMBOL, 1), (SYMBOL, 4), (SYMBOL, 5), ("_Zshort_kernel", 1)}
         )
 
+    def test_core_union_respects_capture_limit(self):
+        plan = dict(
+            sample_groups=[
+                dict(symbols=["first"], invocations=list(range(1, 17))),
+                dict(symbols=["second"], invocations=list(range(17, 33))),
+            ],
+            kernel_invocations={"first": 32, "second": 32},
+        )
+        groups = compute_groups(plan, combine=True)
+        self.assertEqual(len(groups), 2)
+        self.assertTrue(all(group["launches"] <= 32 for group in groups))
+        self.assertEqual(sum(group["launches"] for group in groups), 32)
+
     def test_failed_capture_stops_before_starting_another_case(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
