@@ -612,7 +612,7 @@ class Laplacian
 
 public:
     using staged_storage_type = detail::
-            SpatialOperatorStorage<Laplacian, Index, Cochain, Cochain, 2, Tensor, Exec, true>;
+            LinearSpatialOperatorStorage<Laplacian, Index, Cochain, Cochain, 2, Tensor, Exec, true>;
 
     Laplacian(
             Exec const& exec,

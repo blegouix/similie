@@ -60,7 +60,7 @@ private:
     OperatorActingOnCochainInPlaceOfForm<HodgeOperator> m_hodge;
 
 public:
-    using staged_storage_type = detail::LocalOperatorStorage<
+    using staged_storage_type = detail::LinearLocalOperatorStorage<
             DiscreteHodgeStar,
             tensor::lower_t<reduction_index_t<Indices1>>,
             reduction_index_t<Indices2>,

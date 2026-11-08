@@ -362,7 +362,7 @@ struct Codifferential<
         MetricType,
         PositionType>
 {
-    using staged_storage_type = detail::SpatialOperatorStorage<
+    using staged_storage_type = detail::LinearSpatialOperatorStorage<
             Codifferential,
             TagToRemoveFromCochain,
             CochainTag,

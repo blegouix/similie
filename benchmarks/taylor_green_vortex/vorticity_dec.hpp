@@ -6,6 +6,7 @@
 
 #include <cmath>
 
+#include <similie/exterior/interior_product/staged_vertex_form_composition.hpp>
 #include <similie/exterior/reduction_and_reconstruction/vertex_form_transfer.hpp>
 #include <similie/tensor/periodic_extrapolation_rule.hpp>
 
@@ -64,6 +65,22 @@ class VorticityDEC
                     MetricTensor,
                     PositionTensor>::staged_storage_type::
                     template rebind<Kokkos::DefaultExecutionSpace>>;
+    using InverseMetric = sil::tensor::relabelize_indices_of_t<
+            MetricTensor,
+            ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>,
+            sil::tensor::upper_t<
+                    ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>>>;
+    using StagedInteriorProduct
+            = sil::exterior::StagedOperator<sil::exterior::VertexFormBilinearComposition<
+                    sil::exterior::
+                            InteriorProduct<sil::tensor::Contravariant<CurlDirection>, TwoForm>,
+                    Vector,
+                    TwoForm,
+                    Vector,
+                    SpatialDomain,
+                    Field::memory_space,
+                    InverseMetric>>;
+    std::unique_ptr<StagedInteriorProduct> m_interior_product;
     Field m_one, m_two, m_two_output, m_physical_one, m_physical_two, m_three, m_axial;
     std::unique_ptr<LaplacianOperator<sil::exterior::Cochain<TwoFormTensor>>> m_laplacian;
     std::unique_ptr<TwoCodifferential> m_codifferential;
@@ -135,6 +152,18 @@ public:
                 grid.euclidean_metric(),
                 grid.geometry(),
                 sil::tensor::PeriodicExtrapolationRule {});
+        InverseMetric const inverse_metric = sil::tensor::relabelize_indices_of<
+                ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>,
+                sil::tensor::upper_t<
+                        ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>>>(
+                grid.euclidean_metric());
+        m_interior_product = std::make_unique<StagedInteriorProduct>(
+                Kokkos::DefaultExecutionSpace(),
+                sil::exterior::Cochain(tensor<Vector>(m_two_output)),
+                sil::exterior::Cochain(tensor<Vector>(m_one)),
+                sil::exterior::Cochain(tensor<TwoForm>(m_two)),
+                grid.geometry(),
+                inverse_metric);
         Kokkos::fence("vorticity_hodge_setup_complete");
     }
     void reduce_one_form(Field const& coefficients, Field const& cochain)
@@ -284,33 +313,11 @@ public:
                     for (int a = 0; a < 3; ++a)
                         one(0, 3 * i + a) += h * harmonic[a];
                 });
-        PositionTensor const geometry = m_grid.geometry();
-        MetricTensor const metric = m_grid.euclidean_metric();
-        auto const inverse_metric = sil::tensor::relabelize_indices_of<
-                ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>,
-                sil::tensor::upper_t<
-                        ddc::to_type_seq_t<typename MetricTensor::accessor_t::natural_domain_t>>>(
-                metric);
-        sil::exterior::OperatorActingOnCochainInPlaceOfForm<sil::exterior::InteriorProduct<
-                sil::tensor::Contravariant<CurlDirection>,
-                TwoForm>> {}(
-                Kokkos::DefaultExecutionSpace(),
+        (*m_interior_product)(
+                sil::exterior::Cochain(tensor<Vector>(m_two_output)),
                 sil::exterior::Cochain(tensor<Vector>(m_one)),
-                std::
-                        tuple {sil::exterior::Cochain(tensor<Vector>(m_one)),
-                               sil::exterior::Cochain(tensor<TwoForm>(m_two))},
-                std::
-                        tuple {sil::exterior::Form(tensor<Vector>(m_physical_one)),
-                               sil::exterior::Form(tensor<TwoForm>(m_physical_two))},
-                sil::exterior::Form(tensor<Vector>(m_axial)),
-                sil::exterior::VertexFormReconstructionField(
-                        geometry,
-                        sil::tensor::PeriodicExtrapolationRule {}),
-                sil::exterior::VertexFormProjectionField(
-                        geometry,
-                        sil::tensor::PeriodicExtrapolationRule {}),
-                inverse_metric);
-        unpack(m_one, output);
+                sil::exterior::Cochain(tensor<TwoForm>(m_two)));
+        unpack(m_two_output, output);
     }
     void codifferential(Field const& two_cochain, Field const& one_cochain)
     {

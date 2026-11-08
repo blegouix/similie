@@ -381,7 +381,7 @@ public:
     static constexpr bool input_is_form = true;
     static constexpr bool output_is_form = false;
 
-    using staged_storage_type = detail::LocalOperatorStorage<
+    using staged_storage_type = detail::LinearLocalOperatorStorage<
             Reduction,
             reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
             reduction_index_t<Indices>,
@@ -1069,7 +1069,7 @@ public:
     static constexpr bool input_is_form = false;
     static constexpr bool output_is_form = true;
 
-    using staged_storage_type = detail::LocalOperatorStorage<
+    using staged_storage_type = detail::LinearLocalOperatorStorage<
             Reconstruction,
             reduction_index_t<Indices>,
             reduction_index_t<tensor::primes<Indices>>,

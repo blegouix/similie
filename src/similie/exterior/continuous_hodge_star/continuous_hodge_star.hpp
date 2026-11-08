@@ -226,7 +226,7 @@ struct ContinuousHodgeStar
 {
     static constexpr bool input_is_form = true;
     static constexpr bool output_is_form = true;
-    using staged_storage_type = detail::LocalOperatorStorage<
+    using staged_storage_type = detail::LinearLocalOperatorStorage<
             ContinuousHodgeStar,
             tensor::lower_t<reduction_index_t<Indices1>>,
             reduction_index_t<Indices2>,

@@ -205,18 +205,18 @@ template <
         class SourceElement = typename tensor::natural_domain_t<Source>::discrete_element_type,
         class TargetElement = typename tensor::natural_domain_t<Target>::discrete_element_type,
         bool NormalizeSource = true>
-class LocalOperatorStorage
+class LinearLocalOperatorStorage
 {
     using Element = typename Domain::discrete_element_type;
     LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> m_stencils;
 
     template <class... Geometry>
-    static LocalOperatorStorage cache(
+    static LinearLocalOperatorStorage cache(
             Exec const& exec,
             Domain const& domain,
             Geometry const&... geometry)
     {
-        LocalOperatorStorage result;
+        LinearLocalOperatorStorage result;
         result.m_stencils = cache_local_stencils<Source, Target, Memory, Coefficients>(
                 exec,
                 domain,
@@ -227,7 +227,7 @@ class LocalOperatorStorage
 public:
     using execution_space = Exec;
     template <class OtherExec, template <class...> class OtherCoefficients = Coefficients>
-    using rebind = LocalOperatorStorage<
+    using rebind = LinearLocalOperatorStorage<
             Operator,
             Source,
             Target,
@@ -243,7 +243,7 @@ public:
         requires requires(Geometry const& geometry, Element element) {
             Operator {}.value(geometry, element);
         }
-    static LocalOperatorStorage build(Exec const& exec, Geometry const& geometry)
+    static LinearLocalOperatorStorage build(Exec const& exec, Geometry const& geometry)
     {
         return cache(exec, geometry.non_indices_domain(), geometry);
     }
@@ -252,7 +252,7 @@ public:
         requires requires(Geometry1 const& first, Geometry2 const& second, Element element) {
             Operator {}.value(first, second, element);
         }
-    static LocalOperatorStorage build(
+    static LinearLocalOperatorStorage build(
             Exec const& exec,
             Geometry1 const& first,
             Geometry2 const& second)
@@ -264,7 +264,7 @@ public:
         requires requires(Geometry const& geometry, Element element) {
             Operator {}.value(geometry, element);
         }
-    static LocalOperatorStorage build(
+    static LinearLocalOperatorStorage build(
             Exec const& exec,
             Geometry const& geometry,
             Domain const& domain)
@@ -276,7 +276,7 @@ public:
         requires requires(Geometry1 const& first, Geometry2 const& second, Element element) {
             Operator {}.value(first, second, element);
         }
-    static LocalOperatorStorage build(
+    static LinearLocalOperatorStorage build(
             Exec const& exec,
             Geometry1 const& first,
             Geometry2 const& second,
@@ -291,7 +291,7 @@ public:
                 && requires(
                         Geometry const&... geometry,
                         Element element) { Operator {}.value(geometry..., element); })
-    static LocalOperatorStorage build(
+    static LinearLocalOperatorStorage build(
             Exec const& exec,
             Output const& output,
             Input const&,
@@ -335,7 +335,7 @@ public:
     template <ExteriorFieldType Output, ExteriorFieldType Input>
     Output apply(Exec const& exec, Output const& output, Input const& input) const
     {
-        LocalOperatorStorage const storage = *this;
+        LinearLocalOperatorStorage const storage = *this;
         ddc::parallel_for_each(
                 "similie_apply_staged_local_operator",
                 exec,
@@ -483,6 +483,30 @@ public:
         return Operator {}.value(m_geometry, element, natural);
     }
 };
+
+// Compatibility spelling for existing linear operators.
+template <
+        class Operator,
+        class Source,
+        class Target,
+        class Domain,
+        class Memory,
+        class Exec = typename Memory::execution_space,
+        template <class...> class Coefficients = tensor::TensorFullIndex,
+        class SourceElement = typename tensor::natural_domain_t<Source>::discrete_element_type,
+        class TargetElement = typename tensor::natural_domain_t<Target>::discrete_element_type,
+        bool NormalizeSource = true>
+using LocalOperatorStorage = LinearLocalOperatorStorage<
+        Operator,
+        Source,
+        Target,
+        Domain,
+        Memory,
+        Exec,
+        Coefficients,
+        SourceElement,
+        TargetElement,
+        NormalizeSource>;
 
 } // namespace detail
 } // namespace sil::exterior

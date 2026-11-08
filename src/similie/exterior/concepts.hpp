@@ -174,11 +174,52 @@ concept StagingStorageConcept = requires(
     { storage.apply(exec, output, input) } -> std::same_as<Output>;
 };
 
+// Explicit arity contracts. The historical concepts above describe linear maps.
+template <class Operator, class Output, class Input = Output>
+concept LinearStagedOperatorConcept = StagedOperatorConcept<Operator, Output, Input>;
+
+template <class Storage, class Output, class Input = Output>
+concept LinearStagingStorageConcept = StagingStorageConcept<Storage, Output, Input>;
+
+template <class Storage, class Output, class First, class Second>
+concept BilinearStagingStorageConcept = requires(
+        Storage const& storage,
+        typename Storage::execution_space const& exec,
+        Output const& output,
+        First const& first,
+        Second const& second) {
+    { storage.apply(exec, output, first, second) } -> std::same_as<Output>;
+};
+
+template <class Operator, class Output, class First, class Second>
+concept BilinearStagedOperatorConcept = requires(
+        Operator const& operation,
+        Output const& output,
+        First const& first,
+        Second const& second) {
+    { operation(output, first, second) } -> std::same_as<Output>;
+};
+
 template <class Operator, class Output, class Input = Output>
 concept StageableOperatorConcept
         = OperatorInputType<Operator, Input> && OperatorOutputType<Operator, Output> && requires {
               typename Operator::staged_storage_type;
               requires StagingStorageConcept<typename Operator::staged_storage_type, Output, Input>;
           };
+
+template <class Operator, class Output, class Input = Output>
+concept LinearStageableOperatorConcept = StageableOperatorConcept<Operator, Output, Input>;
+
+template <class Operator, class Output, class First, class Second>
+concept BilinearStageableOperatorConcept
+        = OperatorInputType<Operator, First> && OperatorInputType<Operator, Second>
+          && OperatorOutputType<Operator, Output> && requires {
+                 typename Operator::staged_storage_type;
+                 requires BilinearStagingStorageConcept<
+                         typename Operator::staged_storage_type,
+                         Output,
+                         First,
+                         Second>;
+             };
 
 } // namespace sil::exterior
