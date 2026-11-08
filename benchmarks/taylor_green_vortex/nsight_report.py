@@ -547,7 +547,13 @@ def profile_cases(
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                capture_detail = "full" if detail == "full" else "core"
+                # Large cases collect the main counters in one hardware pass,
+                # even when full profiling was requested for the smaller cases.
+                capture_detail = "full" if detail == "full" and n < 128 else "core"
+                if n >= 128 and detail != "core":
+                    reason = "N=128 and above collect core single-pass metrics only"
+                    results["hot_kernel_skips"][case] = reason
+                    print(f"  {reason}", flush=True)
                 groups = compute_groups(plan, combine=capture_detail == "core")
                 count = sum(group["launches"] for group in groups)
                 print(
@@ -584,42 +590,33 @@ def profile_cases(
                     raise ValueError(
                         f"Missing Compute samples for {len(missing)} first-iteration region/kernel pairs"
                     )
-                if needs_hot:
-                    if n >= 128:
-                        reason = (
-                            "multipass kernel replay skipped at N=128 and above: "
-                            "Nsight Compute could not save the staged-Laplacian N128 "
-                            "device-memory snapshot; single-pass metrics are retained"
-                        )
-                        results["hot_kernel_skips"][case] = reason
-                        print(f"  Detailed analysis skipped: {reason}", flush=True)
-                    else:
-                        selected = hottest_kernels(case, plan, hot_kernels)
-                        results["hot_kernels"][case] = selected
-                        focused_groups = hot_groups(plan, selected)
-                        print(
-                            f"  Detailed analysis: {len(selected)} hottest kernels by cumulative GPU time; "
-                            f"{len(focused_groups)} application executions",
-                            flush=True,
-                        )
-                        detailed = capture_groups(
-                            binary,
-                            case_directory / "hot",
-                            case,
-                            n,
-                            flags,
-                            fluid,
-                            transport,
-                            coupling,
-                            plan,
-                            focused_groups,
-                            "full",
-                            environment,
-                            batch_timeout,
-                        )
-                        merge_hot_samples(
-                            plan, results["cases"][case], detailed, selected
-                        )
+                if needs_hot and n < 128:
+                    selected = hottest_kernels(case, plan, hot_kernels)
+                    results["hot_kernels"][case] = selected
+                    focused_groups = hot_groups(plan, selected)
+                    print(
+                        f"  Detailed analysis: {len(selected)} hottest kernels by cumulative GPU time; "
+                        f"{len(focused_groups)} application executions",
+                        flush=True,
+                    )
+                    detailed = capture_groups(
+                        binary,
+                        case_directory / "hot",
+                        case,
+                        n,
+                        flags,
+                        fluid,
+                        transport,
+                        coupling,
+                        plan,
+                        focused_groups,
+                        "full",
+                        environment,
+                        batch_timeout,
+                    )
+                    merge_hot_samples(
+                        plan, results["cases"][case], detailed, selected
+                    )
             except Exception as error:
                 results["errors"].append(f"{case}: {error}")
                 print(results["errors"][-1], flush=True)

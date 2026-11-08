@@ -578,7 +578,13 @@ class HotKernelSelection(unittest.TestCase):
             self.assertEqual(len(result["hot_kernels"][CASE]), 1)
             self.assertEqual(result["errors"], [])
 
-    def test_hybrid_keeps_n128_core_metrics_when_multipass_is_unsupported(self):
+    def test_hybrid_keeps_n128_core_metrics(self):
+        self.check_n128_core_metrics("hybrid")
+
+    def test_full_keeps_n128_core_metrics(self):
+        self.check_n128_core_metrics("full")
+
+    def check_n128_core_metrics(self, detail):
         case = CASE.replace("N=64", "N=128")
         plan = self.plan()
 
@@ -624,13 +630,14 @@ class HotKernelSelection(unittest.TestCase):
                     "ideal",
                     "hd",
                     hot_kernels=1,
+                    detail=detail,
                 )
             self.assertEqual(capture.call_count, 1)
             self.assertEqual(capture.call_args.args[10], "core")
             result = json.loads((output / "ncu/results.json").read_text())
             self.assertEqual(result["errors"], [])
             self.assertEqual(result["hot_kernels"], {})
-            self.assertIn("device-memory snapshot", result["hot_kernel_skips"][case])
+            self.assertIn("single-pass metrics only", result["hot_kernel_skips"][case])
 
 
 class IterationAttribution(unittest.TestCase):
