@@ -607,7 +607,11 @@ class HotKernelSelection(unittest.TestCase):
                 metrics=dict.fromkeys(
                     {**METRICS, **CORE_METRICS}
                     if expected_detail == "full"
-                    else LAUNCH_METRICS,
+                    else {
+                        key: value
+                        for key, value in LAUNCH_METRICS.items()
+                        if key != "Theoretical occupancy (%)"
+                    },
                     42,
                 ),
                 rules=[],
@@ -615,6 +619,10 @@ class HotKernelSelection(unittest.TestCase):
             )
             for region, label, symbol in plan["targets"]
         ]
+        if n >= 128:
+            plan["launch_samples"] = [
+                dict(sample, source="nsys", replay_passes=None) for sample in base
+            ]
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             (output / "performance/nsys").mkdir(parents=True)
@@ -637,8 +645,16 @@ class HotKernelSelection(unittest.TestCase):
                     "hd",
                     hot_kernels=1,
                 )
-            self.assertEqual(capture.call_count, 1)
-            self.assertEqual(capture.call_args.args[10], expected_detail)
+            if n >= 128:
+                capture.assert_not_called()
+                for sample in json.loads((output / "ncu/results.json").read_text())[
+                    "cases"
+                ][case]:
+                    self.assertEqual(sample["source"], "nsys")
+                    self.assertNotIn("Theoretical occupancy (%)", sample["metrics"])
+            else:
+                self.assertEqual(capture.call_count, 1)
+                self.assertEqual(capture.call_args.args[10], expected_detail)
             result = json.loads((output / "ncu/results.json").read_text())
             self.assertEqual(result["errors"], [])
             self.assertEqual(result["hot_kernels"], {})
@@ -650,6 +666,50 @@ class HotKernelSelection(unittest.TestCase):
 
 
 class IterationAttribution(unittest.TestCase):
+    def test_systems_launch_metadata_uses_the_first_sample_of_each_region(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            database = Path(temporary) / "tgv.sqlite"
+            capture_fixture(database)
+            columns = {
+                "registersPerThread": 47,
+                "staticSharedMemory": 64,
+                "dynamicSharedMemory": 128,
+                "gridX": 2,
+                "gridY": 3,
+                "gridZ": 4,
+                "blockX": 8,
+                "blockY": 4,
+                "blockZ": 2,
+            }
+            with sqlite3.connect(database) as connection:
+                for name, value in columns.items():
+                    connection.execute(
+                        f"ALTER TABLE CUPTI_ACTIVITY_KIND_KERNEL ADD COLUMN {name} INTEGER DEFAULT {value}"
+                    )
+            plan = iteration_profiles(database)[CASE]
+            samples = plan["launch_samples"]
+            self.assertEqual(
+                {
+                    (sample["region"], sample["label"], sample["symbol"])
+                    for sample in samples
+                },
+                set(map(tuple, plan["targets"])),
+            )
+            self.assertTrue(samples)
+            for sample in samples:
+                self.assertEqual(sample["source"], "nsys")
+                self.assertEqual(
+                    sample["metrics"],
+                    {
+                        "Registers/thread": 47,
+                        "Threads/block": 64,
+                        "Blocks/grid": 24,
+                        "Static shared memory/block (bytes)": 64,
+                        "Dynamic shared memory/block (bytes)": 128,
+                    },
+                )
+                self.assertIsNone(sample["replay_passes"])
+
     def test_later_api_with_same_correlation_does_not_steal_earlier_kernels(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

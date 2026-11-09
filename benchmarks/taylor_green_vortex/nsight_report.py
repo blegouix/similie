@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # AI-GENERATED
-"""Collect Compute diagnostics and join them with Systems timings for each case."""
+"""Join Systems timings and launch metadata with Compute diagnostics."""
 
 import argparse
 import csv
@@ -515,6 +515,28 @@ def capture_groups(
     return samples
 
 
+def systems_launch_samples(plan, output, relative, case):
+    if "launch_samples" not in plan:
+        # Older saved timing JSON can be upgraded from its existing trace.
+        for database in (
+            output / "performance/nsys" / relative / "tgv.sqlite",
+            output / "performance/nsys/tgv.sqlite",
+        ):
+            if database.is_file():
+                upgraded = iteration_profiles(database)
+                if case in upgraded:
+                    plan = upgraded[case]
+                    break
+    if "launch_samples" not in plan:
+        raise ValueError(
+            f"Missing Systems launch metadata for {case}; regenerate the Systems capture"
+        )
+    samples = plan["launch_samples"]
+    if any(not sample["metrics"] for sample in samples):
+        raise ValueError(f"Systems export lacks CUDA launch attributes for {case}")
+    return samples
+
+
 def profile_cases(
     binary,
     output,
@@ -563,44 +585,51 @@ def profile_cases(
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                # Large cases retain launch attributes, without hardware counters.
-                capture_detail = (
-                    "launch"
-                    if n >= 128 or detail == "launch"
-                    else "full"
-                    if detail == "full"
-                    else "core"
-                )
                 if n >= 128:
                     results["hot_kernel_skips"][case] = (
-                        "N=128 and above collect launch metadata only; hardware counters are not measured"
+                        "N=128 and above use Systems launch metadata only; no Compute execution"
                     )
-                groups = compute_groups(
-                    plan, combine=capture_detail in ("core", "launch")
-                )
-                count = sum(group["launches"] for group in groups)
-                print(
-                    f"\nNsight Compute: {case}: {count} kernel calls covering all first samples; "
-                    f"{len(groups)} application executions (kernel replay for counter passes)",
-                    flush=True,
-                )
-                results["cases"][case] = []
-                results["cases"][case] = capture_groups(
-                    binary,
-                    case_directory,
-                    case,
-                    n,
-                    flags,
-                    fluid,
-                    transport,
-                    coupling,
-                    plan,
-                    groups,
-                    capture_detail,
-                    environment,
-                    batch_timeout,
-                    samples=results["cases"][case],
-                )
+                    print(
+                        f"\nSystems launch metadata: {case}; no additional application execution",
+                        flush=True,
+                    )
+                    results["cases"][case] = systems_launch_samples(
+                        plan, output, relative, case
+                    )
+                else:
+                    capture_detail = (
+                        "full"
+                        if detail == "full"
+                        else "launch"
+                        if detail == "launch"
+                        else "core"
+                    )
+                    groups = compute_groups(
+                        plan, combine=capture_detail in ("core", "launch")
+                    )
+                    count = sum(group["launches"] for group in groups)
+                    print(
+                        f"\nNsight Compute: {case}: {count} kernel calls covering all first samples; "
+                        f"{len(groups)} application executions (kernel replay for counter passes)",
+                        flush=True,
+                    )
+                    results["cases"][case] = []
+                    results["cases"][case] = capture_groups(
+                        binary,
+                        case_directory,
+                        case,
+                        n,
+                        flags,
+                        fluid,
+                        transport,
+                        coupling,
+                        plan,
+                        groups,
+                        capture_detail,
+                        environment,
+                        batch_timeout,
+                        samples=results["cases"][case],
+                    )
                 (directory / "results.json").write_text(
                     json.dumps(results, indent=2) + "\n"
                 )
@@ -966,13 +995,13 @@ def write_combined_report(output):
     lines = [
         "# TGV iteration profiles",
         "",
-        "Systems supplies all timings/counts; Compute supplies only metrics. "
+        "Systems supplies all timings/counts and N128 launch metadata; Compute supplies N64 diagnostics. "
         "NVTX durations are host times; GPU totals span each region's first to last GPU activity. "
         "Regions include nested scopes and all CUDA kernels, including library kernels. "
         "Others is time outside all reported kernels, including transfers and gaps; overlaps count once. "
         "Cache BW is sector throughput relative to sustained sector-service capacity. "
         "Full symbols and metric values are in the artifacts. "
-        "N128 uses launch metadata only; hardware counters are not measured.",
+        "N128 uses Systems launch metadata only; hardware counters and theoretical occupancy are not measured.",
     ]
     if detail != "full":
         lines += [

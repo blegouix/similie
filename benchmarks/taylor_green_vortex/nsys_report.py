@@ -6,10 +6,43 @@
 import argparse
 import html
 import json
+import math
 import os
 from pathlib import Path
 import sqlite3
 import subprocess
+
+
+# Launch metadata comes from the same CUDA activity as the recorded timing.
+LAUNCH_COLUMNS = (
+    "registersPerThread",
+    "staticSharedMemory",
+    "dynamicSharedMemory",
+    "gridX",
+    "gridY",
+    "gridZ",
+    "blockX",
+    "blockY",
+    "blockZ",
+)
+
+
+def launch_metrics(activity):
+    metrics = {}
+    for label, column in (
+        ("Registers/thread", "registersPerThread"),
+        ("Static shared memory/block (bytes)", "staticSharedMemory"),
+        ("Dynamic shared memory/block (bytes)", "dynamicSharedMemory"),
+    ):
+        if activity[column] is not None:
+            metrics[label] = activity[column]
+    for label, columns in (
+        ("Threads/block", ("blockX", "blockY", "blockZ")),
+        ("Blocks/grid", ("gridX", "gridY", "gridZ")),
+    ):
+        if all(activity[column] is not None for column in columns):
+            metrics[label] = math.prod(activity[column] for column in columns)
+    return metrics
 
 
 def profiling_environment():
@@ -130,6 +163,7 @@ def iteration_profiles(database, diagnostics=None):
                         regions={},
                         sample_ranges=set(),
                         targets=set(),
+                        launch_samples={},
                     ),
                 )
                 if case:
@@ -169,6 +203,7 @@ def iteration_profiles(database, diagnostics=None):
             is_kernel = table.endswith("KERNEL")
             symbol = "coalesce(m.value,d.value)" if is_kernel else "NULL"
             kernel_name = "NULL"
+            columns = set()
             names = (
                 "LEFT JOIN StringIds m ON m.id=g.mangledName LEFT JOIN StringIds d ON d.id=g.demangledName"
                 if is_kernel
@@ -184,9 +219,13 @@ def iteration_profiles(database, diagnostics=None):
                     kernel_name = "coalesce(short.value,d.value,m.value)"
                 else:
                     kernel_name = "coalesce(d.value,m.value)"
+            metadata = ",".join(
+                f"g.{column} AS {column}" if column in columns else f"NULL AS {column}"
+                for column in LAUNCH_COLUMNS
+            )
             gpu_queries.append(f"""
                 SELECT a.start AS launch, a.globalTid AS tid, g.start, g.end,
-                       g.deviceId AS device, {symbol} AS symbol, {kernel_name} AS name
+                       g.deviceId AS device, {symbol} AS symbol, {kernel_name} AS name, {metadata}
                 FROM {table} g JOIN apis a ON a.correlationId=g.correlationId
                   AND (a.globalTid & -16777216)=g.globalPid
                   AND a.start<=g.start
@@ -276,6 +315,15 @@ def iteration_profiles(database, diagnostics=None):
                         profile["sample_ranges"].add(1)
                         profile["targets"].add(target)
                         sample_targets.append(target)
+                        profile["launch_samples"][target] = dict(
+                            region=scope["name"],
+                            label=key[0],
+                            symbol=key[1],
+                            metrics=launch_metrics(activity),
+                            rules=[],
+                            replay_passes=None,
+                            source="nsys",
+                        )
             if activity["symbol"] is not None and first and in_solver:
                 launches.setdefault(active[-1]["case"], []).append(
                     (activity["symbol"], sample_targets)
@@ -326,6 +374,9 @@ def iteration_profiles(database, diagnostics=None):
             )
             profile["sample_ranges"] = sorted(profile["sample_ranges"])
             profile["targets"] = sorted(profile["targets"])
+            profile["launch_samples"] = [
+                sample for _, sample in sorted(profile["launch_samples"].items())
+            ]
             for region in profile["regions"]:
                 region["kernels"] = sorted(
                     region["kernels"].values(),
@@ -417,7 +468,9 @@ def summarize_profile(directory, expected_cases=None):
         for case, iterations in expected_cases.items():
             operation = operations.get(f"{case}/iteration")
             if not operation or operation[0] != iterations:
-                raise ValueError(f"Incorrect profiling range count for {case}/iteration")
+                raise ValueError(
+                    f"Incorrect profiling range count for {case}/iteration"
+                )
     print("Attributing CUDA launches to TGV iteration regions", flush=True)
     diagnostics = {}
     data = dict(cases=iteration_profiles(database, diagnostics))
