@@ -6,14 +6,6 @@ permissions:
   actions: read
   contents: read
 on:
-  workflow_run:
-    workflows: [ build ]
-    types: [ completed ]
-  workflow_dispatch:
-    inputs:
-      target_sha:
-        description: Commit SHA to run the example from
-        required: false
   workflow_call:
     inputs:
       target_sha:

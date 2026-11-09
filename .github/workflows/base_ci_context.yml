@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# AI-GENERATED
+
+name: resolve-base-ci
+on:
+  workflow_call:
+    inputs:
+      base_run_id:
+        required: true
+        type: string
+    outputs:
+      target_sha:
+        value: ${{ jobs.context.outputs.target_sha }}
+      is_pr:
+        value: ${{ jobs.context.outputs.is_pr }}
+      status_sha:
+        value: ${{ jobs.context.outputs.status_sha }}
+      pr_number:
+        value: ${{ jobs.context.outputs.pr_number }}
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    outputs:
+      target_sha: ${{ steps.commit.outputs.target_sha }}
+      is_pr: ${{ steps.run.outputs.is_pr }}
+      status_sha: ${{ steps.commit.outputs.status_sha }}
+      pr_number: ${{ steps.commit.outputs.pr_number }}
+    steps:
+    - name: Require a successful build from this repository
+      id: run
+      uses: actions/github-script@v8
+      env:
+        BASE_RUN_ID: ${{ inputs.base_run_id }}
+      with:
+        script: |
+          const value = process.env.BASE_RUN_ID;
+          if (!/^[1-9][0-9]*$/.test(value)) throw new Error('Invalid base-ci-run run ID');
+          const {data: run} = await github.rest.actions.getWorkflowRun({
+            ...context.repo, run_id: Number(value)
+          });
+          if (run.path !== '.github/workflows/base_ci_run.yml' || run.conclusion !== 'success') {
+            throw new Error('A successful base-ci-run run is required');
+          }
+          if (!['push', 'pull_request'].includes(run.event)) {
+            throw new Error('Unsupported base-ci-run event');
+          }
+          core.setOutput('is_pr', String(run.event === 'pull_request'));
+    - name: Download built commit metadata
+      uses: actions/download-artifact@v5
+      with:
+        name: base-ci-context
+        path: ${{ runner.temp }}/base-ci-context
+        run-id: ${{ inputs.base_run_id }}
+        github-token: ${{ github.token }}
+    - name: Validate built commit metadata
+      id: commit
+      env:
+        BASE_RUN_ID: ${{ inputs.base_run_id }}
+      run: |
+        python3 - <<'PYTHON'
+        import json, os, re
+        from pathlib import Path
+        data = json.loads(Path(os.environ["RUNNER_TEMP"], "base-ci-context", "base-ci-context.json").read_text())
+        sha = data["target_sha"]
+        status_sha = data.get("status_sha", sha)
+        pr_number = data.get("pr_number", 0)
+        if not re.fullmatch(r"[0-9a-f]{40}", status_sha) or type(pr_number) is not int or pr_number < 0:
+            raise ValueError("Invalid base-ci-run PR metadata")
+        if data["run_id"] != os.environ["BASE_RUN_ID"] or not re.fullmatch(r"[0-9a-f]{40}", sha):
+            raise ValueError("Invalid base-ci-run commit metadata")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            output.write(f"target_sha={sha}\nstatus_sha={status_sha}\npr_number={pr_number}\n")
+        PYTHON

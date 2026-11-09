@@ -6,12 +6,12 @@ name: optional-ci-run
 
 on:
   workflow_run:
-    workflows: [ci-build]
+    workflows: [base-ci-run]
     types: [completed]
   workflow_dispatch:
     inputs:
-      build_run_id:
-        description: Successful ci-build run ID whose persistent builds should be used
+      base_run_id:
+        description: Successful base-ci-run run ID whose persistent builds should be used
         required: true
         type: string
       run_scalar_field:
@@ -20,6 +20,18 @@ on:
         default: true
       run_tgv:
         description: Request the TGV benchmark
+        type: boolean
+        default: true
+      run_onelab_inductor:
+        description: Request the ONELAB inductor example
+        type: boolean
+        default: true
+      run_onelab_elasticity:
+        description: Request the ONELAB elasticity example
+        type: boolean
+        default: true
+      run_onelab_potential_flow:
+        description: Request the ONELAB potential flow example
         type: boolean
         default: true
       profiling_detail:
@@ -35,32 +47,158 @@ on:
 permissions:
   actions: read
   contents: read
+  issues: write
+  pull-requests: read
 
 concurrency:
-  group: optional-ci-${{ github.event_name }}-${{ github.event.workflow_run.head_repository.full_name || github.repository }}-${{ github.event.workflow_run.head_branch || inputs.build_run_id }}
+  group: optional-ci-${{ github.event_name }}-${{ github.event.workflow_run.head_repository.full_name || github.repository }}-${{ github.event.workflow_run.head_branch || inputs.base_run_id }}
   cancel-in-progress: true
 
-# Approve either deployment independently after ci-build succeeds.
+# Approve either deployment independently after base-ci-run succeeds.
 # The automatic CI workflow has no dependency on these approval-gated jobs.
 jobs:
   build-context:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    uses: ./.github/workflows/ci_build_context.yml
+    uses: ./.github/workflows/base_ci_context.yml
     with:
-      build_run_id: ${{ inputs.build_run_id || format('{0}', github.event.workflow_run.id) }}
+      base_run_id: ${{ inputs.base_run_id || format('{0}', github.event.workflow_run.id) }}
+
+  scalar-field-labels-pending:
+    needs: build-context
+    if: github.event_name != 'workflow_dispatch' || inputs.run_scalar_field
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: 2d-scalar-field
+      result: pending
 
   scalar-field:
-    needs: build-context
+    needs: [build-context, scalar-field-labels-pending]
     if: github.event_name != 'workflow_dispatch' || inputs.run_scalar_field
     uses: ./.github/workflows/example_scalar_field.yml
     with:
       target_sha: ${{ needs.build-context.outputs.target_sha }}
 
-  taylor-green-vortex:
+  taylor-green-vortex-labels-pending:
     needs: build-context
+    if: github.event_name != 'workflow_dispatch' || inputs.run_tgv
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: taylor-green-vortex
+      result: pending
+
+  taylor-green-vortex:
+    needs: [build-context, taylor-green-vortex-labels-pending]
     if: github.event_name != 'workflow_dispatch' || inputs.run_tgv
     uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
     with:
       target_sha: ${{ needs.build-context.outputs.target_sha }}
       profiling_detail: ${{ inputs.profiling_detail || 'full' }}
       hot_kernels: ${{ fromJSON(github.event_name == 'workflow_dispatch' && toJSON(inputs.hot_kernels) || '20') }}
+
+  scalar-field-labels-result:
+    needs: [build-context, scalar-field]
+    if: always() && needs.build-context.result == 'success' && (needs.scalar-field.result == 'success' || needs.scalar-field.result == 'failure')
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: 2d-scalar-field
+      result: ${{ needs.scalar-field.result }}
+
+  taylor-green-vortex-labels-result:
+    needs: [build-context, taylor-green-vortex]
+    if: always() && needs.build-context.result == 'success' && (needs.taylor-green-vortex.result == 'success' || needs.taylor-green-vortex.result == 'failure')
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: taylor-green-vortex
+      result: ${{ needs.taylor-green-vortex.result }}
+
+  onelab-inductor-labels-pending:
+    needs: build-context
+    if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_inductor
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: onelab-inductor
+      result: pending
+
+  onelab-inductor:
+    needs: [build-context, onelab-inductor-labels-pending]
+    if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_inductor
+    uses: ./.github/workflows/example_onelab_inductor.yml
+    with:
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: onelab_inductor-cuda
+
+  onelab-inductor-labels-result:
+    needs: [build-context, onelab-inductor]
+    if: always() && needs.build-context.result == 'success' && (needs.onelab-inductor.result == 'success' || needs.onelab-inductor.result == 'failure')
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: onelab-inductor
+      result: ${{ needs.onelab-inductor.result }}
+
+  onelab-elasticity-labels-pending:
+    needs: build-context
+    if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_elasticity
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: onelab-elasticity
+      result: pending
+
+  onelab-elasticity:
+    needs: [build-context, onelab-elasticity-labels-pending]
+    if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_elasticity
+    uses: ./.github/workflows/example_onelab_elasticity.yml
+    with:
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: onelab_elasticity-cuda
+
+  onelab-elasticity-labels-result:
+    needs: [build-context, onelab-elasticity]
+    if: always() && needs.build-context.result == 'success' && (needs.onelab-elasticity.result == 'success' || needs.onelab-elasticity.result == 'failure')
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: onelab-elasticity
+      result: ${{ needs.onelab-elasticity.result }}
+
+  onelab-potential-flow-labels-pending:
+    needs: build-context
+    if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_potential_flow
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: onelab-potential-flow
+      result: pending
+
+  onelab-potential-flow:
+    needs: [build-context, onelab-potential-flow-labels-pending]
+    if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_potential_flow
+    uses: ./.github/workflows/example_onelab_potential_flow.yml
+    with:
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: onelab_potential-flow-onelab-cuda
+
+  onelab-potential-flow-labels-result:
+    needs: [build-context, onelab-potential-flow]
+    if: always() && needs.build-context.result == 'success' && (needs.onelab-potential-flow.result == 'success' || needs.onelab-potential-flow.result == 'failure')
+    uses: ./.github/workflows/optional_ci_labels.yml
+    with:
+      pr_number: ${{ needs.build-context.outputs.pr_number }}
+      status_sha: ${{ needs.build-context.outputs.status_sha }}
+      task: onelab-potential-flow
+      result: ${{ needs.onelab-potential-flow.result }}

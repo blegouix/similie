@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# AI-GENERATED
+
+name: optional-ci-labels
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        type: string
+        required: true
+      status_sha:
+        type: string
+        required: true
+      task:
+        type: string
+        required: true
+      result:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/github-script@v8
+      env:
+        PR_NUMBER: ${{ inputs.pr_number }}
+        STATUS_SHA: ${{ inputs.status_sha }}
+        TASK: ${{ inputs.task }}
+        RESULT: ${{ inputs.result }}
+      with:
+        script: |
+          const number = Number(process.env.PR_NUMBER);
+          if (number === 0) return; // Main commits have no PR labels.
+          if (!Number.isSafeInteger(number) || number < 1) throw new Error('Invalid PR number');
+          const task = process.env.TASK;
+          const result = process.env.RESULT;
+          if (!['2d-scalar-field', 'taylor-green-vortex', 'onelab-inductor', 'onelab-elasticity', 'onelab-potential-flow'].includes(task) ||
+              !['pending', 'success', 'failure'].includes(result)) throw new Error('Invalid label result');
+          const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: number});
+          if (pr.state !== 'open' || pr.head.sha !== process.env.STATUS_SHA) {
+            core.info('Ignoring an outdated or closed PR run');
+            return;
+          }
+          const labels = [
+            {name: `${task}-passed`, color: '2da44e'},
+            {name: `${task}-failed`, color: 'cf222e'}
+          ];
+          for (const label of labels) {
+            try {
+              const {data: existing} = await github.rest.issues.getLabel({...context.repo, name: label.name});
+              if (existing.color !== label.color) await github.rest.issues.updateLabel({...context.repo, ...label});
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              await github.rest.issues.createLabel({...context.repo, ...label});
+            }
+          }
+          const keep = result === 'success' ? labels[0].name : result === 'failure' ? labels[1].name : null;
+          for (const label of labels) {
+            if (label.name === keep) continue;
+            try {
+              await github.rest.issues.removeLabel({...context.repo, issue_number: number, name: label.name});
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+          }
+          if (keep) await github.rest.issues.addLabels({...context.repo, issue_number: number, labels: [keep]});
