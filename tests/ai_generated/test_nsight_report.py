@@ -578,8 +578,14 @@ class HotKernelSelection(unittest.TestCase):
             self.assertEqual(len(result["hot_kernels"][CASE]), 1)
             self.assertEqual(result["errors"], [])
 
-    def test_default_profiles_full_metrics_at_n128_without_hot_kernel_limit(self):
-        case = CASE.replace("N=64", "N=128")
+    def test_default_profiles_full_metrics_at_n64(self):
+        self.check_default_metrics(64, "full")
+
+    def test_default_profiles_core_metrics_at_n128(self):
+        self.check_default_metrics(128, "core")
+
+    def check_default_metrics(self, n, expected_detail):
+        case = CASE.replace("N=64", f"N={n}")
         plan = self.plan()
 
         def replace_case(value):
@@ -597,7 +603,10 @@ class HotKernelSelection(unittest.TestCase):
                 region=region,
                 label=label,
                 symbol=symbol,
-                metrics=dict.fromkeys({**METRICS, **CORE_METRICS}, 42),
+                metrics=dict.fromkeys(
+                    {**METRICS, **CORE_METRICS} if expected_detail == "full" else CORE_METRICS,
+                    42,
+                ),
                 rules=[],
                 replay_passes=1,
             )
@@ -613,7 +622,7 @@ class HotKernelSelection(unittest.TestCase):
                 patch("nsight_report.profiling_environment", return_value={}),
                 patch(
                     "nsight_report.case_specs",
-                    return_value=[(case, "only", 128, ())],
+                    return_value=[(case, "only", n, ())],
                 ),
                 patch("nsight_report.capture_groups", return_value=base) as capture,
             ):
@@ -626,11 +635,14 @@ class HotKernelSelection(unittest.TestCase):
                     hot_kernels=1,
                 )
             self.assertEqual(capture.call_count, 1)
-            self.assertEqual(capture.call_args.args[10], "full")
+            self.assertEqual(capture.call_args.args[10], expected_detail)
             result = json.loads((output / "ncu/results.json").read_text())
             self.assertEqual(result["errors"], [])
             self.assertEqual(result["hot_kernels"], {})
-            self.assertEqual(result["hot_kernel_skips"], {})
+            if n >= 128:
+                self.assertIn("single-pass metrics only", result["hot_kernel_skips"][case])
+            else:
+                self.assertEqual(result["hot_kernel_skips"], {})
             self.assertEqual(result["detail"], "full")
 
 

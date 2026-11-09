@@ -545,7 +545,13 @@ def profile_cases(
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                capture_detail = "full" if detail == "full" else "core"
+                # Large cases use one-pass counters, avoiding device snapshots
+                # and multipass replay even when full profiling was requested.
+                capture_detail = "full" if detail == "full" and n < 128 else "core"
+                if n >= 128 and detail != "core":
+                    results["hot_kernel_skips"][case] = (
+                        "N=128 and above collect core single-pass metrics only"
+                    )
                 groups = compute_groups(plan, combine=capture_detail == "core")
                 count = sum(group["launches"] for group in groups)
                 print(
@@ -582,7 +588,7 @@ def profile_cases(
                     raise ValueError(
                         f"Missing Compute samples for {len(missing)} first-iteration region/kernel pairs"
                     )
-                if needs_hot:
+                if needs_hot and n < 128:
                     selected = hottest_kernels(case, plan, hot_kernels)
                     results["hot_kernels"][case] = selected
                     focused_groups = hot_groups(plan, selected)
