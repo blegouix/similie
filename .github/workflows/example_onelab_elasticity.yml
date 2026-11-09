@@ -22,7 +22,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: base-ci-run
 
 concurrency:
   group: example-onelab_elasticity-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
@@ -53,7 +53,7 @@ jobs:
             -setnumber "Geometry/2Main characteristic length" 4
     # PR runs require approval in the onelab_elasticity-cuda GitHub environment.
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_elasticity-cuda' || 'base-ci-run') }}
     steps:
     - name: Prepare example log
       run: |

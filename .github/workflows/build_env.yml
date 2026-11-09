@@ -12,7 +12,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: base-ci-run
 
 concurrency:
   group: ${{ github.workflow }}-${{ inputs.target_sha || (github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref) }}
@@ -22,7 +22,7 @@ jobs:
   build-cuda-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || 'automatic-ci-run' }}
+      name: ${{ inputs.ci_environment || 'base-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v6
@@ -46,7 +46,7 @@ jobs:
   build-cpu-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || 'automatic-ci-run' }}
+      name: ${{ inputs.ci_environment || 'base-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v6

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-name: manual-ci-run
+name: base-ci-run
 permissions:
   actions: read
   contents: read
@@ -20,7 +20,7 @@ jobs:
   build-cuda-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: automatic-ci-run
+      name: base-ci-run
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v6
@@ -44,7 +44,7 @@ jobs:
   build-cpu-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: automatic-ci-run
+      name: base-ci-run
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v6
@@ -66,7 +66,7 @@ jobs:
       group: similie-persistent-cuda-build
       cancel-in-progress: false
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'build-cuda' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'build-cuda' || 'base-ci-run' }}
     env:
       COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:
@@ -128,7 +128,7 @@ jobs:
       group: similie-persistent-omp-build
       cancel-in-progress: false
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'build-omp-debug' || 'base-ci-run' }}
     env:
       COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:
@@ -189,7 +189,7 @@ jobs:
     needs: build-cuda
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'tests-cuda' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'tests-cuda' || 'base-ci-run' }}
     steps:
     - name: Set build paths
       run: |
@@ -225,7 +225,7 @@ jobs:
     needs: build-omp-debug
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'tests-omp-debug' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'tests-omp-debug' || 'base-ci-run' }}
     steps:
     - name: Set build paths
       run: |
@@ -260,53 +260,39 @@ jobs:
     uses: ./.github/workflows/example_laplacian.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'base-ci-run' }}
 
   example-2d_vector_laplacian:
     needs: build-cuda
     uses: ./.github/workflows/example_laplacian_vector.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'automatic-ci-run' }}
-
-  example-2d_scalar_field:
-    needs: build-cuda
-    uses: ./.github/workflows/example_scalar_field.yml
-    with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'scalar-field-cuda' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'base-ci-run' }}
 
   example-onelab_inductor:
     needs: build-cuda
     uses: ./.github/workflows/example_onelab_inductor.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_inductor-cuda' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_inductor-cuda' || 'base-ci-run' }}
 
   example-onelab_elasticity:
     needs: build-cuda
     uses: ./.github/workflows/example_onelab_elasticity.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_elasticity-cuda' || 'base-ci-run' }}
 
   example-onelab_potential_flow:
     needs: build-cuda
     uses: ./.github/workflows/example_onelab_potential_flow.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_potential-flow-onelab-cuda' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_potential-flow-onelab-cuda' || 'base-ci-run' }}
 
   example-kretschmann_scalar:
     needs: build-omp-debug
     uses: ./.github/workflows/example_kretschmann_scalar.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run' }}
-
-  benchmark-taylor-green-vortex:
-    needs: build-cuda
-    uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
-    with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'taylor_green_vortex-cuda' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-omp-debug' || 'base-ci-run' }}

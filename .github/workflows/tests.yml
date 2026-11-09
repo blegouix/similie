@@ -36,7 +36,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'cuda')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || ((github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')) && 'tests-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || ((github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')) && 'tests-cuda' || 'base-ci-run') }}
     steps:
     - name: Select target commit
       id: target
@@ -83,7 +83,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'omp')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'tests-omp-debug' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'tests-omp-debug' || 'base-ci-run') }}
     steps:
     - name: Select target commit
       id: target

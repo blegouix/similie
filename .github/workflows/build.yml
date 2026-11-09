@@ -23,7 +23,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: base-ci-run
 
 concurrency:
   group: similie-persistent-build-cache
@@ -37,7 +37,7 @@ jobs:
       group: similie-persistent-cuda-build
       cancel-in-progress: false
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-cuda' || 'base-ci-run') }}
     env:
       COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:
@@ -114,7 +114,7 @@ jobs:
       group: similie-persistent-omp-build
       cancel-in-progress: false
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-omp-debug' || 'base-ci-run') }}
     env:
       COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
     steps:

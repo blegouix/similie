@@ -4,30 +4,10 @@
 
 name: benchmark_taylor_green_vortex
 on:
-  workflow_run:
-    workflows: [build]
-    types: [completed]
-  workflow_dispatch:
-    inputs:
-      target_sha:
-        description: Full commit SHA with an existing CUDA Docker image
-        required: false
-      profiling_detail:
-        description: Hybrid adds detailed hot-kernel profiling; core is one pass; full analyzes all kernels
-        type: choice
-        options: [hybrid, core, full]
-        default: full
-      hot_kernels:
-        description: Number of hottest kernels per case for detailed hybrid profiling
-        type: number
-        default: 20
   workflow_call:
     inputs:
       target_sha:
         required: true
-        type: string
-      ci_environment:
-        required: false
         type: string
       profiling_detail:
         required: false
@@ -42,20 +22,17 @@ permissions:
   contents: read
 
 concurrency:
-  group: tgv-ci-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  group: tgv-ci-${{ inputs.target_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   run-taylor-green-vortex-benchmark:
-    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    environment: taylor_green_vortex-cuda
     runs-on: [self-hosted, linux]
-    environment:
-      name: ${{ inputs.ci_environment || ((github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')) && 'taylor_green_vortex-cuda' || 'automatic-ci-run') }}
     steps:
       - run: echo "Starting the Taylor–Green benchmark campaign."
 
   physics:
-    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     needs: run-taylor-green-vortex-benchmark
     name: ${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}
     runs-on: [self-hosted, linux]
@@ -81,10 +58,9 @@ jobs:
       id: target
       env:
         INPUT_SHA: ${{ inputs.target_sha }}
-        UPSTREAM_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |
         set -euo pipefail
-        target_sha="${INPUT_SHA:-${UPSTREAM_SHA:-${GITHUB_SHA}}}"
+        target_sha="${INPUT_SHA:-${GITHUB_SHA}}"
         [[ "${target_sha}" =~ ^[0-9a-f]{40}$ ]]
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"

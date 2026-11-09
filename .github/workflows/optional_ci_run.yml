@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# AI-GENERATED
+
+name: optional-ci-run
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Full SHA matching the existing persistent CUDA build
+        required: false
+        type: string
+      run_scalar_field:
+        description: Request the 2D scalar example
+        type: boolean
+        default: true
+      run_tgv:
+        description: Request the TGV benchmark
+        type: boolean
+        default: true
+      profiling_detail:
+        description: TGV profiling detail (N128 always uses core metrics)
+        type: choice
+        options: [full, hybrid, core]
+        default: full
+      hot_kernels:
+        description: Hot kernels per case for TGV hybrid profiling
+        type: number
+        default: 20
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: optional-ci-${{ github.event_name }}-${{ github.event.pull_request.number || inputs.target_sha || github.ref }}
+  cancel-in-progress: true
+
+# Approve either deployment independently after the matching CUDA build finishes.
+# The automatic CI workflow has no dependency on these approval-gated jobs.
+jobs:
+  scalar-field:
+    if: github.event_name != 'workflow_dispatch' || inputs.run_scalar_field
+    uses: ./.github/workflows/example_scalar_field.yml
+    with:
+      target_sha: ${{ inputs.target_sha || github.sha }}
+
+  taylor-green-vortex:
+    if: github.event_name != 'workflow_dispatch' || inputs.run_tgv
+    uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
+    with:
+      target_sha: ${{ inputs.target_sha || github.sha }}
+      profiling_detail: ${{ inputs.profiling_detail || 'full' }}
+      hot_kernels: ${{ fromJSON(github.event_name == 'workflow_dispatch' && toJSON(inputs.hot_kernels) || '20') }}
