@@ -149,8 +149,8 @@ Collaboration diagram for sil::exterior::Laplacian&lt; MetricIndex, Index, Cocha
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:af6b41b2b18a18fe70c12ad8ad64d6a8a" id="r_af6b41b2b18a18fe70c12ad8ad64d6a8a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af6b41b2b18a18fe70c12ad8ad64d6a8a">staged_storage_type</a></td></tr>
-<tr class="separator:af6b41b2b18a18fe70c12ad8ad64d6a8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1cb44f6d12700e018eac12b8a351db95" id="r_a1cb44f6d12700e018eac12b8a351db95"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1cb44f6d12700e018eac12b8a351db95">staged_storage_type</a></td></tr>
+<tr class="separator:a1cb44f6d12700e018eac12b8a351db95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -174,19 +174,19 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:acf8d12d111dc114f5dfa45dc933915b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec, template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, CochainType Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec, template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt;<br />
 class sil::exterior::Laplacian&lt; MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec, Hodge &gt;</div><p>Hodge <a class="el" href="classsil_1_1exterior_1_1Laplacian.html" title="Hodge Laplacian assembled from independently selected Hodge-star policies.">Laplacian</a> assembled from independently selected Hodge-star policies. </p>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. <a class="el" href="structsil_1_1exterior_1_1DiscreteHodgeStar.html" title="Compose reconstruction, continuous Hodge star and reduction policies.">DiscreteHodgeStar</a> evaluates geometry during application. Wrapping it in <a class="el" href="classsil_1_1exterior_1_1StagedOperator.html" title="Freeze an operator&#39;s geometric coefficients using its selected storage policy.">StagedOperator</a> freezes Hodge coefficients at construction. The same incidence operators, intermediate cochains and boundary closures are used in both cases. Policies have the <a class="el" href="structsil_1_1exterior_1_1DiscreteHodgeStar.html" title="Compose reconstruction, continuous Hodge star and reduction policies.">DiscreteHodgeStar</a> template signature and pointwise API. Stateful policies are constructed with (execution space, metric, positions); stateless policies may be default-constructed. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l00587">587</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="af6b41b2b18a18fe70c12ad8ad64d6a8a" name="af6b41b2b18a18fe70c12ad8ad64d6a8a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af6b41b2b18a18fe70c12ad8ad64d6a8a">&#9670;&#160;</a></span>staged_storage_type</h2>
+<a id="a1cb44f6d12700e018eac12b8a351db95" name="a1cb44f6d12700e018eac12b8a351db95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1cb44f6d12700e018eac12b8a351db95">&#9670;&#160;</a></span>staged_storage_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, CochainType Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Laplacian.html">sil::exterior::Laplacian</a>&lt; MetricIndex, Index, <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>, Tensor, Metric, Position, Exec, Hodge &gt;::staged_storage_type</td>
@@ -194,7 +194,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tenso
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line"> detail::</div>
-<div class="line">            SpatialOperatorStorage&lt;Laplacian, Index, Cochain, Cochain, 2, Tensor, Exec, true&gt;</div>
+<div class="line">            LinearSpatialOperatorStorage&lt;Laplacian, Index, Cochain, Cochain, 2, Tensor, Exec, true&gt;</div>
 </div><!-- fragment -->
 <p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l00614">614</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
 
@@ -207,7 +207,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tenso
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, CochainType Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -256,7 +256,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tenso
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, CochainType Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
 <div class="memtemplate">
 template&lt;class <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97">Primal</a>  = tensor::ClampExtrapolationRule, class Dual  = tensor::ZeroExtrapolationRule&gt; </div>
 <table class="mlabels">
@@ -301,7 +301,7 @@ template&lt;class <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, CochainType Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
 <div class="memtemplate">
 template&lt;class Geometry , class Evaluate , class Element , class <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97">Primal</a> , class Dual &gt; </div>
 <table class="mlabels">
@@ -356,7 +356,7 @@ template&lt;class Geometry , class Evaluate , class Element , class <a class="el
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, CochainType Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
 <div class="memtemplate">
 template&lt;class Geometry , class Element , class <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97">Primal</a> , class Dual &gt; </div>
 <table class="mlabels">
@@ -409,7 +409,7 @@ template&lt;class Geometry , class Element , class <a class="el" href="namespace
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, CochainType Tensor, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Metric, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Position, class Exec , template&lt; <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar&gt; </div>
 <div class="memtemplate">
 template&lt;class Geometry , class Element , class Component , class <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97">Primal</a> , class Dual &gt; </div>
 <table class="mlabels">

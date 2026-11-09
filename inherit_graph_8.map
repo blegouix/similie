@@ -1,5 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classelectromagnetism_1_1Electromagnetism.html" title=" " alt="" coords="5,13,269,38"/>
-<area shape="rect" id="Node000001" href="$classelectromagnetism_1_1ResistiveElectromagnetism.html" title=" " alt="" coords="317,5,523,45"/>
-<area shape="poly" id="edge8_Node000000_Node000001" title=" " alt="" coords="283,23,317,23,317,28,283,28"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,13,147,38"/>
+<area shape="rect" id="Node000001" href="$classsimilie_1_1physics_1_1electromagnetism_1_1ResistiveElectromagnetism.html" title="Full Maxwell Ohm law: j=(E+u cross B)/eta, J=charge*u+j." alt="" coords="195,5,445,45"/>
+<area shape="poly" id="edge8_Node000000_Node000001" title=" " alt="" coords="161,23,194,23,194,28,161,28"/>
 </map>

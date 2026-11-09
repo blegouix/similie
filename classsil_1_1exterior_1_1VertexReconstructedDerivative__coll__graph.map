@@ -1,0 +1,7 @@
+<map id="sil::exterior::VertexReconstructedDerivative&lt; FibreRank, SpatialIndex &gt;" name="sil::exterior::VertexReconstructedDerivative&lt; FibreRank, SpatialIndex &gt;">
+<area shape="rect" id="Node000001" title="Reconstruct derivatives of nodal, flat&#45;bundle&#45;valued zero&#45;cochains at the vertices of one cubical cel..." alt="" coords="32,192,299,292"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,27,144,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,106,135,176,130,179,93,109"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="169,5,346,129"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="234,131,214,169,209,179,204,177,210,167,229,129"/>
+</map>

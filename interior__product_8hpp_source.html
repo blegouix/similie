@@ -135,128 +135,132 @@ $(function(){initNavTree('interior__product_8hpp_source.html',''); initResizable
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;array&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;cassert&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;ddc/ddc.hpp&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;similie/exterior/cochain_indices.hpp&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;similie/misc/signed_discrete_element.hpp&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;similie/tensor/scalar_extrapolation_rules.hpp&gt;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;similie/tensor/tensor_impl.hpp&gt;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesil_1_1exterior.html">sil::exterior</a> {</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="keyword">template</span> &lt;tensor::TensorNatIndex VelocityIndex, tensor::TensorIndex FormIndex&gt;</div>
-<div class="foldopen" id="foldopen00041" data-start="{" data-end="};">
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1InteriorProduct.html">   41</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1InteriorProduct.html">InteriorProduct</a></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>{</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>            <span class="keyword">class </span>ExecSpace,</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>            <span class="keyword">class </span>Output,</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>            <span class="keyword">class </span>Velocity,</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>            <span class="keyword">class </span><a class="code hl_typedef" href="namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede">Form</a>,</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>            <span class="keyword">class </span>Extrapolation = <a class="code hl_struct" href="structsil_1_1tensor_1_1ClampExtrapolationRule.html">tensor::ClampExtrapolationRule</a>&gt;</div>
-<div class="foldopen" id="foldopen00049" data-start="{" data-end="}">
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1InteriorProduct.html#a190ea91b71a69412afca50dcf19a30b0">   49</a></span>    Output <a class="code hl_function" href="structsil_1_1exterior_1_1InteriorProduct.html#a190ea91b71a69412afca50dcf19a30b0">operator()</a>(</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            ExecSpace <span class="keyword">const</span>&amp; exec,</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>            Output <span class="keyword">const</span>&amp; output,</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>            Velocity <span class="keyword">const</span>&amp; velocity,</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede">Form</a> <span class="keyword">const</span>&amp; form,</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>            std::array&lt;<span class="keywordtype">double</span>, VelocityIndex::size()&gt; <span class="keyword">const</span>&amp; spacing,</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>            Extrapolation <span class="keyword">const</span>&amp; extrapolation = {}) <span class="keyword">const</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    {</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keyword">using </span>OutputIndex</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                = ddc::type_seq_element_t&lt;0, ddc::to_type_seq_t&lt;typename Output::indices_domain_t&gt;&gt;;</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keyword">using </span>Element = <span class="keyword">typename</span> Output::non_indices_domain_t::discrete_element_type;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="keyword">using </span>SignedElement = <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t</a>&lt;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                <a class="code hl_class" href="classsil_1_1misc_1_1SignedDiscreteElement.html">misc::SignedDiscreteElement</a>,</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                ddc::to_type_seq_t&lt;typename Output::non_indices_domain_t&gt;&gt;;</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keyword">static_assert</span>(FormIndex::rank() &gt; 0);</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        <span class="keyword">static_assert</span>(OutputIndex::rank() + 1 == FormIndex::rank());</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        <span class="keyword">static_assert</span>(Output::non_indices_domain_t::rank() == VelocityIndex::size());</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        <span class="keyword">static_assert</span>(VelocityIndex::rank() == 1);</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        <span class="keywordflow">for</span> (<span class="keywordtype">double</span> <span class="keyword">const</span> length : spacing)</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>            assert(length &gt; 0);</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        assert(output.data_handle() != form.data_handle());</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        assert(output.data_handle() != velocity.data_handle());</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        ddc::parallel_for_each(</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                <span class="stringliteral">&quot;similie_interior_product&quot;</span>,</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                exec,</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                output.domain(),</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                KOKKOS_LAMBDA(<span class="keyword">typename</span> Output::discrete_element_type element) {</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                    <span class="keyword">auto</span> <span class="keyword">const</span> natural_element = output.accessor().canonical_natural_element(</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                            ddc::DiscreteElement&lt;OutputIndex&gt;(element));</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                    std::array&lt;std::size_t, OutputIndex::rank()&gt; axes {};</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (OutputIndex::rank() &gt; 0)</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                        axes = detail::flat_natural_elem_ids(natural_element);</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                    <span class="keywordtype">double</span> volume = 1;</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>                    <span class="keywordflow">for</span> (std::size_t axis : axes)</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>                        volume *= spacing[axis];</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                    <span class="keywordtype">double</span> contraction = 0;</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>                    <span class="keywordflow">for</span> (std::size_t corner = 0; corner &lt; (std::size_t(1) &lt;&lt; OutputIndex::rank());</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>                         ++corner) {</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                        SignedElement vertex {Element(element)};</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>                        <span class="keywordflow">for</span> (std::size_t j = 0; j &lt; axes.size(); ++j)</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>                            ddc::detail::array(vertex)[axes[j]] += (corner &gt;&gt; j) &amp; 1;</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                        <span class="keywordflow">for</span> (std::size_t b = 0; b &lt; VelocityIndex::size(); ++b) {</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                            <span class="keywordtype">bool</span> repeated = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                            <span class="keywordflow">for</span> (std::size_t axis : axes)</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                                repeated = repeated || axis == b;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                            <span class="keywordflow">if</span> (repeated)</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                                <span class="keywordflow">continue</span>;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                            SignedElement previous(vertex);</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                            --ddc::detail::array(previous)[b];</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                            <span class="keyword">auto</span> <span class="keyword">const</span> current_velocity = extrapolation(velocity, vertex);</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                            <span class="keyword">auto</span> <span class="keyword">const</span> previous_velocity = extrapolation(velocity, previous);</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                            <span class="keywordtype">double</span> <span class="keyword">const</span> speed</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                                    = (current_velocity.get(current_velocity.access_element(</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                                               ddc::DiscreteElement&lt;VelocityIndex&gt;(b)))</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                                       + previous_velocity.get(previous_velocity.access_element(</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                                               ddc::DiscreteElement&lt;VelocityIndex&gt;(b))))</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                                      / (2 * spacing[b]);</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                            std::array&lt;std::size_t, FormIndex::rank()&gt; form_axes {};</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                            form_axes[0] = b;</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                            <span class="keywordflow">for</span> (std::size_t j = 0; j &lt; axes.size(); ++j)</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                                form_axes[j + 1] = axes[j];</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t</a>&lt;</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                                    FormIndex&gt;::discrete_element_type <span class="keyword">const</span> component</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                                    = detail::natural_elem_from_flat_ids&lt;</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>                                            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t</a>&lt;</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                                                    FormIndex&gt;::discrete_element_type&gt;(form_axes);</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                            <span class="keywordtype">double</span> coefficient = 0;</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>                            <span class="keywordflow">for</span> (std::size_t sample = 0;</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>                                 sample &lt; (std::size_t(1) &lt;&lt; FormIndex::rank());</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                                 ++sample) {</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>                                SignedElement neighbor(vertex);</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>                                <span class="keywordflow">for</span> (std::size_t j = 0; j &lt; form_axes.size(); ++j)</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>                                    ddc::detail::array(neighbor)[form_axes[j]] -= (sample &gt;&gt; j) &amp; 1;</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>                                <span class="keyword">auto</span> <span class="keyword">const</span> sampled_form = extrapolation(form, neighbor);</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                                coefficient</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>                                        += sampled_form.get(sampled_form.access_element(component));</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>                            }</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>                            contraction += speed * coefficient</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>                                           / ((std::size_t(1) &lt;&lt; FormIndex::rank()) * spacing[b]</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                                              * volume);</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>                        }</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                    }</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>                    output.mem(element)</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                            = volume * contraction / (std::size_t(1) &lt;&lt; OutputIndex::rank());</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                });</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <span class="keywordflow">return</span> output;</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    }</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;similie/exterior/form.hpp&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;similie/tensor/metric.hpp&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;similie/tensor/tensor_indices/full_tensor.hpp&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;similie/tensor/tensor_prod.hpp&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesil_1_1exterior.html">sil::exterior</a> {</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">template</span> &lt;tensor::TensorNatIndex VelocityIndex, tensor::TensorIndex FormIndex&gt;</div>
+<div class="foldopen" id="foldopen00017" data-start="{" data-end="};">
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1InteriorProduct.html">   17</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1InteriorProduct.html">InteriorProduct</a></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="comment">// Insert the metric dual of a velocity one-form. The caller supplies the</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="comment">// inverse metric, so this definition also applies in nonorthogonal frames.</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>            <a class="code hl_concept" href="conceptsil_1_1exterior_1_1TensorFormType.html">TensorFormType</a> Output,</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>            <a class="code hl_concept" href="conceptsil_1_1exterior_1_1TensorFormType.html">TensorFormType</a> Velocity,</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>            <a class="code hl_concept" href="conceptsil_1_1exterior_1_1TensorFormType.html">TensorFormType</a> Input,</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>            <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> InverseMetric,</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>            <span class="keyword">class </span>Element&gt;</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>                <a class="code hl_variable" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v&lt;Velocity&gt;</a> == 1 &amp;&amp; <a class="code hl_variable" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v&lt;Output&gt;</a> + 1 == FormIndex::rank()</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>                &amp;&amp; std::is_same_v&lt;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>                        <span class="keyword">typename</span> Input::accessor_t::natural_domain_t,</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>                        <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;FormIndex&gt;</a>&gt;)</div>
+<div class="foldopen" id="foldopen00032" data-start="{" data-end="}">
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1InteriorProduct.html#a96e585182037b52bf1041e83a3b69fd7">   32</a></span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> <span class="keyword">operator</span>()(</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>            Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>            Velocity <span class="keyword">const</span>&amp; velocity,</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>            Input <span class="keyword">const</span>&amp; input,</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>            InverseMetric <span class="keyword">const</span>&amp; inverse_metric,</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>            Element element) <span class="keyword">const</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    {</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keyword">using </span>VelocityStorageIndex = ddc::</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>                type_seq_element_t&lt;0, ddc::to_type_seq_t&lt;typename Velocity::indices_domain_t&gt;&gt;;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keyword">using </span>Contracted</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">tensor::Covariant&lt;tensor::prime&lt;tensor::uncharacterize_t&lt;VelocityIndex&gt;</a>&gt;&gt;;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        std::array&lt;double, VelocityIndex::mem_size()&gt; storage {};</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> vector(</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                ddc::ChunkSpan&lt;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                        <span class="keywordtype">double</span>,</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                        ddc::DiscreteDomain&lt;<a class="code hl_struct" href="structsil_1_1tensor_1_1TensorFullIndex.html">tensor::TensorFullIndex&lt;VelocityIndex&gt;</a>&gt;,</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                        Kokkos::layout_right,</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                        <span class="keyword">typename</span> Input::memory_space&gt;(</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                        storage.data(),</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                        <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor</a>&lt;<a class="code hl_struct" href="structsil_1_1tensor_1_1TensorFullIndex.html">tensor::TensorFullIndex&lt;VelocityIndex&gt;</a>&gt;::domain()));</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <a class="code hl_function" href="namespacesil_1_1tensor.html#a954f09e8a0b30ab3558173f5da193ddc">tensor::tensor_prod</a>(</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                vector,</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a95d2cc2a30a23ce0fde728686bebb37f">tensor::relabelize_metric</a>&lt;VelocityIndex, <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;Contracted&gt;</a>&gt;(</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                        inverse_metric[element]),</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#aa96671a27e0202d64a0ab1c3a9d93518">tensor::relabelize_index_of&lt;VelocityStorageIndex, Contracted&gt;</a>(</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                        velocity.coefficients()));</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <a class="code hl_function" href="structsil_1_1exterior_1_1InteriorProduct.html#a96e585182037b52bf1041e83a3b69fd7">operator()</a>(output, vector, input);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    }</div>
 </div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>};</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>            <a class="code hl_concept" href="conceptsil_1_1exterior_1_1TensorFormType.html">TensorFormType</a> Output,</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> Vector,</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            <a class="code hl_concept" href="conceptsil_1_1exterior_1_1TensorFormType.html">TensorFormType</a> Input&gt;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                <a class="code hl_variable" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v&lt;Output&gt;</a> + 1 == FormIndex::rank()</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                &amp;&amp; std::is_same_v&lt;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                        <span class="keyword">typename</span> Input::accessor_t::natural_domain_t,</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                        <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;FormIndex&gt;</a>&gt;)</div>
+<div class="foldopen" id="foldopen00070" data-start="{" data-end="}">
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1InteriorProduct.html#a442d23d80ae29e39631d05e03b4fa610">   70</a></span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> <span class="keyword">operator</span>()(Output <span class="keyword">const</span>&amp; output, Vector <span class="keyword">const</span>&amp; vector, Input <span class="keyword">const</span>&amp; input)</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            <span class="keyword">const</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    {</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>        <span class="keyword">static_assert</span>(FormIndex::rank() &gt; 0);</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        <span class="keyword">static_assert</span>(std::is_same_v&lt;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                      <span class="keyword">typename</span> Input::accessor_t::natural_domain_t,</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                      <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;FormIndex&gt;</a>&gt;);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        <span class="keyword">static_assert</span>([]&lt;<span class="keyword">class</span>... Index&gt;(ddc::TypeSeq&lt;Index...&gt;) {</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>            <span class="keywordflow">return</span> (Index::rank() + ... + 0) == FormIndex::rank() - 1;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        }(ddc::to_type_seq_t&lt;typename Output::indices_domain_t&gt;()));</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        <span class="keyword">static_assert</span>(Output::non_indices_domain_t::rank() == 0);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        <span class="keyword">static_assert</span>(Input::non_indices_domain_t::rank() == 0);</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keyword">static_assert</span>(Vector::non_indices_domain_t::rank() == 0);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keyword">static_assert</span>(</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                std::is_same_v&lt;typename VelocityIndex::character, tensor::ContravariantCharacter&gt;);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="comment">// A one-slot full index selects the characterized contraction overload</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="comment">// for one-forms as well as higher-degree forms.</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keyword">using </span>VectorStorageIndex</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>                = ddc::type_seq_element_t&lt;0, ddc::to_type_seq_t&lt;typename Vector::indices_domain_t&gt;&gt;;</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a848522a446c67d9c927f2cfbe93ffcb4">tensor::relabelize_index_of_t</a>&lt;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                Vector,</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                VectorStorageIndex,</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorFullIndex.html">tensor::TensorFullIndex&lt;VelocityIndex&gt;</a>&gt; <span class="keyword">const</span> insertion</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                = <a class="code hl_function" href="namespacesil_1_1tensor.html#aa96671a27e0202d64a0ab1c3a9d93518">tensor::relabelize_index_of</a>&lt;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                        VectorStorageIndex,</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                        <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorFullIndex.html">tensor::TensorFullIndex&lt;VelocityIndex&gt;</a>&gt;(vector);</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (FormIndex::rank() == 1) {</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> scalar(</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                    ddc::ChunkSpan&lt;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                            <span class="keyword">typename</span> Output::element_type,</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                            ddc::DiscreteDomain&lt;&gt;,</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                            <span class="keyword">typename</span> Output::layout_type,</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                            <span class="keyword">typename</span> Output::</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                                    memory_space&gt;(output.data_handle(), ddc::DiscreteDomain&lt;&gt;()));</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#a954f09e8a0b30ab3558173f5da193ddc">tensor::tensor_prod</a>(scalar, insertion, input.coefficients());</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#a954f09e8a0b30ab3558173f5da193ddc">tensor::tensor_prod</a>(output.coefficients(), insertion, input.coefficients());</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>        }</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    }</div>
 </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>} <span class="comment">// namespace sil::exterior</span></div>
-<div class="ttc" id="aclasssil_1_1misc_1_1SignedDiscreteElement_html"><div class="ttname"><a href="classsil_1_1misc_1_1SignedDiscreteElement.html">sil::misc::SignedDiscreteElement</a></div><div class="ttdoc">Absolute logical coordinates with signed storage, including exterior nodes.</div><div class="ttdef"><b>Definition</b> <a href="signed__discrete__element_8hpp_source.html#l00023">signed_discrete_element.hpp:24</a></div></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>};</div>
+</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>} <span class="comment">// namespace sil::exterior</span></div>
+<div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00283">tensor_impl.hpp:284</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1TensorFormType_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1TensorFormType.html">sil::exterior::TensorFormType</a></div><div class="ttdef"><b>Definition</b> <a href="form_8hpp_source.html#l00173">form.hpp:173</a></div></div>
+<div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html"><div class="ttname"><a href="namespacesil_1_1exterior.html">sil::exterior</a></div><div class="ttdef"><b>Definition</b> <a href="boundary_8hpp_source.html#l00017">boundary.hpp:17</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_a04a63056a25815fe3b4e94eddd7dbede"><div class="ttname"><a href="namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede">sil::exterior::Form</a></div><div class="ttdeci">typename detail::FormWrapper&lt; T, ElementType, LayoutStridedPolicy &gt;::type Form</div><div class="ttdef"><b>Definition</b> <a href="form_8hpp_source.html#l00044">form.hpp:44</a></div></div>
-<div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a94d8ca18adad18b6da9972411fae1c95"><div class="ttname"><a href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">sil::exterior::form_degree_v</a></div><div class="ttdeci">constexpr std::size_t form_degree_v</div><div class="ttdef"><b>Definition</b> <a href="form_8hpp_source.html#l00186">form.hpp:187</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a3e2f32622aaafaa7ee4402aba31f1e9c"><div class="ttname"><a href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">sil::tensor::upper_t</a></div><div class="ttdeci">detail::Upper&lt; T &gt;::type upper_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00107">character.hpp:107</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a848522a446c67d9c927f2cfbe93ffcb4"><div class="ttname"><a href="namespacesil_1_1tensor.html#a848522a446c67d9c927f2cfbe93ffcb4">sil::tensor::relabelize_index_of_t</a></div><div class="ttdeci">detail::RelabelizeIndexOfType&lt; TensorType, OldIndex, NewIndex &gt;::type relabelize_index_of_t</div><div class="ttdef"><b>Definition</b> <a href="relabelization_8hpp_source.html#l00118">relabelization.hpp:118</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a954f09e8a0b30ab3558173f5da193ddc"><div class="ttname"><a href="namespacesil_1_1tensor.html#a954f09e8a0b30ab3558173f5da193ddc">sil::tensor::tensor_prod</a></div><div class="ttdeci">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor_prod(Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; const &amp;prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim1... &gt;, LayoutStridedPolicy, MemorySpace &gt; const &amp;tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; const &amp;tensor2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00886">tensor_impl.hpp:886</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a95d2cc2a30a23ce0fde728686bebb37f"><div class="ttname"><a href="namespacesil_1_1tensor.html#a95d2cc2a30a23ce0fde728686bebb37f">sil::tensor::relabelize_metric</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr relabelize_metric_t&lt; TensorType, Index1, Index2 &gt; relabelize_metric(TensorType const &amp;tensor)</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00103">metric.hpp:103</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_aa96671a27e0202d64a0ab1c3a9d93518"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa96671a27e0202d64a0ab1c3a9d93518">sil::tensor::relabelize_index_of</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr relabelize_index_of_t&lt; Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;, OldIndex, NewIndex &gt; relabelize_index_of(Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; const &amp;old_tensor)</div><div class="ttdef"><b>Definition</b> <a href="relabelization_8hpp_source.html#l00131">relabelization.hpp:131</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_ad931792b69b009623e283e74cdb06076"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">sil::tensor::natural_domain_t</a></div><div class="ttdeci">typename detail::NaturalDomainType&lt; Index &gt;::type natural_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00150">tensor_impl.hpp:150</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1InteriorProduct_html"><div class="ttname"><a href="structsil_1_1exterior_1_1InteriorProduct.html">sil::exterior::InteriorProduct</a></div><div class="ttdoc">Interior product of a primal k-cochain with a primal velocity one-cochain.</div><div class="ttdef"><b>Definition</b> <a href="#l00041">interior_product.hpp:42</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1InteriorProduct_html_a190ea91b71a69412afca50dcf19a30b0"><div class="ttname"><a href="structsil_1_1exterior_1_1InteriorProduct.html#a190ea91b71a69412afca50dcf19a30b0">sil::exterior::InteriorProduct::operator()</a></div><div class="ttdeci">Output operator()(ExecSpace const &amp;exec, Output const &amp;output, Velocity const &amp;velocity, Form const &amp;form, std::array&lt; double, VelocityIndex::size()&gt; const &amp;spacing, Extrapolation const &amp;extrapolation={}) const</div><div class="ttdef"><b>Definition</b> <a href="#l00049">interior_product.hpp:49</a></div></div>
-<div class="ttc" id="astructsil_1_1tensor_1_1ClampExtrapolationRule_html"><div class="ttname"><a href="structsil_1_1tensor_1_1ClampExtrapolationRule.html">sil::tensor::ClampExtrapolationRule</a></div><div class="ttdoc">Spatial closure evaluated independently of the stored field values.</div><div class="ttdef"><b>Definition</b> <a href="scalar__extrapolation__rules_8hpp_source.html#l00026">scalar_extrapolation_rules.hpp:27</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_classsil_1_1tensor_1_1Tensor"><div class="ttname"><a href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor_2concepts_8hpp_source.html#l00019">tensor/concepts.hpp:19</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1InteriorProduct_html"><div class="ttname"><a href="structsil_1_1exterior_1_1InteriorProduct.html">sil::exterior::InteriorProduct</a></div><div class="ttdef"><b>Definition</b> <a href="#l00017">interior_product.hpp:18</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1InteriorProduct_html_a96e585182037b52bf1041e83a3b69fd7"><div class="ttname"><a href="structsil_1_1exterior_1_1InteriorProduct.html#a96e585182037b52bf1041e83a3b69fd7">sil::exterior::InteriorProduct::operator()</a></div><div class="ttdeci">KOKKOS_FUNCTION void operator()(Output const &amp;output, Velocity const &amp;velocity, Input const &amp;input, InverseMetric const &amp;inverse_metric, Element element) const</div><div class="ttdef"><b>Definition</b> <a href="#l00032">interior_product.hpp:32</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1Covariant_html"><div class="ttname"><a href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00039">character.hpp:41</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1TensorFullIndex_html"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorFullIndex.html">sil::tensor::TensorFullIndex</a></div><div class="ttdef"><b>Definition</b> <a href="full__tensor_8hpp_source.html#l00017">full_tensor.hpp:18</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

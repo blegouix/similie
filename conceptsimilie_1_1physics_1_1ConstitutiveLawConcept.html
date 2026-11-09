@@ -134,18 +134,22 @@ $(function(){initNavTree('conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.ht
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Law, <span class="keyword">class</span> Element&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">similie::physics::ConstitutiveLawConcept</a> =  <span class="keyword">requires</span>(Law <span class="keyword">const</span>&amp; law, <span class="keyword">typename</span> Law::State <span class="keyword">const</span>&amp; state, Element element) {</div>
 <div class="line">              <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Law::N&gt;;</div>
-<div class="line">              { law(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N&gt;&gt;;</div>
+<div class="line">              {</div>
+<div class="line">                  law(state, element)</div>
+<div class="line">              } -&gt; std::same_as&lt;sil::exterior::Form&lt;std::array&lt;double, Law::N&gt;&gt;&gt;;</div>
 <div class="line">              { law.value(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
 <div class="line">              { law.jacobian(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
-<div class="line">              { law.inverse(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N&gt;&gt;;</div>
+<div class="line">              {</div>
+<div class="line">                  law.inverse(state, element)</div>
+<div class="line">              } -&gt; std::same_as&lt;sil::exterior::Form&lt;std::array&lt;double, Law::N&gt;&gt;&gt;;</div>
 <div class="line">              {</div>
 <div class="line">                  law.inverse_value(state, element)</div>
 <div class="line">              } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
 <div class="line">          }</div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1ConstitutiveLawConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">similie::physics::ConstitutiveLawConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00163">physics/concepts.hpp:164</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1ConstitutiveLawConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">similie::physics::ConstitutiveLawConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00172">physics/concepts.hpp:173</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="physics_2concepts_8hpp_source.html#l00163">163</a> of file <a class="el" href="physics_2concepts_8hpp_source.html">physics/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="physics_2concepts_8hpp_source.html#l00172">172</a> of file <a class="el" href="physics_2concepts_8hpp_source.html">physics/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

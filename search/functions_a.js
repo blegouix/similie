@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['jacobian_0',['jacobian',['../classsimilie_1_1physics_1_1HamiltonEquations.html#a7ea26228c18901c10eff86c5b3fc20c5',1,'similie::physics::HamiltonEquations']]]
+  ['jacobian_0',['jacobian',['../classsimilie_1_1physics_1_1HamiltonEquations.html#a7ea26228c18901c10eff86c5b3fc20c5',1,'similie::physics::HamiltonEquations::jacobian()'],['../classsimilie_1_1physics_1_1magnetostatics_1_1MagneticFormResponse.html#a1aea44064817ed5f9dc68e4bfca740ba',1,'similie::physics::magnetostatics::MagneticFormResponse::jacobian()']]]
 ];

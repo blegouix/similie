@@ -141,7 +141,7 @@ Collaboration diagram for sil::exterior::StagedOperator&lt; Operator, Storage &g
 <div class="dyncontent">
 <div class="center"><img src="classsil_1_1exterior_1_1StagedOperator__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1StagedOperator_3_01Operator_00_01Storage_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1StagedOperator_3_01Operator_00_01Storage_01_4_coll__map" id="asil_1_1exterior_1_1StagedOperator_3_01Operator_00_01Storage_01_4_coll__map">
-<area shape="rect" title="Freeze an operator&#39;s geometric coefficients using its selected storage policy." alt="" coords="5,5,204,145"/>
+<area shape="rect" title="Freeze an operator&#39;s geometric coefficients using its selected storage policy." alt="" coords="5,5,204,165"/>
 </map>
 </div>
 <table class="memberdecls">
@@ -151,14 +151,18 @@ Public Member Functions</h2></td></tr>
 requires requires(Exec const&amp; exec, Arguments const&amp;... arguments) { { Storage::build(exec, arguments...) } -&gt; std::same_as&lt;Storage&gt;; }</td></tr>
 <tr class="memitem:a17fe9ac7cd537650cf614791c1bc49cd"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a17fe9ac7cd537650cf614791c1bc49cd">StagedOperator</a> (Exec const &amp;exec, Arguments const &amp;... arguments)</td></tr>
 <tr class="separator:a17fe9ac7cd537650cf614791c1bc49cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc5782b03aa0a828a0a7dfadfeacf178" id="r_afc5782b03aa0a828a0a7dfadfeacf178"><td class="memTemplParams" colspan="2">template&lt;class Output , class Input &gt; <br />
-requires StagingStorageConcept&lt;Storage, Output, Input&gt;</td></tr>
-<tr class="memitem:afc5782b03aa0a828a0a7dfadfeacf178"><td class="memTemplItemLeft" align="right" valign="top">Output&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afc5782b03aa0a828a0a7dfadfeacf178">operator()</a> (Output const &amp;output, Input const &amp;input) const</td></tr>
-<tr class="separator:afc5782b03aa0a828a0a7dfadfeacf178"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af455ec8b5b271d53580be3c736578eb3" id="r_af455ec8b5b271d53580be3c736578eb3"><td class="memTemplParams" colspan="2">template&lt;class Output , class Input , class... Arguments&gt; <br />
-requires (sizeof...(Arguments) &gt; 0 &amp;&amp; requires(Storage const&amp; storage, Output const&amp; output, Input const&amp; input, Arguments const&amp;... arguments) { storage.apply_pointwise(output, input, arguments...); })</td></tr>
-<tr class="memitem:af455ec8b5b271d53580be3c736578eb3"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af455ec8b5b271d53580be3c736578eb3">operator()</a> (Output const &amp;output, Input const &amp;input, Arguments const &amp;... arguments) const</td></tr>
-<tr class="separator:af455ec8b5b271d53580be3c736578eb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3744932ad5504d88d7206c4a0d9e9764" id="r_a3744932ad5504d88d7206c4a0d9e9764"><td class="memTemplParams" colspan="2">template&lt;class Output , class Input &gt; <br />
+requires ( LinearStagingStorageConcept&lt;Storage, Output, Input&gt; &amp;&amp; OperatorInputType&lt;Operator, Input&gt; &amp;&amp; OperatorOutputType&lt;Operator, Output&gt;)</td></tr>
+<tr class="memitem:a3744932ad5504d88d7206c4a0d9e9764"><td class="memTemplItemLeft" align="right" valign="top">Output&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3744932ad5504d88d7206c4a0d9e9764">operator()</a> (Output const &amp;output, Input const &amp;input) const</td></tr>
+<tr class="separator:a3744932ad5504d88d7206c4a0d9e9764"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55688af429e941039585daab84428337" id="r_a55688af429e941039585daab84428337"><td class="memTemplParams" colspan="2">template&lt;class Output , class First , class Second &gt; <br />
+requires ( BilinearStagingStorageConcept&lt;Storage, Output, First, Second&gt; &amp;&amp; OperatorInputType&lt;Operator, First&gt; &amp;&amp; OperatorInputType&lt;Operator, Second&gt; &amp;&amp; OperatorOutputType&lt;Operator, Output&gt;)</td></tr>
+<tr class="memitem:a55688af429e941039585daab84428337"><td class="memTemplItemLeft" align="right" valign="top">Output&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a55688af429e941039585daab84428337">operator()</a> (Output const &amp;output, First const &amp;first, Second const &amp;second) const</td></tr>
+<tr class="separator:a55688af429e941039585daab84428337"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8a991458df18824514a380b279c5d47" id="r_ab8a991458df18824514a380b279c5d47"><td class="memTemplParams" colspan="2">template&lt;class Output , class Input , class... Arguments&gt; <br />
+requires (sizeof...(Arguments) &gt; 0 &amp;&amp; OperatorInputType&lt;Operator, Input&gt; &amp;&amp; OperatorOutputType&lt;Operator, Output&gt; &amp;&amp; requires(Storage const&amp; storage, Output const&amp; output, Input const&amp; input, Arguments const&amp;... arguments) { storage.apply_pointwise(output, input, arguments...); })</td></tr>
+<tr class="memitem:ab8a991458df18824514a380b279c5d47"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab8a991458df18824514a380b279c5d47">operator()</a> (Output const &amp;output, Input const &amp;input, Arguments const &amp;... arguments) const</td></tr>
+<tr class="separator:ab8a991458df18824514a380b279c5d47"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2520a9bd4ae2bd2fadf92f58a91b8bbc" id="r_a2520a9bd4ae2bd2fadf92f58a91b8bbc"><td class="memTemplParams" colspan="2">template&lt;class... Arguments&gt; <br />
 requires requires(Storage const&amp; storage, Arguments const&amp;... arguments) { storage.value(arguments...); }</td></tr>
 <tr class="memitem:a2520a9bd4ae2bd2fadf92f58a91b8bbc"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2520a9bd4ae2bd2fadf92f58a91b8bbc">value</a> (Arguments const &amp;... arguments) const</td></tr>
@@ -169,7 +173,7 @@ requires requires(Storage const&amp; storage, Arguments const&amp;... arguments)
 class sil::exterior::StagedOperator&lt; Operator, Storage &gt;</div><p>Freeze an operator's geometric coefficients using its selected storage policy. </p>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. The operator supplies staged_storage_type. The policy builds from <a class="el" href="#a2520a9bd4ae2bd2fadf92f58a91b8bbc">value()</a>, owns coefficients, and applies their native local or spatial representation. Rebuild after changing geometry or boundary rules. Local pointwise calls keep the non-staged signatures; geometric arguments there are ignored. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00022">22</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00023">23</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a17fe9ac7cd537650cf614791c1bc49cd" name="a17fe9ac7cd537650cf614791c1bc49cd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a17fe9ac7cd537650cf614791c1bc49cd">&#9670;&#160;</a></span>StagedOperator()</h2>
@@ -203,13 +207,13 @@ requires requires(Exec const&amp; exec, Arguments const&amp;... arguments) { { S
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00033">33</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00034">34</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="afc5782b03aa0a828a0a7dfadfeacf178" name="afc5782b03aa0a828a0a7dfadfeacf178"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afc5782b03aa0a828a0a7dfadfeacf178">&#9670;&#160;</a></span>operator()() <span class="overload">[1/2]</span></h2>
+<a id="a3744932ad5504d88d7206c4a0d9e9764" name="a3744932ad5504d88d7206c4a0d9e9764"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3744932ad5504d88d7206c4a0d9e9764">&#9670;&#160;</a></span>operator()() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -217,7 +221,7 @@ requires requires(Exec const&amp; exec, Arguments const&amp;... arguments) { { S
 template&lt;class Operator , class Storage  = typename Operator::staged_storage_type&gt; </div>
 <div class="memtemplate">
 template&lt;class Output , class Input &gt; <br />
-requires StagingStorageConcept&lt;Storage, Output, Input&gt;</div>
+requires ( LinearStagingStorageConcept&lt;Storage, Output, Input&gt; &amp;&amp; OperatorInputType&lt;Operator, Input&gt; &amp;&amp; OperatorOutputType&lt;Operator, Output&gt;)</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -240,12 +244,53 @@ requires StagingStorageConcept&lt;Storage, Output, Input&gt;</div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00042">42</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00045">45</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
 
 </div>
 </div>
-<a id="af455ec8b5b271d53580be3c736578eb3" name="af455ec8b5b271d53580be3c736578eb3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af455ec8b5b271d53580be3c736578eb3">&#9670;&#160;</a></span>operator()() <span class="overload">[2/2]</span></h2>
+<a id="a55688af429e941039585daab84428337" name="a55688af429e941039585daab84428337"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55688af429e941039585daab84428337">&#9670;&#160;</a></span>operator()() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Operator , class Storage  = typename Operator::staged_storage_type&gt; </div>
+<div class="memtemplate">
+template&lt;class Output , class First , class Second &gt; <br />
+requires ( BilinearStagingStorageConcept&lt;Storage, Output, First, Second&gt; &amp;&amp; OperatorInputType&lt;Operator, First&gt; &amp;&amp; OperatorInputType&lt;Operator, Second&gt; &amp;&amp; OperatorOutputType&lt;Operator, Output&gt;)</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Output <a class="el" href="classsil_1_1exterior_1_1StagedOperator.html">sil::exterior::StagedOperator</a>&lt; Operator, Storage &gt;::operator() </td>
+          <td>(</td>
+          <td class="paramtype">Output const &amp;</td>          <td class="paramname"><span class="paramname"><em>output</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">First const &amp;</td>          <td class="paramname"><span class="paramname"><em>first</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Second const &amp;</td>          <td class="paramname"><span class="paramname"><em>second</em></span>&#160;) const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00055">55</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab8a991458df18824514a380b279c5d47" name="ab8a991458df18824514a380b279c5d47"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8a991458df18824514a380b279c5d47">&#9670;&#160;</a></span>operator()() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -253,7 +298,7 @@ requires StagingStorageConcept&lt;Storage, Output, Input&gt;</div>
 template&lt;class Operator , class Storage  = typename Operator::staged_storage_type&gt; </div>
 <div class="memtemplate">
 template&lt;class Output , class Input , class... Arguments&gt; <br />
-requires (sizeof...(Arguments) &gt; 0 &amp;&amp; requires(Storage const&amp; storage, Output const&amp; output, Input const&amp; input, Arguments const&amp;... arguments) { storage.apply_pointwise(output, input, arguments...); })</div>
+requires (sizeof...(Arguments) &gt; 0 &amp;&amp; OperatorInputType&lt;Operator, Input&gt; &amp;&amp; OperatorOutputType&lt;Operator, Output&gt; &amp;&amp; requires(Storage const&amp; storage, Output const&amp; output, Input const&amp; input, Arguments const&amp;... arguments) { storage.apply_pointwise(output, input, arguments...); })</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -281,7 +326,7 @@ requires (sizeof...(Arguments) &gt; 0 &amp;&amp; requires(Storage const&amp; sto
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00052">52</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00066">66</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
 
 </div>
 </div>
@@ -313,7 +358,7 @@ requires requires(Storage const&amp; storage, Arguments const&amp;... arguments)
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00061">61</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="staged__operator_8hpp_source.html#l00075">75</a> of file <a class="el" href="staged__operator_8hpp_source.html">staged_operator.hpp</a>.</p>
 
 </div>
 </div>

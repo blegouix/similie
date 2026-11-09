@@ -132,15 +132,17 @@ $(function(){initNavTree('conceptsil_1_1exterior_1_1StageableOperatorConcept.htm
 <p><code>#include &lt;<a class="el" href="exterior_2concepts_8hpp_source.html">concepts.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Output, <span class="keyword">class</span> Input Output&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">sil::exterior::StageableOperatorConcept</a> =  <span class="keyword">requires</span> {</div>
-<div class="line">    <span class="keyword">typename</span> Operator::staged_storage_type;</div>
-<div class="line">    <span class="keyword">requires</span> <a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">StagingStorageConcept&lt;typename Operator::staged_storage_type, Output, Input&gt;</a>;</div>
-<div class="line">}</div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1StageableOperatorConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">sil::exterior::StageableOperatorConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00128">exterior/concepts.hpp:128</a></div></div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1StagingStorageConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">sil::exterior::StagingStorageConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00119">exterior/concepts.hpp:119</a></div></div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">sil::exterior::StageableOperatorConcept</a> =  <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorInputType.html">OperatorInputType&lt;Operator, Input&gt;</a> &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorOutputType.html">OperatorOutputType&lt;Operator, Output&gt;</a> &amp;&amp; <span class="keyword">requires</span> {</div>
+<div class="line">              <span class="keyword">typename</span> Operator::staged_storage_type;</div>
+<div class="line">              <span class="keyword">requires</span> <a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">StagingStorageConcept&lt;typename Operator::staged_storage_type, Output, Input&gt;</a>;</div>
+<div class="line">          }</div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1OperatorInputType_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1OperatorInputType.html">sil::exterior::OperatorInputType</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00147">exterior/concepts.hpp:147</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1OperatorOutputType_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1OperatorOutputType.html">sil::exterior::OperatorOutputType</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00150">exterior/concepts.hpp:150</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1StageableOperatorConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">sil::exterior::StageableOperatorConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00204">exterior/concepts.hpp:205</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1StagingStorageConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">sil::exterior::StagingStorageConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00169">exterior/concepts.hpp:169</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="exterior_2concepts_8hpp_source.html#l00128">128</a> of file <a class="el" href="exterior_2concepts_8hpp_source.html">exterior/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="exterior_2concepts_8hpp_source.html#l00204">204</a> of file <a class="el" href="exterior_2concepts_8hpp_source.html">exterior/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

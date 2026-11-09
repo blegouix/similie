@@ -130,13 +130,20 @@ $(function(){initNavTree('namespacesil_1_1exterior.html',''); initResizable(true
 <a href="#concepts">Concepts</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">sil::exterior Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1BilinearSpatialOperatorStorage.html">BilinearSpatialOperatorStorage</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cache a bilinear spatial map without freezing either operand.  <a href="classsil_1_1exterior_1_1BilinearSpatialOperatorStorage.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1BilinearStencil.html">BilinearStencil</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Homogeneous bilinear coefficients, ordered output, first point/component, second point/component (second component varies fastest).  <a href="structsil_1_1exterior_1_1BilinearStencil.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1Boundary.html">Boundary</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a></td></tr>
@@ -150,6 +157,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classsil_1_1exterior_1_1Cochain.html" title="Cochain class.">Cochain</a> class.  <a href="classsil_1_1exterior_1_1Cochain.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain_3_01tensor_1_1Tensor_3_01T_00_01Domain_00_01Layout_00_01Memory_02fe71f8f69eff6949286d8e3a77f9a23.html">Cochain&lt; tensor::Tensor&lt; T, Domain, Layout, Memory &gt;, ElementType, ChainLayout &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">CochainIterator</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -179,13 +188,20 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">FillReductionOperatorMem</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Form.html">Form</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Differential-form coefficients, pointwise or sampled over a spatial domain.  <a href="classsil_1_1exterior_1_1Form.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Form_3_01double_01_4.html">Form&lt; double &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1GaussLegendreQuadrature.html">GaussLegendreQuadrature</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tensor product Gauss-Legendre rule on [0,1]^Dimension, with one, two or three points per axis (exact through degree 2*Order-1 per coordinate).  <a href="structsil_1_1exterior_1_1GaussLegendreQuadrature.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1IdentityTransport.html">IdentityTransport</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parallel transport from the second vertex's fibre to the first one's.  <a href="structsil_1_1exterior_1_1IdentityTransport.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html">IndexForCodifferentialOfCoboundaryInLaplacian</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1InteriorProduct.html">InteriorProduct</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interior product of a primal k-cochain with a primal velocity one-cochain.  <a href="structsil_1_1exterior_1_1InteriorProduct.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Laplacian.html">Laplacian</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hodge <a class="el" href="classsil_1_1exterior_1_1Laplacian.html" title="Hodge Laplacian assembled from independently selected Hodge-star policies.">Laplacian</a> assembled from independently selected Hodge-star policies.  <a href="classsil_1_1exterior_1_1Laplacian.html#details">More...</a><br /></td></tr>
@@ -196,6 +212,10 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChainIterator.html">LocalChainIterator</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1OperatorActingOnCochainInPlaceOfForm.html">OperatorActingOnCochainInPlaceOfForm</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1OperatorActingOnFormInPlaceOfCochain.html">OperatorActingOnFormInPlaceOfCochain</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">Reconstruction</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -217,17 +237,44 @@ Classes</h2></td></tr>
 <tr class="separator:structsil_1_1exterior_1_1TransposedCoboundary"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1TransposedCoboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html">TransposedCoboundary&lt; TagToAddToCochain, CochainTag &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:structsil_1_1exterior_1_1VertexFormBilinearComposition" id="r_structsil_1_1exterior_1_1VertexFormBilinearComposition"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#structsil_1_1exterior_1_1VertexFormBilinearComposition">VertexFormBilinearComposition</a></td></tr>
+<tr class="memdesc:structsil_1_1exterior_1_1VertexFormBilinearComposition"><td class="mdescLeft">&#160;</td><td class="mdescRight">Periodic vertex reconstruction, bilinear form operator, and projection.  <a href="#structsil_1_1exterior_1_1VertexFormBilinearComposition">More...</a><br /></td></tr>
+<tr class="separator:structsil_1_1exterior_1_1VertexFormBilinearComposition"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1VertexFormProjection.html">VertexFormProjection</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Project a nodally sampled differential form onto primal cochains.  <a href="structsil_1_1exterior_1_1VertexFormProjection.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1VertexFormProjectionField.html">VertexFormProjectionField</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1VertexFormReconstruction.html">VertexFormReconstruction</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reconstruct a primal cochain as a differential form at a mesh vertex.  <a href="structsil_1_1exterior_1_1VertexFormReconstruction.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1VertexFormReconstructionField.html">VertexFormReconstructionField</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1VertexQuadrature.html">VertexQuadrature</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tensor product trapezoidal rule on the reference cube [0,1]^Dimension.  <a href="structsil_1_1exterior_1_1VertexQuadrature.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1VertexReconstructedDerivative.html">VertexReconstructedDerivative</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reconstruct derivatives of nodal, flat-bundle-valued zero-cochains at the vertices of one cubical cell.  <a href="classsil_1_1exterior_1_1VertexReconstructedDerivative.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1WeightedLeviCivitaDiscreteHodgeStar.html">WeightedLeviCivitaDiscreteHodgeStar</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Discrete Hodge star for an identity metric and coordinate-aligned orthogonal cells.  <a href="classsil_1_1exterior_1_1WeightedLeviCivitaDiscreteHodgeStar.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="concepts" name="concepts"></a>
 Concepts</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1CochainType.html">CochainType</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">CoboundaryConcept</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1DiscreteHodgeStarConcept.html">DiscreteHodgeStarConcept</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html">ContinuousHodgeStarConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1ExteriorFieldType.html">ExteriorFieldType</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1OperatorInputType.html">OperatorInputType</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1OperatorOutputType.html">OperatorOutputType</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1LocalOperatorConcept.html">LocalOperatorConcept</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -235,7 +282,23 @@ Concepts</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">StagingStorageConcept</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1LinearStagedOperatorConcept.html">LinearStagedOperatorConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1LinearStagingStorageConcept.html">LinearStagingStorageConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1BilinearStagingStorageConcept.html">BilinearStagingStorageConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1BilinearStagedOperatorConcept.html">BilinearStagedOperatorConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1StageableOperatorConcept.html">StageableOperatorConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1LinearStageableOperatorConcept.html">LinearStageableOperatorConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1BilinearStageableOperatorConcept.html">BilinearStageableOperatorConcept</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1FormType.html">FormType</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptsil_1_1exterior_1_1TensorFormType.html">TensorFormType</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
@@ -249,7 +312,7 @@ Typedefs</h2></td></tr>
 <tr class="memitem:ad9397455da98fe2a3f15d1f9ebeebd8c" id="r_ad9397455da98fe2a3f15d1f9ebeebd8c"><td class="memTemplParams" colspan="2">template&lt;class TagToAddToCochain , class CochainTag &gt; </td></tr>
 <tr class="memitem:ad9397455da98fe2a3f15d1f9ebeebd8c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad9397455da98fe2a3f15d1f9ebeebd8c">coboundary_index_t</a> = typename detail::CoboundaryIndex&lt;TagToAddToCochain, CochainTag&gt;::type</td></tr>
 <tr class="separator:ad9397455da98fe2a3f15d1f9ebeebd8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b84e7779045ab2b05d12295aeb6bcc8" id="r_a6b84e7779045ab2b05d12295aeb6bcc8"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType&gt; </td></tr>
+<tr class="memitem:a6b84e7779045ab2b05d12295aeb6bcc8" id="r_a6b84e7779045ab2b05d12295aeb6bcc8"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType&gt; </td></tr>
 <tr class="memitem:a6b84e7779045ab2b05d12295aeb6bcc8"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a></td></tr>
 <tr class="separator:a6b84e7779045ab2b05d12295aeb6bcc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af879a35dd2e3fe608f5c086560f16065" id="r_af879a35dd2e3fe608f5c086560f16065"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
@@ -258,7 +321,7 @@ Typedefs</h2></td></tr>
 <tr class="memitem:aab91885c880898f8e30304a22b965a22" id="r_aab91885c880898f8e30304a22b965a22"><td class="memTemplParams" colspan="2">template&lt;class TagToRemoveFromCochain , class CochainTag &gt; </td></tr>
 <tr class="memitem:aab91885c880898f8e30304a22b965a22"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aab91885c880898f8e30304a22b965a22">codifferential_index_t</a></td></tr>
 <tr class="separator:aab91885c880898f8e30304a22b965a22"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3da5f6d818417a943e98321a4f70d534" id="r_a3da5f6d818417a943e98321a4f70d534"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType&gt; </td></tr>
+<tr class="memitem:a3da5f6d818417a943e98321a4f70d534" id="r_a3da5f6d818417a943e98321a4f70d534"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, CochainType TensorType&gt; </td></tr>
 <tr class="memitem:a3da5f6d818417a943e98321a4f70d534"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a></td></tr>
 <tr class="separator:a3da5f6d818417a943e98321a4f70d534"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95193dca73b2dc48ff0df2902b65609d" id="r_a95193dca73b2dc48ff0df2902b65609d"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2&gt; </td></tr>
@@ -267,9 +330,6 @@ Typedefs</h2></td></tr>
 <tr class="memitem:acf9d9ac240de3edfc4e9bbcac31cd300" id="r_acf9d9ac240de3edfc4e9bbcac31cd300"><td class="memTemplParams" colspan="2">template&lt;std::size_t EndId, class T &gt; </td></tr>
 <tr class="memitem:acf9d9ac240de3edfc4e9bbcac31cd300"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#acf9d9ac240de3edfc4e9bbcac31cd300">codifferential_hodge_output_indices_t</a></td></tr>
 <tr class="separator:acf9d9ac240de3edfc4e9bbcac31cd300"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04a63056a25815fe3b4e94eddd7dbede" id="r_a04a63056a25815fe3b4e94eddd7dbede"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </td></tr>
-<tr class="memitem:a04a63056a25815fe3b4e94eddd7dbede"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> = typename detail::FormWrapper&lt;T, ElementType, LayoutStridedPolicy&gt;::type</td></tr>
-<tr class="separator:a04a63056a25815fe3b4e94eddd7dbede"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f4162fd50b1c01db82d03934600fced" id="r_a7f4162fd50b1c01db82d03934600fced"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices&gt; </td></tr>
 <tr class="memitem:a7f4162fd50b1c01db82d03934600fced"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a> = typename detail::ReductionTargetIndex&lt;Indices&gt;::type</td></tr>
 <tr class="separator:a7f4162fd50b1c01db82d03934600fced"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -282,6 +342,12 @@ Typedefs</h2></td></tr>
 <tr class="memitem:abaced41367e3e156dc7d8467022b3b94" id="r_abaced41367e3e156dc7d8467022b3b94"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, class Dom &gt; </td></tr>
 <tr class="memitem:abaced41367e3e156dc7d8467022b3b94"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abaced41367e3e156dc7d8467022b3b94">simplex_for_domain_t</a> = detail::SimplexForDomain&lt;K, Dom&gt;::type</td></tr>
 <tr class="separator:abaced41367e3e156dc7d8467022b3b94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a088f597a06ed453a169682392ebddda8" id="r_a088f597a06ed453a169682392ebddda8"><td class="memTemplParams" colspan="2">template&lt;class Operator , class Index , class First , class Second , class Target , class Domain , class Memory , class Exec  = typename Memory::execution_space&gt; </td></tr>
+<tr class="memitem:a088f597a06ed453a169682392ebddda8"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a088f597a06ed453a169682392ebddda8">BilinearLocalOperatorStorage</a></td></tr>
+<tr class="separator:a088f597a06ed453a169682392ebddda8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d1c4ab952d031c5df9bc556c3a19f36" id="r_a2d1c4ab952d031c5df9bc556c3a19f36"><td class="memTemplParams" colspan="2">template&lt;class Index , class Source , class Target , std::size_t Radius&gt; </td></tr>
+<tr class="memitem:a2d1c4ab952d031c5df9bc556c3a19f36"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2d1c4ab952d031c5df9bc556c3a19f36">LinearStencil</a> = <a class="el" href="#structsil_1_1exterior_1_1Stencil">Stencil</a>&lt;Index, Source, Target, Radius&gt;</td></tr>
+<tr class="separator:a2d1c4ab952d031c5df9bc556c3a19f36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -315,34 +381,37 @@ Functions</h2></td></tr>
 <tr class="memitem:ae8c195e4dff6e533cec1f717e8197e98" id="r_ae8c195e4dff6e533cec1f717e8197e98"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
 <tr class="memitem:ae8c195e4dff6e533cec1f717e8197e98"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#af909312837528d942e73443a79fd9f17">coboundary_t</a>&lt; CochainType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ae8c195e4dff6e533cec1f717e8197e98">coboundary</a> (CochainType const &amp;cochain)</td></tr>
 <tr class="separator:ae8c195e4dff6e533cec1f717e8197e98"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f283ecf8a777041e9ced6b758adb986" id="r_a9f283ecf8a777041e9ced6b758adb986"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </td></tr>
+<tr class="memitem:a9f283ecf8a777041e9ced6b758adb986" id="r_a9f283ecf8a777041e9ced6b758adb986"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </td></tr>
 <tr class="memitem:a9f283ecf8a777041e9ced6b758adb986"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a9f283ecf8a777041e9ced6b758adb986">coboundary</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; const &amp;coboundary_tensor, TensorType const &amp;tensor, ExtrapolationRules const &amp;extrapolation={})</td></tr>
 <tr class="memdesc:a9f283ecf8a777041e9ced6b758adb986"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply the exterior derivative with a callable cochain sampling rule.  <br /></td></tr>
 <tr class="separator:a9f283ecf8a777041e9ced6b758adb986"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95bb15ad14d55b4c47dc762dd6b4fb77" id="r_a95bb15ad14d55b4c47dc762dd6b4fb77"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ZeroExtrapolationRule&gt; </td></tr>
+<tr class="memitem:a95bb15ad14d55b4c47dc762dd6b4fb77" id="r_a95bb15ad14d55b4c47dc762dd6b4fb77"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ZeroExtrapolationRule&gt; </td></tr>
 <tr class="memitem:a95bb15ad14d55b4c47dc762dd6b4fb77"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a95bb15ad14d55b4c47dc762dd6b4fb77">transposed_coboundary</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; const &amp;coboundary_tensor, TensorType const &amp;tensor, ExtrapolationRules const &amp;extrapolation={})</td></tr>
 <tr class="separator:a95bb15ad14d55b4c47dc762dd6b4fb77"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad823b87135ad51b7434d39537d97ae6" id="r_aad823b87135ad51b7434d39537d97ae6"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </td></tr>
+<tr class="memitem:aad823b87135ad51b7434d39537d97ae6" id="r_aad823b87135ad51b7434d39537d97ae6"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </td></tr>
 <tr class="memitem:aad823b87135ad51b7434d39537d97ae6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aad823b87135ad51b7434d39537d97ae6">deriv</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; const &amp;coboundary_tensor, TensorType const &amp;tensor, ExtrapolationRules const &amp;extrapolation={})</td></tr>
 <tr class="separator:aad823b87135ad51b7434d39537d97ae6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73549f1ff295fa7991194e4bb457c6c0" id="r_a73549f1ff295fa7991194e4bb457c6c0"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor&gt; </td></tr>
+<tr class="memitem:a73549f1ff295fa7991194e4bb457c6c0"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a73549f1ff295fa7991194e4bb457c6c0">Cochain</a> (Tensor const &amp;) -&gt; Cochain&lt; Tensor &gt;</td></tr>
+<tr class="separator:a73549f1ff295fa7991194e4bb457c6c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a154a8b2931e477c4b3dc2b9f23068699" id="r_a154a8b2931e477c4b3dc2b9f23068699"><td class="memTemplParams" colspan="2">template&lt;class ChainType , misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a154a8b2931e477c4b3dc2b9f23068699"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a154a8b2931e477c4b3dc2b9f23068699">Cochain</a> (ChainType, TensorType) -&gt; Cochain&lt; ChainType, typename TensorType::value_type, ddc::detail::mdspan_to_kokkos_layout_t&lt; typename TensorType::layout_type &gt; &gt;</td></tr>
 <tr class="separator:a154a8b2931e477c4b3dc2b9f23068699"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77b1d154b6e5a5a8a225bf23ff67d1ae" id="r_a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
 <tr class="memitem:a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a77b1d154b6e5a5a8a225bf23ff67d1ae">operator&lt;&lt;</a> (std::ostream &amp;out, CochainType const &amp;cochain)</td></tr>
 <tr class="separator:a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ccaf1f7ca752a99490931aabfa59359" id="r_a1ccaf1f7ca752a99490931aabfa59359"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, class ExecSpace , misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class Rules  = tensor::ZeroExtrapolationRule&gt; </td></tr>
+<tr class="memitem:a1ccaf1f7ca752a99490931aabfa59359" id="r_a1ccaf1f7ca752a99490931aabfa59359"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, class ExecSpace , CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class Rules  = tensor::ZeroExtrapolationRule&gt; </td></tr>
 <tr class="memitem:a1ccaf1f7ca752a99490931aabfa59359"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsil_1_1exterior_1_1StagedOperator.html">StagedOperator</a>&lt; <a class="el" href="#structsil_1_1exterior_1_1Codifferential">Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;, typename <a class="el" href="#structsil_1_1exterior_1_1Codifferential">Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;::staged_storage_type::template rebind&lt; ExecSpace &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a1ccaf1f7ca752a99490931aabfa59359">make_staged_codifferential</a> (ExecSpace const &amp;exec_space, TensorType const &amp;tensor, MetricType const &amp;metric, PositionType const &amp;position, Rules const &amp;rules={})</td></tr>
 <tr class="memdesc:a1ccaf1f7ca752a99490931aabfa59359"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cache Codifferential::value() at every input node.  <br /></td></tr>
 <tr class="separator:a1ccaf1f7ca752a99490931aabfa59359"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54a2ce09420c0ca1ba1b8e53b3241795" id="r_a54a2ce09420c0ca1ba1b8e53b3241795"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
-requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt;)</td></tr>
-<tr class="memitem:a54a2ce09420c0ca1ba1b8e53b3241795"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a54a2ce09420c0ca1ba1b8e53b3241795">codifferential</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; const &amp;codifferential_tensor, TensorType const &amp;tensor, HodgeStarType const &amp;hodge_star, DualHodgeStarType const &amp;dual_hodge_star, DualTensorType const &amp;dual_tensor_buffer, DualExtrapolationRule const &amp;dual_extrapolation={})</td></tr>
-<tr class="separator:a54a2ce09420c0ca1ba1b8e53b3241795"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5043989cecaaf47d3135bc908d911e89" id="r_a5043989cecaaf47d3135bc908d911e89"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
-requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt;)</td></tr>
-<tr class="memitem:a5043989cecaaf47d3135bc908d911e89"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5043989cecaaf47d3135bc908d911e89">codifferential</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; const &amp;codifferential_tensor, TensorType const &amp;tensor, MetricType const &amp;metric, PositionType const &amp;position, DualExtrapolationRule const &amp;dual_extrapolation={})</td></tr>
-<tr class="separator:a5043989cecaaf47d3135bc908d911e89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bb921de40773622c3cebefe9c9c1d58" id="r_a8bb921de40773622c3cebefe9c9c1d58"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, CochainType DualTensorType, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+requires ( misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt; &amp;&amp; !ExteriorFieldType&lt;DualExtrapolationRule&gt;)</td></tr>
+<tr class="memitem:a8bb921de40773622c3cebefe9c9c1d58"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a8bb921de40773622c3cebefe9c9c1d58">codifferential</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; const &amp;codifferential_tensor, TensorType const &amp;tensor, HodgeStarType const &amp;hodge_star, DualHodgeStarType const &amp;dual_hodge_star, DualTensorType const &amp;dual_tensor_buffer, DualExtrapolationRule const &amp;dual_extrapolation={})</td></tr>
+<tr class="separator:a8bb921de40773622c3cebefe9c9c1d58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4407839a69209ac04ccbbd6ef322e8a8" id="r_a4407839a69209ac04ccbbd6ef322e8a8"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+requires ( misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt; &amp;&amp; !ExteriorFieldType&lt;DualExtrapolationRule&gt;)</td></tr>
+<tr class="memitem:a4407839a69209ac04ccbbd6ef322e8a8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a4407839a69209ac04ccbbd6ef322e8a8">codifferential</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; const &amp;codifferential_tensor, TensorType const &amp;tensor, MetricType const &amp;metric, PositionType const &amp;position, DualExtrapolationRule const &amp;dual_extrapolation={})</td></tr>
+<tr class="separator:a4407839a69209ac04ccbbd6ef322e8a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3db6431b04afe29d24f80ae489588076" id="r_a3db6431b04afe29d24f80ae489588076"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class ExecSpace &gt; </td></tr>
 <tr class="memitem:a3db6431b04afe29d24f80ae489588076"><td class="memTemplItemLeft" align="right" valign="top">HodgeStarType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3db6431b04afe29d24f80ae489588076">fill_discrete_hodge_star</a> (ExecSpace const &amp;exec_space, HodgeStarType const &amp;hodge_star, MetricType const &amp;metric, PositionType const &amp;position)</td></tr>
 <tr class="separator:a3db6431b04afe29d24f80ae489588076"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -356,34 +425,37 @@ requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8" id="r_a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a> &gt; CosimplexType&gt; </td></tr>
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a941c3e48322d9c305635d3b5a1376ab8">operator&lt;&lt;</a> (std::ostream &amp;out, CosimplexType const &amp;cosimplex)</td></tr>
 <tr class="separator:a941c3e48322d9c305635d3b5a1376ab8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a58e5df70a848a7ef17f5461634df01f5" id="r_a58e5df70a848a7ef17f5461634df01f5"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex Index, class CochainTensor , class SimplexType &gt; </td></tr>
+<tr class="memitem:a910ee6c7c843f108014f603184d97565" id="r_a910ee6c7c843f108014f603184d97565"><td class="memTemplParams" colspan="2">template&lt;class Coefficients &gt; </td></tr>
+<tr class="memitem:a910ee6c7c843f108014f603184d97565"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a910ee6c7c843f108014f603184d97565">Form</a> (Coefficients const &amp;) -&gt; Form&lt; Coefficients &gt;</td></tr>
+<tr class="separator:a910ee6c7c843f108014f603184d97565"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58e5df70a848a7ef17f5461634df01f5" id="r_a58e5df70a848a7ef17f5461634df01f5"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex Index, CochainType CochainTensor, class SimplexType &gt; </td></tr>
 <tr class="memitem:a58e5df70a848a7ef17f5461634df01f5"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a58e5df70a848a7ef17f5461634df01f5">integrate</a> (CochainTensor const &amp;cochain, SimplexType const &amp;simplex)</td></tr>
 <tr class="memdesc:a58e5df70a848a7ef17f5461634df01f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate an already reduced k-cochain on one oriented k-cell.  <br /></td></tr>
 <tr class="separator:a58e5df70a848a7ef17f5461634df01f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e7b7e615443917b987e0de91d69ec4e" id="r_a4e7b7e615443917b987e0de91d69ec4e"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex Index, class ExecSpace , class CochainTensor , class ChainType &gt; </td></tr>
+<tr class="memitem:a4e7b7e615443917b987e0de91d69ec4e" id="r_a4e7b7e615443917b987e0de91d69ec4e"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex Index, class ExecSpace , CochainType CochainTensor, class ChainType &gt; </td></tr>
 <tr class="memitem:a4e7b7e615443917b987e0de91d69ec4e"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a4e7b7e615443917b987e0de91d69ec4e">integrate</a> (ExecSpace const &amp;exec, CochainTensor const &amp;cochain, ChainType const &amp;chain)</td></tr>
 <tr class="memdesc:a4e7b7e615443917b987e0de91d69ec4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pair a reduced k-cochain with an oriented k-chain: &lt;c, C&gt; = sum s_i c_i.  <br /></td></tr>
 <tr class="separator:a4e7b7e615443917b987e0de91d69ec4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4cc1bba3af055be82e121e38383afc8" id="r_af4cc1bba3af055be82e121e38383afc8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class SimplexType &gt; </td></tr>
-<tr class="memitem:af4cc1bba3af055be82e121e38383afc8"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af4cc1bba3af055be82e121e38383afc8">integrate</a> (<a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;form, Position const &amp;position, SimplexType const &amp;simplex)</td></tr>
+<tr class="memitem:af4cc1bba3af055be82e121e38383afc8" id="r_af4cc1bba3af055be82e121e38383afc8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, FormType Form, class Position , class SimplexType &gt; </td></tr>
+<tr class="memitem:af4cc1bba3af055be82e121e38383afc8"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af4cc1bba3af055be82e121e38383afc8">integrate</a> (<a class="el" href="classsil_1_1exterior_1_1Form.html">Form</a> const &amp;form, Position const &amp;position, SimplexType const &amp;simplex)</td></tr>
 <tr class="memdesc:af4cc1bba3af055be82e121e38383afc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reduce a physical differential form, then evaluate it on an oriented cell.  <br /></td></tr>
 <tr class="separator:af4cc1bba3af055be82e121e38383afc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad1d4864b8d4cc465e11404608a33f53a" id="r_ad1d4864b8d4cc465e11404608a33f53a"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace , class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class ChainType &gt; </td></tr>
-<tr class="memitem:ad1d4864b8d4cc465e11404608a33f53a"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad1d4864b8d4cc465e11404608a33f53a">integrate</a> (ExecSpace const &amp;exec, <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;form, Position const &amp;position, ChainType const &amp;chain)</td></tr>
+<tr class="memitem:ad1d4864b8d4cc465e11404608a33f53a" id="r_ad1d4864b8d4cc465e11404608a33f53a"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace , FormType Form, class Position , class ChainType &gt; </td></tr>
+<tr class="memitem:ad1d4864b8d4cc465e11404608a33f53a"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad1d4864b8d4cc465e11404608a33f53a">integrate</a> (ExecSpace const &amp;exec, <a class="el" href="classsil_1_1exterior_1_1Form.html">Form</a> const &amp;form, Position const &amp;position, ChainType const &amp;chain)</td></tr>
 <tr class="memdesc:ad1d4864b8d4cc465e11404608a33f53a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reduce a physical form and pair it with a chain without storing a cochain.  <br /></td></tr>
 <tr class="separator:ad1d4864b8d4cc465e11404608a33f53a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60e01e239e4ee42c85402b174d3687e5" id="r_a60e01e239e4ee42c85402b174d3687e5"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, template&lt; <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar, class Exec , class Tensor , class Metric , class Position &gt; </td></tr>
+<tr class="memitem:a60e01e239e4ee42c85402b174d3687e5" id="r_a60e01e239e4ee42c85402b174d3687e5"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, template&lt; <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar, class Exec , CochainType Tensor, class Metric , class Position &gt; </td></tr>
 <tr class="memitem:a60e01e239e4ee42c85402b174d3687e5"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsil_1_1exterior_1_1Laplacian.html">Laplacian</a>&lt; MetricIndex, Index, <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>, Tensor, Metric, Position, Exec, Hodge &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a60e01e239e4ee42c85402b174d3687e5">make_laplacian</a> (Exec const &amp;exec, Tensor const &amp;output, Tensor const &amp;input, Metric const &amp;metric, Position const &amp;position)</td></tr>
 <tr class="separator:a60e01e239e4ee42c85402b174d3687e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20cae955e5ed41127556916fd92a2620" id="r_a20cae955e5ed41127556916fd92a2620"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeDualTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+<tr class="memitem:a20cae955e5ed41127556916fd92a2620" id="r_a20cae955e5ed41127556916fd92a2620"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, CochainType DerivativeDualTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
 requires (detail::ZeroRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</td></tr>
 <tr class="memitem:a20cae955e5ed41127556916fd92a2620"><td class="memTemplItemLeft" align="right" valign="top">TensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a20cae955e5ed41127556916fd92a2620">laplacian</a> (ExecSpace const &amp;exec_space, TensorType const &amp;laplacian_tensor, TensorType const &amp;tensor, DerivativeHodgeStarType const &amp;hodge_star, DualDerivativeHodgeStarType const &amp;dual_hodge_star, DerivativeDualTensorBufferType const &amp;dual_tensor_buffer, PrimalExtrapolationRule const &amp;primal_extrapolation={}, DualExtrapolationRule const &amp;dual_extrapolation={})</td></tr>
 <tr class="separator:a20cae955e5ed41127556916fd92a2620"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7e14c4f2d1c9dbb5e6eea4e31e63e72" id="r_af7e14c4f2d1c9dbb5e6eea4e31e63e72"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeDualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CodifferentialTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CoboundaryOfCodifferentialBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+<tr class="memitem:af7e14c4f2d1c9dbb5e6eea4e31e63e72" id="r_af7e14c4f2d1c9dbb5e6eea4e31e63e72"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, CochainType DerivativeDualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, CochainType DualTensorBufferType, CochainType CodifferentialTensorBufferType, CochainType CoboundaryOfCodifferentialBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
 requires (detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</td></tr>
 <tr class="memitem:af7e14c4f2d1c9dbb5e6eea4e31e63e72"><td class="memTemplItemLeft" align="right" valign="top">TensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af7e14c4f2d1c9dbb5e6eea4e31e63e72">laplacian</a> (ExecSpace const &amp;exec_space, TensorType const &amp;laplacian_tensor, TensorType const &amp;tensor, DerivativeHodgeStarType const &amp;derivative_hodge_star, DualDerivativeHodgeStarType const &amp;dual_derivative_hodge_star, DerivativeDualTensorBufferType const &amp;derivative_dual_tensor_buffer, HodgeStarType const &amp;hodge_star, DualHodgeStarType const &amp;dual_hodge_star, DualTensorBufferType const &amp;dual_tensor_buffer, CodifferentialTensorBufferType const &amp;codifferential_tensor_buffer, CoboundaryOfCodifferentialBufferType const &amp;coboundary_of_codifferential_buffer, PrimalExtrapolationRule const &amp;primal_extrapolation={}, DualExtrapolationRule const &amp;dual_extrapolation={})</td></tr>
 <tr class="separator:af7e14c4f2d1c9dbb5e6eea4e31e63e72"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abebcd230e9b02ce38f2bf4fb14072d8a" id="r_abebcd230e9b02ce38f2bf4fb14072d8a"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CodifferentialTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+<tr class="memitem:abebcd230e9b02ce38f2bf4fb14072d8a" id="r_abebcd230e9b02ce38f2bf4fb14072d8a"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, CochainType DualTensorBufferType, CochainType CodifferentialTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
 requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</td></tr>
 <tr class="memitem:abebcd230e9b02ce38f2bf4fb14072d8a"><td class="memTemplItemLeft" align="right" valign="top">TensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abebcd230e9b02ce38f2bf4fb14072d8a">laplacian</a> (ExecSpace const &amp;exec_space, TensorType const &amp;laplacian_tensor, TensorType const &amp;tensor, HodgeStarType const &amp;hodge_star, DualHodgeStarType const &amp;dual_hodge_star, DualTensorBufferType const &amp;dual_tensor_buffer, CodifferentialTensorBufferType const &amp;codifferential_tensor_buffer, PrimalExtrapolationRule const &amp;primal_extrapolation={}, DualExtrapolationRule const &amp;dual_extrapolation={})</td></tr>
 <tr class="separator:abebcd230e9b02ce38f2bf4fb14072d8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -397,6 +469,14 @@ requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</td></
 <tr class="memitem:ad77d98f0d2f2ef2be8fe604aca0a1fc1" id="r_ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class SimplexType , class... T&gt; </td></tr>
 <tr class="memitem:ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad77d98f0d2f2ef2be8fe604aca0a1fc1">LocalChain</a> (AllocationType, SimplexType, T...) -&gt; LocalChain&lt; std::remove_cvref_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt;</td></tr>
 <tr class="separator:ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab07bb69d49be12b8fef0faf58d2fe332" id="r_ab07bb69d49be12b8fef0faf58d2fe332"><td class="memTemplParams" colspan="2">template&lt;class Rule , class Evaluator , class Measure &gt; </td></tr>
+<tr class="memitem:ab07bb69d49be12b8fef0faf58d2fe332"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab07bb69d49be12b8fef0faf58d2fe332">quadrature</a> (Rule const &amp;rule, Evaluator const &amp;evaluator, Measure const &amp;measure)</td></tr>
+<tr class="memdesc:ab07bb69d49be12b8fef0faf58d2fe332"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integrate a scalar evaluator with an independent reference-cell rule.  <br /></td></tr>
+<tr class="separator:ab07bb69d49be12b8fef0faf58d2fe332"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af18867eba2e7da6cb0807d50fd0364bf" id="r_af18867eba2e7da6cb0807d50fd0364bf"><td class="memTemplParams" colspan="2">template&lt;class Rule , class Measure , class TrialResponse , class Pairing , class Accumulate &gt; </td></tr>
+<tr class="memitem:af18867eba2e7da6cb0807d50fd0364bf"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af18867eba2e7da6cb0807d50fd0364bf">assemble_bilinear_form</a> (Rule const &amp;rule, std::size_t trial_count, std::size_t test_count, Measure const &amp;measure, TrialResponse const &amp;response, Pairing const &amp;pairing, Accumulate const &amp;accumulate)</td></tr>
+<tr class="memdesc:af18867eba2e7da6cb0807d50fd0364bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assemble a local bilinear form from independently evaluated trial responses and test functions.  <br /></td></tr>
+<tr class="separator:af18867eba2e7da6cb0807d50fd0364bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e4606bfaf57a486f7dae8ee301b548d" id="r_a3e4606bfaf57a486f7dae8ee301b548d"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; ReductionTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class ExecSpace , <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </td></tr>
 <tr class="memitem:a3e4606bfaf57a486f7dae8ee301b548d"><td class="memTemplItemLeft" align="right" valign="top">ReductionTensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3e4606bfaf57a486f7dae8ee301b548d">fill_reduction_operator</a> (ExecSpace const &amp;exec_space, ReductionTensorType const &amp;reduction_tensor, PositionType const &amp;position)</td></tr>
 <tr class="separator:a3e4606bfaf57a486f7dae8ee301b548d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -419,6 +499,12 @@ requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</td></
 <tr class="memitem:a8f11c1c339a134ede34cee3fbd8f2eeb" id="r_a8f11c1c339a134ede34cee3fbd8f2eeb"><td class="memTemplParams" colspan="2">template&lt;class Index , class Source , class Target , std::size_t Radius&gt; </td></tr>
 <tr class="memitem:a8f11c1c339a134ede34cee3fbd8f2eeb"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a8f11c1c339a134ede34cee3fbd8f2eeb">stencil_flatten</a> (<a class="el" href="#structsil_1_1exterior_1_1StencilIndex">StencilIndex</a>&lt; Index::size()&gt; index)</td></tr>
 <tr class="separator:a8f11c1c339a134ede34cee3fbd8f2eeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a94d8ca18adad18b6da9972411fae1c95" id="r_a94d8ca18adad18b6da9972411fae1c95"><td class="memTemplParams" colspan="2">template&lt;TensorFormType T&gt; </td></tr>
+<tr class="memitem:a94d8ca18adad18b6da9972411fae1c95"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a94d8ca18adad18b6da9972411fae1c95">form_degree_v</a> = detail::FormDegree&lt;typename T::indices_domain_t&gt;::value</td></tr>
+<tr class="separator:a94d8ca18adad18b6da9972411fae1c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/><h2 class="groupheader">Class Documentation</h2>
 <a name="structsil_1_1exterior_1_1Coboundary" id="structsil_1_1exterior_1_1Coboundary"></a>
@@ -434,7 +520,7 @@ requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</td></
 </div><div class="memdoc">
 <div class="textblock"><div class="compoundTemplParams">template&lt;class... Args&gt;<br />
 struct sil::exterior::Coboundary&lt; Args &gt;</div>
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00161">161</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00148">148</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for sil::exterior::Coboundary&lt; Args &gt;:</div>
 <div class="dyncontent">
@@ -459,7 +545,7 @@ Collaboration diagram for sil::exterior::Coboundary&lt; Args &gt;:</div>
 </div><div class="memdoc">
 <div class="textblock"><div class="compoundTemplParams">template&lt;class... Args&gt;<br />
 struct sil::exterior::Codifferential&lt; Args &gt;</div>
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00134">134</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00121">121</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for sil::exterior::Codifferential&lt; Args &gt;:</div>
 <div class="dyncontent">
@@ -590,7 +676,7 @@ input_component</td>
 </div><div class="memdoc">
 <div class="textblock"><div class="compoundTemplParams">template&lt;class... Args&gt;<br />
 struct sil::exterior::TransposedCoboundary&lt; Args &gt;</div>
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00164">164</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00151">151</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for sil::exterior::TransposedCoboundary&lt; Args &gt;:</div>
 <div class="dyncontent">
@@ -599,6 +685,42 @@ Collaboration diagram for sil::exterior::TransposedCoboundary&lt; Args &gt;:</di
 <area shape="rect" title=" " alt="" coords="5,5,175,85"/>
 </map>
 </div>
+
+</div>
+</div>
+<a name="structsil_1_1exterior_1_1VertexFormBilinearComposition" id="structsil_1_1exterior_1_1VertexFormBilinearComposition"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#structsil_1_1exterior_1_1VertexFormBilinearComposition">&#9670;&#160;</a></span>sil::exterior::VertexFormBilinearComposition</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct sil::exterior::VertexFormBilinearComposition</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<div class="textblock"><div class="compoundTemplParams">template&lt;class Operator, class First, class Second, class Target, class Domain, class Memory, class InverseMetric&gt;<br />
+struct sil::exterior::VertexFormBilinearComposition&lt; Operator, First, Second, Target, Domain, Memory, InverseMetric &gt;</div><p>Periodic vertex reconstruction, bilinear form operator, and projection. </p>
+<p>Coefficients come from the canonical vertex transfers. Application keeps their factorization and evaluates the supplied form operator locally. Geometry and metric must remain unchanged; output must not alias an input. </p><dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="staged__vertex__form__composition_8hpp_source.html#l00161">161</a> of file <a class="el" href="staged__vertex__form__composition_8hpp_source.html">staged_vertex_form_composition.hpp</a>.</p>
+</div><div class="dynheader">
+Collaboration diagram for sil::exterior::VertexFormBilinearComposition&lt; Operator, First, Second, Target, Domain, Memory, InverseMetric &gt;:</div>
+<div class="dyncontent">
+<div class="center"><img src="structsil_1_1exterior_1_1VertexFormBilinearComposition__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1VertexFormBilinearComposition_3_01Operator_00_01First_00_01Second_00_01Target_00_01Domain_00_01Memory_00_01InverseMetric_01_4_coll__map" alt="Collaboration graph"/></div>
+<map name="asil_1_1exterior_1_1VertexFormBilinearComposition_3_01Operator_00_01First_00_01Second_00_01Target_00_01Domain_00_01Memory_00_01InverseMetric_01_4_coll__map" id="asil_1_1exterior_1_1VertexFormBilinearComposition_3_01Operator_00_01First_00_01Second_00_01Target_00_01Domain_00_01Memory_00_01InverseMetric_01_4_coll__map">
+<area shape="rect" title="Periodic vertex reconstruction, bilinear form operator, and projection." alt="" coords="5,5,228,115"/>
+</map>
+</div>
+<table class="fieldtable">
+<tr><th colspan="3">Class Members</th></tr>
+<tr><td class="fieldtype">
+<a id="afa5ed45a7367039cb1c56d936dc046c0" name="afa5ed45a7367039cb1c56d936dc046c0"></a>typedef <a class="el" href="structsil_1_1exterior_1_1VertexFormBilinearComposition_1_1Storage.html">Storage</a></td>
+<td class="fieldname">
+staged_storage_type <a class="el" href="structsil_1_1exterior_1_1VertexFormBilinearComposition_1_1Storage.html">Storage</a></td>
+<td class="fielddoc">
+</td></tr>
+</table>
 
 </div>
 </div>
@@ -663,7 +785,7 @@ template&lt;class TagToAddToCochain , class CochainTag &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType&gt; </div>
+template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">sil::exterior::coboundary_tensor_t</a></td>
@@ -673,7 +795,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
 <div class="line">        <span class="keyword">typename</span> detail::CoboundaryTensorType&lt;TagToAddToCochain, CochainTag, TensorType&gt;::type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00129">129</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00116">116</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -721,7 +843,7 @@ template&lt;class TagToRemoveFromCochain , class CochainTag &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType&gt; </div>
+template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, CochainType TensorType&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="#a3da5f6d818417a943e98321a4f70d534">sil::exterior::codifferential_tensor_t</a></td>
@@ -731,7 +853,7 @@ template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex C
 <b>Initial value:</b><div class="fragment"><div class="line"> <span class="keyword">typename</span> detail::</div>
 <div class="line">        CodifferentialTensorType&lt;TagToRemoveFromCochain, CochainTag, TensorType&gt;::type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00129">129</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00116">116</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -777,25 +899,7 @@ template&lt;std::size_t EndId, class T &gt; </div>
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
 <div class="line">        <span class="keyword">typename</span> detail::CodifferentialHodgeOutputIndexSeq&lt;EndId, T&gt;::type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00486">486</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a04a63056a25815fe3b4e94eddd7dbede" name="a04a63056a25815fe3b4e94eddd7dbede"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04a63056a25815fe3b4e94eddd7dbede">&#9670;&#160;</a></span>Form</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">sil::exterior::Form</a> = typename detail::FormWrapper&lt;T, ElementType, LayoutStridedPolicy&gt;::type</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="form_8hpp_source.html#l00044">44</a> of file <a class="el" href="form_8hpp_source.html">form.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00487">487</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -876,6 +980,53 @@ template&lt;std::size_t K, class Dom &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00238">238</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a088f597a06ed453a169682392ebddda8" name="a088f597a06ed453a169682392ebddda8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a088f597a06ed453a169682392ebddda8">&#9670;&#160;</a></span>BilinearLocalOperatorStorage</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Operator , class Index , class First , class Second , class Target , class Domain , class Memory , class Exec  = typename Memory::execution_space&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a088f597a06ed453a169682392ebddda8">sil::exterior::BilinearLocalOperatorStorage</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> BilinearSpatialOperatorStorage&lt;</div>
+<div class="line">        Operator,</div>
+<div class="line">        Index,</div>
+<div class="line">        First,</div>
+<div class="line">        Second,</div>
+<div class="line">        Target,</div>
+<div class="line">        0,</div>
+<div class="line">        0,</div>
+<div class="line">        Domain,</div>
+<div class="line">        Memory,</div>
+<div class="line">        Exec&gt;</div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="bilinear__operator__storage_8hpp_source.html#l00228">228</a> of file <a class="el" href="bilinear__operator__storage_8hpp_source.html">bilinear_operator_storage.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a2d1c4ab952d031c5df9bc556c3a19f36" name="a2d1c4ab952d031c5df9bc556c3a19f36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d1c4ab952d031c5df9bc556c3a19f36">&#9670;&#160;</a></span>LinearStencil</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Index , class Source , class Target , std::size_t Radius&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a2d1c4ab952d031c5df9bc556c3a19f36">sil::exterior::LinearStencil</a> = <a class="el" href="#structsil_1_1exterior_1_1Stencil">Stencil</a>&lt;Index, Source, Target, Radius&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="stencil_8hpp_source.html#l00039">39</a> of file <a class="el" href="stencil_8hpp_source.html">stencil.hpp</a>.</p>
 
 </div>
 </div>
@@ -1046,7 +1197,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00521">521</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00508">508</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -1056,7 +1207,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </div>
+template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; sil::exterior::coboundary </td>
@@ -1082,9 +1233,9 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
 </div><div class="memdoc">
 
 <p>Apply the exterior derivative with a callable cochain sampling rule. </p>
-<p>A single rule is automatically broadcast to both sides of every non-index dimension; an ExtrapolationRules policy retains its per-boundary selection. Exterior rules are invoked as rule(tensor, sampled_element) and return a pointwise Tensor containing every stored component, while interior samples retain their stored values. Rules must be copyable and callable in ExecSpace. The output domain selects where to evaluate d; the input domain selects which samples require extrapolation. The same contract applies to <a class="el" href="#aad823b87135ad51b7434d39537d97ae6">deriv()</a>, <a class="el" href="#a95bb15ad14d55b4c47dc762dd6b4fb77">transposed_coboundary()</a>, and the primal and dual stages of <a class="el" href="#a20cae955e5ed41127556916fd92a2620">laplacian()</a>; <a class="el" href="#a54a2ce09420c0ca1ba1b8e53b3241795">codifferential()</a> accepts a rule for its dual Hodge field. </p><dl class="section important"><dt>Important</dt><dd>This documentation is fully AI-generated. </dd></dl>
+<p>A single rule is automatically broadcast to both sides of every non-index dimension; an ExtrapolationRules policy retains its per-boundary selection. Exterior rules are invoked as rule(tensor, sampled_element) and return a pointwise Tensor containing every stored component, while interior samples retain their stored values. Rules must be copyable and callable in ExecSpace. The output domain selects where to evaluate d; the input domain selects which samples require extrapolation. The same contract applies to <a class="el" href="#aad823b87135ad51b7434d39537d97ae6">deriv()</a>, <a class="el" href="#a95bb15ad14d55b4c47dc762dd6b4fb77">transposed_coboundary()</a>, and the primal and dual stages of <a class="el" href="#a20cae955e5ed41127556916fd92a2620">laplacian()</a>; <a class="el" href="#a8bb921de40773622c3cebefe9c9c1d58">codifferential()</a> accepts a rule for its dual Hodge field. </p><dl class="section important"><dt>Important</dt><dd>This documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00545">545</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00532">532</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -1094,7 +1245,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ZeroExtrapolationRule&gt; </div>
+template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ZeroExtrapolationRule&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; sil::exterior::transposed_coboundary </td>
@@ -1119,7 +1270,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00599">599</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00586">586</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -1129,7 +1280,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </div>
+template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, CochainType TensorType, class ExecSpace , class ExtrapolationRules  = tensor::ClampExtrapolationRule&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; sil::exterior::deriv </td>
@@ -1154,12 +1305,31 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00653">653</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00640">640</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a73549f1ff295fa7991194e4bb457c6c0" name="a73549f1ff295fa7991194e4bb457c6c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73549f1ff295fa7991194e4bb457c6c0">&#9670;&#160;</a></span>Cochain() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Tensor&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">sil::exterior::Cochain </td>
+          <td>(</td>
+          <td class="paramtype">Tensor const &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> -&gt;  Cochain&lt; Tensor &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
 <a id="a154a8b2931e477c4b3dc2b9f23068699" name="a154a8b2931e477c4b3dc2b9f23068699"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a154a8b2931e477c4b3dc2b9f23068699">&#9670;&#160;</a></span>Cochain()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a154a8b2931e477c4b3dc2b9f23068699">&#9670;&#160;</a></span>Cochain() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1202,7 +1372,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00362">362</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00408">408</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1212,7 +1382,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, class ExecSpace , misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class Rules  = tensor::ZeroExtrapolationRule&gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, class ExecSpace , CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class Rules  = tensor::ZeroExtrapolationRule&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classsil_1_1exterior_1_1StagedOperator.html">StagedOperator</a>&lt; <a class="el" href="#structsil_1_1exterior_1_1Codifferential">Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;, typename <a class="el" href="#structsil_1_1exterior_1_1Codifferential">Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;::staged_storage_type::template rebind&lt; ExecSpace &gt; &gt; sil::exterior::make_staged_codifferential </td>
@@ -1245,18 +1415,18 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 <p>Cache Codifferential::value() at every input node. </p>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. A fixed stencil stores all component couplings and affine boundary terms. Its Manhattan radius is one (seven spatial points in three dimensions). Closures that sample outside this support are rejected during construction. Geometry and the dual closure are fixed at construction. Application only contracts the stored stencil with the current cochain values. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00598">598</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00591">591</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a54a2ce09420c0ca1ba1b8e53b3241795" name="a54a2ce09420c0ca1ba1b8e53b3241795"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a54a2ce09420c0ca1ba1b8e53b3241795">&#9670;&#160;</a></span>codifferential() <span class="overload">[1/2]</span></h2>
+<a id="a8bb921de40773622c3cebefe9c9c1d58" name="a8bb921de40773622c3cebefe9c9c1d58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8bb921de40773622c3cebefe9c9c1d58">&#9670;&#160;</a></span>codifferential() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
-requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt;)</div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, CochainType DualTensorType, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+requires ( misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt; &amp;&amp; !ExteriorFieldType&lt;DualExtrapolationRule&gt;)</div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; sil::exterior::codifferential </td>
@@ -1296,18 +1466,18 @@ requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00634">634</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00629">629</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a5043989cecaaf47d3135bc908d911e89" name="a5043989cecaaf47d3135bc908d911e89"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5043989cecaaf47d3135bc908d911e89">&#9670;&#160;</a></span>codifferential() <span class="overload">[2/2]</span></h2>
+<a id="a4407839a69209ac04ccbbd6ef322e8a8" name="a4407839a69209ac04ccbbd6ef322e8a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4407839a69209ac04ccbbd6ef322e8a8">&#9670;&#160;</a></span>codifferential() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
-requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt;)</div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class ExecSpace , class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+requires ( misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&gt; &amp;&amp; !ExteriorFieldType&lt;DualExtrapolationRule&gt;)</div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; sil::exterior::codifferential </td>
@@ -1342,7 +1512,7 @@ requires (misc::NotSpecialization&lt;DualExtrapolationRule, <a class="el" href="
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00706">706</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00703">703</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -1377,7 +1547,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specializ
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00369">369</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00370">370</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -1407,7 +1577,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specializ
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00418">418</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00419">419</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -1450,7 +1620,7 @@ template&lt;class Direction , class <a class="el" href="classsil_1_1exterior_1_1
 <p>Normalize single policies locally, as for the staged differential operators. </p>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00953">953</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="continuous__hodge__star_8hpp_source.html#l00959">959</a> of file <a class="el" href="continuous__hodge__star_8hpp_source.html">continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -1479,13 +1649,32 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
 
 </div>
 </div>
+<a id="a910ee6c7c843f108014f603184d97565" name="a910ee6c7c843f108014f603184d97565"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a910ee6c7c843f108014f603184d97565">&#9670;&#160;</a></span>Form()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Coefficients &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">sil::exterior::Form </td>
+          <td>(</td>
+          <td class="paramtype">Coefficients const &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> -&gt;  Form&lt; Coefficients &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a58e5df70a848a7ef17f5461634df01f5" name="a58e5df70a848a7ef17f5461634df01f5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a58e5df70a848a7ef17f5461634df01f5">&#9670;&#160;</a></span>integrate() <span class="overload">[1/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex Index, class CochainTensor , class SimplexType &gt; </div>
+template&lt;tensor::TensorIndex Index, CochainType CochainTensor, class SimplexType &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">KOKKOS_FUNCTION double sil::exterior::integrate </td>
@@ -1504,7 +1693,7 @@ template&lt;tensor::TensorIndex Index, class CochainTensor , class SimplexType &
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
 <p>The tensor stores integrals on positively oriented cells, not physical components. The cell's active logical directions select its coefficient; its orientation supplies the sign. Logical axes must follow the same order in the cell and the cochain index. No metric or cell measure is applied here. </p>
 
-<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00049">49</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00051">51</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
 
 </div>
 </div>
@@ -1514,7 +1703,7 @@ template&lt;tensor::TensorIndex Index, class CochainTensor , class SimplexType &
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex Index, class ExecSpace , class CochainTensor , class ChainType &gt; </div>
+template&lt;tensor::TensorIndex Index, class ExecSpace , CochainType CochainTensor, class ChainType &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">double sil::exterior::integrate </td>
@@ -1538,7 +1727,7 @@ template&lt;tensor::TensorIndex Index, class ExecSpace , class CochainTensor , c
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
 <p>This is DEC integration. In particular, integrating df over C equals integrating f over the boundary of C. An empty chain integrates to zero. The execution space must be able to access both the chain and the tensor. </p>
 
-<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00065">65</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00067">67</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
 
 </div>
 </div>
@@ -1548,12 +1737,12 @@ template&lt;tensor::TensorIndex Index, class ExecSpace , class CochainTensor , c
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class SimplexType &gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, FormType Form, class Position , class SimplexType &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">KOKKOS_FUNCTION double sil::exterior::integrate </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>form</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">Form</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>form</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1572,7 +1761,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class <a class="
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
 <p><a class="el" href="structsil_1_1exterior_1_1Reduction.html">Reduction</a> owns the geometric pullback and its sampling convention. This overload adds no quadrature rule. Use the cochain overload when reduction has already been performed, to avoid applying cell measures twice. </p>
 
-<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00090">90</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00096">96</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
 
 </div>
 </div>
@@ -1582,7 +1771,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class <a class="
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace , class <a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Position , class ChainType &gt; </div>
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace , FormType Form, class Position , class ChainType &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">double sil::exterior::integrate </td>
@@ -1592,7 +1781,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace 
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>form</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">Form</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>form</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1610,7 +1799,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace 
 <p>Reduce a physical form and pair it with a chain without storing a cochain. </p>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00134">134</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="integration_8hpp_source.html#l00143">143</a> of file <a class="el" href="integration_8hpp_source.html">integration.hpp</a>.</p>
 
 </div>
 </div>
@@ -1620,7 +1809,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, class ExecSpace 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, template&lt; <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar, class Exec , class Tensor , class Metric , class Position &gt; </div>
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tensor::TensorIndex Cochain, template&lt; <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a>, class, class, class, class, class &gt; class Hodge = DiscreteHodgeStar, class Exec , CochainType Tensor, class Metric , class Position &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classsil_1_1exterior_1_1Laplacian.html">Laplacian</a>&lt; MetricIndex, Index, <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>, Tensor, Metric, Position, Exec, Hodge &gt; sil::exterior::make_laplacian </td>
@@ -1660,7 +1849,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex Index, tenso
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeDualTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, CochainType DerivativeDualTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
 requires (detail::ZeroRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
       <table class="memname">
         <tr>
@@ -1706,7 +1895,7 @@ requires (detail::ZeroRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l01032">1032</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l01033">1033</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
 
 </div>
 </div>
@@ -1716,7 +1905,7 @@ requires (detail::ZeroRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeDualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CodifferentialTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CoboundaryOfCodifferentialBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DerivativeHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualDerivativeHodgeStarType, CochainType DerivativeDualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, CochainType DualTensorBufferType, CochainType CodifferentialTensorBufferType, CochainType CoboundaryOfCodifferentialBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
 requires (detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
       <table class="memname">
         <tr>
@@ -1787,7 +1976,7 @@ requires (detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, Cocha
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l01076">1076</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l01077">1077</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
 
 </div>
 </div>
@@ -1797,7 +1986,7 @@ requires (detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, Cocha
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualTensorBufferType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CodifferentialTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, CochainType TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; DualHodgeStarType, CochainType DualTensorBufferType, CochainType CodifferentialTensorBufferType, class ExecSpace , class PrimalExtrapolationRule  = tensor::ClampExtrapolationRule, class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; <br />
 requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
       <table class="memname">
         <tr>
@@ -1848,7 +2037,7 @@ requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l01152">1152</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html#l01153">1153</a> of file <a class="el" href="exterior_2laplacian_2laplacian_8hpp_source.html">exterior/laplacian/laplacian.hpp</a>.</p>
 
 </div>
 </div>
@@ -1939,6 +2128,100 @@ template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class Sim
 
 </div>
 </div>
+<a id="ab07bb69d49be12b8fef0faf58d2fe332" name="ab07bb69d49be12b8fef0faf58d2fe332"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab07bb69d49be12b8fef0faf58d2fe332">&#9670;&#160;</a></span>quadrature()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Rule , class Evaluator , class Measure &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION double sil::exterior::quadrature </td>
+          <td>(</td>
+          <td class="paramtype">Rule const &amp;</td>          <td class="paramname"><span class="paramname"><em>rule</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Evaluator const &amp;</td>          <td class="paramname"><span class="paramname"><em>evaluator</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Measure const &amp;</td>          <td class="paramname"><span class="paramname"><em>measure</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">nodiscard</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Integrate a scalar evaluator with an independent reference-cell rule. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. evaluator(point, sample) supplies the reconstructed integrand, while measure(point, sample) supplies the physical volume Jacobian. Neither is inferred from the other. The sample number allows cached reconstructions; evaluators at arbitrary points can ignore it. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="quadrature_8hpp_source.html#l00093">93</a> of file <a class="el" href="quadrature_8hpp_source.html">quadrature.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af18867eba2e7da6cb0807d50fd0364bf" name="af18867eba2e7da6cb0807d50fd0364bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af18867eba2e7da6cb0807d50fd0364bf">&#9670;&#160;</a></span>assemble_bilinear_form()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Rule , class Measure , class TrialResponse , class Pairing , class Accumulate &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION void sil::exterior::assemble_bilinear_form </td>
+          <td>(</td>
+          <td class="paramtype">Rule const &amp;</td>          <td class="paramname"><span class="paramname"><em>rule</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>trial_count</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>test_count</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Measure const &amp;</td>          <td class="paramname"><span class="paramname"><em>measure</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TrialResponse const &amp;</td>          <td class="paramname"><span class="paramname"><em>response</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Pairing const &amp;</td>          <td class="paramname"><span class="paramname"><em>pairing</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Accumulate const &amp;</td>          <td class="paramname"><span class="paramname"><em>accumulate</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Assemble a local bilinear form from independently evaluated trial responses and test functions. </p>
+<p>The callback decides how local entries are accumulated. </p><dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="quadrature_8hpp_source.html#l00110">110</a> of file <a class="el" href="quadrature_8hpp_source.html">quadrature.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a3e4606bfaf57a486f7dae8ee301b548d" name="a3e4606bfaf57a486f7dae8ee301b548d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3e4606bfaf57a486f7dae8ee301b548d">&#9670;&#160;</a></span>fill_reduction_operator()</h2>
 
@@ -1965,7 +2248,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00916">916</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l00917">917</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -1995,7 +2278,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01263">1263</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01265">1265</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -2133,6 +2416,33 @@ template&lt;class Index , class Source , class Target , std::size_t Radius&gt; <
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="stencil__indices_8hpp_source.html#l00081">81</a> of file <a class="el" href="stencil__indices_8hpp_source.html">stencil_indices.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="a94d8ca18adad18b6da9972411fae1c95" name="a94d8ca18adad18b6da9972411fae1c95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94d8ca18adad18b6da9972411fae1c95">&#9670;&#160;</a></span>form_degree_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;TensorFormType T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t sil::exterior::form_degree_v = detail::FormDegree&lt;typename T::indices_domain_t&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="form_8hpp_source.html#l00186">186</a> of file <a class="el" href="form_8hpp_source.html">form.hpp</a>.</p>
 
 </div>
 </div>

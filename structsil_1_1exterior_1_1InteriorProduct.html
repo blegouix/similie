@@ -132,54 +132,49 @@ $(function(){initNavTree('structsil_1_1exterior_1_1InteriorProduct.html',''); in
 </div><!--header-->
 <div class="contents">
 
-<p>Interior product of a primal k-cochain with a primal velocity one-cochain.  
- <a href="#details">More...</a></p>
-
 <p><code>#include &lt;<a class="el" href="interior__product_8hpp_source.html">interior_product.hpp</a>&gt;</code></p>
 <div class="dynheader">
 Collaboration diagram for sil::exterior::InteriorProduct&lt; VelocityIndex, FormIndex &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1exterior_1_1InteriorProduct__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1InteriorProduct_3_01VelocityIndex_00_01FormIndex_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1InteriorProduct_3_01VelocityIndex_00_01FormIndex_01_4_coll__map" id="asil_1_1exterior_1_1InteriorProduct_3_01VelocityIndex_00_01FormIndex_01_4_coll__map">
-<area shape="rect" title="Interior product of a primal k&#45;cochain with a primal velocity one&#45;cochain." alt="" coords="5,5,215,85"/>
+<area shape="rect" title=" " alt="" coords="5,5,215,105"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a190ea91b71a69412afca50dcf19a30b0" id="r_a190ea91b71a69412afca50dcf19a30b0"><td class="memTemplParams" colspan="2">template&lt;class ExecSpace , class Output , class Velocity , class <a class="el" href="namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Extrapolation  = tensor::ClampExtrapolationRule&gt; </td></tr>
-<tr class="memitem:a190ea91b71a69412afca50dcf19a30b0"><td class="memTemplItemLeft" align="right" valign="top">Output&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a190ea91b71a69412afca50dcf19a30b0">operator()</a> (ExecSpace const &amp;exec, Output const &amp;output, Velocity const &amp;velocity, <a class="el" href="namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;form, std::array&lt; double, VelocityIndex::size()&gt; const &amp;spacing, Extrapolation const &amp;extrapolation={}) const</td></tr>
-<tr class="separator:a190ea91b71a69412afca50dcf19a30b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96e585182037b52bf1041e83a3b69fd7" id="r_a96e585182037b52bf1041e83a3b69fd7"><td class="memTemplParams" colspan="2">template&lt;TensorFormType Output, TensorFormType Velocity, TensorFormType Input, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; InverseMetric, class Element &gt; <br />
+requires ( <a class="el" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v</a>&lt;Velocity&gt; == 1 &amp;&amp; <a class="el" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v</a>&lt;Output&gt; + 1 == FormIndex::rank() &amp;&amp; std::is_same_v&lt; typename Input::accessor_t::natural_domain_t, <a class="el" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t</a>&lt;FormIndex&gt;&gt;)</td></tr>
+<tr class="memitem:a96e585182037b52bf1041e83a3b69fd7"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a96e585182037b52bf1041e83a3b69fd7">operator()</a> (Output const &amp;output, Velocity const &amp;velocity, Input const &amp;input, InverseMetric const &amp;inverse_metric, Element element) const</td></tr>
+<tr class="separator:a96e585182037b52bf1041e83a3b69fd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a442d23d80ae29e39631d05e03b4fa610" id="r_a442d23d80ae29e39631d05e03b4fa610"><td class="memTemplParams" colspan="2">template&lt;TensorFormType Output, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Vector, TensorFormType Input&gt; <br />
+requires ( <a class="el" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v</a>&lt;Output&gt; + 1 == FormIndex::rank() &amp;&amp; std::is_same_v&lt; typename Input::accessor_t::natural_domain_t, <a class="el" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t</a>&lt;FormIndex&gt;&gt;)</td></tr>
+<tr class="memitem:a442d23d80ae29e39631d05e03b4fa610"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a442d23d80ae29e39631d05e03b4fa610">operator()</a> (Output const &amp;output, Vector const &amp;vector, Input const &amp;input) const</td></tr>
+<tr class="separator:a442d23d80ae29e39631d05e03b4fa610"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorNatIndex VelocityIndex, tensor::TensorIndex FormIndex&gt;<br />
-struct sil::exterior::InteriorProduct&lt; VelocityIndex, FormIndex &gt;</div><p>Interior product of a primal k-cochain with a primal velocity one-cochain. </p>
-<p>On a uniform Cartesian mesh, the velocity one-cochain stores edge integrals of the Euclidean velocity covector. Each component is divided by its edge length and averaged over the incident edges to the vertex. Likewise, each k-form coefficient is averaged over its 2^k incident cells after division by their k-volume. At the common vertex we evaluate (i_u alpha)_{a_2...a_k} = sum_b u^b alpha_{b a_2...a_k}. Finally, averaging over the vertices of the output (k-1)-cell and multiplying by its volume produces the output cochain. These two averages are adjoints in the uniform Cartesian cochain inner product. In particular, for k=2, the pairing of the velocity cochain with its interior product is zero. This avoids multiplying edge and face coefficients at different positions.</p>
-<p>Axes of the tensor indices and spatial domain must have the same order. Spacing contains the positive, constant Cartesian edge lengths; a curvilinear metric is not supported. The supplied extrapolation rule defines boundary samples; periodic closure preserves the adjoint identity at the seam. Input and output storage must not alias. For vorticity transport, use -d(i_u omega): i_u omega is minus u cross omega in three dimensions. </p><dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="interior__product_8hpp_source.html#l00041">41</a> of file <a class="el" href="interior__product_8hpp_source.html">interior_product.hpp</a>.</p>
+struct sil::exterior::InteriorProduct&lt; VelocityIndex, FormIndex &gt;</div>
+<p class="definition">Definition at line <a class="el" href="interior__product_8hpp_source.html#l00017">17</a> of file <a class="el" href="interior__product_8hpp_source.html">interior_product.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a190ea91b71a69412afca50dcf19a30b0" name="a190ea91b71a69412afca50dcf19a30b0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a190ea91b71a69412afca50dcf19a30b0">&#9670;&#160;</a></span>operator()()</h2>
+<a id="a96e585182037b52bf1041e83a3b69fd7" name="a96e585182037b52bf1041e83a3b69fd7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96e585182037b52bf1041e83a3b69fd7">&#9670;&#160;</a></span>operator()() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;tensor::TensorNatIndex VelocityIndex, tensor::TensorIndex FormIndex&gt; </div>
 <div class="memtemplate">
-template&lt;class ExecSpace , class Output , class Velocity , class <a class="el" href="namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede">Form</a> , class Extrapolation  = tensor::ClampExtrapolationRule&gt; </div>
+template&lt;TensorFormType Output, TensorFormType Velocity, TensorFormType Input, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; InverseMetric, class Element &gt; <br />
+requires ( <a class="el" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v</a>&lt;Velocity&gt; == 1 &amp;&amp; <a class="el" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v</a>&lt;Output&gt; + 1 == FormIndex::rank() &amp;&amp; std::is_same_v&lt; typename Input::accessor_t::natural_domain_t, <a class="el" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t</a>&lt;FormIndex&gt;&gt;)</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Output <a class="el" href="structsil_1_1exterior_1_1InteriorProduct.html">sil::exterior::InteriorProduct</a>&lt; VelocityIndex, FormIndex &gt;::operator() </td>
+          <td class="memname">KOKKOS_FUNCTION void <a class="el" href="structsil_1_1exterior_1_1InteriorProduct.html">sil::exterior::InteriorProduct</a>&lt; VelocityIndex, FormIndex &gt;::operator() </td>
           <td>(</td>
-          <td class="paramtype">ExecSpace const &amp;</td>          <td class="paramname"><span class="paramname"><em>exec</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">Output const &amp;</td>          <td class="paramname"><span class="paramname"><em>output</em></span>, </td>
         </tr>
         <tr>
@@ -190,17 +185,17 @@ template&lt;class ExecSpace , class Output , class Velocity , class <a class="el
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede">Form</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>form</em></span>, </td>
+          <td class="paramtype">Input const &amp;</td>          <td class="paramname"><span class="paramname"><em>input</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::array&lt; double, VelocityIndex::size()&gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>spacing</em></span>, </td>
+          <td class="paramtype">InverseMetric const &amp;</td>          <td class="paramname"><span class="paramname"><em>inverse_metric</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Extrapolation const &amp;</td>          <td class="paramname"><span class="paramname"><em>extrapolation</em></span><span class="paramdefsep"> = </span><span class="paramdefval">{}</span>&#160;) const</td>
+          <td class="paramtype">Element</td>          <td class="paramname"><span class="paramname"><em>element</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -210,7 +205,48 @@ template&lt;class ExecSpace , class Output , class Velocity , class <a class="el
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="interior__product_8hpp_source.html#l00049">49</a> of file <a class="el" href="interior__product_8hpp_source.html">interior_product.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="interior__product_8hpp_source.html#l00032">32</a> of file <a class="el" href="interior__product_8hpp_source.html">interior_product.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a442d23d80ae29e39631d05e03b4fa610" name="a442d23d80ae29e39631d05e03b4fa610"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a442d23d80ae29e39631d05e03b4fa610">&#9670;&#160;</a></span>operator()() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorNatIndex VelocityIndex, tensor::TensorIndex FormIndex&gt; </div>
+<div class="memtemplate">
+template&lt;TensorFormType Output, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; Vector, TensorFormType Input&gt; <br />
+requires ( <a class="el" href="namespacesil_1_1exterior.html#a94d8ca18adad18b6da9972411fae1c95">form_degree_v</a>&lt;Output&gt; + 1 == FormIndex::rank() &amp;&amp; std::is_same_v&lt; typename Input::accessor_t::natural_domain_t, <a class="el" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t</a>&lt;FormIndex&gt;&gt;)</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION void <a class="el" href="structsil_1_1exterior_1_1InteriorProduct.html">sil::exterior::InteriorProduct</a>&lt; VelocityIndex, FormIndex &gt;::operator() </td>
+          <td>(</td>
+          <td class="paramtype">Output const &amp;</td>          <td class="paramname"><span class="paramname"><em>output</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Vector const &amp;</td>          <td class="paramname"><span class="paramname"><em>vector</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Input const &amp;</td>          <td class="paramname"><span class="paramname"><em>input</em></span>&#160;) const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="interior__product_8hpp_source.html#l00070">70</a> of file <a class="el" href="interior__product_8hpp_source.html">interior_product.hpp</a>.</p>
 
 </div>
 </div>

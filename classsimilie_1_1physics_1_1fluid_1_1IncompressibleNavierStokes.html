@@ -127,6 +127,7 @@ $(function(){initNavTree('classsimilie_1_1physics_1_1fluid_1_1IncompressibleNavi
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
@@ -153,20 +154,25 @@ Classes</h2></td></tr>
 <tr class="memitem:structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State" id="r_structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State">State</a></td></tr>
 <tr class="separator:structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a28e47c612fba655eefc4a76e69f05f9e" id="r_a28e47c612fba655eefc4a76e69f05f9e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a> = <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt;double&gt;</td></tr>
+<tr class="separator:a28e47c612fba655eefc4a76e69f05f9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ac99f81f309726686d589d4e5739bf4c3" id="r_ac99f81f309726686d589d4e5739bf4c3"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac99f81f309726686d589d4e5739bf4c3">IncompressibleNavierStokes</a> (double constant_density, double dynamic_viscosity)</td></tr>
 <tr class="separator:ac99f81f309726686d589d4e5739bf4c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aef6a348e62451dcbc7112253a7da0511" id="r_aef6a348e62451dcbc7112253a7da0511"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aef6a348e62451dcbc7112253a7da0511">operator()</a> (double transport_curl, double vorticity_laplacian) const</td></tr>
-<tr class="separator:aef6a348e62451dcbc7112253a7da0511"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2903549161dda9467287603a56f2cf2" id="r_ab2903549161dda9467287603a56f2cf2"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::array&lt; double, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab2903549161dda9467287603a56f2cf2">transport</a> (std::array&lt; double, 3 &gt; const &amp;velocity, std::array&lt; double, 3 &gt; const &amp;vorticity) const</td></tr>
-<tr class="separator:ab2903549161dda9467287603a56f2cf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1f9a02d140d3325388e331c368bf92ab" id="r_a1f9a02d140d3325388e331c368bf92ab"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::array&lt; double, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1f9a02d140d3325388e331c368bf92ab">momentum_rate</a> (std::array&lt; double, 3 &gt; const &amp;velocity, std::array&lt; double, 3 &gt; const &amp;vorticity, std::array&lt; double, 3 &gt; const &amp;bernoulli_gradient, std::array&lt; double, 3 &gt; const &amp;velocity_laplacian) const</td></tr>
-<tr class="separator:a1f9a02d140d3325388e331c368bf92ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2cbee73aea44cfd1895a813db58a65e3" id="r_a2cbee73aea44cfd1895a813db58a65e3"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2cbee73aea44cfd1895a813db58a65e3">incompressibility</a> (double velocity_divergence) const</td></tr>
-<tr class="separator:a2cbee73aea44cfd1895a813db58a65e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:accaeb1e89d0aff4642410ab933410703" id="r_accaeb1e89d0aff4642410ab933410703"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#accaeb1e89d0aff4642410ab933410703">pressure</a> (double bernoulli, std::array&lt; double, 3 &gt; const &amp;velocity) const</td></tr>
-<tr class="separator:accaeb1e89d0aff4642410ab933410703"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d3c10d8a3f5cdedbdd7da3676840051" id="r_a1d3c10d8a3f5cdedbdd7da3676840051"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1d3c10d8a3f5cdedbdd7da3676840051">operator()</a> (<a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt; &gt; const &amp;transport_curl, <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt; &gt; const &amp;vorticity_laplacian) const</td></tr>
+<tr class="separator:a1d3c10d8a3f5cdedbdd7da3676840051"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7695e3c5437eec367dbc856eb0cc016" id="r_af7695e3c5437eec367dbc856eb0cc016"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af7695e3c5437eec367dbc856eb0cc016">transport</a> (<a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;velocity, <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;vorticity) const</td></tr>
+<tr class="separator:af7695e3c5437eec367dbc856eb0cc016"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb5f6378f88822d00debbb9164dc6106" id="r_acb5f6378f88822d00debbb9164dc6106"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acb5f6378f88822d00debbb9164dc6106">momentum_rate</a> (<a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;velocity, <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;vorticity, <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;bernoulli_gradient, <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;velocity_laplacian) const</td></tr>
+<tr class="separator:acb5f6378f88822d00debbb9164dc6106"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af79c5a60b0d99523a7dd3fbcb1906f98" id="r_af79c5a60b0d99523a7dd3fbcb1906f98"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af79c5a60b0d99523a7dd3fbcb1906f98">incompressibility</a> (<a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a> const &amp;velocity_divergence) const</td></tr>
+<tr class="separator:af79c5a60b0d99523a7dd3fbcb1906f98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abfd7ee70386c863dcc28454ff8cf7883" id="r_abfd7ee70386c863dcc28454ff8cf7883"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abfd7ee70386c863dcc28454ff8cf7883">pressure</a> (<a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a> const &amp;bernoulli, <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;velocity) const</td></tr>
+<tr class="separator:abfd7ee70386c863dcc28454ff8cf7883"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -186,7 +192,7 @@ Static Public Attributes</h2></td></tr>
 <div class="textblock"><p>Constant-density incompressible Navier-Stokes in vorticity form. </p>
 <p>dt omega = curl(u cross omega) + (mu/rho) Delta omega, -Delta A=omega, div A=0, u=curl A. The vector potential has zero mean on a periodic domain; any harmonic mean velocity must be supplied separately. For pressure recovery, dt u = u cross omega - grad(Pi) + (mu/rho) Delta u, Pi=p/rho+|u|^2/2. Gradients, curl, divergence, and the physical (negative semidefinite) Laplacian are evaluated with the exterior module by the caller. The pressure solve is a numerical constraint solve, not potential-flow physics. </p><dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00024">24</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00025">25</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 </div><hr/><h2 class="groupheader">Class Documentation</h2>
 <a name="structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State" id="structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State">&#9670;&#160;</a></span>similie::physics::fluid::IncompressibleNavierStokes::State</h2>
@@ -200,26 +206,47 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00029">29</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00031">31</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for similie::physics::fluid::IncompressibleNavierStokes::State:</div>
 <div class="dyncontent">
 <div class="center"><img src="structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State__coll__graph.png" border="0" usemap="#asimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State_coll__map" alt="Collaboration graph"/></div>
 <map name="asimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State_coll__map" id="asimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State_coll__map">
-<area shape="rect" title=" " alt="" coords="5,133,212,228"/>
-<area shape="rect" title=" " alt="" coords="25,5,193,71"/>
+<area shape="rect" title=" " alt="" coords="5,645,212,740"/>
+<area shape="rect" href="classsil_1_1exterior_1_1Form.html" title=" " alt="" coords="31,248,186,583"/>
+<area shape="poly" title=" " alt="" coords="111,583,111,629,106,629,106,583"/>
+<area shape="rect" title=" " alt="" coords="51,133,166,199"/>
+<area shape="poly" title=" " alt="" coords="111,213,111,248,106,248,106,213"/>
+<area shape="rect" title=" " alt="" coords="97,5,120,71"/>
 <area shape="poly" title=" " alt="" coords="111,71,111,117,106,117,106,71"/>
 </map>
 </div>
 <table class="fieldtable">
 <tr><th colspan="3">Class Members</th></tr>
 <tr><td class="fieldtype">
-<a id="a18de6321009f788bda64bb477bd2b2b0" name="a18de6321009f788bda64bb477bd2b2b0"></a>array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt;</td>
+<a id="a4ee6956d719ef45bf25f0431753252e3" name="a4ee6956d719ef45bf25f0431753252e3"></a>Form&lt; array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt; &gt;</td>
 <td class="fieldname">
 vorticity {}</td>
 <td class="fielddoc">
 </td></tr>
 </table>
+
+</div>
+</div>
+<h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a28e47c612fba655eefc4a76e69f05f9e" name="a28e47c612fba655eefc4a76e69f05f9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28e47c612fba655eefc4a76e69f05f9e">&#9670;&#160;</a></span>Scalar</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">similie::physics::fluid::IncompressibleNavierStokes::Scalar</a> = <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt;double&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00028">28</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
@@ -251,13 +278,13 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00035">35</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00037">37</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="aef6a348e62451dcbc7112253a7da0511" name="aef6a348e62451dcbc7112253a7da0511"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aef6a348e62451dcbc7112253a7da0511">&#9670;&#160;</a></span>operator()()</h2>
+<a id="a1d3c10d8a3f5cdedbdd7da3676840051" name="a1d3c10d8a3f5cdedbdd7da3676840051"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d3c10d8a3f5cdedbdd7da3676840051">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -266,14 +293,14 @@ vorticity {}</td>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION double similie::physics::fluid::IncompressibleNavierStokes::operator() </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt; &gt; similie::physics::fluid::IncompressibleNavierStokes::operator() </td>
           <td>(</td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>transport_curl</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>transport_curl</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>vorticity_laplacian</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, <a class="el" href="#aec60c182abef5ffb776979a31c032e76">N</a> &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>vorticity_laplacian</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -283,12 +310,12 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00043">43</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00045">45</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ab2903549161dda9467287603a56f2cf2" name="ab2903549161dda9467287603a56f2cf2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab2903549161dda9467287603a56f2cf2">&#9670;&#160;</a></span>transport()</h2>
+<a id="af7695e3c5437eec367dbc856eb0cc016" name="af7695e3c5437eec367dbc856eb0cc016"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7695e3c5437eec367dbc856eb0cc016">&#9670;&#160;</a></span>transport()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -297,14 +324,14 @@ vorticity {}</td>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION std::array&lt; double, 3 &gt; similie::physics::fluid::IncompressibleNavierStokes::transport </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; similie::physics::fluid::IncompressibleNavierStokes::transport </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; double, 3 &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::array&lt; double, 3 &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>vorticity</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>vorticity</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -314,12 +341,12 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00047">47</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00055">55</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a1f9a02d140d3325388e331c368bf92ab" name="a1f9a02d140d3325388e331c368bf92ab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1f9a02d140d3325388e331c368bf92ab">&#9670;&#160;</a></span>momentum_rate()</h2>
+<a id="acb5f6378f88822d00debbb9164dc6106" name="acb5f6378f88822d00debbb9164dc6106"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb5f6378f88822d00debbb9164dc6106">&#9670;&#160;</a></span>momentum_rate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -328,24 +355,24 @@ vorticity {}</td>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION std::array&lt; double, 3 &gt; similie::physics::fluid::IncompressibleNavierStokes::momentum_rate </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; similie::physics::fluid::IncompressibleNavierStokes::momentum_rate </td>
           <td>(</td>
-          <td class="paramtype">std::array&lt; double, 3 &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::array&lt; double, 3 &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>vorticity</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>vorticity</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::array&lt; double, 3 &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>bernoulli_gradient</em></span>, </td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>bernoulli_gradient</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::array&lt; double, 3 &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity_laplacian</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity_laplacian</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -355,12 +382,12 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00058">58</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00066">66</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a2cbee73aea44cfd1895a813db58a65e3" name="a2cbee73aea44cfd1895a813db58a65e3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2cbee73aea44cfd1895a813db58a65e3">&#9670;&#160;</a></span>incompressibility()</h2>
+<a id="af79c5a60b0d99523a7dd3fbcb1906f98" name="af79c5a60b0d99523a7dd3fbcb1906f98"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af79c5a60b0d99523a7dd3fbcb1906f98">&#9670;&#160;</a></span>incompressibility()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -369,9 +396,9 @@ vorticity {}</td>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION double similie::physics::fluid::IncompressibleNavierStokes::incompressibility </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a> similie::physics::fluid::IncompressibleNavierStokes::incompressibility </td>
           <td>(</td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>velocity_divergence</em></span></td><td>)</td>
+          <td class="paramtype"><a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity_divergence</em></span></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -382,12 +409,12 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00070">70</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00078">78</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
-<a id="accaeb1e89d0aff4642410ab933410703" name="accaeb1e89d0aff4642410ab933410703"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#accaeb1e89d0aff4642410ab933410703">&#9670;&#160;</a></span>pressure()</h2>
+<a id="abfd7ee70386c863dcc28454ff8cf7883" name="abfd7ee70386c863dcc28454ff8cf7883"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abfd7ee70386c863dcc28454ff8cf7883">&#9670;&#160;</a></span>pressure()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -396,14 +423,14 @@ vorticity {}</td>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION double similie::physics::fluid::IncompressibleNavierStokes::pressure </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a> similie::physics::fluid::IncompressibleNavierStokes::pressure </td>
           <td>(</td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>bernoulli</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#a28e47c612fba655eefc4a76e69f05f9e">Scalar</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>bernoulli</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::array&lt; double, 3 &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt; std::array&lt; double, 3 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -413,7 +440,7 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00074">74</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00082">82</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
@@ -438,7 +465,7 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00027">27</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00029">29</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
@@ -462,7 +489,7 @@ vorticity {}</td>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00028">28</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00030">30</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
@@ -478,7 +505,7 @@ vorticity {}</td>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00033">33</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00035">35</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>
@@ -494,7 +521,7 @@ vorticity {}</td>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00034">34</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="incompressible__navier__stokes_8hpp_source.html#l00036">36</a> of file <a class="el" href="incompressible__navier__stokes_8hpp_source.html">incompressible_navier_stokes.hpp</a>.</p>
 
 </div>
 </div>

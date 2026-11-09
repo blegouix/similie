@@ -1,6 +1,12 @@
 var hierarchy =
 [
+    [ "std::array< T >", null, [
+      [ "sil::exterior::Form< std::array< double, 3 > >", "classsil_1_1exterior_1_1Form.html", null ],
+      [ "sil::exterior::Form< std::array< double, N > >", "classsil_1_1exterior_1_1Form.html", null ]
+    ] ],
     [ "similie::solvers::AssembledLinearSystem", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1AssembledLinearSystem", null ],
+    [ "sil::exterior::BilinearSpatialOperatorStorage< Operator, Index, First, Second, Target, FirstRadius, SecondRadius, Domain, Memory, Exec >", "classsil_1_1exterior_1_1BilinearSpatialOperatorStorage.html", null ],
+    [ "sil::exterior::BilinearStencil< Index, First, Second, Target, FirstRadius, SecondRadius >", "structsil_1_1exterior_1_1BilinearStencil.html", null ],
     [ "sil::exterior::Boundary< AllocationType, SimplexType >", "structsil_1_1exterior_1_1Boundary.html", null ],
     [ "sil::multidomains::BoundaryDomain", "namespacesil_1_1multidomains.html#structsil_1_1multidomains_1_1BoundaryDomain", null ],
     [ "sil::multidomains::BoundaryRule", "classsil_1_1multidomains_1_1BoundaryRule.html", null ],
@@ -18,6 +24,9 @@ var hierarchy =
     [ "sil::exterior::Codifferential< Args >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential", null ],
     [ "sil::exterior::Codifferential< MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType >", "structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochain2aac1536eace81f70cbdf910df4f70bc.html", null ],
     [ "sil::exterior::Codifferential< TagToRemoveFromCochain, CochainTag >", "structsil_1_1exterior_1_1Codifferential_3_01TagToRemoveFromCochain_00_01CochainTag_01_4.html", null ],
+    [ "Coefficients", null, [
+      [ "sil::exterior::Form< Coefficients >", "classsil_1_1exterior_1_1Form.html", null ]
+    ] ],
     [ "similie::physics::CombinePhysics< Physics >", "namespacesimilie_1_1physics.html#classsimilie_1_1physics_1_1CombinePhysics", null ],
     [ "similie::physics::CombinePhysics< First, Rest... >", "classsimilie_1_1physics_1_1CombinePhysics_3_01First_00_01Rest_8_8_8_01_4.html", null ],
     [ "similie::physics::CombinePhysics< FluidPhysics, ElectromagneticPhysics, coupling::ElectricCouplingPhysics, coupling::MagneticCouplingPhysics >", "namespacesimilie_1_1physics.html", [
@@ -47,7 +56,6 @@ var hierarchy =
     [ "sil::exterior::DualHodgeCochain< Direction, Cochain, Position, GeometryRules, BoundaryFluxRules >", "structsil_1_1exterior_1_1DualHodgeCochain.html", null ],
     [ "sil::exterior::DualSimplexVolume< Complex, N, MetricType, PositionType, BatchElem >", "structsil_1_1exterior_1_1DualSimplexVolume.html", null ],
     [ "sil::tensor::Dummy< I >", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
-    [ "similie::physics::elasticity::ElasticMaterialHodge2D", "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html", null ],
     [ "Electrodynamics", null, [
       [ "similie::physics::electrodynamics::ResistiveElectrodynamics", "classsimilie_1_1physics_1_1electrodynamics_1_1ResistiveElectrodynamics.html", null ]
     ] ],
@@ -75,6 +83,9 @@ var hierarchy =
     ] ],
     [ "sil::exterior::FillReconstructionOperatorMem< Indices, ReconstructionTensorType, PositionType, Complex, BatchElem >", "structsil_1_1exterior_1_1FillReconstructionOperatorMem.html", null ],
     [ "sil::exterior::FillReductionOperatorMem< Indices, ReductionTensorType, PositionType, Complex, BatchElem >", "structsil_1_1exterior_1_1FillReductionOperatorMem.html", null ],
+    [ "sil::exterior::Form< double >", "classsil_1_1exterior_1_1Form_3_01double_01_4.html", null ],
+    [ "sil::exterior::GaussLegendreQuadrature< Dimension, Order >", "structsil_1_1exterior_1_1GaussLegendreQuadrature.html", null ],
+    [ "sil::exterior::VertexReconstructedDerivative< FibreRank, SpatialIndex >::Grid< Dimension >", "classsil_1_1exterior_1_1VertexReconstructedDerivative.html#structsil_1_1exterior_1_1VertexReconstructedDerivative_1_1Grid", null ],
     [ "similie::physics::HamiltonEquations< Hamiltonian >", "classsimilie_1_1physics_1_1HamiltonEquations.html", null ],
     [ "generate_cpp_hamiltonian.HamiltonianDefinition", "classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html", null ],
     [ "sil::exterior::IdentityTransport< Rank >", "structsil_1_1exterior_1_1IdentityTransport.html", null ],
@@ -90,8 +101,7 @@ var hierarchy =
     [ "linear_magnetostatics.LinearMagnetostaticsHamiltonian", "classlinear__magnetostatics_1_1LinearMagnetostaticsHamiltonian.html", null ],
     [ "sil::exterior::LocalChain< SimplexType, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1LocalChain.html", null ],
     [ "sil::exterior::LocalChainIterator< SimplexType, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1LocalChainIterator.html", null ],
-    [ "similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction< SpatialIndex >", "namespacesimilie_1_1physics_1_1magnetostatics.html#classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction", null ],
-    [ "similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction< SpatialIndex... >", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html", null ],
+    [ "similie::physics::magnetostatics::MagneticFormResponse< X, Y, Z >", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticFormResponse.html", null ],
     [ "Magnetodynamics", null, [
       [ "similie::physics::magnetodynamics::ResistiveMagnetodynamics", "classsimilie_1_1physics_1_1magnetodynamics_1_1ResistiveMagnetodynamics.html", null ]
     ] ],
@@ -106,7 +116,9 @@ var hierarchy =
     [ "sil::tensor::NaturalScalarExtrapolationRule", "structsil_1_1tensor_1_1NaturalScalarExtrapolationRule.html", null ],
     [ "navier_stokes_fourier.NavierStokesFourier", "classnavier__stokes__fourier_1_1NavierStokesFourier.html", null ],
     [ "nonlinear_magnetostatics.NonlinearMagnetostaticsHamiltonian", "classnonlinear__magnetostatics_1_1NonlinearMagnetostaticsHamiltonian.html", null ],
-    [ "similie::physics::magnetostatics::OrthogonalPlaneIndex", "structsimilie_1_1physics_1_1magnetostatics_1_1OrthogonalPlaneIndex.html", null ],
+    [ "sil::exterior::OperatorActingOnCochainInPlaceOfForm< Operator >", "classsil_1_1exterior_1_1OperatorActingOnCochainInPlaceOfForm.html", null ],
+    [ "sil::exterior::OperatorActingOnCochainInPlaceOfForm< HodgeOperator >", "classsil_1_1exterior_1_1OperatorActingOnCochainInPlaceOfForm.html", null ],
+    [ "sil::exterior::OperatorActingOnFormInPlaceOfCochain< Operator >", "classsil_1_1exterior_1_1OperatorActingOnFormInPlaceOfCochain.html", null ],
     [ "sil::tensor::OwningTensor< TensorType, Storage >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1OwningTensor", null ],
     [ "sil::tensor::PeriodicExtrapolationRule", "classsil_1_1tensor_1_1PeriodicExtrapolationRule.html", null ],
     [ "sil::tensor::PrescribedScalarExtrapolationRule", "structsil_1_1tensor_1_1PrescribedScalarExtrapolationRule.html", null ],
@@ -123,6 +135,7 @@ var hierarchy =
     [ "similie::physics::fluid::IncompressibleNavierStokes::State", "classsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes.html#structsimilie_1_1physics_1_1fluid_1_1IncompressibleNavierStokes_1_1State", null ],
     [ "sil::exterior::Stencil< Index, Source, Target, Radius >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Stencil", null ],
     [ "sil::exterior::StencilIndex< Dimensions >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1StencilIndex", null ],
+    [ "sil::exterior::VertexFormBilinearComposition< Operator, First, Second, Target, Domain, Memory, InverseMetric >::Storage", "structsil_1_1exterior_1_1VertexFormBilinearComposition_1_1Storage.html", null ],
     [ "similie::physics::elasticity::Strain2D", "structsimilie_1_1physics_1_1elasticity_1_1Strain2D.html", null ],
     [ "similie::physics::elasticity::StrainTensorIndex< I, J >", "structsimilie_1_1physics_1_1elasticity_1_1StrainTensorIndex.html", null ],
     [ "similie::solvers::StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics", null ],
@@ -134,6 +147,9 @@ var hierarchy =
     [ "sil::tensor::Tensor< ElementType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
     [ "sil::tensor::Tensor< ElementType, DomainType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html", [
       [ "sil::tensor::OwningTensor< Tensor< ElementType, DomainType, LayoutStridedPolicy, MemorySpace >, Storage >", "classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html", null ]
+    ] ],
+    [ "sil::tensor::Tensor< T, Domain, Layout, Memory >", "namespacesil_1_1tensor.html", [
+      [ "sil::exterior::Cochain< tensor::Tensor< T, Domain, Layout, Memory >, ElementType, ChainLayout >", "classsil_1_1exterior_1_1Cochain_3_01tensor_1_1Tensor_3_01T_00_01Domain_00_01Layout_00_01Memory_02fe71f8f69eff6949286d8e3a77f9a23.html", null ]
     ] ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],
     [ "sil::tensor::TensorAntisymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", null ],
@@ -149,7 +165,11 @@ var hierarchy =
     ] ],
     [ "sil::tensor::TensorNaturalIndex< Dummy< Id >... >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
     [ "sil::tensor::TensorNaturalIndex< LocalComponent< Components >... >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
-    [ "sil::tensor::TensorNaturalIndex< SpatialIndex... >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
+    [ "sil::tensor::TensorNaturalIndex< X, Y, Z >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", [
+      [ "similie::physics::magnetostatics::MagneticFormResponse< X, Y, Z >::First", "structsimilie_1_1physics_1_1magnetostatics_1_1MagneticFormResponse_1_1First.html", null ],
+      [ "similie::physics::magnetostatics::MagneticFormResponse< X, Y, Z >::Second", "structsimilie_1_1physics_1_1magnetostatics_1_1MagneticFormResponse_1_1Second.html", null ],
+      [ "similie::physics::magnetostatics::MagneticFormResponse< X, Y, Z >::Third", "structsimilie_1_1physics_1_1magnetostatics_1_1MagneticFormResponse_1_1Third.html", null ]
+    ] ],
     [ "sil::tensor::TensorNaturalIndex<>", "structsil_1_1tensor_1_1TensorNaturalIndex.html", [
       [ "sil::tensor::ScalarIndex", "structsil_1_1tensor_1_1ScalarIndex.html", null ]
     ] ],
@@ -169,6 +189,13 @@ var hierarchy =
       [ "sil::tensor::Contravariant< NaturalIndex >", "structsil_1_1tensor_1_1Contravariant.html", null ],
       [ "sil::tensor::Covariant< NaturalIndex >", "structsil_1_1tensor_1_1Covariant.html", null ]
     ] ],
+    [ "sil::exterior::VertexFormBilinearComposition< Operator, First, Second, Target, Domain, Memory, InverseMetric >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1VertexFormBilinearComposition", null ],
+    [ "sil::exterior::VertexFormProjection< Indices >", "structsil_1_1exterior_1_1VertexFormProjection.html", null ],
+    [ "sil::exterior::VertexFormProjectionField< Position, Extrapolation >", "classsil_1_1exterior_1_1VertexFormProjectionField.html", null ],
+    [ "sil::exterior::VertexFormReconstruction< Indices >", "structsil_1_1exterior_1_1VertexFormReconstruction.html", null ],
+    [ "sil::exterior::VertexFormReconstructionField< Position, Extrapolation >", "classsil_1_1exterior_1_1VertexFormReconstructionField.html", null ],
+    [ "sil::exterior::VertexQuadrature< Dimension >", "structsil_1_1exterior_1_1VertexQuadrature.html", null ],
+    [ "sil::exterior::VertexReconstructedDerivative< FibreRank, SpatialIndex >", "classsil_1_1exterior_1_1VertexReconstructedDerivative.html", null ],
     [ "sil::exterior::WeightedLeviCivitaDiscreteHodgeStar< Complex, Indices1, Indices2, MetricType, PositionType, BatchElem >", "classsil_1_1exterior_1_1WeightedLeviCivitaDiscreteHodgeStar.html", null ],
     [ "sil::tensor::ZeroExtrapolationRule", "structsil_1_1tensor_1_1ZeroExtrapolationRule.html", null ],
     [ "sil::tensor::Index", null, [

@@ -1,0 +1,9 @@
+<map id="sil::exterior::VertexFormBilinearComposition&lt; Operator, First, Second, Target, Domain, Memory, InverseMetric &gt;::Storage" name="sil::exterior::VertexFormBilinearComposition&lt; Operator, First, Second, Target, Domain, Memory, InverseMetric &gt;::Storage">
+<area shape="rect" id="Node000001" title=" " alt="" coords="207,163,450,312"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,199,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,98,226,150,222,154,158,102"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="223,5,435,100"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="331,100,331,146,326,146,326,100"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="459,5,665,100"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="504,102,437,155,434,150,501,98"/>
+</map>

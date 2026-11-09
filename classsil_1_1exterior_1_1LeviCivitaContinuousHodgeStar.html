@@ -128,6 +128,7 @@ $(function(){initNavTree('classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar.
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">sil::exterior::LeviCivitaContinuousHodgeStar&lt; Indices1, Indices2, MetricType, BatchElem &gt; Class Template Reference</div></div>
 </div><!--header-->
@@ -142,7 +143,7 @@ Collaboration diagram for sil::exterior::LeviCivitaContinuousHodgeStar&lt; Indic
 <div class="dyncontent">
 <div class="center"><img src="classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1LeviCivitaContinuousHodgeStar_3_01Indices1_00_01Indices2_00_01MetricType_00_01BatchElem_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1LeviCivitaContinuousHodgeStar_3_01Indices1_00_01Indices2_00_01MetricType_00_01BatchElem_01_4_coll__map" id="asil_1_1exterior_1_1LeviCivitaContinuousHodgeStar_3_01Indices1_00_01Indices2_00_01MetricType_00_01BatchElem_01_4_coll__map">
-<area shape="rect" title="Continuous Hodge star for an identity metric and the positive coordinate orientation." alt="" coords="5,5,249,140"/>
+<area shape="rect" title="Continuous Hodge star for an identity metric and the positive coordinate orientation." alt="" coords="5,5,249,160"/>
 </map>
 </div>
 <table class="memberdecls">
@@ -153,7 +154,7 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a119c27ccf2aee107f61d3ce725a665e4" id="r_a119c27ccf2aee107f61d3ce725a665e4"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; FormTensorType&gt; </td></tr>
+<tr class="memitem:a119c27ccf2aee107f61d3ce725a665e4" id="r_a119c27ccf2aee107f61d3ce725a665e4"><td class="memTemplParams" colspan="2">template&lt;FormType HodgeTensorType, FormType FormTensorType&gt; </td></tr>
 <tr class="memitem:a119c27ccf2aee107f61d3ce725a665e4"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a119c27ccf2aee107f61d3ce725a665e4">operator()</a> (HodgeTensorType const &amp;hodge_tensor, FormTensorType const &amp;form_tensor, MetricType const &amp;, BatchElem)</td></tr>
 <tr class="separator:a119c27ccf2aee107f61d3ce725a665e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0a11bee77de693aa54b4604128bcb0e" id="r_ac0a11bee77de693aa54b4604128bcb0e"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION detail::LocalOperatorStencil&lt; <a class="el" href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">tensor::lower_t</a>&lt; <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt; Indices1 &gt; &gt;, <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt; Indices2 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac0a11bee77de693aa54b4604128bcb0e">value</a> (MetricType const &amp;metric, BatchElem element)</td></tr>
@@ -161,6 +162,13 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a161406312d72577cd0d62d15ace99cad" id="r_a161406312d72577cd0d62d15ace99cad"><td class="memTemplParams" colspan="2">template&lt;class NaturalElement &gt; </td></tr>
 <tr class="memitem:a161406312d72577cd0d62d15ace99cad"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a161406312d72577cd0d62d15ace99cad">value</a> (MetricType const &amp;, BatchElem, NaturalElement natural)</td></tr>
 <tr class="separator:a161406312d72577cd0d62d15ace99cad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:ae91a6c63110c918e85d5a0b07deec597" id="r_ae91a6c63110c918e85d5a0b07deec597"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae91a6c63110c918e85d5a0b07deec597">input_is_form</a> = true</td></tr>
+<tr class="separator:ae91a6c63110c918e85d5a0b07deec597"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39bedbda42f2d0460d3811a4b5911e1b" id="r_a39bedbda42f2d0460d3811a4b5911e1b"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a39bedbda42f2d0460d3811a4b5911e1b">output_is_form</a> = true</td></tr>
+<tr class="separator:a39bedbda42f2d0460d3811a4b5911e1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType, class BatchElem&gt;<br />
@@ -183,7 +191,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specializ
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00051">51</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00053">53</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -196,7 +204,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specializ
 <div class="memtemplate">
 template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType , class BatchElem &gt; </div>
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; HodgeTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; FormTensorType&gt; </div>
+template&lt;FormType HodgeTensorType, FormType FormTensorType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -262,7 +270,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specializ
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00085">85</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00088">88</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -302,7 +310,60 @@ template&lt;class NaturalElement &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00110">110</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00113">113</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="ae91a6c63110c918e85d5a0b07deec597" name="ae91a6c63110c918e85d5a0b07deec597"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae91a6c63110c918e85d5a0b07deec597">&#9670;&#160;</a></span>input_is_form</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType , class BatchElem &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar.html">sil::exterior::LeviCivitaContinuousHodgeStar</a>&lt; Indices1, Indices2, MetricType, BatchElem &gt;::input_is_form = true</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00051">51</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a39bedbda42f2d0460d3811a4b5911e1b" name="a39bedbda42f2d0460d3811a4b5911e1b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39bedbda42f2d0460d3811a4b5911e1b">&#9670;&#160;</a></span>output_is_form</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType , class BatchElem &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar.html">sil::exterior::LeviCivitaContinuousHodgeStar</a>&lt; Indices1, Indices2, MetricType, BatchElem &gt;::output_is_form = true</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html#l00052">52</a> of file <a class="el" href="levi__civita__continuous__hodge__star_8hpp_source.html">levi_civita_continuous_hodge_star.hpp</a>.</p>
 
 </div>
 </div>

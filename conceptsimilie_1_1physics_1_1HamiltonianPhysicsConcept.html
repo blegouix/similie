@@ -137,7 +137,9 @@ $(function(){initNavTree('conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept
 <div class="line">                  Physics <span class="keyword">const</span>&amp; physics,</div>
 <div class="line">                  <span class="keyword">typename</span> Physics::State <span class="keyword">const</span>&amp; state,</div>
 <div class="line">                  Element element) {</div>
-<div class="line">                 { physics.hamiltonian(state, element) } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line">                 {</div>
+<div class="line">                     physics.hamiltonian(state, element)</div>
+<div class="line">                 } -&gt; std::same_as&lt;sil::exterior::Form&lt;double&gt;&gt;;</div>
 <div class="line">                 {</div>
 <div class="line">                     physics.template dhamiltonian_dmoments&lt;</div>
 <div class="line">                             std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
@@ -152,11 +154,11 @@ $(function(){initNavTree('conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept
 <div class="line">                             std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
 <div class="line">                 } -&gt; std::same_as&lt;double&gt;;</div>
 <div class="line">             }</div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html">similie::physics::HamiltonianPhysicsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00108">physics/concepts.hpp:109</a></div></div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1PhysicsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1PhysicsConcept.html">similie::physics::PhysicsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00099">physics/concepts.hpp:99</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html">similie::physics::HamiltonianPhysicsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00115">physics/concepts.hpp:116</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1PhysicsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1PhysicsConcept.html">similie::physics::PhysicsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00106">physics/concepts.hpp:106</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="physics_2concepts_8hpp_source.html#l00108">108</a> of file <a class="el" href="physics_2concepts_8hpp_source.html">physics/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="physics_2concepts_8hpp_source.html#l00115">115</a> of file <a class="el" href="physics_2concepts_8hpp_source.html">physics/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

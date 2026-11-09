@@ -135,74 +135,92 @@ $(function(){initNavTree('staged__operator_8hpp_source.html',''); initResizable(
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;similie/exterior/concepts.hpp&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;similie/exterior/staged_operator/local_operator_storage.hpp&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;similie/exterior/staged_operator/spatial_operator_storage.hpp&gt;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesil_1_1exterior.html">sil::exterior</a> {</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;similie/exterior/staged_operator/bilinear_operator_storage.hpp&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;similie/exterior/staged_operator/local_operator_storage.hpp&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;similie/exterior/staged_operator/spatial_operator_storage.hpp&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesil_1_1exterior.html">sil::exterior</a> {</div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Storage = <span class="keyword">typename</span> Operator::staged_storage_type&gt;</div>
-<div class="foldopen" id="foldopen00022" data-start="{" data-end="};">
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html">   22</a></span><span class="keyword">class </span><a class="code hl_class" href="classsil_1_1exterior_1_1StagedOperator.html">StagedOperator</a></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>{</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keyword">using </span>Exec = <span class="keyword">typename</span> Storage::execution_space;</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    Kokkos::View&lt;Exec, Kokkos::HostSpace&gt; m_exec;</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    Storage m_storage;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... Arguments&gt;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        <span class="keyword">requires</span> <span class="keyword">requires</span>(Exec <span class="keyword">const</span>&amp; exec, Arguments <span class="keyword">const</span>&amp;... arguments) {</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>            { Storage::build(exec, arguments...) } -&gt; std::same_as&lt;Storage&gt;;</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        }</div>
-<div class="foldopen" id="foldopen00033" data-start="{" data-end="}">
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#a17fe9ac7cd537650cf614791c1bc49cd">   33</a></span>    <a class="code hl_function" href="classsil_1_1exterior_1_1StagedOperator.html#a17fe9ac7cd537650cf614791c1bc49cd">StagedOperator</a>(Exec <span class="keyword">const</span>&amp; exec, Arguments <span class="keyword">const</span>&amp;... arguments)</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        : m_exec(<span class="stringliteral">&quot;staged_operator_execution&quot;</span>)</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        , m_storage(Storage::build(exec, arguments...))</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    {</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        m_exec() = exec;</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    }</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Storage = <span class="keyword">typename</span> Operator::staged_storage_type&gt;</div>
+<div class="foldopen" id="foldopen00023" data-start="{" data-end="};">
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html">   23</a></span><span class="keyword">class </span><a class="code hl_class" href="classsil_1_1exterior_1_1StagedOperator.html">StagedOperator</a></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>{</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">using </span>Exec = <span class="keyword">typename</span> Storage::execution_space;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    Kokkos::View&lt;Exec, Kokkos::HostSpace&gt; m_exec;</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    Storage m_storage;</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... Arguments&gt;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        <span class="keyword">requires</span> <span class="keyword">requires</span>(Exec <span class="keyword">const</span>&amp; exec, Arguments <span class="keyword">const</span>&amp;... arguments) {</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>            { Storage::build(exec, arguments...) } -&gt; std::same_as&lt;Storage&gt;;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        }</div>
+<div class="foldopen" id="foldopen00034" data-start="{" data-end="}">
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#a17fe9ac7cd537650cf614791c1bc49cd">   34</a></span>    <a class="code hl_function" href="classsil_1_1exterior_1_1StagedOperator.html#a17fe9ac7cd537650cf614791c1bc49cd">StagedOperator</a>(Exec <span class="keyword">const</span>&amp; exec, Arguments <span class="keyword">const</span>&amp;... arguments)</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        : m_exec(<span class="stringliteral">&quot;staged_operator_execution&quot;</span>)</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        , m_storage(Storage::build(exec, arguments...))</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    {</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        m_exec() = exec;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    }</div>
 </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Output, <span class="keyword">class</span> Input&gt;</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keyword">requires</span> <a class="code hl_concept" href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">StagingStorageConcept&lt;Storage, Output, Input&gt;</a></div>
-<div class="foldopen" id="foldopen00042" data-start="{" data-end="}">
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#afc5782b03aa0a828a0a7dfadfeacf178">   42</a></span>    Output <a class="code hl_function" href="classsil_1_1exterior_1_1StagedOperator.html#afc5782b03aa0a828a0a7dfadfeacf178">operator()</a>(Output <span class="keyword">const</span>&amp; output, Input <span class="keyword">const</span>&amp; input)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keywordflow">return</span> m_storage.apply(m_exec(), output, input);</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    }</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Output, <span class="keyword">class</span> Input&gt;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                <a class="code hl_concept" href="conceptsil_1_1exterior_1_1LinearStagingStorageConcept.html">LinearStagingStorageConcept&lt;Storage, Output, Input&gt;</a></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorInputType.html">OperatorInputType&lt;Operator, Input&gt;</a> &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorOutputType.html">OperatorOutputType&lt;Operator, Output&gt;</a>)</div>
+<div class="foldopen" id="foldopen00045" data-start="{" data-end="}">
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#a3744932ad5504d88d7206c4a0d9e9764">   45</a></span>    Output <span class="keyword">operator</span>()(Output <span class="keyword">const</span>&amp; output, Input <span class="keyword">const</span>&amp; input) <span class="keyword">const</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    {</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keywordflow">return</span> m_storage.apply(m_exec(), output, input);</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    }</div>
 </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keyword">template</span> &lt;<span class="keyword">class </span>Output, <span class="keyword">class </span>Input, <span class="keyword">class</span>... Arguments&gt;</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        <span class="keyword">requires</span>(<span class="keyword">sizeof</span>...(Arguments) &gt; 0 &amp;&amp; <span class="keyword">requires</span>(Storage <span class="keyword">const</span>&amp; storage, Output <span class="keyword">const</span>&amp; output,</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                Input <span class="keyword">const</span>&amp; input, Arguments <span class="keyword">const</span>&amp;... arguments) {</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            storage.apply_pointwise(output, input, arguments...);</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        })</div>
-<div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#af455ec8b5b271d53580be3c736578eb3">   52</a></span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> <span class="keyword">operator</span>()(Output <span class="keyword">const</span>&amp; output, Input <span class="keyword">const</span>&amp; input, Arguments <span class="keyword">const</span>&amp;... arguments) <span class="keyword">const</span></div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    {</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        m_storage.apply_pointwise(output, input, arguments...);</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    }</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Output, <span class="keyword">class</span> First, <span class="keyword">class</span> Second&gt;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                <a class="code hl_concept" href="conceptsil_1_1exterior_1_1BilinearStagingStorageConcept.html">BilinearStagingStorageConcept&lt;Storage, Output, First, Second&gt;</a></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorInputType.html">OperatorInputType&lt;Operator, First&gt;</a> &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorInputType.html">OperatorInputType&lt;Operator, Second&gt;</a></div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorOutputType.html">OperatorOutputType&lt;Operator, Output&gt;</a>)</div>
+<div class="foldopen" id="foldopen00055" data-start="{" data-end="}">
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#a55688af429e941039585daab84428337">   55</a></span>    Output <span class="keyword">operator</span>()(Output <span class="keyword">const</span>&amp; output, First <span class="keyword">const</span>&amp; first, Second <span class="keyword">const</span>&amp; second) <span class="keyword">const</span></div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    {</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keywordflow">return</span> m_storage.apply(m_exec(), output, first, second);</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    }</div>
 </div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... Arguments&gt;</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keyword">requires</span> <span class="keyword">requires</span>(Storage <span class="keyword">const</span>&amp; storage, Arguments <span class="keyword">const</span>&amp;... arguments) {</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            storage.value(arguments...);</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        }</div>
-<div class="foldopen" id="foldopen00061" data-start="{" data-end="}">
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#a2520a9bd4ae2bd2fadf92f58a91b8bbc">   61</a></span>    KOKKOS_FUNCTION <span class="keyword">auto</span> <a class="code hl_function" href="classsil_1_1exterior_1_1StagedOperator.html#a2520a9bd4ae2bd2fadf92f58a91b8bbc">value</a>(Arguments <span class="keyword">const</span>&amp;... arguments)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keywordflow">return</span> m_storage.value(arguments...);</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    }</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keyword">template</span> &lt;<span class="keyword">class </span>Output, <span class="keyword">class </span>Input, <span class="keyword">class</span>... Arguments&gt;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        <span class="keyword">requires</span>(<span class="keyword">sizeof</span>...(Arguments) &gt; 0 &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorInputType.html">OperatorInputType&lt;Operator, Input&gt;</a></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                 &amp;&amp; <a class="code hl_concept" href="conceptsil_1_1exterior_1_1OperatorOutputType.html">OperatorOutputType&lt;Operator, Output&gt;</a> &amp;&amp; <span class="keyword">requires</span>(Storage <span class="keyword">const</span>&amp; storage, Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                Input <span class="keyword">const</span>&amp; input, Arguments <span class="keyword">const</span>&amp;... arguments) {</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            storage.apply_pointwise(output, input, arguments...);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        })</div>
+<div class="foldopen" id="foldopen00066" data-start="{" data-end="}">
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#ab8a991458df18824514a380b279c5d47">   66</a></span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> <span class="keyword">operator</span>()(Output <span class="keyword">const</span>&amp; output, Input <span class="keyword">const</span>&amp; input, Arguments <span class="keyword">const</span>&amp;... arguments) <span class="keyword">const</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    {</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        m_storage.apply_pointwise(output, input, arguments...);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    }</div>
 </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>};</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... Arguments&gt;</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        <span class="keyword">requires</span> <span class="keyword">requires</span>(Storage <span class="keyword">const</span>&amp; storage, Arguments <span class="keyword">const</span>&amp;... arguments) {</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            storage.value(arguments...);</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        }</div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="}">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedOperator.html#a2520a9bd4ae2bd2fadf92f58a91b8bbc">   75</a></span>    KOKKOS_FUNCTION <span class="keyword">auto</span> <a class="code hl_function" href="classsil_1_1exterior_1_1StagedOperator.html#a2520a9bd4ae2bd2fadf92f58a91b8bbc">value</a>(Arguments <span class="keyword">const</span>&amp;... arguments)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        <span class="keywordflow">return</span> m_storage.value(arguments...);</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    }</div>
 </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>} <span class="comment">// namespace sil::exterior</span></div>
-<div class="ttc" id="aclasssil_1_1exterior_1_1StagedOperator_html"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedOperator.html">sil::exterior::StagedOperator</a></div><div class="ttdoc">Freeze an operator's geometric coefficients using its selected storage policy.</div><div class="ttdef"><b>Definition</b> <a href="#l00022">staged_operator.hpp:23</a></div></div>
-<div class="ttc" id="aclasssil_1_1exterior_1_1StagedOperator_html_a17fe9ac7cd537650cf614791c1bc49cd"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedOperator.html#a17fe9ac7cd537650cf614791c1bc49cd">sil::exterior::StagedOperator::StagedOperator</a></div><div class="ttdeci">StagedOperator(Exec const &amp;exec, Arguments const &amp;... arguments)</div><div class="ttdef"><b>Definition</b> <a href="#l00033">staged_operator.hpp:33</a></div></div>
-<div class="ttc" id="aclasssil_1_1exterior_1_1StagedOperator_html_a2520a9bd4ae2bd2fadf92f58a91b8bbc"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedOperator.html#a2520a9bd4ae2bd2fadf92f58a91b8bbc">sil::exterior::StagedOperator::value</a></div><div class="ttdeci">KOKKOS_FUNCTION auto value(Arguments const &amp;... arguments) const</div><div class="ttdef"><b>Definition</b> <a href="#l00061">staged_operator.hpp:61</a></div></div>
-<div class="ttc" id="aclasssil_1_1exterior_1_1StagedOperator_html_afc5782b03aa0a828a0a7dfadfeacf178"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedOperator.html#afc5782b03aa0a828a0a7dfadfeacf178">sil::exterior::StagedOperator::operator()</a></div><div class="ttdeci">Output operator()(Output const &amp;output, Input const &amp;input) const</div><div class="ttdef"><b>Definition</b> <a href="#l00042">staged_operator.hpp:42</a></div></div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1StagingStorageConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1StagingStorageConcept.html">sil::exterior::StagingStorageConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00119">exterior/concepts.hpp:119</a></div></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>};</div>
+</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>} <span class="comment">// namespace sil::exterior</span></div>
+<div class="ttc" id="aclasssil_1_1exterior_1_1StagedOperator_html"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedOperator.html">sil::exterior::StagedOperator</a></div><div class="ttdoc">Freeze an operator's geometric coefficients using its selected storage policy.</div><div class="ttdef"><b>Definition</b> <a href="#l00023">staged_operator.hpp:24</a></div></div>
+<div class="ttc" id="aclasssil_1_1exterior_1_1StagedOperator_html_a17fe9ac7cd537650cf614791c1bc49cd"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedOperator.html#a17fe9ac7cd537650cf614791c1bc49cd">sil::exterior::StagedOperator::StagedOperator</a></div><div class="ttdeci">StagedOperator(Exec const &amp;exec, Arguments const &amp;... arguments)</div><div class="ttdef"><b>Definition</b> <a href="#l00034">staged_operator.hpp:34</a></div></div>
+<div class="ttc" id="aclasssil_1_1exterior_1_1StagedOperator_html_a2520a9bd4ae2bd2fadf92f58a91b8bbc"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedOperator.html#a2520a9bd4ae2bd2fadf92f58a91b8bbc">sil::exterior::StagedOperator::value</a></div><div class="ttdeci">KOKKOS_FUNCTION auto value(Arguments const &amp;... arguments) const</div><div class="ttdef"><b>Definition</b> <a href="#l00075">staged_operator.hpp:75</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1BilinearStagingStorageConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1BilinearStagingStorageConcept.html">sil::exterior::BilinearStagingStorageConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00185">exterior/concepts.hpp:185</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1LinearStagingStorageConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1LinearStagingStorageConcept.html">sil::exterior::LinearStagingStorageConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00182">exterior/concepts.hpp:182</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1OperatorInputType_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1OperatorInputType.html">sil::exterior::OperatorInputType</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00147">exterior/concepts.hpp:147</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1OperatorOutputType_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1OperatorOutputType.html">sil::exterior::OperatorOutputType</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00150">exterior/concepts.hpp:150</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html"><div class="ttname"><a href="namespacesil_1_1exterior.html">sil::exterior</a></div><div class="ttdef"><b>Definition</b> <a href="boundary_8hpp_source.html#l00017">boundary.hpp:17</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

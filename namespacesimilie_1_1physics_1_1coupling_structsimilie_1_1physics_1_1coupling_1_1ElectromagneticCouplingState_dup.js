@@ -1,7 +1,7 @@
 var namespacesimilie_1_1physics_1_1coupling_structsimilie_1_1physics_1_1coupling_1_1ElectromagneticCouplingState_dup =
 [
-    [ "charge_density", "namespacesimilie_1_1physics_1_1coupling.html#a7791453eda14138f94524943556823ae", null ],
-    [ "electric_field", "namespacesimilie_1_1physics_1_1coupling.html#a53c41cda65b7c2cfdbc4a7c4da5f7366", null ],
-    [ "induction", "namespacesimilie_1_1physics_1_1coupling.html#a5565ee58eedaf4071b3d815ec6b71434", null ],
-    [ "current", "namespacesimilie_1_1physics_1_1coupling.html#ab494eeaaf63ae5c62bfcd8ea4cbfab51", null ]
+    [ "charge_density", "namespacesimilie_1_1physics_1_1coupling.html#a187cb96ee495edc267d8088ca0dbf777", null ],
+    [ "electric_field", "namespacesimilie_1_1physics_1_1coupling.html#a99263234830c97e6551adaa9f59cb9dc", null ],
+    [ "induction", "namespacesimilie_1_1physics_1_1coupling.html#ac3abd7d619435dd76369a69a073b1f66", null ],
+    [ "current", "namespacesimilie_1_1physics_1_1coupling.html#ac7c84edf4d1b7fd876d654b466fdd1da", null ]
 ];

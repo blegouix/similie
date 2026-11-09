@@ -167,46 +167,48 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ad8ba3e5b23436c3ef7df0988fccf2a71" id="r_ad8ba3e5b23436c3ef7df0988fccf2a71"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> = std::array&lt;double, 3&gt;</td></tr>
-<tr class="separator:ad8ba3e5b23436c3ef7df0988fccf2a71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c8336b00193e003df1245777e68c543" id="r_a6c8336b00193e003df1245777e68c543"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> = <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt;double&gt;</td></tr>
+<tr class="separator:a6c8336b00193e003df1245777e68c543"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0e861cbddfefe5c4f906da17afce8f4" id="r_ab0e861cbddfefe5c4f906da17afce8f4"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> = <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt;std::array&lt;double, 3&gt;&gt;</td></tr>
+<tr class="separator:ab0e861cbddfefe5c4f906da17afce8f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a068387fade9f8f245e55d3548558151f" id="r_a068387fade9f8f245e55d3548558151f"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a068387fade9f8f245e55d3548558151f">CoupledFluidElectromagnetism</a> (FluidPhysics const &amp;fluid, ElectromagneticPhysics const &amp;electromagnetic)</td></tr>
 <tr class="separator:a068387fade9f8f245e55d3548558151f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5dc8d20c2623d764dc033a0b49f689a9" id="r_a5dc8d20c2623d764dc033a0b49f689a9"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="structsimilie_1_1physics_1_1coupling_1_1ElectromagneticExchange.html">coupling::ElectromagneticExchange</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5dc8d20c2623d764dc033a0b49f689a9">coupling_sources</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;velocity) const</td></tr>
-<tr class="memdesc:a5dc8d20c2623d764dc033a0b49f689a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate both exchanges using the spatially reduced current.  <br /></td></tr>
+<tr class="memitem:a5dc8d20c2623d764dc033a0b49f689a9" id="r_a5dc8d20c2623d764dc033a0b49f689a9"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="structsimilie_1_1physics_1_1coupling_1_1ElectromagneticExchange.html">coupling::ElectromagneticExchange</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5dc8d20c2623d764dc033a0b49f689a9">coupling_sources</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;velocity) const</td></tr>
+<tr class="memdesc:a5dc8d20c2623d764dc033a0b49f689a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate both exchanges using the reconstructed current form.  <br /></td></tr>
 <tr class="separator:a5dc8d20c2623d764dc033a0b49f689a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf1a09570291efa35df762ef4830e3d9" id="r_adf1a09570291efa35df762ef4830e3d9"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="structsimilie_1_1physics_1_1coupling_1_1ElectromagneticExchange.html">coupling::ElectromagneticExchange</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adf1a09570291efa35df762ef4830e3d9">coupling_sources</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current) const</td></tr>
+<tr class="memitem:adf1a09570291efa35df762ef4830e3d9" id="r_adf1a09570291efa35df762ef4830e3d9"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="structsimilie_1_1physics_1_1coupling_1_1ElectromagneticExchange.html">coupling::ElectromagneticExchange</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adf1a09570291efa35df762ef4830e3d9">coupling_sources</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current) const</td></tr>
 <tr class="separator:adf1a09570291efa35df762ef4830e3d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e21985a2b42818e11971d8bd433941b" id="r_a0e21985a2b42818e11971d8bd433941b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0e21985a2b42818e11971d8bd433941b">field_energy</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state) const</td></tr>
-<tr class="separator:a0e21985a2b42818e11971d8bd433941b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a835417fad086de429dd0fa76041cdf4a" id="r_a835417fad086de429dd0fa76041cdf4a"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION ElectromagneticPhysics::State&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a835417fad086de429dd0fa76041cdf4a">field_rate</a> (double current_divergence, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;curl_magnetic_field, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;curl_electric_field, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current) const</td></tr>
-<tr class="separator:a835417fad086de429dd0fa76041cdf4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e1b8d6145f645dc7a184e3367ec17df" id="r_a9e1b8d6145f645dc7a184e3367ec17df"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9e1b8d6145f645dc7a184e3367ec17df">current</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;velocity) const</td></tr>
+<tr class="memitem:ac06f7364df1469f8353c125b4a7b5ddc" id="r_ac06f7364df1469f8353c125b4a7b5ddc"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac06f7364df1469f8353c125b4a7b5ddc">field_energy</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state) const</td></tr>
+<tr class="separator:ac06f7364df1469f8353c125b4a7b5ddc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ff45afc6e76525c11e46cdf0c1f6775" id="r_a1ff45afc6e76525c11e46cdf0c1f6775"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION ElectromagneticPhysics::State&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1ff45afc6e76525c11e46cdf0c1f6775">field_rate</a> (<a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> const &amp;current_divergence, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;curl_magnetic_field, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;curl_electric_field, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current) const</td></tr>
+<tr class="separator:a1ff45afc6e76525c11e46cdf0c1f6775"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e1b8d6145f645dc7a184e3367ec17df" id="r_a9e1b8d6145f645dc7a184e3367ec17df"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9e1b8d6145f645dc7a184e3367ec17df">current</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;velocity) const</td></tr>
 <tr class="separator:a9e1b8d6145f645dc7a184e3367ec17df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36be4486b8631067d7f027388369dd68" id="r_a36be4486b8631067d7f027388369dd68"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION FluidPhysics::State&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a36be4486b8631067d7f027388369dd68">fluid_state</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state) const</td></tr>
 <tr class="separator:a36be4486b8631067d7f027388369dd68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba14c3aabb883c57f8c7d21e4106d4c1" id="r_aba14c3aabb883c57f8c7d21e4106d4c1"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aba14c3aabb883c57f8c7d21e4106d4c1">current</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state) const</td></tr>
+<tr class="memitem:aba14c3aabb883c57f8c7d21e4106d4c1" id="r_aba14c3aabb883c57f8c7d21e4106d4c1"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aba14c3aabb883c57f8c7d21e4106d4c1">current</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state) const</td></tr>
 <tr class="separator:aba14c3aabb883c57f8c7d21e4106d4c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c32eab2c7d40686f907f0a51c9acd75" id="r_a2c32eab2c7d40686f907f0a51c9acd75"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898aeac0a19534134a64742d20fac2e7db5ac7ab74ea4bb9a7a89d251f3a">Fluid</a>  = FluidPhysics&gt; </td></tr>
-<tr class="memitem:a2c32eab2c7d40686f907f0a51c9acd75"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Fluid::Flux&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2c32eab2c7d40686f907f0a51c9acd75">flux</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, typename Fluid::VelocityGradient const &amp;velocity_gradient, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;temperature_gradient, int normal, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current) const</td></tr>
+<tr class="memitem:a2c32eab2c7d40686f907f0a51c9acd75"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Fluid::Flux&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2c32eab2c7d40686f907f0a51c9acd75">flux</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, typename Fluid::VelocityGradient const &amp;velocity_gradient, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;temperature_gradient, int normal, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current) const</td></tr>
 <tr class="separator:a2c32eab2c7d40686f907f0a51c9acd75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7230ad01ad1bb61c294aaeb8045bcb68" id="r_a7230ad01ad1bb61c294aaeb8045bcb68"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898aeac0a19534134a64742d20fac2e7db5ac7ab74ea4bb9a7a89d251f3a">Fluid</a>  = FluidPhysics&gt; <br />
 requires (has_electric)</td></tr>
-<tr class="memitem:a7230ad01ad1bb61c294aaeb8045bcb68"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Fluid::Flux&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7230ad01ad1bb61c294aaeb8045bcb68">flux</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, typename Fluid::VelocityGradient const &amp;velocity_gradient, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;temperature_gradient, int normal) const</td></tr>
+<tr class="memitem:a7230ad01ad1bb61c294aaeb8045bcb68"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Fluid::Flux&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7230ad01ad1bb61c294aaeb8045bcb68">flux</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, typename Fluid::VelocityGradient const &amp;velocity_gradient, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;temperature_gradient, int normal) const</td></tr>
 <tr class="separator:a7230ad01ad1bb61c294aaeb8045bcb68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abc72285af52ae2c90c607bdbdcbe9fd0" id="r_abc72285af52ae2c90c607bdbdcbe9fd0"><td class="memTemplParams" colspan="2">template&lt;class FluidFlux &gt; </td></tr>
-<tr class="memitem:abc72285af52ae2c90c607bdbdcbe9fd0"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abc72285af52ae2c90c607bdbdcbe9fd0">operator()</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, FluidFlux const &amp;fluid_flux_divergence, double current_divergence, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;curl_magnetic_field, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;curl_electric_field, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current) const</td></tr>
-<tr class="separator:abc72285af52ae2c90c607bdbdcbe9fd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abefe5ff1c3b7eb5e60bd0f39ed622394" id="r_abefe5ff1c3b7eb5e60bd0f39ed622394"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abefe5ff1c3b7eb5e60bd0f39ed622394">combined_energy</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state) const</td></tr>
-<tr class="separator:abefe5ff1c3b7eb5e60bd0f39ed622394"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2b223ae70f157669934a019bc1ec6890" id="r_a2b223ae70f157669934a019bc1ec6890"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2b223ae70f157669934a019bc1ec6890">transport</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;velocity, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current) const</td></tr>
+<tr class="memitem:ac40b978bffc60e99cc682b5cf0085b16" id="r_ac40b978bffc60e99cc682b5cf0085b16"><td class="memTemplParams" colspan="2">template&lt;class FluidFlux &gt; </td></tr>
+<tr class="memitem:ac40b978bffc60e99cc682b5cf0085b16"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ac40b978bffc60e99cc682b5cf0085b16">operator()</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, FluidFlux const &amp;fluid_flux_divergence, <a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> const &amp;current_divergence, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;curl_magnetic_field, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;curl_electric_field, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current) const</td></tr>
+<tr class="separator:ac40b978bffc60e99cc682b5cf0085b16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad54eb3b4ed52b24d31b0644e80391d52" id="r_ad54eb3b4ed52b24d31b0644e80391d52"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad54eb3b4ed52b24d31b0644e80391d52">combined_energy</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state) const</td></tr>
+<tr class="separator:ad54eb3b4ed52b24d31b0644e80391d52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b223ae70f157669934a019bc1ec6890" id="r_a2b223ae70f157669934a019bc1ec6890"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2b223ae70f157669934a019bc1ec6890">transport</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;velocity, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current) const</td></tr>
 <tr class="separator:a2b223ae70f157669934a019bc1ec6890"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a687b55363bd30c1bb6f4deffbeb70584" id="r_a687b55363bd30c1bb6f4deffbeb70584"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a687b55363bd30c1bb6f4deffbeb70584">momentum_rate</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;velocity, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;bernoulli_gradient, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;velocity_laplacian, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current) const</td></tr>
+<tr class="memitem:a687b55363bd30c1bb6f4deffbeb70584" id="r_a687b55363bd30c1bb6f4deffbeb70584"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a687b55363bd30c1bb6f4deffbeb70584">momentum_rate</a> (<a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;state, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;velocity, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;bernoulli_gradient, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;velocity_laplacian, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current) const</td></tr>
 <tr class="separator:a687b55363bd30c1bb6f4deffbeb70584"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e427de62c8d31415ee14b5c7b6b8d9e" id="r_a7e427de62c8d31415ee14b5c7b6b8d9e"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7e427de62c8d31415ee14b5c7b6b8d9e">operator()</a> (<a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;transport_curl, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;vorticity_laplacian, double current_divergence, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;curl_magnetic_field, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;curl_electric_field, <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;total_current) const</td></tr>
-<tr class="separator:a7e427de62c8d31415ee14b5c7b6b8d9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70ed2eb6387acddebd384c1edee5a26b" id="r_a70ed2eb6387acddebd384c1edee5a26b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a70ed2eb6387acddebd384c1edee5a26b">operator()</a> (<a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;transport_curl, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;vorticity_laplacian, <a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> const &amp;current_divergence, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;curl_magnetic_field, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;curl_electric_field, <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;total_current) const</td></tr>
+<tr class="separator:a70ed2eb6387acddebd384c1edee5a26b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -219,11 +221,11 @@ Static Public Attributes</h2></td></tr>
 <div class="textblock"><div class="compoundTemplParams">template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898aeac0a19534134a64742d20f">EnergyConvention</a> Energy = EnergyConvention::Fluid&gt;<br />
 class similie::physics::CoupledFluidElectromagnetism&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;</div><p>Assemble fluid and electric, magnetic, or full Maxwell sectors with shared exchange laws. </p>
 <p>The state contains the two physical sectors; the stateless interactions own no new degrees of freedom. get&lt;0&gt;() is the fluid, get&lt;1&gt;() is the field model, and get&lt;2/3&gt;() are the generated electric/magnetic coupling objects.</p>
-<p>The caller computes spatial derivatives with exterior operators. In particular, it supplies one reduced current to both the Maxwell update and the force/power evaluation, and uses that current for the charge divergence. Constitutive current laws and material parameters belong to the field model.</p>
+<p>The caller computes spatial derivatives with exterior operators. In particular, it supplies reconstructed forms to the Maxwell update and force/power evaluation. It reduces the same current for charge divergence. Constitutive current laws and material parameters belong to the field model.</p>
 <p>For compressible flow, Fluid stores thermal+kinetic energy and adds J.E to its rate. FluidAndField stores that energy plus W(D,B), subtracts W when evaluating fluid primitives, and adds E cross H to the energy flux instead. Its rate receives no internal exchange source. Joule heat must not be added again. The field_energy_source diagnostic is already represented by -J in the displacement update; it is not an additional field evolution equation.</p>
 <p>For incompressible flow, transport includes force/density before taking its curl. The caller supplies that complete curl to the vorticity update; no thermal or total-energy variable is evolved in this formulation. </p><dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00043">43</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00044">44</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 </div><hr/><h2 class="groupheader">Class Documentation</h2>
 <a name="structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State" id="structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">&#9670;&#160;</a></span>similie::physics::CoupledFluidElectromagnetism::State</h2>
@@ -238,7 +240,7 @@ class similie::physics::CoupledFluidElectromagnetism&lt; FluidPhysics, Electroma
 </div><div class="memdoc">
 <div class="textblock"><div class="compoundTemplParams">template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898aeac0a19534134a64742d20f">EnergyConvention</a> Energy = EnergyConvention::Fluid&gt;<br />
 struct similie::physics::CoupledFluidElectromagnetism&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::State</div>
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00059">59</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00061">61</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for similie::physics::CoupledFluidElectromagnetism&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::State:</div>
 <div class="dyncontent">
@@ -266,8 +268,8 @@ electromagnetic</td>
 </div>
 </div>
 <h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="ad8ba3e5b23436c3ef7df0988fccf2a71" name="ad8ba3e5b23436c3ef7df0988fccf2a71"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad8ba3e5b23436c3ef7df0988fccf2a71">&#9670;&#160;</a></span>Vector</h2>
+<a id="a6c8336b00193e003df1245777e68c543" name="a6c8336b00193e003df1245777e68c543"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c8336b00193e003df1245777e68c543">&#9670;&#160;</a></span>Scalar</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -275,12 +277,30 @@ electromagnetic</td>
 template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898aeac0a19534134a64742d20f">EnergyConvention</a> Energy = EnergyConvention::Fluid&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::Vector = std::array&lt;double, 3&gt;</td>
+          <td class="memname">using <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::Scalar = <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt;double&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00056">56</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00057">57</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab0e861cbddfefe5c4f906da17afce8f4" name="ab0e861cbddfefe5c4f906da17afce8f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0e861cbddfefe5c4f906da17afce8f4">&#9670;&#160;</a></span>Vector</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898aeac0a19534134a64742d20f">EnergyConvention</a> Energy = EnergyConvention::Fluid&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::Vector = <a class="el" href="classsil_1_1exterior_1_1Form.html">sil::exterior::Form</a>&lt;std::array&lt;double, 3&gt;&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00058">58</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -314,7 +334,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00065">65</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00067">67</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -338,12 +358,12 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -353,10 +373,10 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p>Evaluate both exchanges using the spatially reduced current. </p>
+<p>Evaluate both exchanges using the reconstructed current form. </p>
 <p>Magnetic quasistatics also needs velocity to evaluate E=-u cross B+eta J. Electric quasistatics reconstructs displacement from charge separately. </p>
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00084">84</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00086">86</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -379,7 +399,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -389,12 +409,12 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00108">108</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00110">110</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a0e21985a2b42818e11971d8bd433941b" name="a0e21985a2b42818e11971d8bd433941b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0e21985a2b42818e11971d8bd433941b">&#9670;&#160;</a></span>field_energy()</h2>
+<a id="ac06f7364df1469f8353c125b4a7b5ddc" name="ac06f7364df1469f8353c125b4a7b5ddc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac06f7364df1469f8353c125b4a7b5ddc">&#9670;&#160;</a></span>field_energy()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -405,7 +425,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION double <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::field_energy </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::field_energy </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span></td><td>)</td>
           <td> const</td>
@@ -418,12 +438,12 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00116">116</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00118">118</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a835417fad086de429dd0fa76041cdf4a" name="a835417fad086de429dd0fa76041cdf4a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a835417fad086de429dd0fa76041cdf4a">&#9670;&#160;</a></span>field_rate()</h2>
+<a id="a1ff45afc6e76525c11e46cdf0c1f6775" name="a1ff45afc6e76525c11e46cdf0c1f6775"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ff45afc6e76525c11e46cdf0c1f6775">&#9670;&#160;</a></span>field_rate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -436,22 +456,22 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
         <tr>
           <td class="memname">KOKKOS_FUNCTION ElectromagneticPhysics::State <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::field_rate </td>
           <td>(</td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>current_divergence</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>current_divergence</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_magnetic_field</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_magnetic_field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_electric_field</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_electric_field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -461,7 +481,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00128">128</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00130">130</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -477,14 +497,14 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::current </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::current </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -494,7 +514,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00146">146</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00148">148</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -523,7 +543,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00162">162</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00164">164</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -539,7 +559,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::current </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::current </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span></td><td>)</td>
           <td> const</td>
@@ -552,7 +572,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00171">171</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00173">173</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -582,7 +602,7 @@ template&lt;class <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>temperature_gradient</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>temperature_gradient</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -592,7 +612,7 @@ template&lt;class <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -602,7 +622,7 @@ template&lt;class <a class="el" href="namespacesimilie_1_1physics.html#abbcd1898
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00177">177</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00179">179</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -633,7 +653,7 @@ requires (has_electric)</div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>temperature_gradient</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>temperature_gradient</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -648,12 +668,12 @@ requires (has_electric)</div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00215">215</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00217">217</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
-<a id="abc72285af52ae2c90c607bdbdcbe9fd0" name="abc72285af52ae2c90c607bdbdcbe9fd0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abc72285af52ae2c90c607bdbdcbe9fd0">&#9670;&#160;</a></span>operator()() <span class="overload">[1/2]</span></h2>
+<a id="ac40b978bffc60e99cc682b5cf0085b16" name="ac40b978bffc60e99cc682b5cf0085b16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac40b978bffc60e99cc682b5cf0085b16">&#9670;&#160;</a></span>operator()() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -678,22 +698,22 @@ template&lt;class FluidFlux &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>current_divergence</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>current_divergence</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_magnetic_field</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_magnetic_field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_electric_field</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_electric_field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -703,12 +723,12 @@ template&lt;class FluidFlux &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00226">226</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00228">228</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
-<a id="abefe5ff1c3b7eb5e60bd0f39ed622394" name="abefe5ff1c3b7eb5e60bd0f39ed622394"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abefe5ff1c3b7eb5e60bd0f39ed622394">&#9670;&#160;</a></span>combined_energy()</h2>
+<a id="ad54eb3b4ed52b24d31b0644e80391d52" name="ad54eb3b4ed52b24d31b0644e80391d52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad54eb3b4ed52b24d31b0644e80391d52">&#9670;&#160;</a></span>combined_energy()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -719,7 +739,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION double <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::combined_energy </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::combined_energy </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span></td><td>)</td>
           <td> const</td>
@@ -732,7 +752,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00251">251</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00253">253</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -748,19 +768,19 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::transport </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::transport </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -770,7 +790,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00260">260</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00262">262</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -786,29 +806,29 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::momentum_rate </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::momentum_rate </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>bernoulli_gradient</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>bernoulli_gradient</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity_laplacian</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity_laplacian</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -818,12 +838,12 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00270">270</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00272">272</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a7e427de62c8d31415ee14b5c7b6b8d9e" name="a7e427de62c8d31415ee14b5c7b6b8d9e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e427de62c8d31415ee14b5c7b6b8d9e">&#9670;&#160;</a></span>operator()() <span class="overload">[2/2]</span></h2>
+<a id="a70ed2eb6387acddebd384c1edee5a26b" name="a70ed2eb6387acddebd384c1edee5a26b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70ed2eb6387acddebd384c1edee5a26b">&#9670;&#160;</a></span>operator()() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -836,32 +856,32 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
         <tr>
           <td class="memname">KOKKOS_FUNCTION <a class="el" href="#structsimilie_1_1physics_1_1CoupledFluidElectromagnetism_1_1State">State</a> <a class="el" href="classsimilie_1_1physics_1_1CoupledFluidElectromagnetism.html">similie::physics::CoupledFluidElectromagnetism</a>&lt; FluidPhysics, ElectromagneticPhysics, Energy &gt;::operator() </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>transport_curl</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>transport_curl</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>vorticity_laplacian</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>vorticity_laplacian</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>current_divergence</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#a6c8336b00193e003df1245777e68c543">Scalar</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>current_divergence</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_magnetic_field</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_magnetic_field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_electric_field</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>curl_electric_field</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad8ba3e5b23436c3ef7df0988fccf2a71">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
+          <td class="paramtype"><a class="el" href="#ab0e861cbddfefe5c4f906da17afce8f4">Vector</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>total_current</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -871,7 +891,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00289">289</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00291">291</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -898,7 +918,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00057">57</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00059">59</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -924,7 +944,7 @@ template&lt;PhysicsConcept FluidPhysics, PhysicsConcept ElectromagneticPhysics, 
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00058">58</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html#l00060">60</a> of file <a class="el" href="coupled__fluid__electromagnetism_8hpp_source.html">coupled_fluid_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>

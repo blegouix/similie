@@ -128,6 +128,7 @@ $(function(){initNavTree('structsil_1_1exterior_1_1Reconstruction.html',''); ini
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="structsil_1_1exterior_1_1Reconstruction-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt; Struct Template Reference</div></div>
 </div><!--header-->
@@ -139,14 +140,14 @@ Collaboration diagram for sil::exterior::Reconstruction&lt; Indices, PositionTyp
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1exterior_1_1Reconstruction__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_00_01Coefficients_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_00_01Coefficients_01_4_coll__map" id="asil_1_1exterior_1_1Reconstruction_3_01Indices_00_01PositionType_00_01BatchElem_00_01Complex_00_01Coefficients_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,260,140"/>
+<area shape="rect" title=" " alt="" coords="5,5,260,160"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a6460d10a65f3441d0ff6453ee92b48b1" id="r_a6460d10a65f3441d0ff6453ee92b48b1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6460d10a65f3441d0ff6453ee92b48b1">staged_storage_type</a></td></tr>
-<tr class="separator:a6460d10a65f3441d0ff6453ee92b48b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a414bef266b47e0165734f0fadde4ef48" id="r_a414bef266b47e0165734f0fadde4ef48"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a414bef266b47e0165734f0fadde4ef48">staged_storage_type</a></td></tr>
+<tr class="separator:a414bef266b47e0165734f0fadde4ef48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e764479896eed71c49f152976a658c3" id="r_a0e764479896eed71c49f152976a658c3"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0e764479896eed71c49f152976a658c3">source_index_type</a> = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;Indices&gt;</td></tr>
 <tr class="separator:a0e764479896eed71c49f152976a658c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a72d3bb0b7a5f20ce71a61cafa8aec1b8" id="r_a72d3bb0b7a5f20ce71a61cafa8aec1b8"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a72d3bb0b7a5f20ce71a61cafa8aec1b8">target_index_type</a> = <a class="el" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t</a>&lt;<a class="el" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">tensor::primes</a>&lt;Indices&gt;&gt;</td></tr>
@@ -158,21 +159,28 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:afe3e30285c9b9659dfc5cb8a59ff7811" id="r_afe3e30285c9b9659dfc5cb8a59ff7811"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; ReconstructedTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CochainTensorType&gt; </td></tr>
+<tr class="memitem:afe3e30285c9b9659dfc5cb8a59ff7811" id="r_afe3e30285c9b9659dfc5cb8a59ff7811"><td class="memTemplParams" colspan="2">template&lt;FormType ReconstructedTensorType, CochainType CochainTensorType&gt; </td></tr>
 <tr class="memitem:afe3e30285c9b9659dfc5cb8a59ff7811"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afe3e30285c9b9659dfc5cb8a59ff7811">operator()</a> (ReconstructedTensorType const &amp;reconstructed_tensor, CochainTensorType const &amp;cochain_tensor, PositionType const &amp;position, BatchElem elem)</td></tr>
 <tr class="separator:afe3e30285c9b9659dfc5cb8a59ff7811"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab2b6954b47ee56c448f6d91a3323b59" id="r_aab2b6954b47ee56c448f6d91a3323b59"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION detail::LocalOperatorStencil&lt; <a class="el" href="#a0e764479896eed71c49f152976a658c3">source_index_type</a>, <a class="el" href="#a72d3bb0b7a5f20ce71a61cafa8aec1b8">target_index_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aab2b6954b47ee56c448f6d91a3323b59">value</a> (PositionType const &amp;position, BatchElem element)</td></tr>
 <tr class="separator:aab2b6954b47ee56c448f6d91a3323b59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a249b62c747f68678db00c97a0d2ee099" id="r_a249b62c747f68678db00c97a0d2ee099"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a249b62c747f68678db00c97a0d2ee099">value</a> (PositionType const &amp;position, BatchElem elem, auto natural_elem)</td></tr>
 <tr class="separator:a249b62c747f68678db00c97a0d2ee099"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:acbea3d534307a94c826c5722615dfecb" id="r_acbea3d534307a94c826c5722615dfecb"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acbea3d534307a94c826c5722615dfecb">input_is_form</a> = false</td></tr>
+<tr class="separator:acbea3d534307a94c826c5722615dfecb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab825aba4df44c998e25e91660da19723" id="r_ab825aba4df44c998e25e91660da19723"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab825aba4df44c998e25e91660da19723">output_is_form</a> = true</td></tr>
+<tr class="separator:ab825aba4df44c998e25e91660da19723"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem, <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt;<br />
 struct sil::exterior::Reconstruction&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;</div>
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01058">1058</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01059">1059</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a6460d10a65f3441d0ff6453ee92b48b1" name="a6460d10a65f3441d0ff6453ee92b48b1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6460d10a65f3441d0ff6453ee92b48b1">&#9670;&#160;</a></span>staged_storage_type</h2>
+<a id="a414bef266b47e0165734f0fadde4ef48" name="a414bef266b47e0165734f0fadde4ef48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a414bef266b47e0165734f0fadde4ef48">&#9670;&#160;</a></span>staged_storage_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -184,7 +192,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line"> detail::LocalOperatorStorage&lt;</div>
+<b>Initial value:</b><div class="fragment"><div class="line"> detail::LinearLocalOperatorStorage&lt;</div>
 <div class="line">            Reconstruction,</div>
 <div class="line">            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;Indices&gt;</a>,</div>
 <div class="line">            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;tensor::primes&lt;Indices&gt;</a>&gt;,</div>
@@ -200,7 +208,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
 <div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_ad931792b69b009623e283e74cdb06076"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">sil::tensor::natural_domain_t</a></div><div class="ttdeci">typename detail::NaturalDomainType&lt; Index &gt;::type natural_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00150">tensor_impl.hpp:150</a></div></div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01067">1067</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01071">1071</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -218,7 +226,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01080">1080</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01084">1084</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -236,7 +244,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01081">1081</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01085">1085</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -256,7 +264,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
 <div class="line">            <span class="keyword">typename</span> tensor::natural_domain_t&lt;source_index_type&gt;::discrete_element_type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01082">1082</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01086">1086</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -276,7 +284,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
 <div class="line">            <span class="keyword">typename</span> tensor::natural_domain_t&lt;target_index_type&gt;::discrete_element_type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01084">1084</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01088">1088</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -289,7 +297,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
 <div class="memtemplate">
 template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; ReconstructedTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; CochainTensorType&gt; </div>
+template&lt;FormType ReconstructedTensorType, CochainType CochainTensorType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -322,7 +330,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01090">1090</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01092">1092</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -355,7 +363,7 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01147">1147</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01149">1149</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>
@@ -393,7 +401,60 @@ template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specializa
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01181">1181</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01183">1183</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="acbea3d534307a94c826c5722615dfecb" name="acbea3d534307a94c826c5722615dfecb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acbea3d534307a94c826c5722615dfecb">&#9670;&#160;</a></span>input_is_form</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::input_is_form = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01068">1068</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab825aba4df44c998e25e91660da19723" name="ab825aba4df44c998e25e91660da19723"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab825aba4df44c998e25e91660da19723">&#9670;&#160;</a></span>output_is_form</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a> &gt; PositionType, class BatchElem , <a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal, template&lt; class... &gt; class Coefficients = tensor::TensorFullIndex&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a>&lt; Indices, PositionType, BatchElem, Complex, Coefficients &gt;::output_is_form = true</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="reduction__and__reconstruction_8hpp_source.html#l01069">1069</a> of file <a class="el" href="reduction__and__reconstruction_8hpp_source.html">reduction_and_reconstruction.hpp</a>.</p>
 
 </div>
 </div>

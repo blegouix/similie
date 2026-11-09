@@ -3,9 +3,10 @@ var searchData=
   ['target_5findex_5ftype_0',['target_index_type',['../structsil_1_1exterior_1_1Reduction.html#afc8ada67e41c593d178ff8825d95286b',1,'sil::exterior::Reduction::target_index_type'],['../structsil_1_1exterior_1_1Reconstruction.html#a72d3bb0b7a5f20ce71a61cafa8aec1b8',1,'sil::exterior::Reconstruction::target_index_type']]],
   ['target_5fnatural_5felem_5ftype_1',['target_natural_elem_type',['../structsil_1_1exterior_1_1Reduction.html#a3c2ea9c8fac64f3a2fc20222da8dfe39',1,'sil::exterior::Reduction::target_natural_elem_type'],['../structsil_1_1exterior_1_1Reconstruction.html#a2b02d187fe171d18f9dff91cd43964fa',1,'sil::exterior::Reconstruction::target_natural_elem_type']]],
   ['tensor_5faccessor_5ffor_5fdomain_5ft_2',['tensor_accessor_for_domain_t',['../namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c',1,'sil::tensor']]],
-  ['to_5ftensor_5fantisymmetric_5findex_5ft_3',['to_tensor_antisymmetric_index_t',['../namespacesil_1_1tensor.html#a07b5efb792fc5564b4644c8f1d1bbeec',1,'sil::tensor']]],
-  ['to_5ftype_5fseq_5ft_4',['to_type_seq_t',['../namespacesil_1_1misc.html#a0f31a0b3b9517ab930673de3be192d65',1,'sil::misc']]],
-  ['topology_5ftype_5',['topology_type',['../classsil_1_1multidomains_1_1Multidomain.html#ab28465fd834a9ca469a1e5f61a81fbef',1,'sil::multidomains::Multidomain']]],
-  ['type_5fseq_5fdimensions_6',['type_seq_dimensions',['../structsil_1_1tensor_1_1TensorNaturalIndex.html#a7218989a55487d35c9de25116cb1c1a9',1,'sil::tensor::TensorNaturalIndex']]],
-  ['type_5fseq_5fintersect_5ft_7',['type_seq_intersect_t',['../namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840',1,'sil::misc']]]
+  ['tensor_5ftype_3',['tensor_type',['../classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html#ac285b246da8369bb878d4ae22f828e02',1,'sil::tensor::OwningTensor&lt; Tensor&lt; ElementType, DomainType, LayoutStridedPolicy, MemorySpace &gt;, Storage &gt;']]],
+  ['to_5ftensor_5fantisymmetric_5findex_5ft_4',['to_tensor_antisymmetric_index_t',['../namespacesil_1_1tensor.html#a07b5efb792fc5564b4644c8f1d1bbeec',1,'sil::tensor']]],
+  ['to_5ftype_5fseq_5ft_5',['to_type_seq_t',['../namespacesil_1_1misc.html#a0f31a0b3b9517ab930673de3be192d65',1,'sil::misc']]],
+  ['topology_5ftype_6',['topology_type',['../classsil_1_1multidomains_1_1Multidomain.html#ab28465fd834a9ca469a1e5f61a81fbef',1,'sil::multidomains::Multidomain']]],
+  ['type_5fseq_5fdimensions_7',['type_seq_dimensions',['../structsil_1_1tensor_1_1TensorNaturalIndex.html#a7218989a55487d35c9de25116cb1c1a9',1,'sil::tensor::TensorNaturalIndex']]],
+  ['type_5fseq_5fintersect_5ft_8',['type_seq_intersect_t',['../namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840',1,'sil::misc']]]
 ];

@@ -48,12 +48,15 @@ var annotated_dup =
         [ "CsrDynamic", "classsil_1_1csr_1_1CsrDynamic.html", "classsil_1_1csr_1_1CsrDynamic" ]
       ] ],
       [ "exterior", "namespacesil_1_1exterior.html", [
+        [ "BilinearSpatialOperatorStorage", "classsil_1_1exterior_1_1BilinearSpatialOperatorStorage.html", "classsil_1_1exterior_1_1BilinearSpatialOperatorStorage" ],
+        [ "BilinearStencil", "structsil_1_1exterior_1_1BilinearStencil.html", "structsil_1_1exterior_1_1BilinearStencil" ],
         [ "Boundary", "structsil_1_1exterior_1_1Boundary.html", null ],
         [ "Chain", "classsil_1_1exterior_1_1Chain.html", "classsil_1_1exterior_1_1Chain" ],
         [ "Coboundary", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary", null ],
         [ "Coboundary< CochainType >", "structsil_1_1exterior_1_1Coboundary_3_01CochainType_01_4.html", null ],
         [ "Coboundary< TagToAddToCochain, CochainTag >", "structsil_1_1exterior_1_1Coboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html", "structsil_1_1exterior_1_1Coboundary_3_01TagToAddToCochain_00_01CochainTag_01_4" ],
         [ "Cochain", "classsil_1_1exterior_1_1Cochain.html", "classsil_1_1exterior_1_1Cochain" ],
+        [ "Cochain< tensor::Tensor< T, Domain, Layout, Memory >, ElementType, ChainLayout >", "classsil_1_1exterior_1_1Cochain_3_01tensor_1_1Tensor_3_01T_00_01Domain_00_01Layout_00_01Memory_02fe71f8f69eff6949286d8e3a77f9a23.html", "classsil_1_1exterior_1_1Cochain_3_01tensor_1_1Tensor_3_01T_00_01Domain_00_01Layout_00_01Memory_02fe71f8f69eff6949286d8e3a77f9a23" ],
         [ "CochainIterator", "classsil_1_1exterior_1_1CochainIterator.html", "classsil_1_1exterior_1_1CochainIterator" ],
         [ "Codifferential", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential", null ],
         [ "Codifferential< MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType >", "structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochain2aac1536eace81f70cbdf910df4f70bc.html", "structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochain2aac1536eace81f70cbdf910df4f70bc" ],
@@ -66,6 +69,9 @@ var annotated_dup =
         [ "DualSimplexVolume", "structsil_1_1exterior_1_1DualSimplexVolume.html", null ],
         [ "FillReconstructionOperatorMem", "structsil_1_1exterior_1_1FillReconstructionOperatorMem.html", "structsil_1_1exterior_1_1FillReconstructionOperatorMem" ],
         [ "FillReductionOperatorMem", "structsil_1_1exterior_1_1FillReductionOperatorMem.html", "structsil_1_1exterior_1_1FillReductionOperatorMem" ],
+        [ "Form", "classsil_1_1exterior_1_1Form.html", "classsil_1_1exterior_1_1Form" ],
+        [ "Form< double >", "classsil_1_1exterior_1_1Form_3_01double_01_4.html", "classsil_1_1exterior_1_1Form_3_01double_01_4" ],
+        [ "GaussLegendreQuadrature", "structsil_1_1exterior_1_1GaussLegendreQuadrature.html", null ],
         [ "IdentityTransport", "structsil_1_1exterior_1_1IdentityTransport.html", "structsil_1_1exterior_1_1IdentityTransport" ],
         [ "IndexForCodifferentialOfCoboundaryInLaplacian", "structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html", null ],
         [ "InteriorProduct", "structsil_1_1exterior_1_1InteriorProduct.html", "structsil_1_1exterior_1_1InteriorProduct" ],
@@ -73,6 +79,8 @@ var annotated_dup =
         [ "LeviCivitaContinuousHodgeStar", "classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar.html", "classsil_1_1exterior_1_1LeviCivitaContinuousHodgeStar" ],
         [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
         [ "LocalChainIterator", "classsil_1_1exterior_1_1LocalChainIterator.html", "classsil_1_1exterior_1_1LocalChainIterator" ],
+        [ "OperatorActingOnCochainInPlaceOfForm", "classsil_1_1exterior_1_1OperatorActingOnCochainInPlaceOfForm.html", "classsil_1_1exterior_1_1OperatorActingOnCochainInPlaceOfForm" ],
+        [ "OperatorActingOnFormInPlaceOfCochain", "classsil_1_1exterior_1_1OperatorActingOnFormInPlaceOfCochain.html", "classsil_1_1exterior_1_1OperatorActingOnFormInPlaceOfCochain" ],
         [ "Reconstruction", "structsil_1_1exterior_1_1Reconstruction.html", "structsil_1_1exterior_1_1Reconstruction" ],
         [ "Reduction", "structsil_1_1exterior_1_1Reduction.html", "structsil_1_1exterior_1_1Reduction" ],
         [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ],
@@ -82,6 +90,13 @@ var annotated_dup =
         [ "StencilIndex", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1StencilIndex", "namespacesil_1_1exterior_structsil_1_1exterior_1_1StencilIndex_dup" ],
         [ "TransposedCoboundary", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1TransposedCoboundary", null ],
         [ "TransposedCoboundary< TagToAddToCochain, CochainTag >", "structsil_1_1exterior_1_1TransposedCoboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html", null ],
+        [ "VertexFormBilinearComposition", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1VertexFormBilinearComposition", "namespacesil_1_1exterior_structsil_1_1exterior_1_1VertexFormBilinearComposition_dup" ],
+        [ "VertexFormProjection", "structsil_1_1exterior_1_1VertexFormProjection.html", null ],
+        [ "VertexFormProjectionField", "classsil_1_1exterior_1_1VertexFormProjectionField.html", "classsil_1_1exterior_1_1VertexFormProjectionField" ],
+        [ "VertexFormReconstruction", "structsil_1_1exterior_1_1VertexFormReconstruction.html", null ],
+        [ "VertexFormReconstructionField", "classsil_1_1exterior_1_1VertexFormReconstructionField.html", "classsil_1_1exterior_1_1VertexFormReconstructionField" ],
+        [ "VertexQuadrature", "structsil_1_1exterior_1_1VertexQuadrature.html", null ],
+        [ "VertexReconstructedDerivative", "classsil_1_1exterior_1_1VertexReconstructedDerivative.html", "classsil_1_1exterior_1_1VertexReconstructedDerivative" ],
         [ "WeightedLeviCivitaDiscreteHodgeStar", "classsil_1_1exterior_1_1WeightedLeviCivitaDiscreteHodgeStar.html", "classsil_1_1exterior_1_1WeightedLeviCivitaDiscreteHodgeStar" ]
       ] ],
       [ "mesher", "namespacesil_1_1mesher.html", [
@@ -155,7 +170,6 @@ var annotated_dup =
         [ "elasticity", "namespacesimilie_1_1physics_1_1elasticity.html", [
           [ "CauchyStress2D", "structsimilie_1_1physics_1_1elasticity_1_1CauchyStress2D.html", "structsimilie_1_1physics_1_1elasticity_1_1CauchyStress2D" ],
           [ "DisplacementToStrain", "structsimilie_1_1physics_1_1elasticity_1_1DisplacementToStrain.html", null ],
-          [ "ElasticMaterialHodge2D", "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html", "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D" ],
           [ "Strain2D", "structsimilie_1_1physics_1_1elasticity_1_1Strain2D.html", "structsimilie_1_1physics_1_1elasticity_1_1Strain2D" ],
           [ "StrainTensorIndex", "structsimilie_1_1physics_1_1elasticity_1_1StrainTensorIndex.html", null ]
         ] ],
@@ -172,9 +186,7 @@ var annotated_dup =
           [ "ResistiveMagnetodynamics", "classsimilie_1_1physics_1_1magnetodynamics_1_1ResistiveMagnetodynamics.html", "classsimilie_1_1physics_1_1magnetodynamics_1_1ResistiveMagnetodynamics" ]
         ] ],
         [ "magnetostatics", "namespacesimilie_1_1physics_1_1magnetostatics.html", [
-          [ "MagneticVectorPotentialToMagneticInduction", "namespacesimilie_1_1physics_1_1magnetostatics.html#classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction", null ],
-          [ "MagneticVectorPotentialToMagneticInduction< SpatialIndex... >", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4" ],
-          [ "OrthogonalPlaneIndex", "structsimilie_1_1physics_1_1magnetostatics_1_1OrthogonalPlaneIndex.html", null ]
+          [ "MagneticFormResponse", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticFormResponse.html", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticFormResponse" ]
         ] ],
         [ "CombinePhysics", "namespacesimilie_1_1physics.html#classsimilie_1_1physics_1_1CombinePhysics", null ],
         [ "CombinePhysics< First, Rest... >", "classsimilie_1_1physics_1_1CombinePhysics_3_01First_00_01Rest_8_8_8_01_4.html", "classsimilie_1_1physics_1_1CombinePhysics_3_01First_00_01Rest_8_8_8_01_4" ],

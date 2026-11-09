@@ -11,6 +11,6 @@ var namespacegenerate__cpp__hamiltonian =
     [ "_render_constructor_signature", "namespacegenerate__cpp__hamiltonian.html#a5301af1851edc655dfe79bdc9bc529b8", null ],
     [ "_render_constructor_initializers", "namespacegenerate__cpp__hamiltonian.html#a4e9df2b5a1984e3b053f902b29fb6f61", null ],
     [ "_render_state_component_method", "namespacegenerate__cpp__hamiltonian.html#aa51a54140a261268a8d0ca6e35c11a81", null ],
-    [ "write_cpp_hamiltonian_header", "namespacegenerate__cpp__hamiltonian.html#aef7bc23f7b90eed59cb3fb43c810c0d4", null ],
+    [ "write_cpp_hamiltonian_header", "namespacegenerate__cpp__hamiltonian.html#a2b37a0cd1e93121a3f9248f091efcd0d", null ],
     [ "generate_cpp_hamiltonian", "namespacegenerate__cpp__hamiltonian.html#a89d80d2090308b4525a4349e10876f02", null ]
 ];

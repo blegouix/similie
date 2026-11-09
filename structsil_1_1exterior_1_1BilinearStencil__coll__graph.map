@@ -1,0 +1,5 @@
+<map id="sil::exterior::BilinearStencil&lt; Index, First, Second, Target, FirstRadius, SecondRadius &gt;" name="sil::exterior::BilinearStencil&lt; Index, First, Second, Target, FirstRadius, SecondRadius &gt;">
+<area shape="rect" id="Node000001" title="Homogeneous bilinear coefficients, ordered output, first point/component, second point/component (sec..." alt="" coords="5,177,213,312"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="38,5,181,115"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,115,112,161,107,161,107,115"/>
+</map>

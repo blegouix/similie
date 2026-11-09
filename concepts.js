@@ -2,13 +2,25 @@ var concepts =
 [
     [ "sil", "namespacesil.html", [
       [ "exterior", "namespacesil_1_1exterior.html", [
+        [ "CochainType", "conceptsil_1_1exterior_1_1CochainType.html", null ],
         [ "CoboundaryConcept", "conceptsil_1_1exterior_1_1CoboundaryConcept.html", null ],
         [ "DiscreteHodgeStarConcept", "conceptsil_1_1exterior_1_1DiscreteHodgeStarConcept.html", null ],
         [ "ContinuousHodgeStarConcept", "conceptsil_1_1exterior_1_1ContinuousHodgeStarConcept.html", null ],
+        [ "ExteriorFieldType", "conceptsil_1_1exterior_1_1ExteriorFieldType.html", null ],
+        [ "OperatorInputType", "conceptsil_1_1exterior_1_1OperatorInputType.html", null ],
+        [ "OperatorOutputType", "conceptsil_1_1exterior_1_1OperatorOutputType.html", null ],
         [ "LocalOperatorConcept", "conceptsil_1_1exterior_1_1LocalOperatorConcept.html", null ],
         [ "StagedOperatorConcept", "conceptsil_1_1exterior_1_1StagedOperatorConcept.html", null ],
         [ "StagingStorageConcept", "conceptsil_1_1exterior_1_1StagingStorageConcept.html", null ],
-        [ "StageableOperatorConcept", "conceptsil_1_1exterior_1_1StageableOperatorConcept.html", null ]
+        [ "LinearStagedOperatorConcept", "conceptsil_1_1exterior_1_1LinearStagedOperatorConcept.html", null ],
+        [ "LinearStagingStorageConcept", "conceptsil_1_1exterior_1_1LinearStagingStorageConcept.html", null ],
+        [ "BilinearStagingStorageConcept", "conceptsil_1_1exterior_1_1BilinearStagingStorageConcept.html", null ],
+        [ "BilinearStagedOperatorConcept", "conceptsil_1_1exterior_1_1BilinearStagedOperatorConcept.html", null ],
+        [ "StageableOperatorConcept", "conceptsil_1_1exterior_1_1StageableOperatorConcept.html", null ],
+        [ "LinearStageableOperatorConcept", "conceptsil_1_1exterior_1_1LinearStageableOperatorConcept.html", null ],
+        [ "BilinearStageableOperatorConcept", "conceptsil_1_1exterior_1_1BilinearStageableOperatorConcept.html", null ],
+        [ "FormType", "conceptsil_1_1exterior_1_1FormType.html", null ],
+        [ "TensorFormType", "conceptsil_1_1exterior_1_1TensorFormType.html", null ]
       ] ],
       [ "misc", "namespacesil_1_1misc.html", [
         [ "Specialization", "conceptsil_1_1misc_1_1Specialization.html", null ],
@@ -26,10 +38,6 @@ var concepts =
     ] ],
     [ "similie", "namespacesimilie.html", [
       [ "physics", "namespacesimilie_1_1physics.html", [
-        [ "magnetostatics", "namespacesimilie_1_1physics_1_1magnetostatics.html", [
-          [ "TwoDimensional", "conceptsimilie_1_1physics_1_1magnetostatics_1_1TwoDimensional.html", null ],
-          [ "ThreeDimensional", "conceptsimilie_1_1physics_1_1magnetostatics_1_1ThreeDimensional.html", null ]
-        ] ],
         [ "PhysicsConcept", "conceptsimilie_1_1physics_1_1PhysicsConcept.html", null ],
         [ "HamiltonianPhysicsConcept", "conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html", null ],
         [ "HamiltonEquationsConcept", "conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html", null ],

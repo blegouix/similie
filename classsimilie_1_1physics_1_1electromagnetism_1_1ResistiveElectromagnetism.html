@@ -164,10 +164,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a8de1f6267cb888c875a94fb9c2e61fcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa222e576d5add83b9c71f2b9b4fb9033" id="r_aa222e576d5add83b9c71f2b9b4fb9033"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION Vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa222e576d5add83b9c71f2b9b4fb9033">conduction_current</a> (Vector const &amp;velocity, Vector const &amp;displacement, Vector const &amp;induction) const</td></tr>
 <tr class="separator:aa222e576d5add83b9c71f2b9b4fb9033"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49fbccbc9388a81a4c0c25276d7f9229" id="r_a49fbccbc9388a81a4c0c25276d7f9229"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION Vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a49fbccbc9388a81a4c0c25276d7f9229">current</a> (double charge_density, Vector const &amp;velocity, Vector const &amp;displacement, Vector const &amp;induction) const</td></tr>
-<tr class="separator:a49fbccbc9388a81a4c0c25276d7f9229"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6145b99e3d796fa1a84bc838f064b07c" id="r_a6145b99e3d796fa1a84bc838f064b07c"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6145b99e3d796fa1a84bc838f064b07c">ohmic_heating</a> (Vector const &amp;velocity, Vector const &amp;displacement, Vector const &amp;induction) const</td></tr>
-<tr class="separator:a6145b99e3d796fa1a84bc838f064b07c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59bfdeabea2eb9a76fa5abfa4202d2ec" id="r_a59bfdeabea2eb9a76fa5abfa4202d2ec"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION Vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a59bfdeabea2eb9a76fa5abfa4202d2ec">current</a> (Scalar const &amp;charge_density, Vector const &amp;velocity, Vector const &amp;displacement, Vector const &amp;induction) const</td></tr>
+<tr class="separator:a59bfdeabea2eb9a76fa5abfa4202d2ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac686f2b5d1d92d0807589c410e6a7c16" id="r_ac686f2b5d1d92d0807589c410e6a7c16"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION Scalar&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac686f2b5d1d92d0807589c410e6a7c16">ohmic_heating</a> (Vector const &amp;velocity, Vector const &amp;displacement, Vector const &amp;induction) const</td></tr>
+<tr class="separator:ac686f2b5d1d92d0807589c410e6a7c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a66bacc555ab5df64d9facdc9c2f8da" id="r_a7a66bacc555ab5df64d9facdc9c2f8da"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7a66bacc555ab5df64d9facdc9c2f8da">charge_relaxation_rate</a> () const</td></tr>
 <tr class="separator:a7a66bacc555ab5df64d9facdc9c2f8da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -255,8 +255,8 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a49fbccbc9388a81a4c0c25276d7f9229" name="a49fbccbc9388a81a4c0c25276d7f9229"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a49fbccbc9388a81a4c0c25276d7f9229">&#9670;&#160;</a></span>current()</h2>
+<a id="a59bfdeabea2eb9a76fa5abfa4202d2ec" name="a59bfdeabea2eb9a76fa5abfa4202d2ec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59bfdeabea2eb9a76fa5abfa4202d2ec">&#9670;&#160;</a></span>current()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -267,7 +267,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="memname">KOKKOS_FUNCTION Vector similie::physics::electromagnetism::ResistiveElectromagnetism::current </td>
           <td>(</td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>charge_density</em></span>, </td>
+          <td class="paramtype">Scalar const &amp;</td>          <td class="paramname"><span class="paramname"><em>charge_density</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -296,8 +296,8 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a6145b99e3d796fa1a84bc838f064b07c" name="a6145b99e3d796fa1a84bc838f064b07c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6145b99e3d796fa1a84bc838f064b07c">&#9670;&#160;</a></span>ohmic_heating()</h2>
+<a id="ac686f2b5d1d92d0807589c410e6a7c16" name="ac686f2b5d1d92d0807589c410e6a7c16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac686f2b5d1d92d0807589c410e6a7c16">&#9670;&#160;</a></span>ohmic_heating()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -306,7 +306,7 @@ Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION double similie::physics::electromagnetism::ResistiveElectromagnetism::ohmic_heating </td>
+          <td class="memname">KOKKOS_FUNCTION Scalar similie::physics::electromagnetism::ResistiveElectromagnetism::ohmic_heating </td>
           <td>(</td>
           <td class="paramtype">Vector const &amp;</td>          <td class="paramname"><span class="paramname"><em>velocity</em></span>, </td>
         </tr>
@@ -328,7 +328,7 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="resistive__electromagnetism_8hpp_source.html#l00048">48</a> of file <a class="el" href="resistive__electromagnetism_8hpp_source.html">resistive_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resistive__electromagnetism_8hpp_source.html#l00049">49</a> of file <a class="el" href="resistive__electromagnetism_8hpp_source.html">resistive_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>
@@ -355,7 +355,7 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="resistive__electromagnetism_8hpp_source.html#l00056">56</a> of file <a class="el" href="resistive__electromagnetism_8hpp_source.html">resistive_electromagnetism.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resistive__electromagnetism_8hpp_source.html#l00054">54</a> of file <a class="el" href="resistive__electromagnetism_8hpp_source.html">resistive_electromagnetism.hpp</a>.</p>
 
 </div>
 </div>

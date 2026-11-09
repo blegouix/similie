@@ -132,21 +132,25 @@ $(function(){initNavTree('conceptsil_1_1exterior_1_1CoboundaryConcept.html','');
 <p><code>#include &lt;<a class="el" href="exterior_2concepts_8hpp_source.html">concepts.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Operator, <span class="keyword">class</span> Output, <span class="keyword">class</span> Evaluator, <span class="keyword">class</span> Chain, <span class="keyword">class</span> LowerChain, <span class="keyword">class</span> Element, <span class="keyword">class</span> NaturalElement&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">sil::exterior::CoboundaryConcept</a> =  <span class="keyword">requires</span>(</div>
-<div class="line">        Output <span class="keyword">const</span>&amp; output,</div>
-<div class="line">        Evaluator <span class="keyword">const</span>&amp; evaluator,</div>
-<div class="line">        <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a> <span class="keyword">const</span>&amp; chain,</div>
-<div class="line">        LowerChain <span class="keyword">const</span>&amp; lower_chain,</div>
-<div class="line">        Element element,</div>
-<div class="line">        NaturalElement natural_element) {</div>
-<div class="line">    Operator::value(chain, lower_chain, element, natural_element);</div>
-<div class="line">    { Operator::operator()(output, evaluator, chain, lower_chain, element) } -&gt; std::same_as&lt;void&gt;;</div>
-<div class="line">}</div>
-<div class="ttc" id="aconceptsil_1_1exterior_1_1CoboundaryConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">sil::exterior::CoboundaryConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00052">exterior/concepts.hpp:52</a></div></div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">sil::exterior::CoboundaryConcept</a> =  <a class="code hl_concept" href="conceptsil_1_1exterior_1_1CochainType.html">CochainType&lt;Output&gt;</a></div>
+<div class="line">          &amp;&amp; <span class="keyword">requires</span>(</div>
+<div class="line">                  Output <span class="keyword">const</span>&amp; output,</div>
+<div class="line">                  Evaluator <span class="keyword">const</span>&amp; evaluator,</div>
+<div class="line">                  <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a> <span class="keyword">const</span>&amp; chain,</div>
+<div class="line">                  LowerChain <span class="keyword">const</span>&amp; lower_chain,</div>
+<div class="line">                  Element element,</div>
+<div class="line">                  NaturalElement natural_element) {</div>
+<div class="line">                 Operator::value(chain, lower_chain, element, natural_element);</div>
+<div class="line">                 {</div>
+<div class="line">                     Operator::operator()(output, evaluator, chain, lower_chain, element)</div>
+<div class="line">                 } -&gt; std::same_as&lt;void&gt;;</div>
+<div class="line">             }</div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1CoboundaryConcept_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1CoboundaryConcept.html">sil::exterior::CoboundaryConcept</a></div><div class="ttdef"><b>Definition</b> <a href="exterior_2concepts_8hpp_source.html#l00060">exterior/concepts.hpp:61</a></div></div>
+<div class="ttc" id="aconceptsil_1_1exterior_1_1CochainType_html"><div class="ttname"><a href="conceptsil_1_1exterior_1_1CochainType.html">sil::exterior::CochainType</a></div><div class="ttdef"><b>Definition</b> <a href="cochain_8hpp_source.html#l00258">cochain.hpp:258</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a44d7a21937a15c4687c17dbb94778c2f"><div class="ttname"><a href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">sil::exterior::Chain</a></div><div class="ttdeci">Chain(Head, Tail...) -&gt; Chain&lt; typename Head::value_type, typename Head::array_layout, typename Head::memory_space &gt;</div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="exterior_2concepts_8hpp_source.html#l00052">52</a> of file <a class="el" href="exterior_2concepts_8hpp_source.html">exterior/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="exterior_2concepts_8hpp_source.html#l00060">60</a> of file <a class="el" href="exterior_2concepts_8hpp_source.html">exterior/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

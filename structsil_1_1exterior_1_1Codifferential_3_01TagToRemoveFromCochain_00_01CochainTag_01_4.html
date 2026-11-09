@@ -147,10 +147,10 @@ Collaboration diagram for sil::exterior::Codifferential&lt; TagToRemoveFromCocha
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a3829d6f9bdee35effc11a8ac3e2a0d2c" id="r_a3829d6f9bdee35effc11a8ac3e2a0d2c"><td class="memTemplParams" colspan="2">template&lt;class Output , class DualEvaluator , class InverseHodge , class <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> , class LowerChain , class Element &gt; </td></tr>
+<tr class="memitem:a3829d6f9bdee35effc11a8ac3e2a0d2c" id="r_a3829d6f9bdee35effc11a8ac3e2a0d2c"><td class="memTemplParams" colspan="2">template&lt;CochainType Output, class DualEvaluator , class InverseHodge , class <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> , class LowerChain , class Element &gt; </td></tr>
 <tr class="memitem:a3829d6f9bdee35effc11a8ac3e2a0d2c"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3829d6f9bdee35effc11a8ac3e2a0d2c">operator()</a> (Output output, DualEvaluator const &amp;evaluate_dual, InverseHodge const &amp;inverse_hodge, <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> const &amp;chain, LowerChain const &amp;lower_chain, Element elem)</td></tr>
 <tr class="separator:a3829d6f9bdee35effc11a8ac3e2a0d2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a311e5bd1be8d4e680b1cb5bdee2c1f9e" id="r_a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="memTemplParams" colspan="2">template&lt;class Geometry , class Field , class Element , class Rules &gt; <br />
+<tr class="memitem:a311e5bd1be8d4e680b1cb5bdee2c1f9e" id="r_a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="memTemplParams" colspan="2">template&lt;class Geometry , CochainType Field, class Element , class Rules &gt; <br />
 requires requires(Geometry const&amp; geometry) { geometry.forward; geometry.inverse; }</td></tr>
 <tr class="memitem:a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FORCEINLINE_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a311e5bd1be8d4e680b1cb5bdee2c1f9e">value</a> (Geometry const &amp;geometry, Field const &amp;input, Element element, Rules const &amp;rules)</td></tr>
 <tr class="memdesc:a311e5bd1be8d4e680b1cb5bdee2c1f9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Complete cochain stencil, with geometry and closure supplied separately.  <br /></td></tr>
@@ -170,7 +170,7 @@ requires requires { typename DualField::non_indices_domain_t; }</td></tr>
 struct sil::exterior::Codifferential&lt; TagToRemoveFromCochain, CochainTag &gt;</div><p>Pointwise codifferential with independently supplied Hodge operators. </p>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. The evaluator samples the dual cochain *u, including its boundary policies. The inverse Hodge maps its transposed coboundary back to a primal (k-1)-form. Both geometric realizations use delta = (-1)^(n(k+1)+1) *^-1 d^T *; incidence and the sign are independent of the chosen Hodge discretization. Callbacks permit stored dual tensors and lazy constitutive cochains alike. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00145">145</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00132">132</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a3829d6f9bdee35effc11a8ac3e2a0d2c" name="a3829d6f9bdee35effc11a8ac3e2a0d2c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3829d6f9bdee35effc11a8ac3e2a0d2c">&#9670;&#160;</a></span>operator()()</h2>
@@ -180,7 +180,7 @@ struct sil::exterior::Codifferential&lt; TagToRemoveFromCochain, CochainTag &gt;
 <div class="memtemplate">
 template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag&gt; </div>
 <div class="memtemplate">
-template&lt;class Output , class DualEvaluator , class InverseHodge , class <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> , class LowerChain , class Element &gt; </div>
+template&lt;CochainType Output, class DualEvaluator , class InverseHodge , class <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> , class LowerChain , class Element &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -223,7 +223,7 @@ template&lt;class Output , class DualEvaluator , class InverseHodge , class <a c
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00154">154</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00141">141</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -235,7 +235,7 @@ template&lt;class Output , class DualEvaluator , class InverseHodge , class <a c
 <div class="memtemplate">
 template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag&gt; </div>
 <div class="memtemplate">
-template&lt;class Geometry , class Field , class Element , class Rules &gt; <br />
+template&lt;class Geometry , CochainType Field, class Element , class Rules &gt; <br />
 requires requires(Geometry const&amp; geometry) { geometry.forward; geometry.inverse; }</div>
 <table class="mlabels">
   <tr>
@@ -272,7 +272,7 @@ requires requires(Geometry const&amp; geometry) { geometry.forward; geometry.inv
 <p>Complete cochain stencil, with geometry and closure supplied separately. </p>
 <dl class="section important"><dt>Important</dt><dd>This documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00187">187</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00178">178</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -316,7 +316,7 @@ requires (CochainTag::rank() == 1)</div>
 <p>Scalar codifferential coefficients on the incident dual faces. </p>
 <p>Spatial stencil coordinates are offsets plus one, with the center at one. </p><dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00253">253</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00244">244</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -362,7 +362,7 @@ requires requires { typename DualField::non_indices_domain_t; }</div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00307">307</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00299">299</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
