@@ -8,6 +8,7 @@
 #include <cmath>
 #include <type_traits>
 
+#include <similie/exterior/form.hpp>
 #include <similie/physics/concepts.hpp>
 #include <similie/physics/coupling/magnetic_coupling_physics.hpp>
 
@@ -23,7 +24,8 @@ namespace similie::physics::magnetodynamics {
 class Magnetodynamics
 {
 public:
-    using Vector = std::array<double, 3>;
+    using Scalar = sil::exterior::Form<double>;
+    using Vector = sil::exterior::Form<std::array<double, 3>>;
     using Tensor = std::array<std::array<double, 3>, 3>;
     static constexpr std::size_t N = 3;
     static constexpr bool IS_LINEAR = true;
@@ -46,20 +48,20 @@ public:
         }
         return result;
     }
-    KOKKOS_FUNCTION static double dot(Vector const& left, Vector const& right)
+    KOKKOS_FUNCTION static Scalar dot(Vector const& left, Vector const& right)
     {
         double result = 0;
         for (int a = 0; a < 3; ++a)
             result += left[a] * right[a];
-        return result;
+        return Scalar(result);
     }
-    KOKKOS_FUNCTION double hamiltonian(Vector const& induction) const
+    KOKKOS_FUNCTION Scalar hamiltonian(Vector const& induction) const
     {
-        return @energy@;
+        return Scalar(@energy@);
     }
-    KOKKOS_FUNCTION double magnetic_energy(Vector const& induction) const
+    KOKKOS_FUNCTION Scalar magnetic_energy(Vector const& induction) const
     {
-        return hamiltonian(induction);
+        return Scalar(hamiltonian(induction));
     }
     KOKKOS_FUNCTION Vector magnetic_field(Vector const& induction) const
     {
@@ -88,7 +90,7 @@ public:
     }
     KOKKOS_FUNCTION Vector lorentz_force(Vector const& current, Vector const& induction) const
     {
-        return coupling::MagneticCouplingPhysics()({0, {}, induction, current}).momentum_source;
+        return coupling::MagneticCouplingPhysics()({Scalar(0), {}, induction, current}).momentum_source;
     }
     KOKKOS_FUNCTION Tensor momentum_flux(Vector const& induction) const
     {
@@ -104,9 +106,9 @@ public:
     {
         return cross(electric, magnetic_field(induction));
     }
-    KOKKOS_FUNCTION double ohmic_heating([[maybe_unused]] Vector const& current) const
+    KOKKOS_FUNCTION Scalar ohmic_heating([[maybe_unused]] Vector const& current) const
     {
-        return 0;
+        return Scalar(0);
     }
     KOKKOS_FUNCTION double magnetic_diffusivity() const
     {

@@ -557,12 +557,12 @@ void check_2d(
     auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
     auto staged = sil::exterior::make_laplacian<Metric, Direction, Scalar, CachedHodgeStar>(
             Kokkos::DefaultExecutionSpace {},
-            sil::tensor::Tensor(output),
-            sil::tensor::Tensor(device_potential),
+            sil::exterior::Cochain(sil::tensor::Tensor(output)),
+            sil::exterior::Cochain(sil::tensor::Tensor(device_potential)),
             sil::tensor::Tensor(metric),
             sil::tensor::Tensor(device_position));
-    staged(sil::tensor::Tensor(output),
-           sil::tensor::Tensor(device_potential),
+    staged(sil::exterior::Cochain(sil::tensor::Tensor(output)),
+           sil::exterior::Cochain(sil::tensor::Tensor(device_potential)),
            sil::tensor::NaturalScalarExtrapolationRule {},
            sil::tensor::ZeroExtrapolationRule {});
     auto output_host = ddc::
@@ -591,8 +591,8 @@ void check_2d(
                 ddc::DeviceAllocator<double>());
         sil::exterior::deriv<Direction, Scalar>(
                 Kokkos::DefaultExecutionSpace {},
-                sil::tensor::Tensor(gradient),
-                sil::tensor::Tensor(device_potential),
+                sil::exterior::Cochain(sil::tensor::Tensor(gradient)),
+                sil::exterior::Cochain(sil::tensor::Tensor(device_potential)),
                 sil::tensor::NaturalScalarExtrapolationRule {});
         auto const hodge = sil::exterior::make_dual_hodge_cochain<Direction>(
                 sil::tensor::Tensor(gradient),

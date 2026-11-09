@@ -16,7 +16,7 @@
 #include <similie/tensor/tensor_indices/prime.hpp>
 #include <similie/tensor/tensor_indices/relabelization.hpp>
 #include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
-#include <similie/tensor/tensor_prod/tensor_prod.hpp>
+#include <similie/tensor/tensor_prod.hpp>
 
 namespace sil {
 

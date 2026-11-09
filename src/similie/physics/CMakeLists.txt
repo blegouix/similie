@@ -255,6 +255,7 @@ add_custom_target(similie_physics_generated
 
 add_library(physics INTERFACE)
 add_dependencies(physics similie_physics_generated)
+target_link_libraries(physics INTERFACE sil::exterior)
 target_include_directories(physics
     INTERFACE
         "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>"

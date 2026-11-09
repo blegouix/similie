@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # AI-GENERATED
 
-"""Check convergence of the constraint-preserving Taylor-Green initial field."""
+"""Check second-order convergence of the constraint-preserving initial field."""
 
 import re
 import subprocess
@@ -31,6 +31,6 @@ def initial_error(executable, nodes):
 
 coarse = initial_error(sys.argv[1], 8)
 fine = initial_error(sys.argv[1], 16)
-if not 0 < fine < 0.6 * coarse:
+if not 0 < fine < 0.35 * coarse:
     raise AssertionError(f"Initial velocity does not converge: {coarse=}, {fine=}")
 print(f"Constraint-preserving initial velocity converges: {coarse=}, {fine=}")

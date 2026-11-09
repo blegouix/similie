@@ -64,7 +64,11 @@ void reconstruct_potential_patch(
         Kokkos::View<double* [2]> const& differences,
         Kokkos::View<double* [4]> const& cells)
 {
-    sil::exterior::deriv<GradientIndex, PotentialIndex>(exec, gradient, field, rules);
+    sil::exterior::deriv<GradientIndex, PotentialIndex>(
+            exec,
+            sil::exterior::Cochain(gradient),
+            sil::exterior::Cochain(field),
+            rules);
     ddc::parallel_for_each(
             "reconstruct_potential_patch",
             exec,
@@ -549,8 +553,11 @@ inline Result run(
             flux(elem, flux.accessor().template access_element<Y>()) = -inputs.density * v[0];
             cut += Edge(elem, ddc::DiscreteVector<GridX, GridY>(0, 1));
         }
-        return sil::exterior::integrate<ddc::TypeSeq<
-                GradientIndex>>(Kokkos::DefaultHostExecutionSpace(), flux, positions, cut);
+        return sil::exterior::integrate<ddc::TypeSeq<GradientIndex>>(
+                Kokkos::DefaultHostExecutionSpace(),
+                sil::exterior::Form(flux),
+                positions,
+                cut);
     };
     double const flow0 = mass_flow(base_samples);
     double const flow1 = mass_flow(response_samples);

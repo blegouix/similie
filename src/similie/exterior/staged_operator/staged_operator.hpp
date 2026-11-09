@@ -5,6 +5,7 @@
 #pragma once
 
 #include <similie/exterior/concepts.hpp>
+#include <similie/exterior/staged_operator/bilinear_operator_storage.hpp>
 #include <similie/exterior/staged_operator/local_operator_storage.hpp>
 #include <similie/exterior/staged_operator/spatial_operator_storage.hpp>
 
@@ -38,14 +39,27 @@ public:
     }
 
     template <class Output, class Input>
-        requires StagingStorageConcept<Storage, Output, Input>
+        requires(
+                LinearStagingStorageConcept<Storage, Output, Input>
+                && OperatorInputType<Operator, Input> && OperatorOutputType<Operator, Output>)
     Output operator()(Output const& output, Input const& input) const
     {
         return m_storage.apply(m_exec(), output, input);
     }
 
+    template <class Output, class First, class Second>
+        requires(
+                BilinearStagingStorageConcept<Storage, Output, First, Second>
+                && OperatorInputType<Operator, First> && OperatorInputType<Operator, Second>
+                && OperatorOutputType<Operator, Output>)
+    Output operator()(Output const& output, First const& first, Second const& second) const
+    {
+        return m_storage.apply(m_exec(), output, first, second);
+    }
+
     template <class Output, class Input, class... Arguments>
-        requires(sizeof...(Arguments) > 0 && requires(Storage const& storage, Output const& output,
+        requires(sizeof...(Arguments) > 0 && OperatorInputType<Operator, Input>
+                 && OperatorOutputType<Operator, Output> && requires(Storage const& storage, Output const& output,
                 Input const& input, Arguments const&... arguments) {
             storage.apply_pointwise(output, input, arguments...);
         })

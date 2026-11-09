@@ -34,6 +34,33 @@ struct Stencil
     bool complete = true;
 };
 
+// Historical Stencil includes affine boundary responses; its dynamic action is linear.
+template <class Index, class Source, class Target, std::size_t Radius>
+using LinearStencil = Stencil<Index, Source, Target, Radius>;
+
+/** Homogeneous bilinear coefficients, ordered output, first point/component,
+ * second point/component (second component varies fastest). Boundary closures
+ * must be folded into these coefficients by value(); inhomogeneous closures
+ * generally require additional linear and constant terms and are not represented.
+ * \important This operator and documentation is fully AI-generated.
+ */
+template <
+        class Index,
+        class First,
+        class Second,
+        class Target,
+        std::size_t FirstRadius,
+        std::size_t SecondRadius>
+struct BilinearStencil
+{
+    static constexpr std::size_t first_size
+            = detail::StencilShape<Index, FirstRadius>::size * First::mem_size();
+    static constexpr std::size_t second_size
+            = detail::StencilShape<Index, SecondRadius>::size * Second::mem_size();
+    std::array<double, Target::mem_size() * first_size * second_size> weights {};
+    bool complete = true;
+};
+
 namespace detail {
 
 // Static tensor coefficients, without spatial dimensions or heap allocation.

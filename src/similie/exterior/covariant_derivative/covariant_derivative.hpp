@@ -52,6 +52,34 @@ public:
             Sampler sampler,
             Transport transport = {})
     {
+        // Local arrays live in the calling execution space. In a CUDA build,
+        // host-side assembly must not label its stack storage as CudaSpace.
+        KOKKOS_IF_ON_HOST(
+                (return cochain_value_impl<
+                                Degree,
+                                Rank,
+                                Kokkos::HostSpace>(directions, vertex, sampler, transport);))
+        KOKKOS_IF_ON_DEVICE(
+                (return cochain_value_impl<
+                                Degree,
+                                Rank,
+                                typename Kokkos::DefaultExecutionSpace::
+                                        memory_space>(directions, vertex, sampler, transport);))
+    }
+
+private:
+    template <
+            std::size_t Degree,
+            std::size_t Rank,
+            class MemorySpace,
+            class Sampler,
+            class Transport>
+    [[nodiscard]] KOKKOS_FUNCTION static auto cochain_value_impl(
+            std::array<std::size_t, Degree + 1> const& directions,
+            std::size_t vertex,
+            Sampler& sampler,
+            Transport& transport)
+    {
         static_assert(Degree < sizeof...(SpatialIndex));
         static_assert(Rank > 0);
         std::array<double, Rank> result {};
@@ -72,7 +100,7 @@ public:
         }
         Simplex<Degree + 1, SpatialIndex...> const
                 cell(std::integral_constant<std::size_t, Degree + 1> {}, base, vector);
-        auto const faces = boundary<typename Kokkos::DefaultExecutionSpace::memory_space>(cell);
+        auto const faces = boundary<MemorySpace>(cell);
         std::array<std::array<double, Rank>, 2 * (Degree + 1)> values {};
         std::size_t face_id = 0;
         for (auto face = faces.begin(); face < faces.end(); ++face, ++face_id) {
@@ -82,7 +110,13 @@ public:
                 face_mask |= std::size_t(ddc::detail::array(face->discrete_vector())[d]) << d;
                 face_vertex |= ddc::detail::array(face->discrete_element())[d] << d;
             }
-            auto const sampled = sampler(face_mask, face_vertex);
+            auto const sample = sampler(face_mask, face_vertex);
+            auto const sampled = [&]() {
+                if constexpr (misc::Specialization<std::remove_cv_t<decltype(sample)>, Cosimplex>)
+                    return sample.value();
+                else
+                    return sample;
+            }();
             if (face_vertex == vertex) {
                 values[face_id] = sampled;
             } else {
@@ -99,17 +133,14 @@ public:
             Kokkos::View<
                     double*,
                     Kokkos::LayoutRight,
-                    typename Kokkos::DefaultExecutionSpace::memory_space,
+                    MemorySpace,
                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
                     span(component.data(), component.size());
-            Cochain<LocalChain<
-                    Simplex<Degree, SpatialIndex...>,
-                    Kokkos::LayoutRight,
-                    typename Kokkos::DefaultExecutionSpace::memory_space>>
+            Cochain<LocalChain<Simplex<Degree, SpatialIndex...>, Kokkos::LayoutRight, MemorySpace>>
                     cochain(faces, span);
             result[a] = cochain.integrate();
         }
-        return result;
+        return Cosimplex(cell, result);
     }
 };
 

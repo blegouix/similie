@@ -5,7 +5,9 @@
 #pragma once
 
 #include <similie/exterior/chain.hpp>
+#include <similie/exterior/cochain.hpp>
 #include <similie/exterior/cochain_indices.hpp>
+#include <similie/exterior/form.hpp>
 #include <similie/exterior/local_chain.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 
@@ -45,7 +47,7 @@ KOKKOS_FUNCTION auto integration_element(SimplexType const& simplex)
  * its orientation supplies the sign. Logical axes must follow the same order
  * in the cell and the cochain index. No metric or cell measure is applied here.
  */
-template <tensor::TensorIndex Index, class CochainTensor, class SimplexType>
+template <tensor::TensorIndex Index, CochainType CochainTensor, class SimplexType>
 KOKKOS_FUNCTION double integrate(CochainTensor const& cochain, SimplexType const& simplex)
 {
     return (simplex.negative() ? -1.0 : 1.0)
@@ -61,7 +63,7 @@ KOKKOS_FUNCTION double integrate(CochainTensor const& cochain, SimplexType const
  * integrating f over the boundary of C. An empty chain integrates to zero.
  * The execution space must be able to access both the chain and the tensor.
  */
-template <tensor::TensorIndex Index, class ExecSpace, class CochainTensor, class ChainType>
+template <tensor::TensorIndex Index, class ExecSpace, CochainType CochainTensor, class ChainType>
 double integrate(ExecSpace const& exec, CochainTensor const& cochain, ChainType const& chain)
 {
     static_assert(
@@ -86,7 +88,11 @@ double integrate(ExecSpace const& exec, CochainTensor const& cochain, ChainType 
  * overload adds no quadrature rule. Use the cochain overload when reduction
  * has already been performed, to avoid applying cell measures twice.
  */
-template <misc::Specialization<ddc::TypeSeq> Indices, class Form, class Position, class SimplexType>
+template <
+        misc::Specialization<ddc::TypeSeq> Indices,
+        FormType Form,
+        class Position,
+        class SimplexType>
 KOKKOS_FUNCTION double integrate(
         Form const& form,
         Position const& position,
@@ -101,7 +107,10 @@ KOKKOS_FUNCTION double integrate(
     using NaturalElement = typename tensor::tensor_accessor_for_domain_t<
             reduction_domain_t<Indices>>::natural_domain_t::discrete_element_type;
     if constexpr (ddc::type_seq_size_v<Indices> == 0) {
-        return integrate<typename Operator::target_index_type>(form, simplex);
+        return (simplex.negative() ? -1.0 : 1.0)
+               * form.get(form.access_element(
+                       simplex.discrete_element(),
+                       detail::integration_element<typename Operator::target_index_type>(simplex)));
     } else {
         // Reduce only this cell's tangent component. Other forward directions may
         // lie outside the domain, for example on an upper boundary face.
@@ -128,7 +137,7 @@ KOKKOS_FUNCTION double integrate(
 template <
         misc::Specialization<ddc::TypeSeq> Indices,
         class ExecSpace,
-        class Form,
+        FormType Form,
         class Position,
         class ChainType>
 double integrate(

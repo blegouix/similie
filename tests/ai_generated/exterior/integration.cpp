@@ -84,7 +84,8 @@ TEST(Integration, ReducedCochainOrientationAndNonzeroOrigin)
                   ddc::DiscreteVector<GridX, GridY>(1, 0),
                   true)});
     EXPECT_DOUBLE_EQ(
-            sil::exterior::integrate<First>(Kokkos::DefaultExecutionSpace(), field, chain),
+            sil::exterior::integrate<
+                    First>(Kokkos::DefaultExecutionSpace(), sil::exterior::Cochain(field), chain),
             7.0);
 }
 
@@ -95,22 +96,30 @@ TEST(Integration, EmptyChainAndZeroForms)
     ddc::parallel_fill(field, 4.0);
     auto empty = device_chain<0>({});
     EXPECT_DOUBLE_EQ(
-            sil::exterior::integrate<Scalar>(Kokkos::DefaultExecutionSpace(), field, empty),
+            sil::exterior::integrate<
+                    Scalar>(Kokkos::DefaultExecutionSpace(), sil::exterior::Cochain(field), empty),
             0.0);
     EXPECT_DOUBLE_EQ(
-            sil::exterior::integrate<
-                    ddc::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), field, field, empty),
+            sil::exterior::integrate<ddc::TypeSeq<>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Form(field),
+                    field,
+                    empty),
             0.0);
     using Point = sil::exterior::Simplex<0, GridX, GridY>;
     auto points = device_chain<0>(
             {Point(ddc::DiscreteElement<GridX, GridY>(2, 3), ddc::DiscreteVector<>()),
              Point(ddc::DiscreteElement<GridX, GridY>(3, 3), ddc::DiscreteVector<>())});
     EXPECT_DOUBLE_EQ(
-            sil::exterior::integrate<Scalar>(Kokkos::DefaultExecutionSpace(), field, points),
+            sil::exterior::integrate<
+                    Scalar>(Kokkos::DefaultExecutionSpace(), sil::exterior::Cochain(field), points),
             8.0);
     EXPECT_DOUBLE_EQ(
-            sil::exterior::integrate<
-                    ddc::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), field, field, points),
+            sil::exterior::integrate<ddc::TypeSeq<>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Form(field),
+                    field,
+                    points),
             8.0);
 }
 
@@ -147,8 +156,11 @@ TEST(Integration, PhysicalFormsUseMappedReduction)
             {Edge(ddc::DiscreteElement<GridX, GridY>(4, 3),
                   ddc::DiscreteVector<GridX, GridY>(0, 1))});
     EXPECT_DOUBLE_EQ(
-            sil::exterior::integrate<
-                    ddc::TypeSeq<First>>(Kokkos::DefaultExecutionSpace(), form, position, edges),
+            sil::exterior::integrate<ddc::TypeSeq<First>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Form(form),
+                    position,
+                    edges),
             1.0);
     using Cell = sil::exterior::Simplex<2, GridX, GridY>;
     auto cells = device_chain<2>(
@@ -156,9 +168,11 @@ TEST(Integration, PhysicalFormsUseMappedReduction)
                   ddc::DiscreteVector<GridX, GridY>(1, 1),
                   true)});
     EXPECT_DOUBLE_EQ(
-            (sil::exterior::integrate<ddc::TypeSeq<
-                     First,
-                     Second>>(Kokkos::DefaultExecutionSpace(), area, position, cells)),
+            (sil::exterior::integrate<ddc::TypeSeq<First, Second>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Form(area),
+                    position,
+                    cells)),
             -8.0);
 }
 
@@ -178,8 +192,8 @@ TEST(Integration, DiscreteStokes)
     ddc::parallel_deepcopy(one, host);
     sil::exterior::deriv<Second, First>(
             Kokkos::DefaultExecutionSpace(),
-            two,
-            one,
+            sil::exterior::Cochain(two),
+            sil::exterior::Cochain(one),
             sil::tensor::ClampExtrapolationRule());
     using Cell = sil::exterior::Simplex<2, GridX, GridY>;
     Cell const
@@ -187,11 +201,14 @@ TEST(Integration, DiscreteStokes)
     auto cells = device_chain<2>({cell});
     auto boundary = sil::exterior::boundary<Kokkos::HostSpace>(cell);
     auto edges = device_chain<1>({boundary[0], boundary[1], boundary[2], boundary[3]});
-    double const boundary_integral
-            = sil::exterior::integrate<First>(Kokkos::DefaultExecutionSpace(), one, edges);
+    double const boundary_integral = sil::exterior::integrate<
+            First>(Kokkos::DefaultExecutionSpace(), sil::exterior::Cochain(one), edges);
     EXPECT_DOUBLE_EQ(boundary_integral, 1.0);
     EXPECT_DOUBLE_EQ(
-            sil::exterior::integrate<Derivative>(Kokkos::DefaultExecutionSpace(), two, cells),
+            sil::exterior::integrate<Derivative>(
+                    Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Cochain(two),
+                    cells),
             boundary_integral);
 }
 

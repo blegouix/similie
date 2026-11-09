@@ -21,7 +21,7 @@
 #include <similie/tensor/tensor_indices/scaling_tensor.hpp>
 #include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
 #include <similie/tensor/tensor_indices/weighted_levi_civita_tensor.hpp>
-#include <similie/tensor/tensor_prod/tensor_prod.hpp>
+#include <similie/tensor/tensor_prod.hpp>
 
 #include "determinant.hpp"
 #include "external_domain_extrapolation_rule.hpp"

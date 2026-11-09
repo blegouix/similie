@@ -38,7 +38,30 @@ if(BUILD_TESTING)
     add_executable(unit_tests_physics_api equations.cpp ../../main.cpp)
     target_link_libraries(unit_tests_physics_api PRIVATE GTest::gtest sil::sil physics)
     gtest_discover_tests(unit_tests_physics_api DISCOVERY_MODE PRE_TEST)
-    add_test(NAME PhysicsAPI.SpatialHamiltonianGenerator
+
+    set(SPATIAL_HAMILTONIAN_HEADER "${CMAKE_CURRENT_BINARY_DIR}/spatial_hamiltonian.hpp")
+    add_custom_command(
+        OUTPUT "${SPATIAL_HAMILTONIAN_HEADER}"
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/generator.py"
-                "${CMAKE_CXX_COMPILER}")
+                "${SPATIAL_HAMILTONIAN_HEADER}"
+        DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/generator.py"
+            "${PROJECT_SOURCE_DIR}/src/similie/physics/generate_cpp_hamiltonian.py"
+        VERBATIM)
+    add_executable(
+        unit_tests_spatial_hamiltonian_generator
+        spatial_hamiltonian_generator.cpp
+        "${SPATIAL_HAMILTONIAN_HEADER}")
+    target_include_directories(
+        unit_tests_spatial_hamiltonian_generator PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+    target_link_libraries(unit_tests_spatial_hamiltonian_generator PRIVATE sil::sil physics)
+    add_test(
+        NAME PhysicsAPI.SpatialHamiltonianGenerator
+        COMMAND unit_tests_spatial_hamiltonian_generator)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(unit_tests_magnetic_forms magnetic_forms.cpp ../../main.cpp)
+    target_link_libraries(unit_tests_magnetic_forms PRIVATE GTest::gtest sil::sil physics)
+    gtest_discover_tests(unit_tests_magnetic_forms DISCOVERY_MODE PRE_TEST)
 endif()

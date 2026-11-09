@@ -32,10 +32,11 @@
 #include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
 #include <similie/exterior/integration/integration.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
+#include <similie/exterior/reduction_and_reconstruction/vertex_reconstructed_derivative.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
-#include <similie/physics/magnetostatics/linear_magnetostatics_constitutive_law.hpp>
+#include <similie/physics/magnetostatics/magnetic_form_response.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -435,8 +436,8 @@ inline std::string format_seconds(double seconds)
 
 inline std::string solve_backend_description(bool use_matrix_free)
 {
-    return use_matrix_free ? "matrix-free preconditioned conjugate-gradient"
-                           : "assembled-matrix Ginkgo preconditioned conjugate-gradient";
+    return use_matrix_free ? "matrix-free preconditioned Krylov"
+                           : "assembled-matrix Ginkgo preconditioned Krylov";
 }
 
 inline std::string solve_start_message(bool use_matrix_free)
@@ -607,10 +608,12 @@ struct Z
 template <class MuTensor>
 using LinearMagnetostaticsHamiltonian
         = physics::magnetostatics::LinearMagnetostaticsHamiltonian<MuTensor, X, Y, Z>;
-using MagneticVectorPotentialToMagneticInduction2D
-        = physics::magnetostatics::MagneticVectorPotentialToMagneticInduction<X, Y>;
-using MagneticVectorPotentialToMagneticInduction3D
-        = physics::magnetostatics::MagneticVectorPotentialToMagneticInduction<X, Y, Z>;
+using PotentialCoboundary2D = sil::exterior::Coboundary<
+        sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>,
+        sil::tensor::ScalarIndex>;
+using PotentialCoboundary3D = sil::exterior::Coboundary<
+        sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>,
+        sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>>;
 using InPlaneIndex = sil::tensor::TensorNaturalIndex<X, Y>;
 
 struct MagneticMoments
@@ -650,11 +653,11 @@ template <class Index, class Equations, class Elem>
 {
     typename Equations::State state {};
     state.moments = {moments.x, moments.y, moments.z};
-    return equations.template dpotential_dt<std::integral_constant<
-            std::size_t,
-            std::is_same_v<Index, X>   ? 0
-            : std::is_same_v<Index, Y> ? 1
-                                       : 2>>(state, elem);
+    return physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+            .field(equations, state, elem)
+                    [std::is_same_v<Index, X>   ? 0
+                     : std::is_same_v<Index, Y> ? 1
+                                                : 2];
 }
 
 template <class RowIndex, class ColumnIndex, class Equations, class Elem>
@@ -665,17 +668,15 @@ template <class RowIndex, class ColumnIndex, class Equations, class Elem>
 {
     typename Equations::State state {};
     state.moments = {moments.x, moments.y, moments.z};
-    return equations.template jacobian<
-            std::integral_constant<
-                    std::size_t,
-                    std::is_same_v<RowIndex, X>   ? 0
-                    : std::is_same_v<RowIndex, Y> ? 1
-                                                  : 2>,
-            std::integral_constant<
-                    std::size_t,
-                    std::is_same_v<ColumnIndex, X>   ? 0
-                    : std::is_same_v<ColumnIndex, Y> ? 1
-                                                     : 2>>(state, elem);
+    return physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+            .jacobian(equations, state, elem)
+                    [3
+                             * (std::is_same_v<RowIndex, X>   ? 0
+                                : std::is_same_v<RowIndex, Y> ? 1
+                                                              : 2)
+                     + (std::is_same_v<ColumnIndex, X>   ? 0
+                        : std::is_same_v<ColumnIndex, Y> ? 1
+                                                         : 2)];
 }
 
 struct DDimX
@@ -699,6 +700,47 @@ struct DDimZ
 using NodeDomain2D = ddc::DiscreteDomain<DDimX, DDimY>;
 using NodeDomain3D = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>;
 using ScalarPotentialIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+
+// Select the physical curl component from the canonical exterior coboundary.
+// The returned coefficients still act on cochains; callers reconstruct fields.
+template <class Index, class PotentialCoboundary, class Elem>
+[[nodiscard]] KOKKOS_FUNCTION auto magnetic_induction_stencil(Elem const& elem)
+{
+    using Source = typename PotentialCoboundary::cochain_tag;
+    using Direction = std::conditional_t<
+            Source::rank() == 0,
+            sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>,
+            sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>>;
+    using Target = sil::exterior::coboundary_index_t<Direction, Source>;
+    using Domain = sil::misc::convert_type_seq_to_t<ddc::DiscreteDomain, ddc::to_type_seq_t<Elem>>;
+    [[maybe_unused]] sil::tensor::TensorAccessor<Target> accessor;
+    typename sil::tensor::TensorAccessor<Target>::discrete_element_type component;
+    if constexpr (Source::rank() == 0) {
+        static_assert(std::is_same_v<Index, X> || std::is_same_v<Index, Y>);
+        if constexpr (std::is_same_v<Index, X>)
+            component = accessor.template access_element<Y>();
+        else
+            component = accessor.template access_element<X>();
+    } else {
+        static_assert(
+                std::is_same_v<Index, X> || std::is_same_v<Index, Y> || std::is_same_v<Index, Z>);
+        if constexpr (std::is_same_v<Index, X>)
+            component = accessor.template access_element<Y, Z>();
+        else if constexpr (std::is_same_v<Index, Y>)
+            component = accessor.template access_element<X, Z>();
+        else
+            component = accessor.template access_element<X, Y>();
+    }
+    auto stencil = PotentialCoboundary::
+            value(sil::exterior::tangent_basis<Target::rank(), Domain>(elem),
+                  sil::exterior::tangent_basis<Source::rank(), Domain>(elem),
+                  elem,
+                  component);
+    if constexpr (std::is_same_v<Index, Y>)
+        stencil *= -1.0;
+    return stencil;
+}
+
 
 template <class... CDim>
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
@@ -1103,48 +1145,24 @@ public:
     }
 };
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 class MagnetostaticsOperator2D
 {
-public:
-    using coord_view_type = detail::coord_view_type<MemorySpace>;
-    static constexpr bool IS_LINEAR = Equations::IS_LINEAR;
-    static constexpr int MOMENT_STENCIL_MAX_SIZE = 4;
-    static constexpr int TRANSPOSED_MOMENT_STENCIL_MAX_SIZE = 64;
-    static constexpr int OUTER_STENCIL_MAX_SIZE = 4;
-
-private:
     Equations m_equations;
-    coord_view_type m_x_coords;
-    coord_view_type m_y_coords;
+    detail::coord_view_type<MemorySpace> m_x_coords, m_y_coords;
     solvers::Criterion m_criterion;
-    std::size_t m_nx;
-    std::size_t m_ny;
-    NodeDomain2D m_node_domain;
-    Kokkos::View<int* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment0_columns;
-    Kokkos::View<double* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment0_coefficients;
-    Kokkos::View<int* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment1_columns;
-    Kokkos::View<double* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment1_coefficients;
-    Kokkos::View<int*, MemorySpace> m_moment0_counts;
-    Kokkos::View<int*, MemorySpace> m_moment1_counts;
-    Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment0_columns;
-    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment0_coefficients;
-    Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment1_columns;
-    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment1_coefficients;
-    Kokkos::View<int*, MemorySpace> m_transposed_moment0_counts;
-    Kokkos::View<int*, MemorySpace> m_transposed_moment1_counts;
-    Kokkos::View<int* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer0_columns;
-    Kokkos::View<double* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer0_coefficients;
-    Kokkos::View<int* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer1_columns;
-    Kokkos::View<double* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer1_coefficients;
-    Kokkos::View<int*, MemorySpace> m_outer0_counts;
-    Kokkos::View<int*, MemorySpace> m_outer1_counts;
+    std::size_t m_nx, m_ny;
+    Kokkos::View<double* [4][4][2], MemorySpace> m_gradients;
+    Kokkos::View<double* [4], MemorySpace> m_measures;
 
 public:
+    static constexpr bool IS_LINEAR = Equations::IS_LINEAR;
+    static constexpr bool IS_SYMMETRIC = true;
+
     MagnetostaticsOperator2D(
             Equations equations,
-            coord_view_type x_coords,
-            coord_view_type y_coords,
+            detail::coord_view_type<MemorySpace> x_coords,
+            detail::coord_view_type<MemorySpace> y_coords,
             solvers::Criterion criterion)
         : m_equations(std::move(equations))
         , m_x_coords(x_coords)
@@ -1152,571 +1170,133 @@ public:
         , m_criterion(criterion)
         , m_nx(x_coords.extent(0))
         , m_ny(y_coords.extent(0))
-        , m_node_domain(
-                  ddc::DiscreteElement<DDimX, DDimY>(0, 0),
-                  ddc::DiscreteVector<DDimX, DDimY>(m_nx, m_ny))
-        , m_moment0_columns("similie_moment0_columns", m_nx * m_ny)
-        , m_moment0_coefficients("similie_moment0_coefficients", m_nx * m_ny)
-        , m_moment1_columns("similie_moment1_columns", m_nx * m_ny)
-        , m_moment1_coefficients("similie_moment1_coefficients", m_nx * m_ny)
-        , m_moment0_counts("similie_moment0_counts", m_nx * m_ny)
-        , m_moment1_counts("similie_moment1_counts", m_nx * m_ny)
-        , m_transposed_moment0_columns(
-                  "similie_transposed_moment0_columns",
-                  m_nx * m_ny,
-                  TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
-        , m_transposed_moment0_coefficients(
-                  "similie_transposed_moment0_coefficients",
-                  m_nx * m_ny,
-                  TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
-        , m_transposed_moment1_columns(
-                  "similie_transposed_moment1_columns",
-                  m_nx * m_ny,
-                  TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
-        , m_transposed_moment1_coefficients(
-                  "similie_transposed_moment1_coefficients",
-                  m_nx * m_ny,
-                  TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
-        , m_transposed_moment0_counts("similie_transposed_moment0_counts", m_nx * m_ny)
-        , m_transposed_moment1_counts("similie_transposed_moment1_counts", m_nx * m_ny)
-        , m_outer0_columns("similie_outer0_columns", m_nx * m_ny)
-        , m_outer0_coefficients("similie_outer0_coefficients", m_nx * m_ny)
-        , m_outer1_columns("similie_outer1_columns", m_nx * m_ny)
-        , m_outer1_coefficients("similie_outer1_coefficients", m_nx * m_ny)
-        , m_outer0_counts("similie_outer0_counts", m_nx * m_ny)
-        , m_outer1_counts("similie_outer1_counts", m_nx * m_ny)
+        , m_gradients("similie_magnetic_cell_gradients", (m_nx - 1) * (m_ny - 1))
+        , m_measures("similie_magnetic_cell_measures", (m_nx - 1) * (m_ny - 1))
     {
-        auto moment0_columns_host = Kokkos::create_mirror_view(m_moment0_columns);
-        auto moment0_coefficients_host = Kokkos::create_mirror_view(m_moment0_coefficients);
-        auto moment1_columns_host = Kokkos::create_mirror_view(m_moment1_columns);
-        auto moment1_coefficients_host = Kokkos::create_mirror_view(m_moment1_coefficients);
-        auto moment0_counts_host = Kokkos::create_mirror_view(m_moment0_counts);
-        auto moment1_counts_host = Kokkos::create_mirror_view(m_moment1_counts);
-        auto transposed_moment0_columns_host
-                = Kokkos::create_mirror_view(m_transposed_moment0_columns);
-        auto transposed_moment0_coefficients_host
-                = Kokkos::create_mirror_view(m_transposed_moment0_coefficients);
-        auto transposed_moment1_columns_host
-                = Kokkos::create_mirror_view(m_transposed_moment1_columns);
-        auto transposed_moment1_coefficients_host
-                = Kokkos::create_mirror_view(m_transposed_moment1_coefficients);
-        auto transposed_moment0_counts_host
-                = Kokkos::create_mirror_view(m_transposed_moment0_counts);
-        auto transposed_moment1_counts_host
-                = Kokkos::create_mirror_view(m_transposed_moment1_counts);
-        auto outer0_columns_host = Kokkos::create_mirror_view(m_outer0_columns);
-        auto outer0_coefficients_host = Kokkos::create_mirror_view(m_outer0_coefficients);
-        auto outer1_columns_host = Kokkos::create_mirror_view(m_outer1_columns);
-        auto outer1_coefficients_host = Kokkos::create_mirror_view(m_outer1_coefficients);
-        auto outer0_counts_host = Kokkos::create_mirror_view(m_outer0_counts);
-        auto outer1_counts_host = Kokkos::create_mirror_view(m_outer1_counts);
-        for (std::size_t j = 0; j < m_ny; ++j) {
-            for (std::size_t i = 0; i < m_nx; ++i) {
-                std::size_t const row = flat_index(i, j);
-                auto const elem = ddc::DiscreteElement<DDimX, DDimY>(i, j);
-                for (int slot = 0; slot < MOMENT_STENCIL_MAX_SIZE; ++slot) {
-                    moment0_columns_host(row, slot) = 0;
-                    moment0_coefficients_host(row, slot) = 0.0;
-                    moment1_columns_host(row, slot) = 0;
-                    moment1_coefficients_host(row, slot) = 0.0;
+        auto const x = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), x_coords);
+        auto const y = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), y_coords);
+        auto gradients = Kokkos::create_mirror_view(m_gradients);
+        auto measures = Kokkos::create_mirror_view(m_measures);
+        for (std::size_t j = 0; j + 1 < m_ny; ++j) {
+            for (std::size_t i = 0; i + 1 < m_nx; ++i) {
+                std::array<std::array<double, 2>, 4> const positions {
+                        {{x(i), y(j)}, {x(i + 1), y(j)}, {x(i), y(j + 1)}, {x(i + 1), y(j + 1)}}};
+                sil::exterior::VertexReconstructedDerivative<1, X, Y> const reconstruction(
+                        positions);
+                std::size_t const cell = i + (m_nx - 1) * j;
+                for (std::size_t sample = 0; sample < 4; ++sample) {
+                    measures(cell, sample) = reconstruction.measures[sample];
+                    for (std::size_t basis = 0; basis < 4; ++basis)
+                        for (std::size_t axis = 0; axis < 2; ++axis)
+                            gradients(cell, sample, basis, axis)
+                                    = reconstruction.gradients[sample][basis][axis];
                 }
-                for (int slot = 0; slot < TRANSPOSED_MOMENT_STENCIL_MAX_SIZE; ++slot) {
-                    transposed_moment0_columns_host(row, slot) = 0;
-                    transposed_moment0_coefficients_host(row, slot) = 0.0;
-                    transposed_moment1_columns_host(row, slot) = 0;
-                    transposed_moment1_coefficients_host(row, slot) = 0.0;
-                }
-                for (int slot = 0; slot < OUTER_STENCIL_MAX_SIZE; ++slot) {
-                    outer0_columns_host(row, slot) = 0;
-                    outer0_coefficients_host(row, slot) = 0.0;
-                    outer1_columns_host(row, slot) = 0;
-                    outer1_coefficients_host(row, slot) = 0.0;
-                }
-                int moment0_count = 0;
-                auto moment0_stencil
-                        = MagneticVectorPotentialToMagneticInduction::template forward_value<X>(
-                                elem);
-                ddc::device_for_each(moment0_stencil.domain(), [&](auto stencil_elem) {
-                    double const coeff = moment0_stencil.mem(stencil_elem);
-                    if (coeff == 0.0) {
-                        return;
-                    }
-                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                    moment0_columns_host(row, moment0_count) = static_cast<int>(flat_index(
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
-                    moment0_coefficients_host(row, moment0_count) = coeff;
-                    ++moment0_count;
-                });
-                moment0_counts_host(row) = moment0_count;
-
-                int moment1_count = 0;
-                auto moment1_stencil
-                        = MagneticVectorPotentialToMagneticInduction::template forward_value<Y>(
-                                elem);
-                ddc::device_for_each(moment1_stencil.domain(), [&](auto stencil_elem) {
-                    double const coeff = moment1_stencil.mem(stencil_elem);
-                    if (coeff == 0.0) {
-                        return;
-                    }
-                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                    moment1_columns_host(row, moment1_count) = static_cast<int>(flat_index(
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
-                    moment1_coefficients_host(row, moment1_count) = coeff;
-                    ++moment1_count;
-                });
-                moment1_counts_host(row) = moment1_count;
-                transposed_moment0_counts_host(row) = 0;
-                transposed_moment1_counts_host(row) = 0;
-                outer0_counts_host(row) = 0;
-                outer1_counts_host(row) = 0;
             }
         }
-        for (std::size_t sampled_row = 0; sampled_row < m_nx * m_ny; ++sampled_row) {
-            std::size_t const sampled_i = sampled_row % m_nx;
-            std::size_t const sampled_j = sampled_row / m_nx;
-            if (sampled_i == 0 || sampled_j == 0 || sampled_i + 1 == m_nx
-                || sampled_j + 1 == m_ny) {
-                continue;
-            }
-            for (int slot = 0; slot < moment0_counts_host(sampled_row); ++slot) {
-                std::size_t const row
-                        = static_cast<std::size_t>(moment0_columns_host(sampled_row, slot));
-                if (row >= m_nx * m_ny) {
-                    continue;
-                }
-                int const count = transposed_moment0_counts_host(row);
-                if (count >= TRANSPOSED_MOMENT_STENCIL_MAX_SIZE) {
-                    throw std::runtime_error("transposed moment0 stencil capacity exceeded");
-                }
-                transposed_moment0_columns_host(row, count) = static_cast<int>(sampled_row);
-                transposed_moment0_coefficients_host(row, count)
-                        = moment0_coefficients_host(sampled_row, slot);
-                transposed_moment0_counts_host(row) = count + 1;
-                int const outer_count = outer0_counts_host(row);
-                if (outer_count >= OUTER_STENCIL_MAX_SIZE) {
-                    throw std::runtime_error("outer moment0 stencil capacity exceeded");
-                }
-                outer0_columns_host(row, outer_count) = static_cast<int>(sampled_row);
-                outer0_coefficients_host(row, outer_count)
-                        = -moment0_coefficients_host(sampled_row, slot);
-                outer0_counts_host(row) = outer_count + 1;
-            }
-            for (int slot = 0; slot < moment1_counts_host(sampled_row); ++slot) {
-                std::size_t const row
-                        = static_cast<std::size_t>(moment1_columns_host(sampled_row, slot));
-                if (row >= m_nx * m_ny) {
-                    continue;
-                }
-                int const count = transposed_moment1_counts_host(row);
-                if (count >= TRANSPOSED_MOMENT_STENCIL_MAX_SIZE) {
-                    throw std::runtime_error("transposed moment1 stencil capacity exceeded");
-                }
-                transposed_moment1_columns_host(row, count) = static_cast<int>(sampled_row);
-                transposed_moment1_coefficients_host(row, count)
-                        = moment1_coefficients_host(sampled_row, slot);
-                transposed_moment1_counts_host(row) = count + 1;
-                int const outer_count = outer1_counts_host(row);
-                if (outer_count >= OUTER_STENCIL_MAX_SIZE) {
-                    throw std::runtime_error("outer moment1 stencil capacity exceeded");
-                }
-                outer1_columns_host(row, outer_count) = static_cast<int>(sampled_row);
-                outer1_coefficients_host(row, outer_count)
-                        = -moment1_coefficients_host(sampled_row, slot);
-                outer1_counts_host(row) = outer_count + 1;
-            }
-        }
-        Kokkos::deep_copy(m_moment0_columns, moment0_columns_host);
-        Kokkos::deep_copy(m_moment0_coefficients, moment0_coefficients_host);
-        Kokkos::deep_copy(m_moment1_columns, moment1_columns_host);
-        Kokkos::deep_copy(m_moment1_coefficients, moment1_coefficients_host);
-        Kokkos::deep_copy(m_moment0_counts, moment0_counts_host);
-        Kokkos::deep_copy(m_moment1_counts, moment1_counts_host);
-        Kokkos::deep_copy(m_transposed_moment0_columns, transposed_moment0_columns_host);
-        Kokkos::deep_copy(m_transposed_moment0_coefficients, transposed_moment0_coefficients_host);
-        Kokkos::deep_copy(m_transposed_moment1_columns, transposed_moment1_columns_host);
-        Kokkos::deep_copy(m_transposed_moment1_coefficients, transposed_moment1_coefficients_host);
-        Kokkos::deep_copy(m_transposed_moment0_counts, transposed_moment0_counts_host);
-        Kokkos::deep_copy(m_transposed_moment1_counts, transposed_moment1_counts_host);
-        Kokkos::deep_copy(m_outer0_columns, outer0_columns_host);
-        Kokkos::deep_copy(m_outer0_coefficients, outer0_coefficients_host);
-        Kokkos::deep_copy(m_outer1_columns, outer1_columns_host);
-        Kokkos::deep_copy(m_outer1_coefficients, outer1_coefficients_host);
-        Kokkos::deep_copy(m_outer0_counts, outer0_counts_host);
-        Kokkos::deep_copy(m_outer1_counts, outer1_counts_host);
+        Kokkos::deep_copy(m_gradients, gradients);
+        Kokkos::deep_copy(m_measures, measures);
     }
 
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
+    [[nodiscard]] KOKKOS_FUNCTION std::size_t size() const
     {
         return m_nx * m_ny;
     }
-
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION bool is_boundary_node(std::size_t i, std::size_t j) const
+    [[nodiscard]] KOKKOS_FUNCTION bool is_boundary_node(std::size_t i, std::size_t j) const
     {
         return i == 0 || j == 0 || i + 1 == m_nx || j + 1 == m_ny;
+    }
+    [[nodiscard]] KOKKOS_FUNCTION auto x_coords() const
+    {
+        return m_x_coords;
+    }
+    [[nodiscard]] KOKKOS_FUNCTION auto y_coords() const
+    {
+        return m_y_coords;
+    }
+
+    // Integrate virtual magnetic work using the same reconstructed basis for
+    // trial and test fields. Boundary values are homogeneous: eliminate both
+    // rows and columns, retaining identity only on constrained unknowns.
+    template <bool Tangent, class StateView, class InputView>
+    [[nodiscard]] KOKKOS_FUNCTION double row_action(
+            std::size_t row,
+            StateView const& state,
+            InputView const& input,
+            std::size_t basis_column = static_cast<std::size_t>(-1)) const
+    {
+        std::size_t const i = row % m_nx, j = row / m_nx;
+        bool const basis_input = basis_column != static_cast<std::size_t>(-1);
+        if (is_boundary_node(i, j))
+            return basis_input ? double(row == basis_column) : input(row, 0);
+        double result = 0.0;
+        for (std::size_t corner = 0; corner < 4; ++corner) {
+            std::size_t const ci = i - (corner & 1), cj = j - (corner >> 1);
+            std::size_t const cell = ci + (m_nx - 1) * cj;
+            result += sil::exterior::quadrature(
+                    sil::exterior::VertexQuadrature<2>(),
+                    [&](auto const&, std::size_t sample) {
+                        MagneticMoments induction {0.0, 0.0, 0.0};
+                        MagneticMoments variation {0.0, 0.0, 0.0};
+                        for (std::size_t basis = 0; basis < 4; ++basis) {
+                            std::size_t const ni = ci + (basis & 1), nj = cj + (basis >> 1);
+                            if (is_boundary_node(ni, nj))
+                                continue;
+                            std::size_t const column = ni + m_nx * nj;
+                            double const value = basis_input ? double(column == basis_column)
+                                                             : input(column, 0);
+                            induction.x += m_gradients(cell, sample, basis, 1) * state(column, 0);
+                            induction.y -= m_gradients(cell, sample, basis, 0) * state(column, 0);
+                            variation.x += m_gradients(cell, sample, basis, 1) * value;
+                            variation.y -= m_gradients(cell, sample, basis, 0) * value;
+                        }
+                        ddc::DiscreteElement<DDimX, DDimY> const
+                                element(ci + (sample & 1), cj + (sample >> 1));
+                        double hx, hy;
+                        if constexpr (Tangent) {
+                            hx = jacobian_component<X, X>(m_equations, induction, element)
+                                         * variation.x
+                                 + jacobian_component<X, Y>(m_equations, induction, element)
+                                           * variation.y;
+                            hy = jacobian_component<Y, X>(m_equations, induction, element)
+                                         * variation.x
+                                 + jacobian_component<Y, Y>(m_equations, induction, element)
+                                           * variation.y;
+                        } else {
+                            hx = dpotential_dt_component<X>(m_equations, induction, element);
+                            hy = dpotential_dt_component<Y>(m_equations, induction, element);
+                        }
+                        return m_gradients(cell, sample, corner, 1) * hx
+                               - m_gradients(cell, sample, corner, 0) * hy;
+                    },
+                    [&](auto const&, std::size_t sample) { return m_measures(cell, sample); });
+        }
+        return (m_criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative ? 2.0
+                                                                                         : 1.0)
+               * result;
     }
 
     template <class ExecSpace, class InputView, class OutputView>
     void apply(ExecSpace const& exec_space, InputView input, OutputView output) const
     {
-        std::size_t const nx = m_nx;
-        std::size_t const ny = m_ny;
-        auto const moment0_columns = m_moment0_columns;
-        auto const moment0_coefficients = m_moment0_coefficients;
-        auto const moment1_columns = m_moment1_columns;
-        auto const moment1_coefficients = m_moment1_coefficients;
-        auto const moment0_counts = m_moment0_counts;
-        auto const moment1_counts = m_moment1_counts;
-        auto const transposed_moment0_columns = m_transposed_moment0_columns;
-        auto const transposed_moment0_coefficients = m_transposed_moment0_coefficients;
-        auto const transposed_moment1_columns = m_transposed_moment1_columns;
-        auto const transposed_moment1_coefficients = m_transposed_moment1_coefficients;
-        auto const transposed_moment0_counts = m_transposed_moment0_counts;
-        auto const transposed_moment1_counts = m_transposed_moment1_counts;
-        auto const outer0_columns = m_outer0_columns;
-        auto const outer0_coefficients = m_outer0_coefficients;
-        auto const outer1_columns = m_outer1_columns;
-        auto const outer1_coefficients = m_outer1_coefficients;
-        auto const outer0_counts = m_outer0_counts;
-        auto const outer1_counts = m_outer1_counts;
-        auto const equations = m_equations;
-        auto const criterion = m_criterion;
-        auto const x_coords = m_x_coords;
-        auto const y_coords = m_y_coords;
-
-        ddc::parallel_for_each(
-                exec_space,
-                m_node_domain,
-                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                    std::size_t const i
-                            = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                    std::size_t const j
-                            = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
-                    std::size_t const row = i + nx * j;
-                    if (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny) {
-                        output(row, 0) = input(row, 0);
-                        return;
-                    }
-
-                    double residual = 0.0;
-                    if (criterion == solvers::Criterion::PotentialTemporalDerivative
-                        || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                        for (int slot = 0; slot < transposed_moment0_counts(row); ++slot) {
-                            double const transpose_coefficient
-                                    = transposed_moment0_coefficients(row, slot);
-                            std::size_t const sampled_row = static_cast<std::size_t>(
-                                    transposed_moment0_columns(row, slot));
-                            auto const sampled_elem = ddc::DiscreteElement<
-                                    DDimX,
-                                    DDimY>(sampled_row % nx, sampled_row / nx);
-                            double moment0 = 0.0;
-                            for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                                moment0 += moment0_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment0_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            double moment1 = 0.0;
-                            for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                                moment1 += moment1_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment1_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual
-                                    += transpose_coefficient
-                                       * magnetic_field_dual_edge_length_2d<X>(
-                                               x_coords,
-                                               y_coords,
-                                               sampled_row % nx,
-                                               sampled_row / nx)
-                                       * dpotential_dt_component<X>(
-                                               equations,
-                                               MagneticMoments {
-                                                       moments.x
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       X>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       moments.y
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       Y>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       0.0},
-                                               sampled_elem);
-                        }
-                        for (int slot = 0; slot < transposed_moment1_counts(row); ++slot) {
-                            double const transpose_coefficient
-                                    = transposed_moment1_coefficients(row, slot);
-                            std::size_t const sampled_row = static_cast<std::size_t>(
-                                    transposed_moment1_columns(row, slot));
-                            auto const sampled_elem = ddc::DiscreteElement<
-                                    DDimX,
-                                    DDimY>(sampled_row % nx, sampled_row / nx);
-                            double moment0 = 0.0;
-                            for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                                moment0 += moment0_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment0_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            double moment1 = 0.0;
-                            for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                                moment1 += moment1_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment1_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual
-                                    += transpose_coefficient
-                                       * magnetic_field_dual_edge_length_2d<Y>(
-                                               x_coords,
-                                               y_coords,
-                                               sampled_row % nx,
-                                               sampled_row / nx)
-                                       * dpotential_dt_component<Y>(
-                                               equations,
-                                               MagneticMoments {
-                                                       moments.x
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       X>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       moments.y
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       Y>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       0.0},
-                                               sampled_elem);
-                        }
-                    }
-                    if (criterion == solvers::Criterion::MomentsTemporalDerivative
-                        || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                        for (int slot = 0; slot < outer0_counts(row); ++slot) {
-                            double const outer_coefficient = outer0_coefficients(row, slot);
-                            std::size_t const sampled_row
-                                    = static_cast<std::size_t>(outer0_columns(row, slot));
-                            auto const sampled_elem = ddc::DiscreteElement<
-                                    DDimX,
-                                    DDimY>(sampled_row % nx, sampled_row / nx);
-                            double moment0 = 0.0;
-                            for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                                moment0 += moment0_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment0_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            double moment1 = 0.0;
-                            for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                                moment1 += moment1_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment1_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual
-                                    -= outer_coefficient
-                                       * magnetic_field_dual_edge_length_2d<X>(
-                                               x_coords,
-                                               y_coords,
-                                               sampled_row % nx,
-                                               sampled_row / nx)
-                                       * dpotential_dt_component<X>(
-                                               equations,
-                                               MagneticMoments {
-                                                       moments.x
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       X>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       moments.y
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       Y>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       0.0},
-                                               sampled_elem);
-                        }
-                        for (int slot = 0; slot < outer1_counts(row); ++slot) {
-                            double const outer_coefficient = outer1_coefficients(row, slot);
-                            std::size_t const sampled_row
-                                    = static_cast<std::size_t>(outer1_columns(row, slot));
-                            auto const sampled_elem = ddc::DiscreteElement<
-                                    DDimX,
-                                    DDimY>(sampled_row % nx, sampled_row / nx);
-                            double moment0 = 0.0;
-                            for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                                moment0 += moment0_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment0_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            double moment1 = 0.0;
-                            for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                                moment1 += moment1_coefficients(sampled_row, k)
-                                           * input(static_cast<std::size_t>(
-                                                           moment1_columns(sampled_row, k)),
-                                                   0);
-                            }
-                            MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual
-                                    -= outer_coefficient
-                                       * magnetic_field_dual_edge_length_2d<Y>(
-                                               x_coords,
-                                               y_coords,
-                                               sampled_row % nx,
-                                               sampled_row / nx)
-                                       * dpotential_dt_component<Y>(
-                                               equations,
-                                               MagneticMoments {
-                                                       moments.x
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       X>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       moments.y
-                                                               / magnetic_induction_primal_edge_length_2d<
-                                                                       Y>(
-                                                                       x_coords,
-                                                                       y_coords,
-                                                                       sampled_row % nx,
-                                                                       sampled_row / nx),
-                                                       0.0},
-                                               sampled_elem);
-                        }
-                    }
-                    output(row, 0) = residual;
+        MagnetostaticsOperator2D const operation = *this;
+        Kokkos::parallel_for(
+                "similie_magnetic_virtual_work",
+                Kokkos::RangePolicy<ExecSpace>(exec_space, 0, size()),
+                KOKKOS_LAMBDA(std::size_t row) {
+                    output(row, 0) = operation.template row_action<false>(row, input, input);
                 });
-    }
-
-    [[nodiscard]] Equations const& equations() const
-    {
-        return m_equations;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type x_coords() const
-    {
-        return m_x_coords;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type y_coords() const
-    {
-        return m_y_coords;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION solvers::Criterion criterion() const
-    {
-        return m_criterion;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment0_columns() const
-    {
-        return m_transposed_moment0_columns;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment0_coefficients() const
-    {
-        return m_transposed_moment0_coefficients;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment1_columns() const
-    {
-        return m_transposed_moment1_columns;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment1_coefficients() const
-    {
-        return m_transposed_moment1_coefficients;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment0_counts() const
-    {
-        return m_transposed_moment0_counts;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment1_counts() const
-    {
-        return m_transposed_moment1_counts;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment0_columns() const
-    {
-        return m_moment0_columns;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment0_coefficients() const
-    {
-        return m_moment0_coefficients;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment1_columns() const
-    {
-        return m_moment1_columns;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment1_coefficients() const
-    {
-        return m_moment1_coefficients;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment0_counts() const
-    {
-        return m_moment0_counts;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment1_counts() const
-    {
-        return m_moment1_counts;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto outer0_columns() const
-    {
-        return m_outer0_columns;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto outer0_coefficients() const
-    {
-        return m_outer0_coefficients;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto outer1_columns() const
-    {
-        return m_outer1_columns;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto outer1_coefficients() const
-    {
-        return m_outer1_coefficients;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto outer0_counts() const
-    {
-        return m_outer0_counts;
-    }
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto outer1_counts() const
-    {
-        return m_outer1_counts;
-    }
-
-private:
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t flat_index(std::size_t i, std::size_t j) const
-    {
-        return i + m_nx * j;
     }
 };
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 class MagnetostaticsOperator3D
 {
 public:
     using coord_view_type = detail::coord_view_type<MemorySpace>;
-    using vector_potential_index =
-            typename MagneticVectorPotentialToMagneticInduction::vector_potential_index;
-    using magnetic_induction_index =
-            typename MagneticVectorPotentialToMagneticInduction::magnetic_induction_index;
+    using vector_potential_index = typename PotentialCoboundary::cochain_tag;
+    using magnetic_induction_index = sil::exterior::coboundary_index_t<
+            sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>,
+            vector_potential_index>;
     using matrix_free_vector_potential_alloc_type
             = vector_potential_tensor_alloc_type_3d<MemorySpace, vector_potential_index>;
     using matrix_free_vector_potential_tensor_type
@@ -1739,7 +1319,8 @@ public:
                        vector_potential_index,
                        vector_potential_index>(
                     std::declval<ExecSpace const&>(),
-                    std::declval<matrix_free_vector_potential_tensor_type>(),
+                    std::declval<
+                            sil::exterior::Cochain<matrix_free_vector_potential_tensor_type>>(),
                     std::declval<matrix_free_metric_tensor_type>(),
                     std::declval<matrix_free_position_tensor_type>()));
     template <class ExecSpace>
@@ -2052,8 +1633,8 @@ public:
                                 = 3 * (i + nx * (j + ny * k))
                                   + static_cast<std::size_t>(component_id<index_type>());
                         int count = 0;
-                        auto stencil = MagneticVectorPotentialToMagneticInduction::
-                                template forward_value<index_type>(elem);
+                        auto stencil
+                                = magnetic_induction_stencil<index_type, PotentialCoboundary>(elem);
                         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
                             double const coeff = stencil.mem(stencil_elem);
                             if (coeff == 0.0) {
@@ -2099,10 +1680,10 @@ public:
                             MetricIndex3D,
                             vector_potential_index,
                             vector_potential_index,
-                            matrix_free_vector_potential_tensor_type,
+                            sil::exterior::Cochain<matrix_free_vector_potential_tensor_type>,
                             matrix_free_metric_tensor_type,
                             matrix_free_position_tensor_type>::
-                            value(vector_potential_tensor,
+                            value(sil::exterior::Cochain(vector_potential_tensor),
                                   metric,
                                   position,
                                   codifferential_chain,
@@ -2323,7 +1904,7 @@ public:
                         vector_potential_index,
                         vector_potential_index>(
                         exec_space,
-                        workspace.potential,
+                        sil::exterior::Cochain(workspace.potential),
                         workspace.metric,
                         workspace.position));
 
@@ -2364,10 +1945,10 @@ public:
                             MetricIndex3D,
                             vector_potential_index,
                             vector_potential_index,
-                            matrix_free_vector_potential_tensor_type,
+                            sil::exterior::Cochain<matrix_free_vector_potential_tensor_type>,
                             matrix_free_metric_tensor_type,
                             matrix_free_position_tensor_type>::
-                            value(workspace.potential,
+                            value(sil::exterior::Cochain(workspace.potential),
                                   workspace.metric,
                                   workspace.position,
                                   codifferential_chain,
@@ -2667,9 +2248,10 @@ public:
                     divergence_tensor(elem, scalar_accessor.domain().front()) = 0.0;
                 });
 
-        sil::exterior::coboundary<
-                CoboundaryIndex3D,
-                vector_potential_index>(exec_space, magnetic_induction_tensor, potential_tensor);
+        sil::exterior::coboundary<CoboundaryIndex3D, vector_potential_index>(
+                exec_space,
+                sil::exterior::Cochain(magnetic_induction_tensor),
+                sil::exterior::Cochain(potential_tensor));
 
         ddc::parallel_for_each(
                 "similie_3d_matrix_free_magnetic_response",
@@ -2723,7 +2305,9 @@ public:
 
         bool const use_divergence_gauge = use_divergence_gauge_3d();
         if (use_divergence_gauge) {
-            (*workspace.staged_codifferential)(divergence_tensor, potential_tensor);
+            (*workspace.staged_codifferential)(
+                    sil::exterior::Cochain(divergence_tensor),
+                    sil::exterior::Cochain(potential_tensor));
         }
 
         double const gauge_penalty = m_gauge_penalty;
@@ -2828,8 +2412,8 @@ public:
                         if (response == 0.0) {
                             return;
                         }
-                        auto const stencil = MagneticVectorPotentialToMagneticInduction::
-                                template forward_value<index_type>(elem);
+                        auto const stencil
+                                = magnetic_induction_stencil<index_type, PotentialCoboundary>(elem);
                         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
                             double const coefficient = stencil.mem(stencil_elem);
                             if (coefficient == 0.0) {
@@ -3011,140 +2595,22 @@ template <
         class ExecSpace,
         class MemorySpace,
         class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
+        class PotentialCoboundary,
         class StateView,
         class InputView,
         class OutputView>
 void apply_jacobian(
         ExecSpace const& exec_space,
-        MagnetostaticsOperator2D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator2D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state,
         InputView input,
         OutputView output)
 {
-    std::size_t const nx = operator_model.x_coords().extent(0);
-    std::size_t const ny = operator_model.y_coords().extent(0);
-    auto const moment0_columns = operator_model.moment0_columns();
-    auto const moment0_coefficients = operator_model.moment0_coefficients();
-    auto const moment1_columns = operator_model.moment1_columns();
-    auto const moment1_coefficients = operator_model.moment1_coefficients();
-    auto const moment0_counts = operator_model.moment0_counts();
-    auto const moment1_counts = operator_model.moment1_counts();
-    auto const transposed_moment0_columns = operator_model.transposed_moment0_columns();
-    auto const transposed_moment0_coefficients = operator_model.transposed_moment0_coefficients();
-    auto const transposed_moment1_columns = operator_model.transposed_moment1_columns();
-    auto const transposed_moment1_coefficients = operator_model.transposed_moment1_coefficients();
-    auto const transposed_moment0_counts = operator_model.transposed_moment0_counts();
-    auto const transposed_moment1_counts = operator_model.transposed_moment1_counts();
-    auto const outer0_columns = operator_model.outer0_columns();
-    auto const outer0_coefficients = operator_model.outer0_coefficients();
-    auto const outer1_columns = operator_model.outer1_columns();
-    auto const outer1_coefficients = operator_model.outer1_coefficients();
-    auto const outer0_counts = operator_model.outer0_counts();
-    auto const outer1_counts = operator_model.outer1_counts();
-    auto const equations = operator_model.equations();
-    auto const criterion = operator_model.criterion();
-    auto const x_coords = operator_model.x_coords();
-    auto const y_coords = operator_model.y_coords();
-    auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
-            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
-            ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
-
-    ddc::parallel_for_each(
-            exec_space,
-            node_domain,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                std::size_t const i
-                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j
-                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
-                std::size_t const row = i + nx * j;
-                if (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny) {
-                    output(row, 0) = input(row, 0);
-                    return;
-                }
-
-                double residual = 0.0;
-                auto add_sampled_contribution = [&](double row_coefficient,
-                                                    std::size_t sampled_row,
-                                                    bool use_first_component) {
-                    auto const sampled_elem = ddc::
-                            DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
-                    double state_moment0 = 0.0;
-                    double delta_moment0 = 0.0;
-                    for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                        std::size_t const column
-                                = static_cast<std::size_t>(moment0_columns(sampled_row, k));
-                        state_moment0 += moment0_coefficients(sampled_row, k) * state(column, 0);
-                        delta_moment0 += moment0_coefficients(sampled_row, k) * input(column, 0);
-                    }
-                    double state_moment1 = 0.0;
-                    double delta_moment1 = 0.0;
-                    for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                        std::size_t const column
-                                = static_cast<std::size_t>(moment1_columns(sampled_row, k));
-                        state_moment1 += moment1_coefficients(sampled_row, k) * state(column, 0);
-                        delta_moment1 += moment1_coefficients(sampled_row, k) * input(column, 0);
-                    }
-                    std::size_t const sampled_i = sampled_row % nx;
-                    std::size_t const sampled_j = sampled_row / nx;
-                    double const primal0 = magnetic_induction_primal_edge_length_2d<
-                            X>(x_coords, y_coords, sampled_i, sampled_j);
-                    double const primal1 = magnetic_induction_primal_edge_length_2d<
-                            Y>(x_coords, y_coords, sampled_i, sampled_j);
-                    MagneticMoments const
-                            moments {state_moment0 / primal0, state_moment1 / primal1, 0.0};
-                    double const h00 = jacobian_component<X, X>(equations, moments, sampled_elem);
-                    double const h01 = jacobian_component<X, Y>(equations, moments, sampled_elem);
-                    double const h10 = jacobian_component<Y, X>(equations, moments, sampled_elem);
-                    double const h11 = jacobian_component<Y, Y>(equations, moments, sampled_elem);
-                    double const dual_length
-                            = use_first_component
-                                      ? magnetic_field_dual_edge_length_2d<
-                                                X>(x_coords, y_coords, sampled_i, sampled_j)
-                                      : magnetic_field_dual_edge_length_2d<
-                                                Y>(x_coords, y_coords, sampled_i, sampled_j);
-                    residual += row_coefficient * dual_length
-                                * (use_first_component ? (h00 * delta_moment0 / primal0
-                                                          + h01 * delta_moment1 / primal1)
-                                                       : (h10 * delta_moment0 / primal0
-                                                          + h11 * delta_moment1 / primal1));
-                };
-
-                if (criterion == solvers::Criterion::PotentialTemporalDerivative
-                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                    for (int slot = 0; slot < transposed_moment0_counts(row); ++slot) {
-                        add_sampled_contribution(
-                                transposed_moment0_coefficients(row, slot),
-                                static_cast<std::size_t>(transposed_moment0_columns(row, slot)),
-                                true);
-                    }
-                    for (int slot = 0; slot < transposed_moment1_counts(row); ++slot) {
-                        add_sampled_contribution(
-                                transposed_moment1_coefficients(row, slot),
-                                static_cast<std::size_t>(transposed_moment1_columns(row, slot)),
-                                false);
-                    }
-                }
-                if (criterion == solvers::Criterion::MomentsTemporalDerivative
-                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                    for (int slot = 0; slot < outer0_counts(row); ++slot) {
-                        add_sampled_contribution(
-                                -outer0_coefficients(row, slot),
-                                static_cast<std::size_t>(outer0_columns(row, slot)),
-                                true);
-                    }
-                    for (int slot = 0; slot < outer1_counts(row); ++slot) {
-                        add_sampled_contribution(
-                                -outer1_coefficients(row, slot),
-                                static_cast<std::size_t>(outer1_columns(row, slot)),
-                                false);
-                    }
-                }
-                output(row, 0) = residual;
+    Kokkos::parallel_for(
+            "similie_magnetic_virtual_work_tangent",
+            Kokkos::RangePolicy<ExecSpace>(exec_space, 0, operator_model.size()),
+            KOKKOS_LAMBDA(std::size_t row) {
+                output(row, 0) = operator_model.template row_action<true>(row, state, input);
             });
 }
 
@@ -3152,16 +2618,13 @@ template <
         class ExecSpace,
         class MemorySpace,
         class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
+        class PotentialCoboundary,
         class StateView,
         class InputView,
         class OutputView>
 void apply_jacobian(
         ExecSpace const& exec_space,
-        MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state,
         InputView input,
         OutputView output)
@@ -3363,29 +2826,20 @@ void apply_jacobian(
             });
 }
 
-template <
-        class MemorySpace,
-        class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
-        class StateView>
+template <class MemorySpace, class Equations, class PotentialCoboundary, class StateView>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state)
 {
     if (!operator_model.has_precomputed_stencils()) {
-        auto const stencil_operator = MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction>(
-                operator_model.equations(),
-                operator_model.x_coords(),
-                operator_model.y_coords(),
-                operator_model.z_coords(),
-                operator_model.gauge_penalty(),
-                true);
+        auto const stencil_operator
+                = MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary>(
+                        operator_model.equations(),
+                        operator_model.x_coords(),
+                        operator_model.y_coords(),
+                        operator_model.z_coords(),
+                        operator_model.gauge_penalty(),
+                        true);
         return assemble_matrix_data(stencil_operator, state);
     }
     std::size_t const size = operator_model.size();
@@ -3847,229 +3301,55 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     return matrix_data;
 }
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator3D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model)
+        MagnetostaticsOperator3D<MemorySpace, Equations, PotentialCoboundary> const& operator_model)
 {
     Kokkos::View<double**, MemorySpace> state("similie_3d_linear_state", operator_model.size(), 1);
     Kokkos::deep_copy(state, 0.0);
     return assemble_matrix_data(operator_model, state);
 }
 
-template <
-        class MemorySpace,
-        class Equations,
-        class MagneticVectorPotentialToMagneticInduction,
-        class StateView>
+template <class MemorySpace, class Equations, class PotentialCoboundary, class StateView>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator2D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model,
+        MagnetostaticsOperator2D<MemorySpace, Equations, PotentialCoboundary> const& operator_model,
         StateView const& state)
 {
     std::size_t const size = operator_model.size();
-    Kokkos::DefaultExecutionSpace exec_space;
-    Kokkos::View<double* [64]> coefficients("similie_magnetostatics_matrix_coefficients", size);
-    Kokkos::View<int* [64]> columns("similie_magnetostatics_matrix_columns", size);
-    Kokkos::View<int*> counts("similie_magnetostatics_matrix_counts", size);
-
-    auto equations = operator_model.equations();
-    auto const criterion = operator_model.criterion();
     std::size_t const nx = operator_model.x_coords().extent(0);
     std::size_t const ny = operator_model.y_coords().extent(0);
-    auto const transposed_moment0_columns = operator_model.transposed_moment0_columns();
-    auto const transposed_moment0_coefficients = operator_model.transposed_moment0_coefficients();
-    auto const transposed_moment1_columns = operator_model.transposed_moment1_columns();
-    auto const transposed_moment1_coefficients = operator_model.transposed_moment1_coefficients();
-    auto const transposed_moment0_counts = operator_model.transposed_moment0_counts();
-    auto const transposed_moment1_counts = operator_model.transposed_moment1_counts();
-    auto const moment0_columns = operator_model.moment0_columns();
-    auto const moment0_coefficients = operator_model.moment0_coefficients();
-    auto const moment1_columns = operator_model.moment1_columns();
-    auto const moment1_coefficients = operator_model.moment1_coefficients();
-    auto const moment0_counts = operator_model.moment0_counts();
-    auto const moment1_counts = operator_model.moment1_counts();
-    auto const outer0_columns = operator_model.outer0_columns();
-    auto const outer0_coefficients = operator_model.outer0_coefficients();
-    auto const outer1_columns = operator_model.outer1_columns();
-    auto const outer1_coefficients = operator_model.outer1_coefficients();
-    auto const outer0_counts = operator_model.outer0_counts();
-    auto const outer1_counts = operator_model.outer1_counts();
-    auto const x_coords = operator_model.x_coords();
-    auto const y_coords = operator_model.y_coords();
-    auto node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
-            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
-            ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
-
-    ddc::parallel_for_each(
-            "similie_assemble_magnetostatics_jacobian",
-            exec_space,
-            node_domain,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                std::size_t const i
-                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j
-                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
-                std::size_t const row = i + nx * j;
-
-                auto set_entry = [&](int slot, std::size_t column, double value) {
-                    columns(row, slot) = static_cast<int>(column);
-                    coefficients(row, slot) = value;
-                };
-                auto add_entry = [&](int& count, std::size_t column, double value) {
-                    for (int slot = 0; slot < count; ++slot) {
-                        if (columns(row, slot) == static_cast<int>(column)) {
-                            coefficients(row, slot) += value;
-                            return;
-                        }
-                    }
-                    if (count >= 64) {
-                        Kokkos::abort("magnetostatics matrix row capacity exceeded");
-                    }
-                    columns(row, count) = static_cast<int>(column);
-                    coefficients(row, count) = value;
-                    ++count;
-                };
-
-                for (int slot = 0; slot < 64; ++slot) {
-                    set_entry(slot, row, 0.0);
+    Kokkos::View<double* [9], MemorySpace> coefficients("similie_magnetic_tangent_entries", size);
+    Kokkos::parallel_for(
+            "similie_assemble_magnetic_virtual_work_tangent",
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, size),
+            KOKKOS_LAMBDA(std::size_t row) {
+                for (int slot = 0; slot < 9; ++slot) {
+                    int const i = static_cast<int>(row % nx) + slot % 3 - 1;
+                    int const j = static_cast<int>(row / nx) + slot / 3 - 1;
+                    coefficients(row, slot)
+                            = (i < 0 || j < 0 || i >= nx || j >= ny)
+                                      ? 0.0
+                                      : operator_model.template row_action<
+                                                true>(row, state, state, i + nx * j);
                 }
-
-                if (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny) {
-                    counts(row) = 1;
-                    set_entry(0, row, 1.0);
-                    return;
-                }
-
-                int count = 0;
-                auto add_sampled_block = [&](double row_coefficient,
-                                             std::size_t sampled_row,
-                                             bool use_first_component) {
-                    auto const sampled_elem = ddc::
-                            DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
-                    double state_moment0 = 0.0;
-                    for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                        state_moment0 += moment0_coefficients(sampled_row, k)
-                                         * state(static_cast<std::size_t>(
-                                                         moment0_columns(sampled_row, k)),
-                                                 0);
-                    }
-                    double state_moment1 = 0.0;
-                    for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                        state_moment1 += moment1_coefficients(sampled_row, k)
-                                         * state(static_cast<std::size_t>(
-                                                         moment1_columns(sampled_row, k)),
-                                                 0);
-                    }
-                    std::size_t const sampled_i = sampled_row % nx;
-                    std::size_t const sampled_j = sampled_row / nx;
-                    double const primal0 = magnetic_induction_primal_edge_length_2d<
-                            X>(x_coords, y_coords, sampled_i, sampled_j);
-                    double const primal1 = magnetic_induction_primal_edge_length_2d<
-                            Y>(x_coords, y_coords, sampled_i, sampled_j);
-                    double const dual_length
-                            = use_first_component
-                                      ? magnetic_field_dual_edge_length_2d<
-                                                X>(x_coords, y_coords, sampled_i, sampled_j)
-                                      : magnetic_field_dual_edge_length_2d<
-                                                Y>(x_coords, y_coords, sampled_i, sampled_j);
-                    MagneticMoments const
-                            moments {state_moment0 / primal0, state_moment1 / primal1, 0.0};
-                    double const h00 = jacobian_component<X, X>(equations, moments, sampled_elem);
-                    double const h01 = jacobian_component<X, Y>(equations, moments, sampled_elem);
-                    double const h10 = jacobian_component<Y, X>(equations, moments, sampled_elem);
-                    double const h11 = jacobian_component<Y, Y>(equations, moments, sampled_elem);
-                    for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                        std::size_t const column
-                                = static_cast<std::size_t>(moment0_columns(sampled_row, k));
-                        double const value
-                                = row_coefficient * dual_length / primal0
-                                  * (use_first_component
-                                             ? h00 * moment0_coefficients(sampled_row, k)
-                                             : h10 * moment0_coefficients(sampled_row, k));
-                        if (value != 0.0) {
-                            add_entry(count, column, value);
-                        }
-                    }
-                    for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                        std::size_t const column
-                                = static_cast<std::size_t>(moment1_columns(sampled_row, k));
-                        double const value
-                                = row_coefficient * dual_length / primal1
-                                  * (use_first_component
-                                             ? h01 * moment1_coefficients(sampled_row, k)
-                                             : h11 * moment1_coefficients(sampled_row, k));
-                        if (value != 0.0) {
-                            add_entry(count, column, value);
-                        }
-                    }
-                };
-
-                if (criterion == solvers::Criterion::PotentialTemporalDerivative
-                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                    for (int slot = 0; slot < transposed_moment0_counts(row); ++slot) {
-                        add_sampled_block(
-                                transposed_moment0_coefficients(row, slot),
-                                static_cast<std::size_t>(transposed_moment0_columns(row, slot)),
-                                true);
-                    }
-                    for (int slot = 0; slot < transposed_moment1_counts(row); ++slot) {
-                        add_sampled_block(
-                                transposed_moment1_coefficients(row, slot),
-                                static_cast<std::size_t>(transposed_moment1_columns(row, slot)),
-                                false);
-                    }
-                }
-                if (criterion == solvers::Criterion::MomentsTemporalDerivative
-                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                    for (int slot = 0; slot < outer0_counts(row); ++slot) {
-                        add_sampled_block(
-                                -outer0_coefficients(row, slot),
-                                static_cast<std::size_t>(outer0_columns(row, slot)),
-                                true);
-                    }
-                    for (int slot = 0; slot < outer1_counts(row); ++slot) {
-                        add_sampled_block(
-                                -outer1_coefficients(row, slot),
-                                static_cast<std::size_t>(outer1_columns(row, slot)),
-                                false);
-                    }
-                }
-                counts(row) = count;
             });
-    exec_space.fence();
-
-    auto coefficients_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), coefficients);
-    auto columns_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), columns);
-    auto counts_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), counts);
-
-    gko::matrix_data<double, gko::int32> matrix_data(gko::dim<2>(size, size));
-    matrix_data.nonzeros.reserve(size * 64);
-    for (std::size_t row = 0; row < size; ++row) {
-        for (int slot = 0; slot < counts_host(row); ++slot) {
-            double const coefficient = coefficients_host(row, slot);
-            if (coefficient == 0.0) {
-                continue;
-            }
-            matrix_data.nonzeros.emplace_back(
-                    row,
-                    static_cast<std::size_t>(columns_host(row, slot)),
-                    coefficient);
-        }
-    }
-    return matrix_data;
+    auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), coefficients);
+    gko::matrix_data<double, gko::int32> matrix(gko::dim<2>(size, size));
+    matrix.nonzeros.reserve(9 * size);
+    for (std::size_t row = 0; row < size; ++row)
+        for (int slot = 0; slot < 9; ++slot)
+            if (host(row, slot) != 0.0)
+                matrix.nonzeros.emplace_back(
+                        row,
+                        static_cast<int>(row % nx) + slot % 3 - 1
+                                + nx * (static_cast<int>(row / nx) + slot / 3 - 1),
+                        host(row, slot));
+    return matrix;
 }
 
-template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+template <class MemorySpace, class Equations, class PotentialCoboundary>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator2D<
-                MemorySpace,
-                Equations,
-                MagneticVectorPotentialToMagneticInduction> const& operator_model)
+        MagnetostaticsOperator2D<MemorySpace, Equations, PotentialCoboundary> const& operator_model)
 {
     Kokkos::View<double**> state("similie_2d_linear_state", operator_model.size(), 1);
     Kokkos::deep_copy(state, 0.0);
@@ -4095,7 +3375,7 @@ using InPlaneInductionFormIndex = sil::tensor::Covariant<magnetostatics_local::I
 using InPlaneInductionIndexSeq = sil::tensor::upper_t<
         ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneInductionFormIndex>>>;
 
-template <class MagneticVectorPotentialToMagneticInduction, class Index, class NodeValueGetter>
+template <class PotentialCoboundary, class Index, class NodeValueGetter>
 double magnetic_induction_moment_from_potential_z(
         ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY> elem,
         NodeValueGetter&& node_value_z)
@@ -4116,38 +3396,7 @@ double magnetic_induction_moment_from_potential_z(
         return value;
     };
 
-    return apply_stencil(
-            MagneticVectorPotentialToMagneticInduction::template forward_value<Index>(elem));
-}
-
-template <class Index, class NodeValueGetter>
-double magnetic_induction_moment_from_potential_z_3d(
-        ddc::DiscreteElement<
-                magnetostatics_local::DDimX,
-                magnetostatics_local::DDimY,
-                magnetostatics_local::DDimZ> elem,
-        NodeValueGetter&& node_value_z)
-{
-    using namespace magnetostatics_local;
-
-    auto apply_stencil = [&](auto stencil) {
-        double value = 0.0;
-        ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
-            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
-            value += stencil.mem(stencil_elem)
-                     * node_value_z(
-                             static_cast<std::size_t>(
-                                     ddc::DiscreteElement<DDimX>(potential_elem).uid()),
-                             static_cast<std::size_t>(
-                                     ddc::DiscreteElement<DDimY>(potential_elem).uid()),
-                             static_cast<std::size_t>(
-                                     ddc::DiscreteElement<DDimZ>(potential_elem).uid()));
-        });
-        return value;
-    };
-
-    return apply_stencil(
-            MagneticVectorPotentialToMagneticInduction3D::template forward_value<Index>(elem));
+    return apply_stencil(magnetic_induction_stencil<Index, PotentialCoboundary>(elem));
 }
 
 template <class Index, class NodeValueGetter>
@@ -4159,16 +3408,14 @@ double magnetic_induction_moment_from_vector_potential_3d(
         NodeValueGetter&& node_value)
 {
     using namespace magnetostatics_local;
-    using VectorPotentialIndex =
-            typename MagneticVectorPotentialToMagneticInduction3D::vector_potential_index;
+    using VectorPotentialIndex = typename PotentialCoboundary3D::cochain_tag;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<VectorPotentialIndex> potential_accessor;
     auto const potential_x = potential_accessor.template access_element<X>();
     auto const potential_y = potential_accessor.template access_element<Y>();
 
     double value = 0.0;
-    auto stencil
-            = MagneticVectorPotentialToMagneticInduction3D::template forward_value<Index>(elem);
+    auto stencil = magnetic_induction_stencil<Index, PotentialCoboundary3D>(elem);
     ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
         auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
         auto const potential_component = ddc::DiscreteElement<VectorPotentialIndex>(stencil_elem);
@@ -4247,11 +3494,11 @@ void fill_post_process_fields_on_cell_domain(
         sil::tensor::Tensor reduced_induction(reduced_induction_span);
         reduced_induction(reduced_induction.accessor().template access_element<X>())
                 = magnetic_induction_moment_from_potential_z<
-                        magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D,
+                        magnetostatics_local::PotentialCoboundary2D,
                         Y>(elem, node_value_z);
         reduced_induction(reduced_induction.accessor().template access_element<Y>())
                 = magnetic_induction_moment_from_potential_z<
-                        magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D,
+                        magnetostatics_local::PotentialCoboundary2D,
                         X>(elem, node_value_z);
 
         std::array<double, InPlaneInductionFormIndex::access_size()>
@@ -4271,7 +3518,11 @@ void fill_post_process_fields_on_cell_domain(
                 InPlaneInductionIndexSeq,
                 decltype(position),
                 ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>>::
-        operator()(reconstructed_induction, reduced_induction, position, elem);
+        operator()(
+                sil::exterior::Form(reconstructed_induction),
+                sil::exterior::Cochain(reduced_induction),
+                position,
+                elem);
 
         std::array<double, 3> const magnetic_induction {
                 reconstructed_induction(
@@ -4281,20 +3532,17 @@ void fill_post_process_fields_on_cell_domain(
                 0.0,
         };
         std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
-        std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
         if (read_nonlinear_material(elem)) {
-            magnetic_field = nonlinear_constitutive_law(
-                    physics::magnetostatics::
-                            NonlinearMagneticState {magnetic_induction, unit_hodge},
-                    elem);
+            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                                     .constitutive_field(
+                                             nonlinear_constitutive_law,
+                                             physics::magnetostatics::NonlinearMagneticState {
+                                                     sil::exterior::Form(magnetic_induction)},
+                                             elem);
         } else {
-            physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
-                    read_mu(elem));
-            magnetic_field = {
-                    constitutive_law({{magnetic_induction[0]}, unit_hodge[0]}, elem)[0],
-                    constitutive_law({{magnetic_induction[1]}, unit_hodge[1]}, elem)[0],
-                    0.0,
-            };
+            magnetic_field
+                    = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                              .field(sil::exterior::Form(magnetic_induction), 1.0 / read_mu(elem));
         }
 
         write_cell_output(elem, magnetic_induction, magnetic_field);
@@ -4332,20 +3580,17 @@ void fill_post_process_fields_on_cell_domain_3d(
                         / (cell_widths[0] * cell_widths[1]),
         };
         std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
-        std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
         if (read_nonlinear_material(elem)) {
-            magnetic_field = nonlinear_constitutive_law(
-                    physics::magnetostatics::
-                            NonlinearMagneticState {magnetic_induction, unit_hodge},
-                    elem);
+            magnetic_field = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                                     .constitutive_field(
+                                             nonlinear_constitutive_law,
+                                             physics::magnetostatics::NonlinearMagneticState {
+                                                     sil::exterior::Form(magnetic_induction)},
+                                             elem);
         } else {
-            physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
-                    read_mu(elem));
-            magnetic_field = {
-                    constitutive_law({{magnetic_induction[0]}, unit_hodge[0]}, elem)[0],
-                    constitutive_law({{magnetic_induction[1]}, unit_hodge[1]}, elem)[0],
-                    constitutive_law({{magnetic_induction[2]}, unit_hodge[2]}, elem)[0],
-            };
+            magnetic_field
+                    = physics::magnetostatics::MagneticFormResponse<X, Y, Z>::euclidean()
+                              .field(sil::exterior::Form(magnetic_induction), 1.0 / read_mu(elem));
         }
 
         write_cell_output(elem, magnetic_induction, magnetic_field);
@@ -4374,78 +3619,100 @@ inline CellPostProcessFields make_cell_post_process_fields(
     return cell_output;
 }
 
-template <class FillStress, class ReadPosition, class WriteForceDensity>
+template <class... DDim, class FillStress, class ReadPosition, class WriteForceDensity>
+    requires(sizeof...(DDim) == 2 || sizeof...(DDim) == 3)
 void fill_force_density_on_cell_domain(
-        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const&
-                cell_domain,
+        ddc::DiscreteDomain<DDim...> const& cell_domain,
         FillStress&& fill_stress,
         ReadPosition&& read_position,
         WriteForceDensity&& write_force_density)
 {
-    using InPlaneOneFormIndex = sil::tensor::Covariant<magnetostatics_local::InPlaneIndex>;
+    using StressRowIndex = sil::tensor::Covariant<
+            sil::tensor::TensorNaturalIndex<typename DDim::continuous_dimension_type...>>;
+    using StressMetricIndex = MetricIndex<typename DDim::continuous_dimension_type...>;
+    using StressPositionIndex = sil::tensor::Contravariant<
+            sil::tensor::TensorNaturalIndex<typename DDim::continuous_dimension_type...>>;
     using ForceDensityIndex = physics::magnetostatics::ForceDensityIndex<X, Y, Z>;
     using ScalarIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<ForceDensityIndex> force_density_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, ForceDensityIndex>
+    ddc::DiscreteDomain<DDim..., ForceDensityIndex>
             force_density_dom(cell_domain, force_density_accessor.domain());
     ddc::Chunk force_density_alloc(force_density_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor force_density_tensor(force_density_alloc);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex2D> metric_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, MetricIndex2D>
+    [[maybe_unused]] sil::tensor::TensorAccessor<StressMetricIndex> metric_accessor;
+    ddc::DiscreteDomain<DDim..., StressMetricIndex>
             metric_dom(cell_domain, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, PositionIndex2D>
+    [[maybe_unused]] sil::tensor::TensorAccessor<StressPositionIndex> position_accessor;
+    ddc::DiscreteDomain<DDim..., StressPositionIndex>
             position_dom(cell_domain, position_accessor.domain());
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<InPlaneOneFormIndex> one_form_accessor;
-    ddc::DiscreteDomain<
-            magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY,
-            InPlaneOneFormIndex>
+    [[maybe_unused]] sil::tensor::TensorAccessor<StressRowIndex> one_form_accessor;
+    ddc::DiscreteDomain<DDim..., StressRowIndex>
             one_form_dom(cell_domain, one_form_accessor.domain());
     ddc::Chunk one_form_alloc(one_form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor one_form_tensor(one_form_alloc);
+    ddc::Chunk stress_form_alloc(one_form_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor stress_form(stress_form_alloc);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<ScalarIndex> scalar_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, ScalarIndex>
-            scalar_dom(cell_domain, scalar_accessor.domain());
+    ddc::DiscreteDomain<DDim..., ScalarIndex> scalar_dom(cell_domain, scalar_accessor.domain());
     ddc::Chunk scalar_alloc(scalar_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor scalar_tensor(scalar_alloc);
 
     ddc::host_for_each(cell_domain, [&](auto elem) {
-        std::array<double, 2> const coordinates = read_position(elem);
+        std::array<double, sizeof...(DDim)> const coordinates = read_position(elem);
         position(elem, position.accessor().template access_element<X>()) = coordinates[0];
         position(elem, position.accessor().template access_element<Y>()) = coordinates[1];
 
         metric(elem, metric.accessor().template access_element<X, X>()) = 1.0;
         metric(elem, metric.accessor().template access_element<X, Y>()) = 0.0;
         metric(elem, metric.accessor().template access_element<Y, Y>()) = 1.0;
+        if constexpr (sizeof...(DDim) == 3) {
+            position(elem, position.accessor().template access_element<Z>()) = coordinates[2];
+            metric(elem, metric.accessor().template access_element<X, Z>()) = 0.0;
+            metric(elem, metric.accessor().template access_element<Y, Z>()) = 0.0;
+            metric(elem, metric.accessor().template access_element<Z, Z>()) = 1.0;
+        }
     });
 
     auto staged_codifferential = sil::exterior::
-            make_staged_codifferential<MetricIndex2D, InPlaneOneFormIndex, InPlaneOneFormIndex>(
+            make_staged_codifferential<StressMetricIndex, StressRowIndex, StressRowIndex>(
                     Kokkos::DefaultHostExecutionSpace(),
-                    one_form_tensor,
+                    sil::exterior::Cochain(one_form_tensor),
                     metric,
                     position);
+
+    sil::exterior::StagedOperator<sil::exterior::Reduction<
+            ddc::TypeSeq<StressRowIndex>,
+            decltype(position),
+            ddc::DiscreteElement<DDim...>>>
+            reduce_stress {
+                    Kokkos::DefaultHostExecutionSpace(),
+                    sil::exterior::Cochain(one_form_tensor),
+                    sil::exterior::Form(stress_form),
+                    position};
 
     auto fill_force_component = [&](auto select_components, auto assign_output) {
         ddc::host_for_each(cell_domain, [&](auto elem) {
             std::array<double, 6> const stress = fill_stress(elem);
-            std::array<double, 2> const one_form = select_components(stress);
-            one_form_tensor(elem, one_form_tensor.accessor().template access_element<X>())
-                    = one_form[0];
-            one_form_tensor(elem, one_form_tensor.accessor().template access_element<Y>())
-                    = one_form[1];
+            std::array<double, sizeof...(DDim)> const one_form = select_components(stress);
+            stress_form(elem, stress_form.accessor().template access_element<X>()) = one_form[0];
+            stress_form(elem, stress_form.accessor().template access_element<Y>()) = one_form[1];
+            if constexpr (sizeof...(DDim) == 3)
+                stress_form(elem, stress_form.accessor().template access_element<Z>())
+                        = one_form[2];
         });
-        staged_codifferential(scalar_tensor, one_form_tensor);
+        reduce_stress(sil::exterior::Cochain(one_form_tensor), sil::exterior::Form(stress_form));
+        staged_codifferential(
+                sil::exterior::Cochain(scalar_tensor),
+                sil::exterior::Cochain(one_form_tensor));
         ddc::host_for_each(cell_domain, [&](auto elem) {
             assign_output(elem, -scalar_tensor(elem, ddc::DiscreteElement<ScalarIndex>(0)));
         });
@@ -4453,7 +3720,10 @@ void fill_force_density_on_cell_domain(
 
     fill_force_component(
             [](std::array<double, 6> const& stress) {
-                return std::array<double, 2> {stress[0], stress[3]};
+                if constexpr (sizeof...(DDim) == 3)
+                    return std::array<double, 3> {stress[0], stress[3], stress[4]};
+                else
+                    return std::array<double, 2> {stress[0], stress[3]};
             },
             [&](auto elem, double value) {
                 force_density_tensor(
@@ -4463,7 +3733,10 @@ void fill_force_density_on_cell_domain(
             });
     fill_force_component(
             [](std::array<double, 6> const& stress) {
-                return std::array<double, 2> {stress[3], stress[1]};
+                if constexpr (sizeof...(DDim) == 3)
+                    return std::array<double, 3> {stress[3], stress[1], stress[5]};
+                else
+                    return std::array<double, 2> {stress[3], stress[1]};
             },
             [&](auto elem, double value) {
                 force_density_tensor(
@@ -4473,7 +3746,10 @@ void fill_force_density_on_cell_domain(
             });
     fill_force_component(
             [](std::array<double, 6> const& stress) {
-                return std::array<double, 2> {stress[4], stress[5]};
+                if constexpr (sizeof...(DDim) == 3)
+                    return std::array<double, 3> {stress[4], stress[5], stress[2]};
+                else
+                    return std::array<double, 2> {stress[4], stress[5]};
             },
             [&](auto elem, double value) {
                 force_density_tensor(
@@ -4538,45 +3814,43 @@ inline void fill_force_density_on_quadrilateral_grid(
             });
 }
 
-inline void fill_force_density_on_hexahedral_grid_xy_slices(
+inline void fill_force_density_on_hexahedral_grid(
         sil::onelab_interface::gmsh::StructuredGrid3D const& grid,
         std::vector<CellPostProcessFields>& cell_outputs)
 {
-    auto const cell_domain = ddc::DiscreteDomain<
-            magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY>(
-            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
+    using magnetostatics_local::DDimX;
+    using magnetostatics_local::DDimY;
+    using magnetostatics_local::DDimZ;
+    ddc::DiscreteDomain<DDimX, DDimY, DDimZ> const cell_domain(
+            ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
             ddc::DiscreteVector<
-                    magnetostatics_local::DDimX,
-                    magnetostatics_local::DDimY>(grid.ncell_x(), grid.ncell_y()));
-    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
-        fill_force_density_on_cell_domain(
-                cell_domain,
-                [&](auto elem) {
-                    std::size_t const i = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                    std::size_t const j = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                    return cell_outputs[grid.cell_index(i, j, k)].maxwell_stress;
-                },
-                [&](auto elem) {
-                    std::size_t const i = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                    std::size_t const j = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                    return std::array<double, 2> {
-                            grid.cell_center_x(i),
-                            grid.cell_center_y(j),
-                    };
-                },
-                [&](auto elem, std::array<double, 3> const& force_density) {
-                    std::size_t const i = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                    std::size_t const j = static_cast<std::size_t>(
-                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                    cell_outputs[grid.cell_index(i, j, k)].force_density = force_density;
-                });
-    }
+                    DDimX,
+                    DDimY,
+                    DDimZ>(grid.ncell_x(), grid.ncell_y(), grid.ncell_z()));
+    fill_force_density_on_cell_domain(
+            cell_domain,
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> const& elem) {
+                return cell_outputs[grid.cell_index(
+                                            ddc::DiscreteElement<DDimX>(elem).uid(),
+                                            ddc::DiscreteElement<DDimY>(elem).uid(),
+                                            ddc::DiscreteElement<DDimZ>(elem).uid())]
+                        .maxwell_stress;
+            },
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> const& elem) {
+                return std::array<double, 3> {
+                        grid.cell_center_x(ddc::DiscreteElement<DDimX>(elem).uid()),
+                        grid.cell_center_y(ddc::DiscreteElement<DDimY>(elem).uid()),
+                        grid.cell_center_z(ddc::DiscreteElement<DDimZ>(elem).uid())};
+            },
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> const& elem,
+                std::array<double, 3> const& force_density) {
+                cell_outputs[grid.cell_index(
+                                     ddc::DiscreteElement<DDimX>(elem).uid(),
+                                     ddc::DiscreteElement<DDimY>(elem).uid(),
+                                     ddc::DiscreteElement<DDimZ>(elem).uid())]
+                        .force_density
+                        = force_density;
+            });
 }
 
 // Physical diagnostic densities are reduced on selected oriented grid faces.
@@ -4717,7 +3991,8 @@ void integrate_diagnostics(
                                 .z
                                 = planar ? z_coords.front() : 0.5 * (z_coords[k] + z_coords[k + 1]),
                                 .measure = sil::exterior::integrate<ddc::TypeSeq<First, Second>>(
-                                        forms[ddc::DiscreteElement<DiagnosticQuantity>(2)],
+                                        sil::exterior::Form(
+                                                forms[ddc::DiscreteElement<DiagnosticQuantity>(2)]),
                                         position,
                                         face),
                                 .traction = traction});
@@ -4727,7 +4002,7 @@ void integrate_diagnostics(
     auto integral = [&](std::size_t quantity, Chain const& chain) {
         return sil::exterior::integrate<ddc::TypeSeq<First, Second>>(
                 Kokkos::DefaultHostExecutionSpace(),
-                forms[ddc::DiscreteElement<DiagnosticQuantity>(quantity)],
+                sil::exterior::Form(forms[ddc::DiscreteElement<DiagnosticQuantity>(quantity)]),
                 position,
                 chain);
     };
@@ -5016,7 +4291,7 @@ Result run_on_quadrilateral_grid(
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator2D<
                 memory_space,
                 decltype(equations),
-                magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D>(
+                magnetostatics_local::PotentialCoboundary2D>(
                 equations,
                 x_coords,
                 y_coords,
@@ -5142,7 +4417,10 @@ Result run_on_quadrilateral_grid(
         fill_cell_outputs(nonlinear_constitutive_law);
     } else {
         auto const dummy_nonlinear_constitutive_law
-                = [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; };
+                = physics::magnetostatics::NonlinearMagneticInductionToMagneticField(
+                        physics::magnetostatics::InterpolatedNonlinearBHCurve<2>(
+                                std::array<double, 2> {0.0, 1.0},
+                                std::array<double, 2> {0.0, 1.0}));
         fill_cell_outputs(dummy_nonlinear_constitutive_law);
     }
     for (CellPostProcessFields const& cell_output : cell_outputs) {
@@ -5522,7 +4800,7 @@ Result run_on_hexahedral_grid(
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator3D<
                 memory_space,
                 decltype(equations),
-                magnetostatics_local::MagneticVectorPotentialToMagneticInduction3D>(
+                magnetostatics_local::PotentialCoboundary3D>(
                 equations,
                 x_coords,
                 y_coords,
@@ -5670,7 +4948,10 @@ Result run_on_hexahedral_grid(
         fill_cell_outputs(nonlinear_constitutive_law);
     } else {
         auto const dummy_nonlinear_constitutive_law
-                = [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; };
+                = physics::magnetostatics::NonlinearMagneticInductionToMagneticField(
+                        physics::magnetostatics::InterpolatedNonlinearBHCurve<2>(
+                                std::array<double, 2> {0.0, 1.0},
+                                std::array<double, 2> {0.0, 1.0}));
         fill_cell_outputs(dummy_nonlinear_constitutive_law);
     }
     for (CellPostProcessFields const& cell_output : cell_outputs) {
@@ -5681,7 +4962,7 @@ Result run_on_hexahedral_grid(
             result.max_abs_field = std::max(result.max_abs_field, std::abs(value));
         }
     }
-    fill_force_density_on_hexahedral_grid_xy_slices(grid, cell_outputs);
+    fill_force_density_on_hexahedral_grid(grid, cell_outputs);
     integrate_diagnostics(grid, inputs, cell_inputs_3d, cell_outputs, result);
 
     write_results_view(

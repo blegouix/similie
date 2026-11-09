@@ -33,9 +33,9 @@ public:
             result[a] += resistivity * current[a];
         return result;
     }
-    KOKKOS_FUNCTION double ohmic_heating(Vector const& current) const
+    KOKKOS_FUNCTION Scalar ohmic_heating(Vector const& current) const
     {
-        return resistivity * dot(current, current);
+        return Scalar(resistivity * dot(current, current));
     }
     KOKKOS_FUNCTION double magnetic_diffusivity() const
     {

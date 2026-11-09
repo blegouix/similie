@@ -26,11 +26,16 @@ struct Reference
     }
     KOKKOS_FUNCTION static double conductivity()
     {
-        return model().conductivity({1, {}, reference_pressure / (gamma - 1)});
+        return model().conductivity(
+                {CompressiblePhysics::Scalar(1),
+                 {},
+                 CompressiblePhysics::Scalar(reference_pressure / (gamma - 1))});
     }
     KOKKOS_FUNCTION static CompressiblePhysics::State state(Field const& field, int i)
     {
-        return {field(0, i), {field(1, i), field(2, i), field(3, i)}, field(4, i)};
+        return {CompressiblePhysics::Scalar(field(0, i)),
+                {field(1, i), field(2, i), field(3, i)},
+                CompressiblePhysics::Scalar(field(4, i))};
     }
     KOKKOS_FUNCTION static double pressure(Field const& state, int i)
     {

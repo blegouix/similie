@@ -61,6 +61,22 @@ double reference_final_time = 10;
 bool write_snapshots = true;
 bool benchmark_failed = false;
 
+// A fixed capture trigger leaves the hierarchical operation paths unchanged.
+class IterationCapture
+{
+public:
+    IterationCapture()
+    {
+        Kokkos::Profiling::pushRegion("similie_tgv_iterations");
+    }
+    IterationCapture(IterationCapture const&) = delete;
+    IterationCapture& operator=(IterationCapture const&) = delete;
+    ~IterationCapture()
+    {
+        Kokkos::Profiling::popRegion();
+    }
+};
+
 void check_hdf(herr_t status)
 {
     if (status < 0)
@@ -628,6 +644,12 @@ public:
     void snapshot(Simulation& simulation, double time)
     {
         simulation.compute_pressure();
+        if (simulation.incompressible)
+            simulation.incompressible->observe_fields(
+                    simulation.state,
+                    simulation.velocity,
+                    simulation.vorticity,
+                    simulation.vector_potential);
         std::vector<std::pair<char const*, Field>>
                 fields {{"velocity", simulation.velocity},
                         std::pair {"vorticity", simulation.vorticity},
@@ -855,12 +877,17 @@ void validate()
     Simulation simulation(nodes, physics);
     Monitor const initial = simulation.monitor(0);
     double const symbol = 2 * std::sin(simulation.dec.h / 2) / simulation.dec.h;
-    double const expected = physics == Physics::Incompressible ? 0.125 * symbol * symbol : 0.125;
+    // Vertex quadrature of sin(x) sin(y) multiplies the face-centred
+    // potential by cos(h/2)^2. Quadratic cochain monitors inherit its square.
+    double const projection_norm = std::pow(std::cos(simulation.dec.h / 2), 4);
+    double const expected = physics == Physics::Incompressible
+                                    ? 0.125 * symbol * symbol * projection_norm
+                                    : 0.125;
     if (std::abs(initial.energy - expected) > 1e-10
         || (physics == Physics::Incompressible && initial.divergence > 1e-10))
         throw std::runtime_error("Initial kinetic energy or periodic divergence is incorrect");
     if (physics == Physics::Incompressible
-        && std::abs(initial.enstrophy - 0.375 * std::pow(symbol, 4)) > 1e-10)
+        && std::abs(initial.enstrophy - 0.375 * std::pow(symbol, 4) * projection_norm) > 1e-10)
         throw std::runtime_error("Initial DEC enstrophy is incorrect");
     double initial_velocity_rms = 0;
     Field constant("constant", 1, simulation.dec.cells), lap("lap", 1, simulation.dec.cells);
@@ -909,8 +936,12 @@ void validate()
         Kokkos::deep_copy(saved, simulation.state);
         simulation.compute_pressure();
         simulation.incompressible->monitor_constraints(simulation.state);
-        Field const q = simulation.state, p = simulation.pressure,
-                    u = simulation.incompressible->velocity;
+        simulation.incompressible->observe_fields(
+                simulation.state,
+                simulation.velocity,
+                simulation.vorticity,
+                simulation.vector_potential);
+        Field const q = simulation.state, p = simulation.pressure, u = simulation.velocity;
         double mean_pressure;
         Kokkos::parallel_reduce(
                 "reconstructed_pressure_mean",
@@ -1092,7 +1123,11 @@ double run_trajectory(benchmark::State* benchmark_state)
         std::filesystem::create_directories(output_directory);
         Clock::time_point const setup_start = Clock::now();
         Simulation simulation(nodes, physics);
-        Kokkos::fence("taylor_green_setup_complete");
+        // Exercise the initial-state operators without advancing the solution.
+        // This constructs lazy stencil caches and reusable preconditioners in
+        // setup, and prepares the initial elliptic reconstruction for every run.
+        simulation.timestep();
+        simulation.evaluate(simulation.state, simulation.rhs);
         double setup_seconds = 0;
         std::string const prefix = std::string("tgv_") + configuration.name() + "_N"
                                    + std::to_string(nodes) + "_run";
@@ -1120,11 +1155,10 @@ double run_trajectory(benchmark::State* benchmark_state)
                 ProfilingRegion monitor_region("monitoring");
                 Monitor const m = simulation.monitor(time, step_seconds);
                 monitor_region.end();
-                monitor_seconds
-                        += std::chrono::duration<double>(Clock::now() - begin).count();
+                monitor_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
                 monitors.push_back(m);
-                energy << m.time << " " << m.energy << " " << m.derivative << " "
-                       << m.dissipation << "\n";
+                energy << m.time << " " << m.energy << " " << m.derivative << " " << m.dissipation
+                       << "\n";
             }
             Clock::time_point const begin = Clock::now();
             ProfilingRegion const export_region("export");
@@ -1138,6 +1172,7 @@ double run_trajectory(benchmark::State* benchmark_state)
         output = std::make_unique<Export>(base, nodes);
         export_seconds += std::chrono::duration<double>(Clock::now() - export_start).count();
         sample(0, 0, true);
+        Kokkos::fence("taylor_green_setup_complete");
         setup_seconds = std::chrono::duration<double>(Clock::now() - setup_start).count();
         setup_region.end();
         Clock::time_point progress_start = Clock::now();
@@ -1148,7 +1183,7 @@ double run_trajectory(benchmark::State* benchmark_state)
         std::int64_t next_snapshot = 1;
         // A single Google Benchmark iteration advances the existing state once.
         auto advance_step = [&]() {
-            ProfilingRegion const iteration_region("iteration");
+            ProfilingRegion iteration_region("iteration");
             ProfilingRegion solver_region("solver");
             Clock::time_point const step_start = Clock::now();
             std::int64_t const cg_before
@@ -1195,6 +1230,7 @@ double run_trajectory(benchmark::State* benchmark_state)
             Kokkos::fence("taylor_green_timing");
             double const seconds = std::chrono::duration<double>(Clock::now() - step_start).count();
             solver_region.end();
+            iteration_region.end();
             solver_seconds += seconds;
             if (benchmark_state)
                 benchmark_state->SetIterationTime(seconds);
@@ -1230,12 +1266,15 @@ double run_trajectory(benchmark::State* benchmark_state)
             if (benchmark_state)
                 benchmark_state->ResumeTiming();
         };
-        if (benchmark_state) {
-            for ([[maybe_unused]] auto iteration : *benchmark_state)
-                advance_step();
-        } else {
-            while (time < reference_final_time)
-                advance_step();
+        {
+            IterationCapture const capture;
+            if (benchmark_state) {
+                for ([[maybe_unused]] auto iteration : *benchmark_state)
+                    advance_step();
+            } else {
+                while (time < reference_final_time)
+                    advance_step();
+            }
         }
         ProfilingRegion const finalization_region("finalization");
         Clock::time_point const finish_export = Clock::now();
@@ -1260,8 +1299,7 @@ double run_trajectory(benchmark::State* benchmark_state)
                     << configuration.staging_name() << "\",\"operators\":\""
                     << configuration.operator_name() << "\",\"mode\":\""
                     << (benchmark_state ? "performance" : "reference")
-                    << "\",\"monitoring_enabled\":"
-                    << (monitoring_enabled ? "true" : "false")
+                    << "\",\"monitoring_enabled\":" << (monitoring_enabled ? "true" : "false")
                     << ",\"strategy\":" << strategy_index << ",\"flags\":\""
                     << configuration.strategy_flags() << "\",\"N\":" << nodes
                     << ",\"steps\":" << steps << ",\"final_time\":" << time

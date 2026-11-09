@@ -220,8 +220,12 @@ int main(int argc, char** argv)
             ddc::DiscreteElement<DDimX, DDimY>,
             sil::exterior::CellComplex::Primal,
             sil::tensor::TensorDiagonalIndex>>
-            reduction(Kokkos::DefaultExecutionSpace(), potential_cochain, potential, position);
-    reduction(potential_cochain, potential);
+            reduction {
+                    Kokkos::DefaultExecutionSpace(),
+                    sil::exterior::Cochain(potential_cochain),
+                    sil::exterior::Form(potential),
+                    position};
+    reduction(sil::exterior::Cochain(potential_cochain), sil::exterior::Form(potential));
 
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> laplacian_accessor;
@@ -238,8 +242,8 @@ int main(int argc, char** argv)
             MuLow,
             sil::exterior::WeightedLeviCivitaDiscreteHodgeStar>(
             Kokkos::DefaultExecutionSpace(),
-            laplacian_cochain,
-            potential_cochain,
+            sil::exterior::Cochain(laplacian_cochain),
+            sil::exterior::Cochain(potential_cochain),
             metric,
             position);
     // Pairs follow the (DDimX, DDimY) domain order, with lower then upper side.
@@ -251,8 +255,8 @@ int main(int argc, char** argv)
                     pair {sil::tensor::NaturalScalarExtrapolationRule {},
                           sil::tensor::NaturalScalarExtrapolationRule {}});
     laplacian(
-            laplacian_cochain,
-            potential_cochain,
+            sil::exterior::Cochain(laplacian_cochain),
+            sil::exterior::Cochain(potential_cochain),
             primal_rules,
             sil::tensor::ZeroExtrapolationRule {});
     sil::exterior::StagedOperator<sil::exterior::Reconstruction<
@@ -261,12 +265,14 @@ int main(int argc, char** argv)
             ddc::DiscreteElement<DDimX, DDimY>,
             sil::exterior::CellComplex::Primal,
             sil::tensor::TensorDiagonalIndex>>
-            reconstruction(
+            reconstruction {
                     Kokkos::DefaultExecutionSpace(),
-                    laplacian_tensor,
-                    laplacian_cochain,
-                    position);
-    reconstruction(laplacian_tensor, laplacian_cochain);
+                    sil::exterior::Form(laplacian_tensor),
+                    sil::exterior::Cochain(laplacian_cochain),
+                    position};
+    reconstruction(
+            sil::exterior::Form(laplacian_tensor),
+            sil::exterior::Cochain(laplacian_cochain));
     Kokkos::fence();
 
     auto position_host

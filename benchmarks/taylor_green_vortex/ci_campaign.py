@@ -169,7 +169,7 @@ def validate_trajectory(path, configuration, n, reference=False):
             ):
                 raise ValueError(f"Invalid final time, density, or pressure: {hdf}")
             initial_energy = (
-                0.125 * np.sinc(1 / n) ** 2
+                0.125 * np.sinc(1 / n) ** 2 * np.cos(np.pi / n) ** 4
                 if configuration.startswith("incompressible")
                 else 0.125
             )
@@ -680,6 +680,7 @@ def profile_performance(command, directory, configuration):
     benchmark = None
     rows = []
     header_printed = False
+    pending_profiles = []
     for strategy, flags in enumerate(STRATEGIES, 1):
         for n in MESH_SIZES:
             name = f"TaylorGreen/{configuration}/N{n}/{'+'.join(flags) or 'default'}"
@@ -689,24 +690,32 @@ def profile_performance(command, directory, configuration):
             # outside brackets, while Python re.escape also escapes hyphens.
             pattern = re.escape(name).replace(r"\-", "-")
             profiled, environment = profile_command(
-                [*command, f"--benchmark_filter=^{pattern}(/|$)"], capture
+                [
+                    *command,
+                    "--benchmark_color=true",
+                    f"--benchmark_filter=^{pattern}(/|$)",
+                ],
+                capture,
             )
             execute(profiled, capture, environment, stream_output=False)
             for line in (capture / "run.log").read_text().splitlines():
-                line = re.sub(r"\x1b\[[0-9;]*m", "", line)
-                if line.startswith("Benchmark ") and not header_printed:
+                plain_line = re.sub(r"\x1b\[[0-9;]*m", "", line)
+                if plain_line.startswith("Benchmark ") and not header_printed:
                     print(line)
-                    print("-" * len(line))
+                    print("-" * len(plain_line))
                     header_printed = True
-                elif line.startswith("TaylorGreen/"):
+                elif plain_line.startswith("TaylorGreen/"):
                     print(line, flush=True)
             current = json.loads((directory / "benchmark.json").read_text())
             if benchmark is None:
                 benchmark = current
             rows.extend(current["benchmarks"])
-            timings["cases"].update(
-                summarize_profile(capture, {case: PERFORMANCE_STEPS})["cases"]
-            )
+            pending_profiles.append((capture, case))
+    for capture, case in pending_profiles:
+        print(f"Summarizing Nsight Systems timeline: {case}", flush=True)
+        timings["cases"].update(
+            summarize_profile(capture, {case: PERFORMANCE_STEPS})["cases"]
+        )
     benchmark["benchmarks"] = rows
     (directory / "benchmark.json").write_text(json.dumps(benchmark, indent=2) + "\n")
     (directory / "nsys/timings.json").write_text(json.dumps(timings, indent=2) + "\n")

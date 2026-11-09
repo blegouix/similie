@@ -72,11 +72,11 @@ void check_reconstruction(bool singular)
                           MetricIndex,
                           OneForm,
                           Form,
-                          Field<Form>,
+                          sil::exterior::Cochain<Field<Form>>,
                           Field<MetricIndex>,
                           Field<PositionIndex>,
                           Kokkos::DefaultExecutionSpace>>,
-                  Field<Form>>);
+                  sil::exterior::Cochain<Field<Form>>>);
     if constexpr (Form::rank() > 0)
         static_assert(sil::exterior::StagedOperatorConcept<
                       sil::exterior::StagedOperator<
@@ -84,19 +84,22 @@ void check_reconstruction(bool singular)
                                       MetricIndex,
                                       OneForm,
                                       Form,
-                                      Field<Form>,
+                                      sil::exterior::Cochain<Field<Form>>,
                                       Field<MetricIndex>,
                                       Field<PositionIndex>>,
                               typename sil::exterior::Codifferential<
                                       MetricIndex,
                                       OneForm,
                                       Form,
-                                      Field<Form>,
+                                      sil::exterior::Cochain<Field<Form>>,
                                       Field<MetricIndex>,
                                       Field<PositionIndex>>::staged_storage_type::
                                       template rebind<Kokkos::DefaultExecutionSpace>>,
-                      sil::exterior::codifferential_tensor_t<OneForm, Form, Field<Form>>,
-                      Field<Form>>);
+                      sil::exterior::codifferential_tensor_t<
+                              OneForm,
+                              Form,
+                              sil::exterior::Cochain<Field<Form>>>,
+                      sil::exterior::Cochain<Field<Form>>>);
     SpatialDomain const geometry_domain(
             ddc::DiscreteElement<GridX, GridY, GridZ>(0, 0, 0),
             ddc::DiscreteVector<GridX, GridY, GridZ>(4, 4, 4));
@@ -141,22 +144,34 @@ void check_reconstruction(bool singular)
                                                 + 0.02 * elem.template uid<GridZ>();
                 });
                 sil::exterior::Reduction<Indices, decltype(position), decltype(elem), Complex>::
-                operator()(reduced[elem], form[elem], position, elem);
+                operator()(
+                        sil::exterior::Cochain(reduced[elem]),
+                        sil::exterior::Form(form[elem]),
+                        position,
+                        elem);
                 sil::exterior::
                         Reconstruction<Indices, decltype(position), decltype(elem), Complex>::
-                        operator()(reconstructed[elem], reduced[elem], position, elem);
+                        operator()(
+                                sil::exterior::Form(reconstructed[elem]),
+                                sil::exterior::Cochain(reduced[elem]),
+                                position,
+                                elem);
             });
     sil::tensor::Tensor staged_result(staged_alloc);
     auto staged = sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             Indices,
             decltype(position),
             SpatialDomain::discrete_element_type,
-            Complex>>(Kokkos::DefaultExecutionSpace(), staged_result, reduced, position);
+            Complex>>(
+            Kokkos::DefaultExecutionSpace(),
+            sil::exterior::Form(staged_result),
+            sil::exterior::Cochain(reduced),
+            position);
     static_assert(sil::exterior::StagedOperatorConcept<
                   decltype(staged),
-                  decltype(staged_result),
-                  decltype(reduced)>);
-    staged(staged_result, reduced);
+                  sil::exterior::Form<decltype(staged_result)>,
+                  sil::exterior::Cochain<std::remove_cv_t<decltype(reduced)>>>);
+    staged(sil::exterior::Form(staged_result), sil::exterior::Cochain(reduced));
     sil::tensor::tensor_accessor_for_domain_t<sil::exterior::reconstruction_domain_t<Indices>> const
             reconstruction_accessor;
     sil::misc::
@@ -216,7 +231,7 @@ void check_reconstruction(bool singular)
             KOKKOS_LAMBDA(typename decltype(form_domain)::discrete_element_type elem) {
                 reduced.mem(elem) *= 1.75;
             });
-    staged(staged_result, reduced);
+    staged(sil::exterior::Form(staged_result), sil::exterior::Cochain(reduced));
     // Keep a snapshot even when the execution space already uses host memory.
     auto const updated
             = Kokkos::create_mirror(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());
@@ -232,7 +247,7 @@ void check_reconstruction(bool singular)
             KOKKOS_LAMBDA(typename decltype(position_domain)::discrete_element_type elem) {
                 position.mem(elem) *= 2.;
             });
-    staged(staged_result, reduced);
+    staged(sil::exterior::Form(staged_result), sil::exterior::Cochain(reduced));
     auto const unchanged = Kokkos::
             create_mirror_view_and_copy(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());
     for (std::size_t i = 0; i < actual.size(); ++i)
@@ -241,8 +256,12 @@ void check_reconstruction(bool singular)
             Indices,
             decltype(position),
             SpatialDomain::discrete_element_type,
-            Complex>>(Kokkos::DefaultExecutionSpace(), staged_result, reduced, position);
-    refreshed(staged_result, reduced);
+            Complex>>(
+            Kokkos::DefaultExecutionSpace(),
+            sil::exterior::Form(staged_result),
+            sil::exterior::Cochain(reduced),
+            position);
+    refreshed(sil::exterior::Form(staged_result), sil::exterior::Cochain(reduced));
     auto const refreshed_host = Kokkos::
             create_mirror_view_and_copy(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());
     for (std::size_t i = 0; i < actual.size(); ++i)

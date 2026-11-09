@@ -89,8 +89,7 @@ jobs:
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
           -e HOME="${BUILD_ROOT}/home" \
-          -e CACHE_ROOT="${BUILD_ROOT}" \
-          -v "${CACHE_ROOT}:/similie-ci" \
+          -e BUILD_ROOT="${BUILD_ROOT}" \
           -v "${CACHE_ROOT}:${BUILD_ROOT}" \
           -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
@@ -101,16 +100,14 @@ jobs:
             git config --global --add safe.directory "*"
             nvidia-smi
 
-            export HOME=/similie-ci/home
             mkdir -p "${HOME}"
             case_name="${{ matrix.case.name }}"
-            cd /similie-ci/build
             output_dir="${PWD}/onelab_elasticity_cases/${case_name}"
             mkdir -p "${output_dir}"
             SIMILIE_ONELAB_BUILD_DIR="${PWD}" \
             SIMILIE_ONELAB_MESH_FILE="${output_dir}/wrench2D.msh" \
             SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_elasticity_inputs.pos" \
-              "/similie-ci/src/examples/onelab_elasticity/run_similie_onelab.sh" \
+              "${BUILD_ROOT}/src/examples/onelab_elasticity/run_similie_onelab.sh" \
               "--${{ matrix.case.backend }}" ${{ matrix.case.arguments }}
           ' 2>&1 | tee -a "${EXAMPLE_LOG}"
     - name: Upload example outputs

@@ -18,18 +18,18 @@ namespace similie::physics::coupling {
  * This exchange must not be added to the stored fluid-plus-field Hamiltonian.
  * \important This operator and documentation is fully AI-generated.
  */
-class @class@
-{
-public:
-    using State = ElectromagneticCouplingState;
-    static constexpr std::size_t N = 0;
-    static constexpr bool IS_LINEAR = false;
+class @class@{public : using State = ElectromagneticCouplingState;
+static constexpr std::size_t N = 0;
+static constexpr bool IS_LINEAR = false;
 
-    [[nodiscard]] KOKKOS_FUNCTION ElectromagneticExchange operator()(State const& state) const
+[[nodiscard]] KOKKOS_FUNCTION ElectromagneticExchange operator()(State const& state) const
+{
+    return
     {
-        return {@force@, @power@, @field_power@};
-    }
-};
+        @force@, sil::exterior::Form<double>(@power@), sil::exterior::Form<double>(@field_power@)
+    };
+}
+}; // namespace similie::physics::coupling
 
 static_assert(PhysicsConcept<@class@>);
 } // namespace similie::physics::coupling

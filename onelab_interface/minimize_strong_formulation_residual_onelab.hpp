@@ -61,8 +61,10 @@ inline double preconditioner_to_control_value(solvers::PreconditionerType precon
         return 6.0;
     case solvers::PreconditionerType::GeneralIsai:
         return 7.0;
+    case solvers::PreconditionerType::Multigrid:
+        return 8.0;
     }
-    return 1.0;
+    throw std::runtime_error("invalid strong-formulation preconditioner");
 }
 
 inline solvers::PreconditionerType preconditioner_from_control_value(double value)
@@ -85,6 +87,8 @@ inline solvers::PreconditionerType preconditioner_from_control_value(double valu
         return solvers::PreconditionerType::IrJacobi;
     case 7:
         return solvers::PreconditionerType::GeneralIsai;
+    case 8:
+        return solvers::PreconditionerType::Multigrid;
     default:
         throw std::runtime_error("invalid strong-formulation preconditioner control value");
     }
@@ -151,9 +155,9 @@ void synchronize_controls(
             "Ginkgo preconditioner used by the stationary strong-formulation solver.",
             preconditioner_to_control_value(solver_settings.preconditioner),
             0.0,
-            7.0,
+            8.0,
             1.0,
-            std::vector<double> {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0},
+            std::vector<double> {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0},
             std::map<double, std::string> {
                     {0.0, "Identity"},
                     {1.0, "Jacobi"},
@@ -163,6 +167,7 @@ void synchronize_controls(
                     {5.0, "ChebyshevJacobi"},
                     {6.0, "IrJacobi"},
                     {7.0, "GeneralIsai"},
+                    {8.0, "Multigrid"},
             });
     publish_or_sync_number(
             problem_parameter_name("1Solver", "6SOR relaxation factor"),

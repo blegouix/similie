@@ -95,8 +95,8 @@ cache_laplacian_hodge(
                 }();
                 for (std::size_t source = 0; source < Source::mem_size(); ++source) {
                     unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
-                    hodge(tensor::Tensor(output.span_view()),
-                          tensor::Tensor(unit.span_view()),
+                    hodge(::sil::exterior::Cochain(tensor::Tensor(output.span_view())),
+                          ::sil::exterior::Cochain(tensor::Tensor(unit.span_view())),
                           metric,
                           position,
                           element);
@@ -149,16 +149,16 @@ struct LaplacianHodgePair
                     Element>;
     static_assert(DiscreteHodgeStarConcept<
                   Forward,
-                  tensor::Tensor<
+                  ::sil::exterior::Cochain<tensor::Tensor<
                           double,
                           ddc::DiscreteDomain<Dual>,
                           Kokkos::layout_right,
-                          typename Metric::memory_space>,
-                  tensor::Tensor<
+                          typename Metric::memory_space>>,
+                  ::sil::exterior::Cochain<tensor::Tensor<
                           double,
                           ddc::DiscreteDomain<Cochain>,
                           Kokkos::layout_right,
-                          typename Metric::memory_space>,
+                          typename Metric::memory_space>>,
                   Metric,
                   Position,
                   Element,
@@ -167,16 +167,16 @@ struct LaplacianHodgePair
                           discrete_element_type>);
     static_assert(DiscreteHodgeStarConcept<
                   Inverse,
-                  tensor::Tensor<
+                  ::sil::exterior::Cochain<tensor::Tensor<
                           double,
                           ddc::DiscreteDomain<codifferential_index_t<Index, Cochain>>,
                           Kokkos::layout_right,
-                          typename Metric::memory_space>,
-                  tensor::Tensor<
+                          typename Metric::memory_space>>,
+                  ::sil::exterior::Cochain<tensor::Tensor<
                           double,
                           ddc::DiscreteDomain<Intermediate>,
                           Kokkos::layout_right,
-                          typename Metric::memory_space>,
+                          typename Metric::memory_space>>,
                   Metric,
                   Position,
                   Element,
@@ -236,7 +236,7 @@ KOKKOS_FORCEINLINE_FUNCTION auto laplacian_derivative(
             return tensor::make_extrapolation_rules(field, rules);
     }();
     apply_incidence<false, Index, Source>(
-            tensor::Tensor(output.span_view()),
+            ::sil::exterior::Cochain(tensor::Tensor(output.span_view())),
             [&](auto sample, auto component) { return boundary(field, sample).mem(component); },
             chain,
             lower,
@@ -290,7 +290,7 @@ KOKKOS_FORCEINLINE_FUNCTION auto laplacian_codifferential(
     auto derivative
             = make_stencil<typename Field::memory_space, Intermediate>(ddc::DiscreteElement<>());
     apply_incidence<true, Index, Dual>(
-            tensor::Tensor(derivative.span_view()),
+            ::sil::exterior::Cochain(tensor::Tensor(derivative.span_view())),
             [&](auto sample, auto component) { return boundary(dual, sample).mem(component); },
             chain,
             lower,
@@ -400,7 +400,7 @@ struct LaplacianCodifferential
             Position const& position,
             Rules const& rules)
     {
-        tensor::Tensor const dual(buffer.span_view());
+        ::sil::exterior::Cochain const dual {tensor::Tensor(buffer.span_view())};
         auto const& forward = stars.forward;
         auto const& inverse = stars.inverse;
         auto const boundary = [&] {
@@ -420,9 +420,9 @@ struct LaplacianCodifferential
                 KOKKOS_LAMBDA(
                         typename Tensor::non_indices_domain_t::discrete_element_type element) {
                     auto point = make_stencil<Memory, Cochain>(ddc::DiscreteElement<>());
-                    evaluate(tensor::Tensor(point.span_view()), element);
+                    evaluate(::sil::exterior::Cochain(tensor::Tensor(point.span_view())), element);
                     forward(dual[element],
-                            tensor::Tensor(point.span_view()),
+                            ::sil::exterior::Cochain(tensor::Tensor(point.span_view())),
                             metric,
                             position,
                             element);
@@ -436,7 +436,7 @@ struct LaplacianCodifferential
                     auto derivative = make_stencil<Memory, typename Pair::Intermediate>(
                             ddc::DiscreteElement<>());
                     TransposedCoboundary<Index, DualIndex>::operator()(
-                            tensor::Tensor(derivative.span_view()),
+                            ::sil::exterior::Cochain(tensor::Tensor(derivative.span_view())),
                             [&](auto sample, auto component) {
                                 return boundary(dual, sample).mem(component);
                             },
@@ -444,7 +444,7 @@ struct LaplacianCodifferential
                             lower,
                             element);
                     inverse(output[element],
-                            tensor::Tensor(derivative.span_view()),
+                            ::sil::exterior::Cochain(tensor::Tensor(derivative.span_view())),
                             metric,
                             position,
                             element);
@@ -579,7 +579,7 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex Index,
         tensor::TensorIndex Cochain,
-        misc::Specialization<tensor::Tensor> Tensor,
+        CochainType Tensor,
         misc::Specialization<tensor::Tensor> Metric,
         misc::Specialization<tensor::Tensor> Position,
         class Exec,
@@ -612,7 +612,7 @@ class Laplacian
 
 public:
     using staged_storage_type = detail::
-            SpatialOperatorStorage<Laplacian, Index, Cochain, Cochain, 2, Tensor, Exec, true>;
+            LinearSpatialOperatorStorage<Laplacian, Index, Cochain, Cochain, 2, Tensor, Exec, true>;
 
     Laplacian(
             Exec const& exec,
@@ -665,7 +665,7 @@ public:
                            dual);
         }
         if constexpr (Cochain::rank() > 0) {
-            tensor::Tensor lower(m_lower.lower);
+            ::sil::exterior::Cochain lower {tensor::Tensor(m_lower.lower)};
             m_lower.operation
                     .apply(m_exec,
                            lower,
@@ -674,7 +674,7 @@ public:
                            m_position,
                            dual);
             if constexpr (Cochain::rank() < Index::size()) {
-                Tensor contribution(*m_lower.contribution);
+                Tensor contribution(tensor::Tensor(m_lower.contribution->span_view()));
                 deriv<Index,
                       codifferential_index_t<Index, Cochain>>(m_exec, contribution, lower, primal);
                 ddc::parallel_for_each(
@@ -849,7 +849,7 @@ template <
         tensor::TensorIndex Cochain,
         template <CellComplex, class, class, class, class, class> class Hodge = DiscreteHodgeStar,
         class Exec,
-        class Tensor,
+        CochainType Tensor,
         class Metric,
         class Position>
 Laplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec, Hodge> make_laplacian(
@@ -868,8 +868,8 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex LaplacianDummyIndex,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> DualTensorBufferType,
-        misc::Specialization<tensor::Tensor> TensorType,
+        CochainType DualTensorBufferType,
+        CochainType TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
         class ExecSpace,
@@ -946,7 +946,7 @@ TensorType codifferential_of_coboundary(
                         Kokkos::layout_right,
                         typename TensorType::memory_space>
                         derivative_span(derivative_alloc.data(), derivative_accessor.domain());
-                sil::tensor::Tensor derivative_tensor(derivative_span);
+                ::sil::exterior::Cochain derivative_tensor {sil::tensor::Tensor(derivative_span)};
 
                 Coboundary<LaplacianDummyIndex, CochainTag>::operator()(
                         derivative_tensor,
@@ -980,7 +980,8 @@ TensorType codifferential_of_coboundary(
                         dual_codifferential_span(
                                 dual_codifferential_alloc.data(),
                                 dual_codifferential_accessor.domain());
-                sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
+                ::sil::exterior::Cochain dual_codifferential {
+                        sil::tensor::Tensor(dual_codifferential_span)};
 
                 TransposedCoboundary<LaplacianDummyIndex, coboundary_dual_tensor_index>::operator()(
                         dual_codifferential,
@@ -1021,10 +1022,10 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex LaplacianDummyIndex,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
+        CochainType TensorType,
         misc::Specialization<tensor::Tensor> DerivativeHodgeStarType,
         misc::Specialization<tensor::Tensor> DualDerivativeHodgeStarType,
-        misc::Specialization<tensor::Tensor> DerivativeDualTensorBufferType,
+        CochainType DerivativeDualTensorBufferType,
         class ExecSpace,
         class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
         class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
@@ -1060,15 +1061,15 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex LaplacianDummyIndex,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
+        CochainType TensorType,
         misc::Specialization<tensor::Tensor> DerivativeHodgeStarType,
         misc::Specialization<tensor::Tensor> DualDerivativeHodgeStarType,
-        misc::Specialization<tensor::Tensor> DerivativeDualTensorBufferType,
+        CochainType DerivativeDualTensorBufferType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
-        misc::Specialization<tensor::Tensor> DualTensorBufferType,
-        misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
-        misc::Specialization<tensor::Tensor> CoboundaryOfCodifferentialBufferType,
+        CochainType DualTensorBufferType,
+        CochainType CodifferentialTensorBufferType,
+        CochainType CoboundaryOfCodifferentialBufferType,
         class ExecSpace,
         class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
         class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
@@ -1140,11 +1141,11 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex LaplacianDummyIndex,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
+        CochainType TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
-        misc::Specialization<tensor::Tensor> DualTensorBufferType,
-        misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
+        CochainType DualTensorBufferType,
+        CochainType CodifferentialTensorBufferType,
         class ExecSpace,
         class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
         class DualExtrapolationRule = tensor::ZeroExtrapolationRule>

@@ -61,6 +61,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                 )
                 pattern = re.escape(name).replace(r"\-", "-")
                 self.assertIn(f"--benchmark_filter=^{pattern}(/|$)", command)
+                self.assertIn("--benchmark_color=true", command)
                 self.assertNotIn(r"\-", command[-1])
                 captures.append(output)
                 (directory / "benchmark.json").write_text(
@@ -86,11 +87,19 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                 profile_performance(
                     ["binary", "--strategy-suite"], directory, configuration
                 )
-            self.assertEqual(console.getvalue().count("Benchmark Time CPU Iterations"), 1)
-            self.assertEqual(console.getvalue().count("TaylorGreen/"), 14)
+            self.assertEqual(
+                console.getvalue().count("Benchmark Time CPU Iterations"), 1
+            )
+            self.assertEqual(
+                sum(
+                    re.sub(r"\x1b\[[0-9;]*m", "", line).startswith("TaylorGreen/")
+                    for line in console.getvalue().splitlines()
+                ),
+                14,
+            )
             self.assertNotIn("Profiler chatter", console.getvalue())
             self.assertNotIn("Collecting data", console.getvalue())
-            self.assertNotIn("\x1b", console.getvalue())
+            self.assertIn("\x1b[0;32m", console.getvalue())
             self.assertEqual(len(set(captures)), 14)
             self.assertEqual(summary.call_count, 14)
             self.assertEqual(
@@ -107,14 +116,18 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                 14,
             )
 
-    def test_failed_capture_stops_before_publishing_combined_timings(self):
+    def test_failed_summary_stops_before_publishing_combined_timings(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             (directory / "benchmark.json").write_text(json.dumps({"benchmarks": []}))
+
+            def capture(command, output, environment, stream_output=True):
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "run.log").write_text("")
+
             with (
                 patch("ci_campaign.profile_command", return_value=(["nsys"], {})),
-                patch("ci_campaign.execute") as execute_capture,
-                patch("ci_campaign.Path.read_text", return_value=""),
+                patch("ci_campaign.execute", side_effect=capture) as execute_capture,
                 patch(
                     "ci_campaign.summarize_profile",
                     side_effect=ValueError("missing kernels"),
@@ -124,7 +137,7 @@ class IsolatedSystemsCaptures(unittest.TestCase):
                     profile_performance(
                         ["binary"], directory, "incompressible_ideal_hd"
                     )
-            execute_capture.assert_called_once()
+            self.assertEqual(execute_capture.call_count, 14)
             self.assertFalse((directory / "nsys/timings.json").exists())
 
 
@@ -144,7 +157,9 @@ class ReferenceAccuracyGate(unittest.TestCase):
                     "--phase=validation",
                 ],
             ),
-            patch("ci_campaign.campaign", side_effect=ReferenceValidationError(message)),
+            patch(
+                "ci_campaign.campaign", side_effect=ReferenceValidationError(message)
+            ),
             self.assertRaises(SystemExit) as failure,
         ):
             main()
@@ -533,7 +548,7 @@ class InitialDiscretization(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "requires monitoring"):
                 validate_trajectory(path, "incompressible_ideal_hd", 8, reference=True)
 
-    def test_potential_based_energy_without_resolution_compensation(self):
+    def test_potential_based_energy_includes_vertex_quadrature_projection(self):
         for fluid in ("incompressible", "compressible"):
             for n in (8, 16):
                 with (
@@ -558,7 +573,7 @@ class InitialDiscretization(unittest.TestCase):
                     )
                     h = 2 * np.pi / n
                     expected = (
-                        0.125 * (np.sin(h / 2) / (h / 2)) ** 2
+                        0.125 * (np.sin(h / 2) / (h / 2)) ** 2 * np.cos(h / 2) ** 4
                         if fluid == "incompressible"
                         else 0.125
                     )

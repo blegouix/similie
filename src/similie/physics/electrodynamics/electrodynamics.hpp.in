@@ -8,6 +8,7 @@
 #include <cmath>
 #include <type_traits>
 
+#include <similie/exterior/form.hpp>
 #include <similie/physics/concepts.hpp>
 #include <similie/physics/coupling/electric_coupling_physics.hpp>
 
@@ -24,12 +25,13 @@ namespace similie::physics::electrodynamics {
 class Electrodynamics
 {
 public:
-    using Vector = std::array<double, 3>;
+    using Scalar = sil::exterior::Form<double>;
+    using Vector = sil::exterior::Form<std::array<double, 3>>;
     static constexpr std::size_t N = 4;
     static constexpr bool IS_LINEAR = true;
     struct State
     {
-        double charge_density {};
+        Scalar charge_density {};
         Vector displacement {};
     };
     double const permittivity;
@@ -38,16 +40,16 @@ public:
     {
         KOKKOS_ASSERT(permittivity > 0);
     }
-    KOKKOS_FUNCTION static double dot(Vector const& left, Vector const& right)
+    KOKKOS_FUNCTION static Scalar dot(Vector const& left, Vector const& right)
     {
         double result = 0;
         for (int a = 0; a < 3; ++a)
             result += left[a] * right[a];
-        return result;
+        return Scalar(result);
     }
-    KOKKOS_FUNCTION double hamiltonian(Vector const& displacement) const
+    KOKKOS_FUNCTION Scalar hamiltonian(Vector const& displacement) const
     {
-        return @energy@;
+        return Scalar(@energy@);
     }
     KOKKOS_FUNCTION Vector electric_field(Vector const& displacement) const
     {
@@ -72,7 +74,7 @@ public:
         return {};
     }
     KOKKOS_FUNCTION Vector
-    current(double charge_density,
+    current(Scalar const& charge_density,
             Vector const& velocity,
             [[maybe_unused]] Vector const& displacement) const
     {
@@ -81,36 +83,37 @@ public:
             result[a] = charge_density * velocity[a];
         return result;
     }
-    KOKKOS_FUNCTION double operator()(double current_divergence) const
+    KOKKOS_FUNCTION Scalar operator()(Scalar const& current_divergence) const
     {
-        return -current_divergence;
+        return Scalar(-current_divergence);
     }
-    KOKKOS_FUNCTION Vector electric_force(double charge_density, Vector const& displacement) const
+    KOKKOS_FUNCTION Vector
+    electric_force(Scalar const& charge_density, Vector const& displacement) const
     {
         return coupling::ElectricCouplingPhysics()(
                        {charge_density, electric_field(displacement), {}, {}})
                 .momentum_source;
     }
-    KOKKOS_FUNCTION double fluid_energy_source(
-            Vector const& displacement,
-            Vector const& total_current) const
+    KOKKOS_FUNCTION Scalar
+    fluid_energy_source(Vector const& displacement, Vector const& total_current) const
     {
-        return coupling::ElectricCouplingPhysics()(
-                       {0, electric_field(displacement), {}, total_current})
-                .fluid_energy_source;
+        return Scalar(
+                coupling::ElectricCouplingPhysics()(
+                        {Scalar(0), electric_field(displacement), {}, total_current})
+                        .fluid_energy_source);
     }
-    KOKKOS_FUNCTION double ohmic_heating([[maybe_unused]] Vector const& displacement) const
+    KOKKOS_FUNCTION Scalar ohmic_heating([[maybe_unused]] Vector const& displacement) const
     {
-        return 0;
+        return Scalar(0);
     }
     KOKKOS_FUNCTION double charge_relaxation_rate() const
     {
         return 0;
     }
-    KOKKOS_FUNCTION double gauss_residual(double displacement_divergence, double charge_density)
-            const
+    KOKKOS_FUNCTION Scalar
+    gauss_residual(Scalar const& displacement_divergence, Scalar const& charge_density) const
     {
-        return displacement_divergence - charge_density;
+        return Scalar(displacement_divergence - charge_density);
     }
 };
 

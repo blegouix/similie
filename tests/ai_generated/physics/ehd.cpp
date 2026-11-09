@@ -8,20 +8,22 @@
 #include <similie/physics/fluid/incompressible_navier_stokes.hpp>
 #include <similie/physics/fluid/navier_stokes_fourier.hpp>
 
+using Scalar = sil::exterior::Form<double>;
+
 namespace {
 struct CaloricClosure
 {
-    KOKKOS_FUNCTION double pressure(double rho, double e) const
+    KOKKOS_FUNCTION Scalar pressure(Scalar const& rho, Scalar const& e) const
     {
-        return 0.4 * rho * e;
+        return Scalar(0.4 * rho * e);
     }
-    KOKKOS_FUNCTION double temperature([[maybe_unused]] double rho, double e) const
+    KOKKOS_FUNCTION Scalar temperature([[maybe_unused]] Scalar const& rho, Scalar const& e) const
     {
-        return 0.4 * e;
+        return Scalar(0.4 * e);
     }
     KOKKOS_FUNCTION double heat_capacity_at_constant_pressure(
-            [[maybe_unused]] double rho,
-            [[maybe_unused]] double e) const
+            [[maybe_unused]] Scalar const& rho,
+            [[maybe_unused]] Scalar const& e) const
     {
         return 3.5;
     }
@@ -31,23 +33,23 @@ struct CaloricClosure
 TEST(Electrodynamics, ElectricHamiltonianAndPotentialSign)
 {
     similie::physics::electrodynamics::Electrodynamics const electric(2);
-    std::array<double, 3> const d {4, 0, 0}, u {0, 1, 0};
+    sil::exterior::Form<std::array<double, 3>> const d {4, 0, 0}, u {0, 1, 0};
     EXPECT_DOUBLE_EQ(electric.hamiltonian(d), 4);
     EXPECT_DOUBLE_EQ(electric.electric_field(d)[0], 2);
     EXPECT_DOUBLE_EQ(electric.field_from_potential_gradient({-2, 0, 0})[0], 2);
     EXPECT_DOUBLE_EQ(electric.displacement({2, 0, 0})[0], 4);
-    EXPECT_DOUBLE_EQ(electric.current(3, u, d)[1], 3);
-    EXPECT_DOUBLE_EQ(electric.electric_force(3, d)[0], 6);
+    EXPECT_DOUBLE_EQ(electric.current(Scalar(3), u, d)[1], 3);
+    EXPECT_DOUBLE_EQ(electric.electric_force(Scalar(3), d)[0], 6);
     EXPECT_DOUBLE_EQ(electric.ohmic_heating(d), 0);
-    EXPECT_DOUBLE_EQ(electric.gauss_residual(3, 3), 0);
-    EXPECT_DOUBLE_EQ(electric(7), -7);
+    EXPECT_DOUBLE_EQ(electric.gauss_residual(Scalar(3), Scalar(3)), 0);
+    EXPECT_DOUBLE_EQ(electric(Scalar(7)), -7);
 }
 
 TEST(ResistiveElectrodynamics, CurrentRelaxationAndHeat)
 {
     similie::physics::electrodynamics::ResistiveElectrodynamics const electric(2, 4);
-    std::array<double, 3> const d {4, 0, 0}, u {0, 1, 0};
-    std::array<double, 3> const current = electric.current(3, u, d);
+    sil::exterior::Form<std::array<double, 3>> const d {4, 0, 0}, u {0, 1, 0};
+    sil::exterior::Form<std::array<double, 3>> const current = electric.current(Scalar(3), u, d);
     EXPECT_DOUBLE_EQ(current[0], 0.5);
     EXPECT_DOUBLE_EQ(current[1], 3);
     EXPECT_DOUBLE_EQ(electric.ohmic_heating(d), 1);
@@ -69,18 +71,18 @@ TEST(IncompressibleEHD, ElectricForceAndChargeEvolution)
     Resistive const resistive(
             similie::physics::fluid::IncompressibleNavierStokes(2, 0),
             similie::physics::electrodynamics::ResistiveElectrodynamics(2, 4));
-    Ideal::State const state {{{0, 0, 2}}, {3, {4, 0, 0}}};
+    Ideal::State const state {{{0, 0, 2}}, {Scalar(3), {4, 0, 0}}};
     Resistive::State const resistive_state {state.fluid, state.electromagnetic};
-    std::array<double, 3> const velocity {0, 1, 0};
+    sil::exterior::Form<std::array<double, 3>> const velocity {0, 1, 0};
     EXPECT_DOUBLE_EQ(ideal.transport(state, velocity, ideal.current(state, velocity))[0], 5);
     EXPECT_DOUBLE_EQ(ideal.momentum_rate(state, velocity, {}, {}, {})[0], 5);
     EXPECT_DOUBLE_EQ(ideal.current(state, velocity)[0], 0);
     EXPECT_DOUBLE_EQ(resistive.current(resistive_state, velocity)[0], 0.5);
     EXPECT_DOUBLE_EQ(resistive.get<1>().ohmic_heating(state.electromagnetic.displacement), 1);
-    Resistive::State const rate = resistive({1, 2, 3}, {}, 9, {}, {}, {});
+    Resistive::State const rate = resistive({1, 2, 3}, {}, Scalar(9), {}, {}, {});
     EXPECT_DOUBLE_EQ(rate.fluid.vorticity[1], 2);
     EXPECT_DOUBLE_EQ(rate.electromagnetic.charge_density, -9);
-    EXPECT_EQ(rate.electromagnetic.displacement, (std::array<double, 3> {}));
+    EXPECT_EQ(rate.electromagnetic.displacement, (sil::exterior::Form<std::array<double, 3>> {}));
 }
 
 TEST(CompressibleEHD, FluidEnergyAndElectricalWork)
@@ -91,11 +93,17 @@ TEST(CompressibleEHD, FluidEnergyAndElectricalWork)
     Model const
             ideal(Fluid(CaloricClosure(), 1, 0),
                   similie::physics::electrodynamics::Electrodynamics(2));
-    Model::State const state {{1, {1, 0, 0}, 3}, {2, {2, 0, 0}}};
+    Model::State const state {{Scalar(1), {1, 0, 0}, Scalar(3)}, {Scalar(2), {2, 0, 0}}};
     EXPECT_NEAR(ideal.get<0>().pressure(ideal.fluid_state(state)), 1, 1e-14);
     EXPECT_DOUBLE_EQ(ideal.combined_energy(state), 4);
     EXPECT_NEAR(ideal.flux(state, {}, {}, 0).total_energy, 4, 1e-14);
-    Model::State const rate = ideal(state, Fluid::Flux {0, {}, 0}, 0, {}, {}, ideal.current(state));
+    Model::State const rate
+            = ideal(state,
+                    Fluid::Flux {Scalar(0), {}, Scalar(0)},
+                    Scalar(0),
+                    {},
+                    {},
+                    ideal.current(state));
     EXPECT_DOUBLE_EQ(rate.fluid.momentum[0], 2);
     EXPECT_DOUBLE_EQ(rate.fluid.total_energy, 2);
 }
@@ -109,11 +117,16 @@ TEST(ResistiveCompressibleEHD, JouleHeatingIsIncludedOnce)
     Model const resistive(
             Fluid(CaloricClosure(), 1, 0),
             similie::physics::electrodynamics::ResistiveElectrodynamics(2, 2));
-    Model::State const state {{1, {1, 0, 0}, 3}, {2, {2, 0, 0}}};
+    Model::State const state {{Scalar(1), {1, 0, 0}, Scalar(3)}, {Scalar(2), {2, 0, 0}}};
     EXPECT_DOUBLE_EQ(resistive.current(state)[0], 2.5);
     EXPECT_DOUBLE_EQ(resistive.get<1>().ohmic_heating(state.electromagnetic.displacement), 0.5);
-    Model::State const rate
-            = resistive(state, Fluid::Flux {0, {}, 0}, 0, {}, {}, resistive.current(state));
+    Model::State const rate = resistive(
+            state,
+            Fluid::Flux {Scalar(0), {}, Scalar(0)},
+            Scalar(0),
+            {},
+            {},
+            resistive.current(state));
     EXPECT_DOUBLE_EQ(rate.fluid.momentum[0], 2);
     EXPECT_DOUBLE_EQ(rate.fluid.total_energy, 2.5);
 }

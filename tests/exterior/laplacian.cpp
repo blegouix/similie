@@ -146,11 +146,11 @@ static auto test_derivative(auto potential)
 
         sil::exterior::laplacian<MetricTensorIndex, InterestIndex, Index>(
                 Kokkos::DefaultHostExecutionSpace(),
-                laplacian,
-                potential,
+                sil::exterior::Cochain(laplacian),
+                sil::exterior::Cochain(potential),
                 derivative_hodge_star,
                 dual_derivative_hodge_star,
-                derivative_dual_tensor_buffer);
+                sil::exterior::Cochain(derivative_dual_tensor_buffer));
     } else if constexpr (Index::rank() < InterestIndex::size()) {
         using DerivativeIndex
                 = sil::exterior::coboundary_index_t<CodifferentialOfCoboundaryIndex, Index>;
@@ -278,16 +278,16 @@ static auto test_derivative(auto potential)
 
         sil::exterior::laplacian<MetricTensorIndex, InterestIndex, Index>(
                 Kokkos::DefaultHostExecutionSpace(),
-                laplacian,
-                potential,
+                sil::exterior::Cochain(laplacian),
+                sil::exterior::Cochain(potential),
                 derivative_hodge_star,
                 dual_derivative_hodge_star,
-                derivative_dual_tensor_buffer,
+                sil::exterior::Cochain(derivative_dual_tensor_buffer),
                 hodge_star,
                 dual_hodge_star,
-                dual_tensor_buffer,
-                codifferential_tensor_buffer,
-                coboundary_of_codifferential_buffer);
+                sil::exterior::Cochain(dual_tensor_buffer),
+                sil::exterior::Cochain(codifferential_tensor_buffer),
+                sil::exterior::Cochain(coboundary_of_codifferential_buffer));
     } else if constexpr (Index::rank() == InterestIndex::size()) {
         using MuUpSeq
                 = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<Index>>>;
@@ -346,12 +346,12 @@ static auto test_derivative(auto potential)
 
         sil::exterior::laplacian<MetricTensorIndex, InterestIndex, Index>(
                 Kokkos::DefaultHostExecutionSpace(),
-                laplacian,
-                potential,
+                sil::exterior::Cochain(laplacian),
+                sil::exterior::Cochain(potential),
                 hodge_star,
                 dual_hodge_star,
-                dual_tensor_buffer,
-                codifferential_tensor_buffer);
+                sil::exterior::Cochain(dual_tensor_buffer),
+                sil::exterior::Cochain(codifferential_tensor_buffer));
     }
     Kokkos::fence();
 
@@ -710,11 +710,11 @@ TEST(Laplacian, StagedHodge2D1Form)
     auto staged_laplacian = sil::exterior::
             make_laplacian<MetricIndex<X, Y>, InterestIndex, InterestIndex, CachedHodgeStar>(
                     Kokkos::DefaultHostExecutionSpace(),
-                    laplacian,
-                    potential,
+                    sil::exterior::Cochain(laplacian),
+                    sil::exterior::Cochain(potential),
                     metric,
                     position);
-    staged_laplacian(laplacian, potential);
+    staged_laplacian(sil::exterior::Cochain(laplacian), sil::exterior::Cochain(potential));
 
     ddc::host_for_each(
             laplacian.template domain<DDimX>()

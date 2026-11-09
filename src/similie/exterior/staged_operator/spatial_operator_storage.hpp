@@ -17,7 +17,7 @@ template <
         class Tensor,
         class Exec = typename Tensor::memory_space::execution_space,
         bool EqualDomains = false>
-class SpatialOperatorStorage
+class LinearSpatialOperatorStorage
 {
     using Domain = typename Tensor::non_indices_domain_t;
     StencilStorage<Index, Source, Target, Radius, Domain, typename Tensor::memory_space> m_stencils;
@@ -25,7 +25,7 @@ class SpatialOperatorStorage
 public:
     using execution_space = Exec;
     template <class OtherExec>
-    using rebind = SpatialOperatorStorage<
+    using rebind = LinearSpatialOperatorStorage<
             Operator,
             Index,
             Source,
@@ -45,14 +45,14 @@ public:
                 Rules const& rules) {
             Operator::value(Operator::geometry(exec, metric, position), input, element, rules);
         }
-    static SpatialOperatorStorage build(
+    static LinearSpatialOperatorStorage build(
             Exec const& exec,
             Tensor const& input,
             Metric const& metric,
             Position const& position,
             Rules const& rules = {})
     {
-        SpatialOperatorStorage result;
+        LinearSpatialOperatorStorage result;
         result.m_stencils = cache_stencils<
                 Operator,
                 Index,
@@ -79,7 +79,7 @@ public:
             Operator::
                     value(Operator::geometry(exec, metric, position), input, element, primal, dual);
         }
-    static SpatialOperatorStorage build(
+    static LinearSpatialOperatorStorage build(
             Exec const& exec,
             Output const& output,
             Tensor const& input,
@@ -93,7 +93,7 @@ public:
                 throw std::invalid_argument(
                         "Staged operator requires equal input/output spatial domains");
         }
-        SpatialOperatorStorage result;
+        LinearSpatialOperatorStorage result;
         result.m_stencils = cache_stencils<
                 Operator,
                 Index,
@@ -103,7 +103,7 @@ public:
         return result;
     }
 
-    template <misc::Specialization<tensor::Tensor> Output>
+    template <ExteriorFieldType Output>
     Output apply(Exec const& exec, Output const& output, Tensor const& input) const
     {
         if constexpr (EqualDomains) {
@@ -113,5 +113,24 @@ public:
         return apply_stencils<Index, Source, Target, Radius>(exec, output, input, m_stencils);
     }
 };
+
+template <
+        class Operator,
+        class Index,
+        class Source,
+        class Target,
+        std::size_t Radius,
+        class Tensor,
+        class Exec = typename Tensor::memory_space::execution_space,
+        bool EqualDomains = false>
+using SpatialOperatorStorage = LinearSpatialOperatorStorage<
+        Operator,
+        Index,
+        Source,
+        Target,
+        Radius,
+        Tensor,
+        Exec,
+        EqualDomains>;
 
 } // namespace sil::exterior::detail

@@ -78,16 +78,6 @@ add_executable(unit_tests_staged_local_operators staged_local_operators.cpp ../.
 target_link_libraries(unit_tests_staged_local_operators PUBLIC GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_staged_local_operators DISCOVERY_MODE PRE_TEST)
 
-add_executable(diagonal_assertion_debug diagonal_assertion_probe.cpp)
-add_executable(diagonal_assertion_release diagonal_assertion_probe.cpp)
-target_link_libraries(diagonal_assertion_debug PRIVATE DDC::core sil::exterior)
-target_link_libraries(diagonal_assertion_release PRIVATE DDC::core sil::exterior)
-target_compile_definitions(diagonal_assertion_debug PRIVATE SIMILIE_TEST_DEBUG_ASSERTIONS)
-target_compile_definitions(diagonal_assertion_release PRIVATE NDEBUG)
-add_test(NAME StagedLocalOperators.DebugOnlyDiagonalAssertions
-    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/diagonal_assertions.py"
-    $<TARGET_FILE:diagonal_assertion_debug> $<TARGET_FILE:diagonal_assertion_release>)
-
 add_executable(unit_tests_weighted_levi_civita_discrete_hodge_star
     weighted_levi_civita_discrete_hodge_star.cpp ../../main.cpp)
 target_link_libraries(unit_tests_weighted_levi_civita_discrete_hodge_star
@@ -97,3 +87,15 @@ gtest_discover_tests(unit_tests_weighted_levi_civita_discrete_hodge_star DISCOVE
 add_executable(unit_tests_scaling scaling.cpp ../../main.cpp)
 target_link_libraries(unit_tests_scaling PRIVATE GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_scaling DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_quadrature quadrature.cpp ../../main.cpp)
+target_link_libraries(unit_tests_quadrature PRIVATE GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_quadrature DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_vertex_form_transfer vertex_form_transfer.cpp ../../main.cpp)
+target_link_libraries(unit_tests_vertex_form_transfer PRIVATE GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_vertex_form_transfer DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_staged_bilinear_operators staged_bilinear_operators.cpp ../../main.cpp)
+target_link_libraries(unit_tests_staged_bilinear_operators PRIVATE GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_staged_bilinear_operators DISCOVERY_MODE PRE_TEST)

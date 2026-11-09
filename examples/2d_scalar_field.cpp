@@ -436,11 +436,11 @@ int main(int argc, char** argv)
             ddc::DiscreteElement<DDimX, DDimY>,
             sil::exterior::CellComplex::Primal,
             sil::tensor::TensorScalingIndex>>
-            reconstruct_spatial_moments(
+            reconstruct_spatial_moments {
                     Kokkos::DefaultExecutionSpace(),
-                    reconstructed_spatial_moments,
-                    spatial_moments,
-                    position);
+                    sil::exterior::Form(reconstructed_spatial_moments),
+                    sil::exterior::Cochain(spatial_moments),
+                    position};
 
     auto spatial_moments_host = ddc::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace(),
@@ -491,7 +491,7 @@ int main(int argc, char** argv)
     auto codifferential
             = sil::exterior::make_staged_codifferential<MetricIndex, AlphaLow, AlphaLow>(
                     Kokkos::DefaultExecutionSpace(),
-                    spatial_moments,
+                    sil::exterior::Cochain(spatial_moments),
                     metric,
                     position,
                     sil::tensor::ConstantScalarExtrapolationRule {});
@@ -563,15 +563,17 @@ int main(int argc, char** argv)
         // Compute the potential gradient
         sil::exterior::deriv<AlphaLow, DummyIndex>(
                 Kokkos::DefaultExecutionSpace(),
-                potential_grad,
-                half_step_potential,
+                sil::exterior::Cochain(potential_grad),
+                sil::exterior::Cochain(half_step_potential),
                 sil::tensor::ClampExtrapolationRule {});
 
         // For this scalar model, the spatial moments cochain is exactly dphi.
         ddc::parallel_deepcopy(spatial_moments, potential_grad);
         // Compute minus the divergence \delta \pi of the spatial moments
         // The dual closure prescribes zero exterior flux on all four sides.
-        codifferential(minus_spatial_moments_div, spatial_moments);
+        codifferential(
+                sil::exterior::Cochain(minus_spatial_moments_div),
+                sil::exterior::Cochain(spatial_moments));
 
         // Compute dpi_0/dx^0 = dH/dphi - \delta \pi from the DeDonder-Weyl equation then perform the whole-step advection
         ddc::parallel_for_each(
@@ -607,7 +609,9 @@ int main(int argc, char** argv)
                 });
 
         if (i % nb_iter_between_exports == 0) {
-            reconstruct_spatial_moments(reconstructed_spatial_moments, spatial_moments);
+            reconstruct_spatial_moments(
+                    sil::exterior::Form(reconstructed_spatial_moments),
+                    sil::exterior::Cochain(spatial_moments));
             ddc::parallel_deepcopy(spatial_moments_host, reconstructed_spatial_moments);
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
@@ -626,7 +630,8 @@ int main(int argc, char** argv)
                                            elem,
                                            ddc::DiscreteElement<AlphaLow>(1))};
                         Hamiltonian::State const
-                                state {{potential(elem, ddc::DiscreteElement<DummyIndex>())}, pi};
+                                state {{potential(elem, ddc::DiscreteElement<DummyIndex>())},
+                                       sil::exterior::Form(pi)};
                         hamiltonian(elem) = hamiltonian_model.hamiltonian(state, elem);
                     });
             ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);

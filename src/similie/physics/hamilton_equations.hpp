@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include <type_traits>
 #include <utility>
-
-#include <ddc/ddc.hpp>
 
 #include <Kokkos_Core.hpp>
 
@@ -53,7 +50,7 @@ public:
 
     template <class Index, class Elem>
         requires detail::HasMomentCoefficientConcept<Hamiltonian, Index, Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt_value(
             State const& state,
             Elem const& elem) const
     {
@@ -62,17 +59,11 @@ public:
 
     template <class Index, class Elem>
         requires detail::HasPotentialCoefficientConcept<Hamiltonian, Index, Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt_value(
             State const& state,
             Elem const& elem) const
     {
-        auto value = m_hamiltonian.template dhamiltonian_dpotential_value<Index>(state, elem);
-        if constexpr (std::is_same_v<std::remove_cvref_t<decltype(value)>, double>) {
-            return -value;
-        } else {
-            ddc::device_for_each(value.domain(), [&](auto element) { value(element) *= -1.0; });
-            return value;
-        }
+        return -m_hamiltonian.template dhamiltonian_dpotential_value<Index>(state, elem);
     }
 };
 

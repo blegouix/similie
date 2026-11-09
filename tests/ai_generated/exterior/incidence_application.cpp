@@ -84,13 +84,13 @@ void check_incidence(ddc::DiscreteDomain<Grid...>)
                 auto transposed = sil::exterior::detail::make_stencil<MemorySpace, Output>(
                         ddc::DiscreteElement<>());
                 sil::exterior::Coboundary<Direction, Cochain>::operator()(
-                        sil::tensor::Tensor(forward.span_view()),
+                        sil::exterior::Cochain(sil::tensor::Tensor(forward.span_view())),
                         evaluate,
                         chain,
                         lower,
                         element);
                 sil::exterior::TransposedCoboundary<Direction, Cochain>::operator()(
-                        sil::tensor::Tensor(transposed.span_view()),
+                        sil::exterior::Cochain(sil::tensor::Tensor(transposed.span_view())),
                         evaluate,
                         chain,
                         lower,

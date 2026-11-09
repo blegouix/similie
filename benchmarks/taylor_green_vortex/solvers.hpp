@@ -50,7 +50,9 @@ public:
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) {
                     CompressiblePhysics::PrimitiveVariables const values = physics.primitives(
-                            {state(0, i), {state(1, i), state(2, i), state(3, i)}, state(4, i)});
+                            {CompressiblePhysics::Scalar(state(0, i)),
+                             {state(1, i), state(2, i), state(3, i)},
+                             CompressiblePhysics::Scalar(state(4, i))});
                     primitive(0, i) = values.density;
                     for (int a = 0; a < 3; ++a)
                         primitive(a + 1, i) = values.velocity[a];
@@ -81,7 +83,7 @@ public:
                         for (int a = 0; a < 3; ++a)
                             for (int b = 0; b < 3; ++b)
                                 strain[a][b] = gradient(3 * a + b, i);
-                        std::array<double, 3> const
+                        sil::exterior::Form<std::array<double, 3>> const
                                 temperature_gradient {normal(0, i), normal(1, i), normal(2, i)};
                         CompressiblePhysics::Flux const values = physics.two_point_flux(
                                 left,
@@ -106,9 +108,9 @@ public:
                     m_dec.cells,
                     KOKKOS_LAMBDA(int i) {
                         CompressiblePhysics::State const rate = physics(
-                                {divergence(0, i),
+                                {CompressiblePhysics::Scalar(divergence(0, i)),
                                  {divergence(1, i), divergence(2, i), divergence(3, i)},
-                                 divergence(4, i)});
+                                 CompressiblePhysics::Scalar(divergence(4, i))});
                         result(0, i) += rate.density;
                         for (int a = 0; a < 3; ++a)
                             result(a + 1, i) += rate.momentum[a];
@@ -197,7 +199,7 @@ public:
                 "incompressible_momentum",
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) {
-                    std::array<double, 3> const rate = physics.momentum_rate(
+                    sil::exterior::Form<std::array<double, 3>> const rate = physics.momentum_rate(
                             {velocity(0, i), velocity(1, i), velocity(2, i)},
                             {rotation(0, i), rotation(1, i), rotation(2, i)},
                             {},
@@ -215,7 +217,7 @@ public:
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) {
                     output(0, i) = physics.pressure(
-                            potential(0, i),
+                            sil::exterior::Form<double>(potential(0, i)),
                             {velocity(0, i), velocity(1, i), velocity(2, i)});
                 });
         double sum;
@@ -410,8 +412,8 @@ public:
     {
         // The analytic vector potential A_z=sin(x) sin(y) cos(z) gives the
         // Taylor-Green velocity. Reduce *A, then initialize U=delta(*A) and W=dU.
-        // This preserves both discrete constraints without shifted samples or
-        // mesh-dependent amplitude corrections.
+        // Project the nodal potential over its faces before applying delta
+        // and d. This preserves both discrete constraints and cell placement.
         int const n = m_grid.n;
         double const h = m_grid.h;
         Field const potential = m_transport;
@@ -426,7 +428,7 @@ public:
                     potential(1, i) = 0;
                     potential(2, i) = sin(x) * sin(y) * cos(z);
                 });
-        m_dec.reduce_two_form(potential, m_potential);
+        m_dec.reduce_two_form(potential, m_potential, true);
         m_dec.codifferential(m_potential, m_one);
         m_dec.derivative_one_form(m_one, state);
     }
@@ -566,14 +568,23 @@ public:
         }
         m_dec.derivative_one_form(m_transport_one, result);
         m_dec.positive_laplacian(state, m_lap);
-        Field const lap = m_lap;
+        m_dec.reconstruct_two_form(result, m_transport);
+        m_dec.reconstruct_two_form(m_lap, m_check);
+        Field const lap = m_check, curl = m_transport;
         Kokkos::parallel_for(
                 "vorticity_evolution",
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) {
+                    sil::exterior::Form<std::array<double, 3>> const
+                            transport {curl(0, i), curl(1, i), curl(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const
+                            diffusion {-lap(0, i), -lap(1, i), -lap(2, i)};
+                    sil::exterior::Form<std::array<double, 3>> const rate
+                            = physics(transport, diffusion);
                     for (int c = 0; c < 3; ++c)
-                        result(c, i) = physics(result(c, i), -lap(c, i));
+                        curl(c, i) = rate[c];
                 });
+        m_dec.reduce_two_form(m_transport, result);
         if (reconstruct_pressure) {
             m_pressure.compute_pressure(velocity, pressure, 0.0, vorticity, acceleration);
             monitor_constraints(state);
@@ -592,6 +603,24 @@ public:
     void divergence(Field const& output)
     {
         m_dec.negative_codifferential_one_form(m_one, output);
+    }
+    void observe_fields(
+            Field const& state,
+            Field const& observed_velocity,
+            Field const& observed_vorticity,
+            Field const& observed_potential)
+    {
+        m_dec.reconstruct_one_form(m_one, observed_velocity, true);
+        m_dec.reconstruct_two_form(state, observed_vorticity, true);
+        m_dec.reconstruct_two_form(m_potential, observed_potential, true);
+        std::array<double, 3> const harmonic = mean_velocity;
+        Kokkos::parallel_for(
+                "observed_velocity_harmonic",
+                m_grid.cells,
+                KOKKOS_LAMBDA(int i) {
+                    for (int a = 0; a < 3; ++a)
+                        observed_velocity(a, i) += harmonic[a];
+                });
     }
     void monitor_constraints(Field const& state)
     {

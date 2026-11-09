@@ -139,12 +139,12 @@ TEST(Codifferential, NonStaged2D1Form)
                             MetricIndex<X, Y>,
                             TensorIndex,
                             TensorIndex,
-                            std::decay_t<decltype(tensor)>,
+                            sil::exterior::Cochain<std::decay_t<decltype(tensor)>>,
                             std::decay_t<decltype(metric)>,
                             std::decay_t<decltype(position)>>::
                     operator()(
-                            codifferential_tensor[elem],
-                            tensor,
+                            sil::exterior::Cochain(codifferential_tensor[elem]),
+                            sil::exterior::Cochain(tensor),
                             metric,
                             position,
                             chain,
@@ -155,10 +155,16 @@ TEST(Codifferential, NonStaged2D1Form)
                             MetricIndex<X, Y>,
                             TensorIndex,
                             TensorIndex,
-                            std::decay_t<decltype(tensor)>,
+                            sil::exterior::Cochain<std::decay_t<decltype(tensor)>>,
                             std::decay_t<decltype(metric)>,
                             std::decay_t<decltype(position)>>::
-                            value(tensor, metric, position, chain, lower_chain, elem, output_elem);
+                            value(sil::exterior::Cochain(tensor),
+                                  metric,
+                                  position,
+                                  chain,
+                                  lower_chain,
+                                  elem,
+                                  output_elem);
                     EXPECT_EQ(
                             stencil.non_indices_domain().front(),
                             sil::exterior::detail::
@@ -243,25 +249,28 @@ TEST(Codifferential, Prefilled2D1Form)
 
         sil::exterior::codifferential<MetricIndex<X, Y>, TensorIndex, TensorIndex>(
                 Kokkos::DefaultHostExecutionSpace(),
-                codifferential_tensor,
-                tensor,
+                sil::exterior::Cochain(codifferential_tensor),
+                sil::exterior::Cochain(tensor),
                 hodge_star,
                 dual_hodge_star,
-                dual_tensor_buffer);
+                sil::exterior::Cochain(dual_tensor_buffer));
     });
 }
 
 TEST(Codifferential, Staged2D1Form)
 {
-    run_codifferential_test([](auto codifferential_tensor,
-                               auto tensor,
-                               auto metric,
-                               auto position) {
-        auto staged_codifferential = sil::exterior::make_staged_codifferential<
-                MetricIndex<X, Y>,
-                sil::tensor::Covariant<Mu2>,
-                sil::tensor::Covariant<
-                        Mu2>>(Kokkos::DefaultHostExecutionSpace(), tensor, metric, position);
-        staged_codifferential(codifferential_tensor, tensor);
-    });
+    run_codifferential_test(
+            [](auto codifferential_tensor, auto tensor, auto metric, auto position) {
+                auto staged_codifferential = sil::exterior::make_staged_codifferential<
+                        MetricIndex<X, Y>,
+                        sil::tensor::Covariant<Mu2>,
+                        sil::tensor::Covariant<Mu2>>(
+                        Kokkos::DefaultHostExecutionSpace(),
+                        sil::exterior::Cochain(tensor),
+                        metric,
+                        position);
+                staged_codifferential(
+                        sil::exterior::Cochain(codifferential_tensor),
+                        sil::exterior::Cochain(tensor));
+            });
 }

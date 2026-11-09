@@ -47,14 +47,22 @@ void check_local(bool curved)
             typename Field<Form>::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
             Coefficients>>
-            reduction(Exec(), cached, input, position);
+            reduction {
+                    Exec(),
+                    sil::exterior::Cochain(cached),
+                    sil::exterior::Form(input),
+                    position};
     sil::exterior::StagedOperator<sil::exterior::Reconstruction<
             Indices,
             Field<PositionIndex>,
             typename Field<Form>::non_indices_domain_t::discrete_element_type,
             sil::exterior::CellComplex::Primal,
             Coefficients>>
-            reconstruction(Exec(), cached, input, position);
+            reconstruction {
+                    Exec(),
+                    sil::exterior::Form(cached),
+                    sil::exterior::Cochain(input),
+                    position};
     Domain const cached_domain = domain();
     Kokkos::View<double*, Memory> coefficient_errors("staged_coefficient_errors", domain().size());
     ddc::parallel_for_each(
@@ -85,7 +93,11 @@ void check_local(bool curved)
                 Exec(),
                 domain(),
                 KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                    Reduction::operator()(reference[element], input[element], position, element);
+                    Reduction::operator()(
+                            sil::exterior::Cochain(reference[element]),
+                            sil::exterior::Form(input[element]),
+                            position,
+                            element);
                 });
         ddc::parallel_for_each(
                 Exec(),
@@ -97,17 +109,24 @@ void check_local(bool curved)
                             Domain::discrete_element_type,
                             sil::exterior::CellComplex::Primal,
                             Coefficients>::
-                    operator()(cached[element], input[element], position, element);
+                    operator()(
+                            sil::exterior::Cochain(cached[element]),
+                            sil::exterior::Form(input[element]),
+                            position,
+                            element);
                 });
         expect_equal(cached, reference);
-        reduction(cached, input);
+        reduction(sil::exterior::Cochain(cached), sil::exterior::Form(input));
         expect_equal(cached, reference);
         ddc::parallel_for_each(
                 Exec(),
                 domain(),
                 KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                    Reconstruction::
-                    operator()(reference[element], input[element], position, element);
+                    Reconstruction::operator()(
+                            sil::exterior::Form(reference[element]),
+                            sil::exterior::Cochain(input[element]),
+                            position,
+                            element);
                 });
         ddc::parallel_for_each(
                 Exec(),
@@ -119,20 +138,24 @@ void check_local(bool curved)
                             Domain::discrete_element_type,
                             sil::exterior::CellComplex::Primal,
                             Coefficients>::
-                    operator()(cached[element], input[element], position, element);
+                    operator()(
+                            sil::exterior::Form(cached[element]),
+                            sil::exterior::Cochain(input[element]),
+                            position,
+                            element);
                 });
         expect_equal(cached, reference);
-        reconstruction(cached, input);
+        reconstruction(sil::exterior::Form(cached), sil::exterior::Cochain(input));
         expect_equal(cached, reference);
     }
     // Geometry changes do not alter either cache.
-    reconstruction(reference, input);
+    reconstruction(sil::exterior::Form(reference), sil::exterior::Cochain(input));
     fill_geometry(position, curved, 1.7);
-    reconstruction(cached, input);
+    reconstruction(sil::exterior::Form(cached), sil::exterior::Cochain(input));
     expect_equal(cached, reference);
-    reduction(reference, input);
+    reduction(sil::exterior::Cochain(reference), sil::exterior::Form(input));
     fill_geometry(position, curved, 2.1);
-    reduction(cached, input);
+    reduction(sil::exterior::Cochain(cached), sil::exterior::Form(input));
     expect_equal(cached, reference);
 }
 
@@ -181,10 +204,18 @@ void check_direct_dual_diagonal()
                 Exec(),
                 domain(),
                 KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                    General::
-                    operator()(reference[element], input[element], metric, position, element);
-                    Diagonal::
-                    operator()(result[element], input[element], metric, position, element);
+                    General::operator()(
+                            sil::exterior::Cochain(reference[element]),
+                            sil::exterior::Form(input[element]),
+                            metric,
+                            position,
+                            element);
+                    Diagonal::operator()(
+                            sil::exterior::Cochain(result[element]),
+                            sil::exterior::Form(input[element]),
+                            metric,
+                            position,
+                            element);
                 });
         expect_equal(result, reference);
     }
@@ -330,9 +361,13 @@ void check_continuous_and_composed()
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                Direct::operator()(reference[element], input[element], metric, element);
+                Direct::operator()(
+                        sil::exterior::Form(reference[element]),
+                        sil::exterior::Form(input[element]),
+                        metric,
+                        element);
             });
-    continuous(result, input);
+    continuous(sil::exterior::Form(result), sil::exterior::Form(input));
     expect_equal(result, reference);
 
     using DirectDiscrete = sil::exterior::DiscreteHodgeStar<
@@ -342,6 +377,41 @@ void check_continuous_and_composed()
             Field<SymmetricMetric>,
             Field<PositionIndex>,
             Domain::discrete_element_type>;
+    // Applying the cochain map to forms must recover the pointwise Hodge
+    // map when the transfers are inverse on this affine cell.
+    ddc::parallel_for_each(
+            Exec(),
+            domain(),
+            KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                auto source = sil::exterior::detail::make_stencil<Memory, Two>(
+                        ddc::DiscreteElement<>());
+                auto target = sil::exterior::detail::make_stencil<Memory, Target>(
+                        ddc::DiscreteElement<>());
+                sil::exterior::OperatorActingOnFormInPlaceOfCochain<DirectDiscrete> {}(
+                        sil::exterior::Form(result[element]),
+                        sil::exterior::Form(input[element]),
+                        sil::exterior::Cochain(sil::tensor::Tensor(source.span_view())),
+                        sil::exterior::Cochain(sil::tensor::Tensor(target.span_view())),
+                        [&](auto const& cochain, auto const& form) {
+                            sil::exterior::Reduction<
+                                    sil::tensor::lower_t<SourceIndices>,
+                                    Field<PositionIndex>,
+                                    Domain::discrete_element_type>::
+                            operator()(cochain, form, position, element);
+                        },
+                        [&](auto const& form, auto const& cochain) {
+                            sil::exterior::Reconstruction<
+                                    TargetIndices,
+                                    Field<PositionIndex>,
+                                    Domain::discrete_element_type>::
+                            operator()(form, cochain, position, element);
+                        },
+                        metric,
+                        position,
+                        element);
+            });
+    expect_equal(result, reference);
+
     sil::exterior::DiscreteHodgeStar<
             sil::exterior::CellComplex::Primal,
             SourceIndices,
@@ -357,8 +427,18 @@ void check_continuous_and_composed()
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                DirectDiscrete {}(reference[element], input[element], metric, position, element);
-                composed(result[element], input[element], metric, position, element);
+                DirectDiscrete {}(
+                        sil::exterior::Cochain(reference[element]),
+                        sil::exterior::Cochain(input[element]),
+                        metric,
+                        position,
+                        element);
+                composed(
+                        sil::exterior::Cochain(result[element]),
+                        sil::exterior::Cochain(input[element]),
+                        metric,
+                        position,
+                        element);
             });
     expect_equal(result, reference);
     // Both metric and positions are frozen by the composed cache.
@@ -373,7 +453,12 @@ void check_continuous_and_composed()
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                composed(result[element], input[element], metric, position, element);
+                composed(
+                        sil::exterior::Cochain(result[element]),
+                        sil::exterior::Cochain(input[element]),
+                        metric,
+                        position,
+                        element);
             });
     expect_equal(result, reference);
 }
@@ -401,7 +486,7 @@ struct NodeMap
     }
 };
 
-static_assert(sil::exterior::StageableOperatorConcept<NodeMap, Field<One>>);
+static_assert(sil::exterior::StageableOperatorConcept<NodeMap, sil::exterior::Cochain<Field<One>>>);
 static_assert(!sil::exterior::StageableOperatorConcept<int, Field<One>>);
 static_assert(!sil::exterior::StagedOperatorConcept<sil::exterior::StagedOperator<NodeMap>, int>);
 
@@ -417,7 +502,7 @@ void check_generic_staging()
     fill_geometry(position, false);
     fill_form(input);
     sil::exterior::StagedOperator<NodeMap, NodeMap::staged_storage_type::rebind<Exec, Coefficients>>
-            staged(Exec(), position, domain());
+            staged {Exec(), position, domain()};
     ddc::parallel_for_each(
             Exec(),
             input.domain(),
@@ -429,14 +514,17 @@ void check_generic_staging()
                           * (2.0
                              + position.mem(node, ddc::DiscreteElement<PositionIndex>(component)));
             });
-    staged(output, input);
+    staged(sil::exterior::Cochain(output), sil::exterior::Cochain(input));
     expect_equal(output, reference);
     fill_geometry(position, false, 2.0);
     ddc::parallel_for_each(
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                staged(output[element], input[element], position, element);
+                staged(sil::exterior::Cochain(output[element]),
+                       sil::exterior::Cochain(input[element]),
+                       position,
+                       element);
             });
     expect_equal(output, reference);
 }
@@ -458,7 +546,10 @@ void check_implicit_levi_civita()
             TargetIndices,
             Field<MetricIndex>,
             Domain::discrete_element_type>;
-    static_assert(sil::exterior::StageableOperatorConcept<Direct, Field<Target>, Field<Two>>);
+    static_assert(sil::exterior::StageableOperatorConcept<
+                  Direct,
+                  sil::exterior::Form<Field<Target>>,
+                  sil::exterior::Form<Field<Two>>>);
     static_assert(std::is_same_v<
                   Direct::staged_storage_type,
                   sil::exterior::detail::ImplicitLocalOperatorStorage<Direct, Field<MetricIndex>>>);
@@ -470,20 +561,27 @@ void check_implicit_levi_civita()
     Field<Two> input(inputs);
     Field<Target> output(outputs), reference(references);
     fill_form(input);
-    sil::exterior::StagedOperator<Direct> staged(Exec(), metric);
+    sil::exterior::StagedOperator<Direct> staged {Exec(), metric};
     ddc::parallel_for_each(
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                Direct::operator()(reference[element], input[element], metric, element);
+                Direct::operator()(
+                        sil::exterior::Form(reference[element]),
+                        sil::exterior::Form(input[element]),
+                        metric,
+                        element);
             });
-    staged(output, input);
+    staged(sil::exterior::Form(output), sil::exterior::Form(input));
     expect_equal(output, reference);
     ddc::parallel_for_each(
             Exec(),
             domain(),
             KOKKOS_LAMBDA(Domain::discrete_element_type element) {
-                staged(output[element], input[element], metric, element);
+                staged(sil::exterior::Form(output[element]),
+                       sil::exterior::Form(input[element]),
+                       metric,
+                       element);
             });
     expect_equal(output, reference);
 }
@@ -539,16 +637,20 @@ void check_batched_reconstruction()
                 reference.mem(element) = input.mem(element)
                                          / (component == 0 ? 0.7 : (component == 1 ? 0.9 : 1.1));
             });
-    sil::exterior::StagedOperator<Operator> staged(Exec(), output, input, position);
+    sil::exterior::StagedOperator<Operator>
+            staged {Exec(), sil::exterior::Form(output), sil::exterior::Cochain(input), position};
     for (int trial = 0; trial < 2; ++trial) {
         if (trial == 0)
-            staged(output, input);
+            staged(sil::exterior::Form(output), sil::exterior::Cochain(input));
         else
             ddc::parallel_for_each(
                     Exec(),
                     batched_domain,
                     KOKKOS_LAMBDA(BatchedDomain::discrete_element_type element) {
-                        staged(output[element], input[element], position, element);
+                        staged(sil::exterior::Form(output[element]),
+                               sil::exterior::Cochain(input[element]),
+                               position,
+                               element);
                     });
         auto first = Kokkos::
                 create_mirror_view_and_copy(Kokkos::HostSpace(), outputs.allocation_kokkos_view());
@@ -562,8 +664,12 @@ void check_batched_reconstruction()
             ddc::TypeSeq<One>,
             Field<PositionIndex>,
             BatchedDomain::discrete_element_type>>
-            reduction(Exec(), output, input, position);
-    reduction(output, input);
+            reduction {
+                    Exec(),
+                    sil::exterior::Cochain(output),
+                    sil::exterior::Form(input),
+                    position};
+    reduction(sil::exterior::Cochain(output), sil::exterior::Form(input));
     auto reduced = Kokkos::
             create_mirror_view_and_copy(Kokkos::HostSpace(), outputs.allocation_kokkos_view());
     auto source = Kokkos::

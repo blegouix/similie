@@ -106,7 +106,7 @@ TEST(Chain, Optimization)
                                           true)));
 }
 
-TEST(Form, Alias)
+TEST(Cochain, ExplicitTypes)
 {
     sil::exterior::Chain
             chain(Kokkos::View<
@@ -116,9 +116,8 @@ TEST(Form, Alias)
                   sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
-    // Unfortunately CTAD cannot deduce template arguments
-    sil::exterior::Form<typename decltype(chain)::simplex_type> cosimplex(chain[0], 0.);
-    sil::exterior::Form<decltype(chain)>
+    sil::exterior::Cosimplex cosimplex(chain[0], 0.);
+    sil::exterior::Cochain<decltype(chain)>
             cochain(chain,
                     Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>("", 1),
                     0.);
