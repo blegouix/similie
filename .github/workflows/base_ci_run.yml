@@ -1,206 +1,46 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# AI-GENERATED
 
 name: base-ci-run
+on:
+  workflow_run:
+    workflows: [ci-build]
+    types: [completed]
+
 permissions:
   actions: read
   contents: read
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    types: [opened, synchronize, reopened]
-
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
+  group: base-ci-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 jobs:
-  build-cuda-docker-env:
-    runs-on: [self-hosted, linux]
-    environment:
-      name: base-ci-run
-    steps:
-    - name: Checkout built branch
-      uses: actions/checkout@v6
-      with:
-        ref: ${{ github.sha }}
-    - name: Check GPU visibility on runner
-      run: |
-        if command -v nvidia-smi; then
-          nvidia-smi
-        else
-          /usr/lib/wsl/lib/nvidia-smi
-        fi
-    - name: Build CUDA similie_env image
-      run: |
-        DOCKER_BUILDKIT=1 docker build \
-          --build-arg BACKEND=cuda \
-          -t "similie_env:${GITHUB_SHA}" \
-          -t similie_env:latest \
-          docker/similie_env
-
-  build-cpu-docker-env:
-    runs-on: [self-hosted, linux]
-    environment:
-      name: base-ci-run
-    steps:
-    - name: Checkout built branch
-      uses: actions/checkout@v6
-      with:
-        ref: ${{ github.sha }}
-    - name: Build CPU similie_env_cpu image
-      run: |
-        DOCKER_BUILDKIT=1 docker build \
-          --build-arg BACKEND=cpu \
-          --build-arg BASE_IMAGE=ubuntu:26.04 \
-          -t "similie_env_cpu:${GITHUB_SHA}" \
-          -t similie_env_cpu:latest \
-          docker/similie_env
-
-  build-cuda:
-    needs: build-cuda-docker-env
-    runs-on: [self-hosted, linux]
-    concurrency:
-      group: similie-persistent-cuda-build
-      cancel-in-progress: false
-    environment:
-      name: ${{ github.event_name == 'pull_request' && 'build-cuda' || 'base-ci-run' }}
-    env:
-      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
-    steps:
-    - name: Checkout built branch
-      uses: actions/checkout@v6
-      with:
-        ref: ${{ github.sha }}
-        submodules: recursive
-        fetch-depth: 0
-        lfs: true
-    - name: Materialize Git LFS files in the reused workspace
-      run: git lfs checkout
-    - name: Clear persistent CUDA build
-      run: |
-        set -euo pipefail
-        echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_WORKSPACE}/builds/cuda"
-    - name: Populate CUDA commit workspace
-      run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
-        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
-    - name: Configure and compile on GPU
-      run: |
-        docker image inspect "${IMAGE_TAG}" >/dev/null
-        docker run --rm --gpus all \
-          --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/src" \
-          "${IMAGE_TAG}" \
-          bash -lc '
-            set -euo pipefail
-            mkdir -p "${HOME}"
-            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
-            git config --global --add safe.directory "*"
-            nvidia-smi
-            # The installed Kokkos package supplies its CUDA architecture flags.
-            cmake \
-              -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper \
-              -DCMAKE_BUILD_TYPE=Release \
-              -DKokkos_ENABLE_CUDA=ON \
-              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
-              -DSIMILIE_BUILD_BENCHMARKS=ON \
-              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
-              -B "${CACHE_ROOT}/build" \
-              -S .
-            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build"
-          '
-    - name: Tag persistent CUDA build
-      run: printf '%s\n' "${GITHUB_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
-
-  build-omp-debug:
-    needs: build-cpu-docker-env
-    runs-on: [self-hosted, linux]
-    concurrency:
-      group: similie-persistent-omp-build
-      cancel-in-progress: false
-    environment:
-      name: ${{ github.event_name == 'pull_request' && 'build-omp-debug' || 'base-ci-run' }}
-    env:
-      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
-    steps:
-    - name: Checkout built branch
-      uses: actions/checkout@v6
-      with:
-        ref: ${{ github.sha }}
-        submodules: recursive
-        fetch-depth: 0
-        lfs: true
-    - name: Materialize Git LFS files in the reused workspace
-      run: git lfs checkout
-    - name: Clear persistent OMP debug build
-      run: |
-        set -euo pipefail
-        echo "IMAGE_TAG=similie_env_cpu:${GITHUB_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_WORKSPACE}/builds/omp-debug"
-    - name: Populate OpenMP commit workspace
-      run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
-        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
-    - name: Configure and compile with OpenMP
-      run: |
-        docker image inspect "${IMAGE_TAG}" >/dev/null
-        docker run --rm \
-          --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/src" \
-          "${IMAGE_TAG}" \
-          bash -lc '
-            set -euo pipefail
-            mkdir -p "${HOME}"
-            git config --global --add safe.directory "*"
-            g++-15 --version
-            cmake \
-              -DCMAKE_CXX_COMPILER=g++-15 \
-              -DCMAKE_BUILD_TYPE=Debug \
-              -DKokkos_ENABLE_OPENMP=ON \
-              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
-              -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
-              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
-              -B "${CACHE_ROOT}/build_omp" \
-              -S .
-            # Young tableaux generate the dictionary at runtime; tensor consumers
-            # must compile after those entries exist for their #embed directive.
-            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp" unit_tests_young_tableau
-            "${CACHE_ROOT}/build_omp/tests/young_tableau/unit_tests_young_tableau"
-            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp"
-          '
-    - name: Tag persistent OMP debug build
-      run: printf '%s\n' "${GITHUB_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
+  build-context:
+    if: github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/ci_build_context.yml
+    with:
+      build_run_id: ${{ format('{0}', github.event.workflow_run.id) }}
 
   tests-cuda:
-    needs: build-cuda
+    needs: build-context
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'tests-cuda' || 'base-ci-run' }}
+      name: ${{ needs.build-context.outputs.is_pr == 'true' && 'tests-cuda' || 'base-ci-run' }}
+    env:
+      TARGET_SHA: ${{ needs.build-context.outputs.target_sha }}
     steps:
     - name: Set build paths
       run: |
-        echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
         echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
         echo "BUILD_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
     - name: Require matching CUDA build
       run: |
         set -euo pipefail
         test -f "${BUILD_ROOT}/COMMIT_SHA"
-        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${GITHUB_SHA}"
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}"
         test -d "${BUILD_ROOT}/build"
     - name: Run CUDA tests
       run: |
@@ -222,21 +62,23 @@ jobs:
           '
 
   tests-omp-debug:
-    needs: build-omp-debug
+    needs: build-context
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'tests-omp-debug' || 'base-ci-run' }}
+      name: ${{ needs.build-context.outputs.is_pr == 'true' && 'tests-omp-debug' || 'base-ci-run' }}
+    env:
+      TARGET_SHA: ${{ needs.build-context.outputs.target_sha }}
     steps:
     - name: Set build paths
       run: |
-        echo "IMAGE_TAG=similie_env_cpu:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
         echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
         echo "BUILD_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
     - name: Require matching OMP debug build
       run: |
         set -euo pipefail
         test -f "${BUILD_ROOT}/COMMIT_SHA"
-        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${GITHUB_SHA}"
+        test "$(cat "${BUILD_ROOT}/COMMIT_SHA")" = "${TARGET_SHA}"
         test -d "${BUILD_ROOT}/build_omp"
     - name: Run OpenMP tests
       run: |
@@ -256,43 +98,43 @@ jobs:
           '
 
   example-2d_laplacian:
-    needs: build-cuda
+    needs: build-context
     uses: ./.github/workflows/example_laplacian.yml
     with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'base-ci-run' }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: ${{ needs.build-context.outputs.is_pr == 'true' && 'laplacians-cuda' || 'base-ci-run' }}
 
   example-2d_vector_laplacian:
-    needs: build-cuda
+    needs: build-context
     uses: ./.github/workflows/example_laplacian_vector.yml
     with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'laplacians-cuda' || 'base-ci-run' }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: ${{ needs.build-context.outputs.is_pr == 'true' && 'laplacians-cuda' || 'base-ci-run' }}
 
   example-onelab_inductor:
-    needs: build-cuda
+    needs: build-context
     uses: ./.github/workflows/example_onelab_inductor.yml
     with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_inductor-cuda' || 'base-ci-run' }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: ${{ needs.build-context.outputs.is_pr == 'true' && 'onelab_inductor-cuda' || 'base-ci-run' }}
 
   example-onelab_elasticity:
-    needs: build-cuda
+    needs: build-context
     uses: ./.github/workflows/example_onelab_elasticity.yml
     with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_elasticity-cuda' || 'base-ci-run' }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: ${{ needs.build-context.outputs.is_pr == 'true' && 'onelab_elasticity-cuda' || 'base-ci-run' }}
 
   example-onelab_potential_flow:
-    needs: build-cuda
+    needs: build-context
     uses: ./.github/workflows/example_onelab_potential_flow.yml
     with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_potential-flow-onelab-cuda' || 'base-ci-run' }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: ${{ needs.build-context.outputs.is_pr == 'true' && 'onelab_potential-flow-onelab-cuda' || 'base-ci-run' }}
 
   example-kretschmann_scalar:
-    needs: build-omp-debug
+    needs: build-context
     uses: ./.github/workflows/example_kretschmann_scalar.yml
     with:
-      target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-omp-debug' || 'base-ci-run' }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
+      ci_environment: ${{ needs.build-context.outputs.is_pr == 'true' && 'examples-omp-debug' || 'base-ci-run' }}

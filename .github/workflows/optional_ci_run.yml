@@ -5,15 +5,14 @@
 name: optional-ci-run
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: [ci-build]
+    types: [completed]
   workflow_dispatch:
     inputs:
-      target_sha:
-        description: Full SHA matching the existing persistent CUDA build
-        required: false
+      build_run_id:
+        description: Successful ci-build run ID whose persistent builds should be used
+        required: true
         type: string
       run_scalar_field:
         description: Request the 2D scalar example
@@ -38,22 +37,30 @@ permissions:
   contents: read
 
 concurrency:
-  group: optional-ci-${{ github.event_name }}-${{ github.event.pull_request.number || inputs.target_sha || github.ref }}
+  group: optional-ci-${{ github.event_name }}-${{ github.event.workflow_run.head_repository.full_name || github.repository }}-${{ github.event.workflow_run.head_branch || inputs.build_run_id }}
   cancel-in-progress: true
 
-# Approve either deployment independently after the matching CUDA build finishes.
+# Approve either deployment independently after ci-build succeeds.
 # The automatic CI workflow has no dependency on these approval-gated jobs.
 jobs:
+  build-context:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/ci_build_context.yml
+    with:
+      build_run_id: ${{ inputs.build_run_id || format('{0}', github.event.workflow_run.id) }}
+
   scalar-field:
+    needs: build-context
     if: github.event_name != 'workflow_dispatch' || inputs.run_scalar_field
     uses: ./.github/workflows/example_scalar_field.yml
     with:
-      target_sha: ${{ inputs.target_sha || github.sha }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
 
   taylor-green-vortex:
+    needs: build-context
     if: github.event_name != 'workflow_dispatch' || inputs.run_tgv
     uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
     with:
-      target_sha: ${{ inputs.target_sha || github.sha }}
+      target_sha: ${{ needs.build-context.outputs.target_sha }}
       profiling_detail: ${{ inputs.profiling_detail || 'full' }}
       hot_kernels: ${{ fromJSON(github.event_name == 'workflow_dispatch' && toJSON(inputs.hot_kernels) || '20') }}

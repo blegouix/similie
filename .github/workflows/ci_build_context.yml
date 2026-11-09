@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# AI-GENERATED
+
+name: resolve-ci-build
+on:
+  workflow_call:
+    inputs:
+      build_run_id:
+        required: true
+        type: string
+    outputs:
+      target_sha:
+        value: ${{ jobs.context.outputs.target_sha }}
+      is_pr:
+        value: ${{ jobs.context.outputs.is_pr }}
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    outputs:
+      target_sha: ${{ steps.commit.outputs.target_sha }}
+      is_pr: ${{ steps.run.outputs.is_pr }}
+    steps:
+    - name: Require a successful build from this repository
+      id: run
+      uses: actions/github-script@v8
+      env:
+        BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      with:
+        script: |
+          const value = process.env.BUILD_RUN_ID;
+          if (!/^[1-9][0-9]*$/.test(value)) throw new Error('Invalid ci-build run ID');
+          const {data: run} = await github.rest.actions.getWorkflowRun({
+            ...context.repo, run_id: Number(value)
+          });
+          if (run.path !== '.github/workflows/ci_build.yml' || run.conclusion !== 'success') {
+            throw new Error('A successful ci-build run is required');
+          }
+          if (!['push', 'pull_request'].includes(run.event)) {
+            throw new Error('Unsupported ci-build event');
+          }
+          core.setOutput('is_pr', String(run.event === 'pull_request'));
+    - name: Download built commit metadata
+      uses: actions/download-artifact@v5
+      with:
+        name: ci-build-context
+        path: ${{ runner.temp }}/ci-build-context
+        run-id: ${{ inputs.build_run_id }}
+        github-token: ${{ github.token }}
+    - name: Validate built commit metadata
+      id: commit
+      env:
+        BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      run: |
+        python3 - <<'PYTHON'
+        import json, os, re
+        from pathlib import Path
+        data = json.loads(Path(os.environ["RUNNER_TEMP"], "ci-build-context", "ci-build-context.json").read_text())
+        sha = data["target_sha"]
+        if data["run_id"] != os.environ["BUILD_RUN_ID"] or not re.fullmatch(r"[0-9a-f]{40}", sha):
+            raise ValueError("Invalid ci-build commit metadata")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            output.write(f"target_sha={sha}\n")
+        PYTHON

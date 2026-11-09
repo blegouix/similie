@@ -1,0 +1,207 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: ci-build
+permissions:
+  actions: read
+  contents: read
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-cuda-docker-env:
+    runs-on: [self-hosted, linux]
+    environment:
+      name: base-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.sha }}
+    - name: Check GPU visibility on runner
+      run: |
+        if command -v nvidia-smi; then
+          nvidia-smi
+        else
+          /usr/lib/wsl/lib/nvidia-smi
+        fi
+    - name: Build CUDA similie_env image
+      run: |
+        DOCKER_BUILDKIT=1 docker build \
+          --build-arg BACKEND=cuda \
+          -t "similie_env:${GITHUB_SHA}" \
+          -t similie_env:latest \
+          docker/similie_env
+
+  build-cpu-docker-env:
+    runs-on: [self-hosted, linux]
+    environment:
+      name: base-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.sha }}
+    - name: Build CPU similie_env_cpu image
+      run: |
+        DOCKER_BUILDKIT=1 docker build \
+          --build-arg BACKEND=cpu \
+          --build-arg BASE_IMAGE=ubuntu:26.04 \
+          -t "similie_env_cpu:${GITHUB_SHA}" \
+          -t similie_env_cpu:latest \
+          docker/similie_env
+
+  build-cuda:
+    needs: build-cuda-docker-env
+    runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-cuda-build
+      cancel-in-progress: false
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'build-cuda' || 'base-ci-run' }}
+    env:
+      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.sha }}
+        submodules: recursive
+        fetch-depth: 0
+        lfs: true
+    - name: Materialize Git LFS files in the reused workspace
+      run: git lfs checkout
+    - name: Clear persistent CUDA build
+      run: |
+        set -euo pipefail
+        echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/cuda" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/cuda"
+    - name: Populate CUDA commit workspace
+      run: |
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
+    - name: Configure and compile on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            mkdir -p "${HOME}"
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            # The installed Kokkos package supplies its CUDA architecture flags.
+            cmake \
+              -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_CUDA=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_BUILD_BENCHMARKS=ON \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -B "${CACHE_ROOT}/build" \
+              -S .
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build"
+          '
+    - name: Tag persistent CUDA build
+      run: printf '%s\n' "${GITHUB_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
+
+  build-omp-debug:
+    needs: build-cpu-docker-env
+    runs-on: [self-hosted, linux]
+    concurrency:
+      group: similie-persistent-omp-build
+      cancel-in-progress: false
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'build-omp-debug' || 'base-ci-run' }}
+    env:
+      COMPILATION_NUM_THREADS: ${{ vars.COMPILATION_NUM_THREADS || '8' }}
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.sha }}
+        submodules: recursive
+        fetch-depth: 0
+        lfs: true
+    - name: Materialize Git LFS files in the reused workspace
+      run: git lfs checkout
+    - name: Clear persistent OMP debug build
+      run: |
+        set -euo pipefail
+        echo "IMAGE_TAG=similie_env_cpu:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_WORKSPACE}/builds/omp-debug" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_WORKSPACE}/builds/omp-debug"
+    - name: Populate OpenMP commit workspace
+      run: |
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
+    - name: Configure and compile with OpenMP
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -e COMPILATION_NUM_THREADS="${COMPILATION_NUM_THREADS}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            mkdir -p "${HOME}"
+            git config --global --add safe.directory "*"
+            g++-15 --version
+            cmake \
+              -DCMAKE_CXX_COMPILER=g++-15 \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DKokkos_ENABLE_OPENMP=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -B "${CACHE_ROOT}/build_omp" \
+              -S .
+            # Young tableaux generate the dictionary at runtime; tensor consumers
+            # must compile after those entries exist for their #embed directive.
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp" unit_tests_young_tableau
+            "${CACHE_ROOT}/build_omp/tests/young_tableau/unit_tests_young_tableau"
+            make -j"${COMPILATION_NUM_THREADS}" -C "${CACHE_ROOT}/build_omp"
+          '
+    - name: Tag persistent OMP debug build
+      run: printf '%s\n' "${GITHUB_SHA}" > "${CACHE_ROOT}/COMMIT_SHA"
+
+  publish-build-context:
+    needs: [build-cuda, build-omp-debug]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Record the exact built commit (including PR merge commits)
+      run: |
+        python3 - <<'PYTHON'
+        import json, os
+        from pathlib import Path
+        Path(os.environ["RUNNER_TEMP"], "ci-build-context.json").write_text(json.dumps({
+            "target_sha": os.environ["GITHUB_SHA"],
+            "run_id": os.environ["GITHUB_RUN_ID"],
+        }))
+        PYTHON
+    - uses: actions/upload-artifact@v7
+      with:
+        name: ci-build-context
+        path: ${{ runner.temp }}/ci-build-context.json
+        retention-days: 15
+        overwrite: true
