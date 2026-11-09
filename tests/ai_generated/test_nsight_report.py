@@ -24,6 +24,7 @@ sys.path.insert(
 )
 from nsight_report import (
     CORE_METRICS,
+    LAUNCH_METRICS,
     METRICS,
     case_specs,
     combined_rows,
@@ -581,8 +582,8 @@ class HotKernelSelection(unittest.TestCase):
     def test_default_profiles_full_metrics_at_n64(self):
         self.check_default_metrics(64, "full")
 
-    def test_default_profiles_core_metrics_at_n128(self):
-        self.check_default_metrics(128, "core")
+    def test_default_profiles_launch_metadata_at_n128(self):
+        self.check_default_metrics(128, "launch")
 
     def check_default_metrics(self, n, expected_detail):
         case = CASE.replace("N=64", f"N={n}")
@@ -604,7 +605,9 @@ class HotKernelSelection(unittest.TestCase):
                 label=label,
                 symbol=symbol,
                 metrics=dict.fromkeys(
-                    {**METRICS, **CORE_METRICS} if expected_detail == "full" else CORE_METRICS,
+                    {**METRICS, **CORE_METRICS}
+                    if expected_detail == "full"
+                    else LAUNCH_METRICS,
                     42,
                 ),
                 rules=[],
@@ -640,7 +643,7 @@ class HotKernelSelection(unittest.TestCase):
             self.assertEqual(result["errors"], [])
             self.assertEqual(result["hot_kernels"], {})
             if n >= 128:
-                self.assertIn("single-pass metrics only", result["hot_kernel_skips"][case])
+                self.assertIn("launch metadata only", result["hot_kernel_skips"][case])
             else:
                 self.assertEqual(result["hot_kernel_skips"], {})
             self.assertEqual(result["detail"], "full")
@@ -1182,6 +1185,66 @@ class CombinedReport(unittest.TestCase):
         del values[CORE_METRICS["SM active (%)"]]
         with self.assertRaisesRegex(ValueError, "Missing core metric"):
             read_compute_report(Path("report"), api, 1, detail="core")
+
+    def test_launch_reader_accepts_no_counter_pass_and_requires_metadata(self):
+        values = dict.fromkeys(LAUNCH_METRICS.values(), 2.0)
+        domain = SimpleNamespace(
+            name=lambda: "<default domain>",
+            push_pop_ranges=lambda: [CASE + "/iteration", CASE + "/iteration/solver"],
+        )
+        action = SimpleNamespace(
+            name=lambda _: SYMBOL,
+            nvtx_state=lambda: SimpleNamespace(
+                domains=lambda: [0], domain_by_id=lambda _: domain
+            ),
+            metric_by_name=lambda name: (
+                SimpleNamespace(has_value=lambda: True, as_double=lambda: values[name])
+                if name in values
+                else None
+            ),
+            rule_results=lambda: [],
+        )
+        section = SimpleNamespace(num_actions=lambda: 1, action_by_idx=lambda _: action)
+        report = SimpleNamespace(num_ranges=lambda: 1, range_by_idx=lambda _: section)
+        api = SimpleNamespace(
+            load_report=lambda _: report, IAction=SimpleNamespace(NameBase_MANGLED=1)
+        )
+        rows = read_compute_report(Path("report"), api, 1, detail="launch")
+        self.assertEqual(set(rows[0]["metrics"]), set(LAUNCH_METRICS))
+        self.assertIsNone(rows[0]["replay_passes"])
+        values["profiler__replayer_passes"] = 0.0
+        self.assertEqual(
+            read_compute_report(Path("report"), api, 1, detail="launch")[0][
+                "replay_passes"
+            ],
+            0,
+        )
+        values["profiler__replayer_passes"] = 2.0
+        with self.assertRaisesRegex(ValueError, "unexpectedly required replay"):
+            read_compute_report(Path("report"), api, 1, detail="launch")
+        values["profiler__replayer_passes"] = 0.0
+        del values[LAUNCH_METRICS["Registers/thread"]]
+        with self.assertRaisesRegex(ValueError, "Missing launch metric"):
+            read_compute_report(Path("report"), api, 1, detail="launch")
+
+    def test_launch_command_does_not_select_hardware_sections(self):
+        command = compute_command(
+            Path("binary"),
+            Path("output"),
+            CASE,
+            128,
+            (),
+            "incompressible",
+            "ideal",
+            "hd",
+            [1],
+            dict(symbols=[SYMBOL], invocations=[1]),
+            detail="launch",
+        )
+        self.assertFalse(any(value.startswith("--section=") for value in command))
+        self.assertIn("--metrics=" + ",".join(LAUNCH_METRICS.values()), command)
+        self.assertIn("--apply-rules=no", command)
+        self.assertIn("--cache-control=none", command)
 
     def test_core_report_labels_activity_and_normalized_cache_bandwidth(
         self,

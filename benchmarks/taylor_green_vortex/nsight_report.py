@@ -55,6 +55,24 @@ CORE_METRICS = {
     },
 }
 
+# These values are launch attributes or occupancy-calculator results, rather
+# than hardware counters. No executing-kernel instrumentation is requested.
+LAUNCH_METRICS = {
+    "Registers/thread": "launch__registers_per_thread",
+    "Theoretical occupancy (%)": "sm__maximum_warps_per_active_cycle_pct",
+    "Threads/block": "launch__block_size",
+    "Blocks/grid": "launch__grid_size",
+    "Static shared memory/block (bytes)": "launch__shared_mem_per_block_static",
+    "Dynamic shared memory/block (bytes)": "launch__shared_mem_per_block_dynamic",
+}
+
+
+def compute_metrics(detail):
+    if detail == "launch":
+        return LAUNCH_METRICS
+    return {**METRICS, **CORE_METRICS} if detail == "full" else CORE_METRICS
+
+
 COMPUTE_SOL_GREEN_THRESHOLD = 90
 
 
@@ -235,15 +253,15 @@ def compute_command(
         # not instruction or source analysis. Importing the large templated
         # CUDA cubins into every report adds unnecessary processing and I/O.
         "--import-sass=no",
-        "--section=LaunchStats",
-        "--section=Occupancy",
-        *(["--section=SpeedOfLight"] if detail == "full" else []),
-        "--metrics="
-        + ",".join(
-            ({**METRICS, **CORE_METRICS} if detail == "full" else CORE_METRICS).values()
+        *(
+            []
+            if detail == "launch"
+            else ["--section=LaunchStats", "--section=Occupancy"]
         ),
+        *(["--section=SpeedOfLight"] if detail == "full" else []),
+        "--metrics=" + ",".join(compute_metrics(detail).values()),
         "--disable-extra-suffixes",
-        "--apply-rules=yes",
+        "--apply-rules=" + ("no" if detail == "launch" else "yes"),
         "--force-overwrite",
         f"--export={directory / 'kernels'}",
         str(binary),
@@ -316,17 +334,19 @@ def read_compute_report(
                 raise ValueError(
                     f"Core profiling requires one pass; captured {passes}: {path}"
                 )
+            if detail == "launch" and passes is not None and passes > 1:
+                raise ValueError(
+                    f"Launch metadata unexpectedly required replay: {path}"
+                )
             metrics = {}
-            for metric_label, name in (
-                {**METRICS, **CORE_METRICS} if detail == "full" else CORE_METRICS
-            ).items():
+            for metric_label, name in compute_metrics(detail).items():
                 metric = action.metric_by_name(name)
                 value = metric.as_double() if metric and metric.has_value() else None
                 metrics[metric_label] = (
                     value if value is not None and math.isfinite(value) else None
                 )
-                if detail == "core" and metrics[metric_label] is None:
-                    raise ValueError(f"Missing core metric {name}: {path}")
+                if detail in ("core", "launch") and metrics[metric_label] is None:
+                    raise ValueError(f"Missing {detail} metric {name}: {path}")
             rules = []
             for rule in action.rule_results():
                 if rule.has_rule_message():
@@ -484,9 +504,7 @@ def capture_groups(
         ]
         if len(reports) != 1:
             raise FileNotFoundError(f"Expected one Compute report in {batch_directory}")
-        captured = read_compute_report_isolated(
-            reports[0], directory, expected, detail
-        )
+        captured = read_compute_report_isolated(reports[0], directory, expected, detail)
         reconcile_compute_invocations(plan, group, captured)
         deduplicated = {}
         for sample in captured:
@@ -545,14 +563,21 @@ def profile_cases(
                 if not plan["sample_ranges"]:
                     results["cases"][case] = []
                     continue
-                # Large cases use one-pass counters, avoiding device snapshots
-                # and multipass replay even when full profiling was requested.
-                capture_detail = "full" if detail == "full" and n < 128 else "core"
-                if n >= 128 and detail != "core":
+                # Large cases retain launch attributes, without hardware counters.
+                capture_detail = (
+                    "launch"
+                    if n >= 128 or detail == "launch"
+                    else "full"
+                    if detail == "full"
+                    else "core"
+                )
+                if n >= 128:
                     results["hot_kernel_skips"][case] = (
-                        "N=128 and above collect core single-pass metrics only"
+                        "N=128 and above collect launch metadata only; hardware counters are not measured"
                     )
-                groups = compute_groups(plan, combine=capture_detail == "core")
+                groups = compute_groups(
+                    plan, combine=capture_detail in ("core", "launch")
+                )
                 count = sum(group["launches"] for group in groups)
                 print(
                     f"\nNsight Compute: {case}: {count} kernel calls covering all first samples; "
@@ -612,9 +637,7 @@ def profile_cases(
                         environment,
                         batch_timeout,
                     )
-                    merge_hot_samples(
-                        plan, results["cases"][case], detailed, selected
-                    )
+                    merge_hot_samples(plan, results["cases"][case], detailed, selected)
             except Exception as error:
                 results["errors"].append(f"{case}: {error}")
                 print(results["errors"][-1], flush=True)
@@ -812,6 +835,13 @@ def report_metrics(compute):
             "Registers/thread": "Registers/thread",
         }
     )
+    for name in LAUNCH_METRICS:
+        if name not in visible.values() and any(
+            sample["metrics"].get(name) is not None
+            for samples in compute.get("cases", {}).values()
+            for sample in samples
+        ):
+            visible[name] = name
     return visible
 
 
@@ -941,7 +971,8 @@ def write_combined_report(output):
         "Regions include nested scopes and all CUDA kernels, including library kernels. "
         "Others is time outside all reported kernels, including transfers and gaps; overlaps count once. "
         "Cache BW is sector throughput relative to sustained sector-service capacity. "
-        "Full symbols and metric values are in the artifacts.",
+        "Full symbols and metric values are in the artifacts. "
+        "N128 uses launch metadata only; hardware counters are not measured.",
     ]
     if detail != "full":
         lines += [
@@ -1083,6 +1114,11 @@ def write_combined_report(output):
                 "mean_ns",
                 *METRICS,
                 *(name for name in CORE_METRICS if name not in METRICS),
+                *(
+                    name
+                    for name in LAUNCH_METRICS
+                    if name not in METRICS and name not in CORE_METRICS
+                ),
                 "L1/TEX (sector/s)",
                 "L2 (sector/s)",
                 "analysis",
@@ -1111,9 +1147,9 @@ def main():
     parser.add_argument("--preserve-launches", action="store_true")
     parser.add_argument(
         "--detail",
-        choices=("hybrid", "core", "full"),
+        choices=("hybrid", "core", "full", "launch"),
         default="full",
-        help="Hybrid adds detailed hot-kernel analysis; core is one pass; full analyzes all kernels",
+        help="Hybrid analyzes hot kernels; core is one pass; full analyzes all kernels; launch collects metadata. N128 always uses launch metadata",
     )
     parser.add_argument(
         "--hot-kernels",
@@ -1127,7 +1163,9 @@ def main():
     args = parser.parse_args()
     if args.phase == "read-compute":
         if args.detail == "hybrid":
-            parser.error("read-compute requires --detail=core or --detail=full")
+            parser.error(
+                "read-compute requires --detail=core, --detail=full or --detail=launch"
+            )
         if args.compute_report is None or args.expected_launches is None:
             parser.error(
                 "read-compute requires --compute-report and --expected-launches"

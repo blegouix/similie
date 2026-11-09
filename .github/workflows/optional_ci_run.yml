@@ -35,7 +35,7 @@ on:
         type: boolean
         default: true
       profiling_detail:
-        description: TGV profiling detail (N128 always uses core metrics)
+        description: TGV profiling detail (N128 always uses launch metadata)
         type: choice
         options: [full, hybrid, core]
         default: full
