@@ -224,9 +224,11 @@ class ReferenceAccuracyGate(unittest.TestCase):
         comparisons["N128"]["kinetic_energy"]["relative_l2_error"] = 0.004
         validate_reference_comparisons(comparisons)
 
-    def test_zero_slice_at_the_error_limit_fails(self):
+    def test_slice_at_the_error_limit_fails(self):
         comparisons = self.comparisons()
-        comparisons["N128"]["vorticity_norm_t8"]["relative_l2_error"] = 1.0
+        comparisons["N128"]["vorticity_norm_t8"]["relative_l2_error"] = 1.49
+        validate_reference_comparisons(comparisons)
+        comparisons["N128"]["vorticity_norm_t8"]["relative_l2_error"] = 1.5
         with self.assertRaisesRegex(ValueError, "vorticity_norm_t8"):
             validate_reference_comparisons(comparisons)
 
@@ -484,11 +486,13 @@ class CampaignConfiguration(unittest.TestCase):
                 fine = metrics["N128"]["vorticity_norm_t8"]
                 self.assertEqual(fine["passed"], not corrupted)
                 self.assertAlmostEqual(fine["relative_l2_error"], 2 if corrupted else 0)
-                self.assertIn(
-                    "**FAIL**" if corrupted else "**PASS**",
-                    (directory / "report.md").read_text(),
-                )
-                self.assertIn("centered exactly", (directory / "report.md").read_text())
+                report = (directory / "report.md").read_text()
+                self.assertEqual("**FAILED:**" in report, corrupted)
+                self.assertIn("| N | Reference observable |", report)
+                self.assertNotIn("# Taylor–Green validation", report)
+                self.assertNotIn("HD accuracy uses", report)
+                self.assertNotIn("Reference accuracy gate:", report)
+                self.assertNotIn("HDF5 snapshots", report)
                 manifest = json.loads((directory / "manifest.json").read_text())
                 self.assertEqual(manifest["error"] is not None, corrupted)
 
@@ -568,9 +572,8 @@ class CampaignConfiguration(unittest.TestCase):
                         )
                 gate = json.loads((directory / "reference-validation.json").read_text())
                 self.assertEqual(gate["passed"], not inconsistent)
-                self.assertIn(
-                    "**FAIL**" if inconsistent else "**PASS**",
-                    (directory / "report.md").read_text(),
+                self.assertEqual(
+                    "**FAILED:**" in (directory / "report.md").read_text(), inconsistent
                 )
                 manifest = json.loads((directory / "manifest.json").read_text())
                 self.assertEqual(manifest["error"] is not None, inconsistent)

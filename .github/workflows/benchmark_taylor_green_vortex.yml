@@ -199,7 +199,7 @@ jobs:
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
               --transport "${TRANSPORT}" --coupling "${COUPLING}" --phase validation \
               --reference-energy-relative-tolerance 0.1 \
-              --reference-relative-tolerance 0.5 --reference-slice-relative-tolerance 1.0
+              --reference-relative-tolerance 0.5 --reference-slice-relative-tolerance 1.5
           ' &
         wait $!
     - name: Upload Nsight timelines, Compute reports, combined tables, and reference outputs

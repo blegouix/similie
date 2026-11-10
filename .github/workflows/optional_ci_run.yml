@@ -63,7 +63,7 @@ jobs:
     with:
       base_run_id: ${{ inputs.base_run_id || format('{0}', github.event.workflow_run.id) }}
 
-  scalar-field-labels-pending:
+  scalar-field-reset-labels:
     needs: build-context
     if: github.event_name != 'workflow_dispatch' || inputs.run_scalar_field
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -74,13 +74,13 @@ jobs:
       result: pending
 
   scalar-field:
-    needs: [build-context, scalar-field-labels-pending]
+    needs: [build-context, scalar-field-reset-labels]
     if: github.event_name != 'workflow_dispatch' || inputs.run_scalar_field
     uses: ./.github/workflows/example_scalar_field.yml
     with:
       target_sha: ${{ needs.build-context.outputs.target_sha }}
 
-  taylor-green-vortex-labels-pending:
+  taylor-green-vortex-reset-labels:
     needs: build-context
     if: github.event_name != 'workflow_dispatch' || inputs.run_tgv
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -91,7 +91,7 @@ jobs:
       result: pending
 
   taylor-green-vortex:
-    needs: [build-context, taylor-green-vortex-labels-pending]
+    needs: [build-context, taylor-green-vortex-reset-labels]
     if: github.event_name != 'workflow_dispatch' || inputs.run_tgv
     uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
     with:
@@ -99,7 +99,7 @@ jobs:
       profiling_detail: ${{ inputs.profiling_detail || 'full' }}
       hot_kernels: ${{ fromJSON(github.event_name == 'workflow_dispatch' && toJSON(inputs.hot_kernels) || '20') }}
 
-  scalar-field-labels-result:
+  scalar-field-set-labels:
     needs: [build-context, scalar-field]
     if: always() && needs.build-context.result == 'success' && (needs.scalar-field.result == 'success' || needs.scalar-field.result == 'failure')
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -109,7 +109,7 @@ jobs:
       task: 2d-scalar-field
       result: ${{ needs.scalar-field.result }}
 
-  taylor-green-vortex-labels-result:
+  taylor-green-vortex-set-labels:
     needs: [build-context, taylor-green-vortex]
     if: always() && needs.build-context.result == 'success' && (needs.taylor-green-vortex.result == 'success' || needs.taylor-green-vortex.result == 'failure')
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -119,7 +119,7 @@ jobs:
       task: taylor-green-vortex
       result: ${{ needs.taylor-green-vortex.result }}
 
-  onelab-inductor-labels-pending:
+  onelab-inductor-reset-labels:
     needs: build-context
     if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_inductor
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -130,14 +130,14 @@ jobs:
       result: pending
 
   onelab-inductor:
-    needs: [build-context, onelab-inductor-labels-pending]
+    needs: [build-context, onelab-inductor-reset-labels]
     if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_inductor
     uses: ./.github/workflows/example_onelab_inductor.yml
     with:
       target_sha: ${{ needs.build-context.outputs.target_sha }}
       ci_environment: onelab_inductor-cuda
 
-  onelab-inductor-labels-result:
+  onelab-inductor-set-labels:
     needs: [build-context, onelab-inductor]
     if: always() && needs.build-context.result == 'success' && (needs.onelab-inductor.result == 'success' || needs.onelab-inductor.result == 'failure')
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -147,7 +147,7 @@ jobs:
       task: onelab-inductor
       result: ${{ needs.onelab-inductor.result }}
 
-  onelab-elasticity-labels-pending:
+  onelab-elasticity-reset-labels:
     needs: build-context
     if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_elasticity
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -158,14 +158,14 @@ jobs:
       result: pending
 
   onelab-elasticity:
-    needs: [build-context, onelab-elasticity-labels-pending]
+    needs: [build-context, onelab-elasticity-reset-labels]
     if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_elasticity
     uses: ./.github/workflows/example_onelab_elasticity.yml
     with:
       target_sha: ${{ needs.build-context.outputs.target_sha }}
       ci_environment: onelab_elasticity-cuda
 
-  onelab-elasticity-labels-result:
+  onelab-elasticity-set-labels:
     needs: [build-context, onelab-elasticity]
     if: always() && needs.build-context.result == 'success' && (needs.onelab-elasticity.result == 'success' || needs.onelab-elasticity.result == 'failure')
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -175,7 +175,7 @@ jobs:
       task: onelab-elasticity
       result: ${{ needs.onelab-elasticity.result }}
 
-  onelab-potential-flow-labels-pending:
+  onelab-potential-flow-reset-labels:
     needs: build-context
     if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_potential_flow
     uses: ./.github/workflows/optional_ci_labels.yml
@@ -186,14 +186,14 @@ jobs:
       result: pending
 
   onelab-potential-flow:
-    needs: [build-context, onelab-potential-flow-labels-pending]
+    needs: [build-context, onelab-potential-flow-reset-labels]
     if: github.event_name != 'workflow_dispatch' || inputs.run_onelab_potential_flow
     uses: ./.github/workflows/example_onelab_potential_flow.yml
     with:
       target_sha: ${{ needs.build-context.outputs.target_sha }}
       ci_environment: onelab_potential-flow-onelab-cuda
 
-  onelab-potential-flow-labels-result:
+  onelab-potential-flow-set-labels:
     needs: [build-context, onelab-potential-flow]
     if: always() && needs.build-context.result == 'success' && (needs.onelab-potential-flow.result == 'success' || needs.onelab-potential-flow.result == 'failure')
     uses: ./.github/workflows/optional_ci_labels.yml
