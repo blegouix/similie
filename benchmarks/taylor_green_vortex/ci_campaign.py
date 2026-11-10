@@ -467,7 +467,7 @@ def validate_reference_comparisons(
 
 
 def compare_vorticity_slice(hdf, reference_directory, tolerance=None):
-    """Compare the t=8 periodic-face norm at the simulation's matching nodes."""
+    """Compare against periodic cell averages centered at the simulation nodes."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -511,15 +511,32 @@ def compare_vorticity_slice(hdf, reference_directory, tolerance=None):
         raise ValueError(
             "Vorticity comparison requires a matching periodic grid dividing 512"
         )
-    # N=64 and N=128 are exact subsets of the 512-node reference: no
-    # interpolation or axis rotation is needed to compare the same points.
-    expected = reference[:: 512 // n, :: 512 // n]
+    # Average over a coarse cell centered on each matching node, with periodic
+    # wrapping. Integrate the piecewise bilinear reference interpolant: for
+    # even ratios, boundary nodes have half weight on either side. A forward
+    # block average would shift the filter center away from the simulation node.
+    stride = 512 // n
+    filtered = reference
+    for axis in (0, 1):
+        averaged = np.zeros_like(filtered)
+        for offset in range(-(stride // 2), stride // 2 + 1):
+            weight = min(0.5, stride / 2 - offset) - max(-0.5, -stride / 2 - offset)
+            averaged += weight * np.roll(filtered, offset, axis=axis)
+        filtered = averaged / stride
+    expected = filtered[::stride, ::stride]
     difference = simulation - expected
     metrics = {
         "source": REFERENCE_URL,
         "file": REFERENCE_SLICE,
         "time": 8,
         "plane": "x/L=-pi",
+        "reference_filter": {
+            "method": "periodic centered cell average (piecewise bilinear reference)",
+            "width": float(2 * np.pi / n),
+            "center": "simulation node",
+            "reference_grid_stride": stride,
+            "quantity": "vorticity norm",
+        },
         "samples": int(simulation.size),
         "relative_l2_error": float(
             np.linalg.norm(difference) / np.linalg.norm(expected)
@@ -541,17 +558,16 @@ def compare_vorticity_slice(hdf, reference_directory, tolerance=None):
             )
         ),
         delimiter=",",
-        header="y,z,simulation_vorticity_norm,reference_vorticity_norm,error",
+        header="y,z,simulation_vorticity_norm,filtered_reference_vorticity_norm,error",
         comments="",
     )
     hdf.with_suffix(".vorticity-comparison.json").write_text(
         json.dumps(metrics, indent=2) + "\n"
     )
     figure, axes = plt.subplots(1, 3, figsize=(15, 4), constrained_layout=True)
-    reference_coordinates = -np.pi + np.arange(512) * (2 * np.pi / 512)
-    maximum = max(float(reference.max()), float(simulation.max()))
+    maximum = max(float(expected.max()), float(simulation.max()))
     for axis, grid, norm, label in (
-        (axes[0], reference_coordinates, reference, "UCL spectral 512³"),
+        (axes[0], coordinates, expected, f"UCL 512³, cell-filtered to N={n}"),
         (axes[1], coordinates, simulation, f"SimiLie N={n}"),
     ):
         image = axis.pcolormesh(
@@ -627,7 +643,7 @@ def write_report(output, phase, entries, error=None):
         lines.extend(
             (
                 "",
-                "HD accuracy uses the original UCL 512³ pseudo-spectral data from https://cfd.ku.edu/hiocfd/data.tgz: kinetic energy, dissipation and enstrophy histories, plus the vorticity norm on x/L=-pi at t/tc=8. Slice errors compare matching nodes of the 512² reference and the simulation grid. Inputs and SHA-256 provenance are included in reference-data; comparison CSVs and PNGs accompany the results. Reference-error limits are mandatory. History errors must also improve with refinement (10% slack, with an absolute relative-error floor of 0.005). These are regression guards for under-resolved grids, not DNS accuracy claims. The configured limits and pass/fail status are saved in reference-validation.json.",
+                "HD accuracy uses the original UCL 512³ pseudo-spectral data from https://cfd.ku.edu/hiocfd/data.tgz: kinetic energy, dissipation and enstrophy histories, plus the vorticity norm on x/L=-pi at t/tc=8. Slice errors compare the simulation with periodic cell averages of the 512² reference vorticity norm, centered exactly at the simulation nodes with width 2*pi/N in each in-plane direction. Inputs and SHA-256 provenance are included in reference-data; comparison CSVs and PNGs accompany the results. Reference-error limits are mandatory. History errors must also improve with refinement (10% slack, with an absolute relative-error floor of 0.005). These are regression guards for under-resolved grids, not DNS accuracy claims. The configured limits and pass/fail status are saved in reference-validation.json.",
                 "",
                 "HDF5 snapshots and their XDMF time series are saved every 0.033 seconds of simulation time, with additional snapshots at t=8 and t=10.",
             )

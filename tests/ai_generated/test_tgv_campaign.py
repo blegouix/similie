@@ -345,6 +345,153 @@ class CampaignExecution(unittest.TestCase):
 
 
 class CampaignConfiguration(unittest.TestCase):
+    def test_filtered_slice_reaches_validation_gate_and_failure_report(self):
+        for corrupted in (False, True):
+            with (
+                self.subTest(corrupted=corrupted),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                output = Path(temporary)
+                directory = output / "validation"
+                flags = "+".join(STRATEGIES[3])
+
+                def synthetic_reference(destination):
+                    history = reference_history(destination)
+                    grid = -np.pi + np.arange(512) * (2 * np.pi / 512)
+                    # This mode aliases at both simulation resolutions but
+                    # integrates to zero in their centered filtering cells.
+                    norm = np.broadcast_to(
+                        10 + 3 * np.cos(128 * grid[:, None]), (512, 512)
+                    )
+                    norm.astype("<f8").tofile(destination / "wn_slice_x0_08000.out")
+                    return history
+
+                def synthetic_benchmark(command, destination):
+                    self.assertIn("--reference-suite", command)
+                    history = np.loadtxt(
+                        destination / "reference-data/spectral_Re1600_512.gdiag"
+                    )
+                    history = history[history[:, 0] <= 10]
+                    rows = []
+                    times = np.sort(np.append(np.arange(0, 10, 0.033), [8, 10]))
+                    for n in (64, 128):
+                        case = destination / f"N{n}"
+                        case.mkdir()
+                        record = {
+                            "configuration": "incompressible_ideal_hd",
+                            "N": n,
+                            "mode": "reference",
+                            "strategy": 3,
+                            "flags": flags,
+                            "steps": len(history) - 1,
+                            "solver_seconds": 1,
+                            "mean_step_seconds": 1,
+                            "cell_updates_per_second": n**3,
+                            "final_time": 10,
+                        }
+                        (case / "trajectory.performance.json").write_text(
+                            json.dumps(record)
+                        )
+                        with h5py.File(case / "trajectory.h5", "w") as data:
+                            data.create_dataset(
+                                "final_state", (3, n**3), dtype="f8", fillvalue=0
+                            )
+                            monitors = np.zeros((len(history), 14))
+                            monitors[:, 0] = history[:, 0]
+                            monitors[:, 1] = history[:, 1]
+                            monitors[0, 1] = (
+                                0.125 * np.sinc(1 / n) ** 2 * np.cos(np.pi / n) ** 4
+                            )
+                            monitors[:, 3:5] = history[:, 2:4]
+                            monitors[:, 8] = 1
+                            monitors[:, 11:13] = 1
+                            data["monitors"] = monitors
+                            data["reconstruction_monitors"] = np.zeros(
+                                (len(history), 5)
+                            )
+                            grid = -np.pi + np.arange(n) * (2 * np.pi / n)
+                            position = np.zeros((1, n, n, 3))
+                            position[..., 0] = -np.pi
+                            position[0, ..., 1] = grid[:, None]
+                            position[0, ..., 2] = grid[None, :]
+                            data["position"] = position
+                            for index, time_value in enumerate(times):
+                                snapshot = data.create_group(f"snapshot_{index}")
+                                snapshot["time"] = [time_value]
+                                if time_value == 8:
+                                    vorticity = np.zeros((1, n, n, 3))
+                                    vorticity[..., 0] = (
+                                        30 if corrupted and n == 128 else 10
+                                    )
+                                    snapshot["vorticity"] = vorticity
+                        grids = "".join(
+                            f'<Grid><Time Value="{t}"/></Grid>' for t in times
+                        )
+                        (case / "trajectory.xmf").write_text(
+                            f"<Xdmf><Domain><Grid>{grids}</Grid></Domain></Xdmf>"
+                        )
+                        rows.append(
+                            {
+                                "run_name": f"TaylorGreen/incompressible_ideal_hd/N{n}/{flags}/iterations:1/repeats:1",
+                                "repetitions": 1,
+                                "iterations": 1,
+                            }
+                        )
+                    (destination / "benchmark.json").write_text(
+                        json.dumps({"benchmarks": rows})
+                    )
+
+                # Replace the expensive solver and unrelated field rendering;
+                # trajectory checks, comparisons, filtering and gates are real.
+                with (
+                    patch(
+                        "ci_campaign.reference_history", side_effect=synthetic_reference
+                    ),
+                    patch("ci_campaign.execute", side_effect=synthetic_benchmark),
+                    patch("ci_campaign.process"),
+                ):
+                    if corrupted:
+                        with self.assertRaisesRegex(
+                            ReferenceValidationError, "N=128 vorticity_norm_t8"
+                        ):
+                            campaign(
+                                Path("synthetic"),
+                                output,
+                                "incompressible",
+                                "ideal",
+                                "hd",
+                                "validation",
+                                reference_slice_relative_tolerance=0.01,
+                            )
+                    else:
+                        campaign(
+                            Path("synthetic"),
+                            output,
+                            "incompressible",
+                            "ideal",
+                            "hd",
+                            "validation",
+                            reference_slice_relative_tolerance=0.01,
+                        )
+                gate = json.loads((directory / "reference-validation.json").read_text())
+                self.assertEqual(gate["passed"], not corrupted)
+                metrics = json.loads(
+                    (directory / "reference-comparison.json").read_text()
+                )
+                self.assertLess(
+                    metrics["N64"]["vorticity_norm_t8"]["relative_l2_error"], 1e-12
+                )
+                fine = metrics["N128"]["vorticity_norm_t8"]
+                self.assertEqual(fine["passed"], not corrupted)
+                self.assertAlmostEqual(fine["relative_l2_error"], 2 if corrupted else 0)
+                self.assertIn(
+                    "**FAIL**" if corrupted else "**PASS**",
+                    (directory / "report.md").read_text(),
+                )
+                self.assertIn("centered exactly", (directory / "report.md").read_text())
+                manifest = json.loads((directory / "manifest.json").read_text())
+                self.assertEqual(manifest["error"] is not None, corrupted)
+
     def test_default_validation_gate_controls_campaign_status_and_report(self):
         for inconsistent in (False, True):
             with (
@@ -701,7 +848,7 @@ class StrategyComparison(unittest.TestCase):
 
 
 class NumericalReference(unittest.TestCase):
-    def test_original_inputs_and_matching_periodic_slice_nodes(self):
+    def test_original_inputs_and_centered_periodic_slice_filter(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             reference_directory = root / "reference"
@@ -710,38 +857,62 @@ class NumericalReference(unittest.TestCase):
             self.assertEqual(history[0, 1], 0.125)
             self.assertEqual(history[0, 3], 0.375)
             self.assertEqual(len(list(reference_directory.iterdir())), 4)
-            reference = np.fromfile(
-                reference_directory / "wn_slice_x0_08000.out", dtype="<f8"
-            ).reshape(512, 512)
-            # Use a deliberately asymmetric reference to detect a mistaken
-            # transpose in the binary storage/coordinate interpretation.
-            reference = reference + np.arange(512)[:, None] / 512
+            # Distinct low modes detect swapped axes or a shifted filter.
+            # Unresolved modes average to zero over the coarse cell, but
+            # alias into a nonzero constant if the reference is only sampled.
+            fine_grid = -np.pi + np.arange(512) * (2 * np.pi / 512)
+            reference = (
+                10
+                + np.cos(11 * fine_grid[:, None])
+                + 2 * np.sin(7 * fine_grid[None, :])
+                + 3 * np.cos(128 * fine_grid[:, None])
+                + 2 * np.cos(128 * fine_grid[None, :])
+            )
             reference.astype("<f8").tofile(
                 reference_directory / "wn_slice_x0_08000.out"
             )
-            n = 8
+            n = 128
             grid = -np.pi + np.arange(n) * (2 * np.pi / n)
             position = np.zeros((1, n, n, 3))
             position[..., 0] = -np.pi
             position[0, ..., 1] = grid[:, None]
             position[0, ..., 2] = grid[None, :]
             vorticity = np.zeros((1, n, n, 3))
-            vorticity[0, ..., 0] = reference[::64, ::64]
+
+            # Exact trapezoidal integral of a Fourier mode over a centered
+            # coarse cell on the fine grid (including half-weight endpoints).
+            def gain(k):
+                return np.sin(k * np.pi / n) / ((512 // n) * np.tan(k * np.pi / 512))
+
+            expected = (
+                10
+                + gain(11) * np.cos(11 * grid[:, None])
+                + 2 * gain(7) * np.sin(7 * grid[None, :])
+            )
+            vorticity[0, ..., 0] = expected
             hdf = root / "trajectory.h5"
             with h5py.File(hdf, "w") as data:
                 data["position"] = position
                 data["snapshot_0/time"] = [8.0]
                 data["snapshot_0/vorticity"] = vorticity
             metrics = compare_vorticity_slice(hdf, reference_directory, tolerance=0.01)
-            self.assertEqual(metrics["relative_l2_error"], 0)
+            self.assertLess(metrics["relative_l2_error"], 1e-13)
             self.assertTrue(metrics["passed"])
             self.assertEqual(metrics["samples"], n * n)
+            self.assertEqual(metrics["reference_filter"]["center"], "simulation node")
+            self.assertEqual(metrics["reference_filter"]["reference_grid_stride"], 4)
+            compared = np.loadtxt(
+                hdf.with_suffix(".vorticity-comparison.csv"), delimiter=",", skiprows=1
+            )
+            np.testing.assert_allclose(
+                compared[:, 3].reshape(n, n), expected, atol=1e-12
+            )
             self.assertTrue(hdf.with_suffix(".vorticity-comparison.png").is_file())
             with h5py.File(hdf, "r+") as data:
                 data["snapshot_0/vorticity"][0, 1, 3, 0] += 50
             metrics = compare_vorticity_slice(hdf, reference_directory, tolerance=0.01)
             self.assertFalse(metrics["passed"])
-            self.assertEqual(metrics["max_absolute_error"], 50)
+            self.assertAlmostEqual(metrics["max_absolute_error"], 50)
             with h5py.File(hdf, "r+") as data:
                 data["snapshot_0/time"][0] = 7.9999
             with self.assertRaisesRegex(ValueError, "exactly one t=8"):
