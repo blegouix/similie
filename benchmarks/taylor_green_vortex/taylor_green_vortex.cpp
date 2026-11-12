@@ -27,7 +27,6 @@
 
 #include <KokkosBlas1_dot.hpp>
 #include <KokkosBlas1_nrm1.hpp>
-#include <KokkosBlas1_scal.hpp>
 #include <hdf5.h>
 #include <paraconf.h>
 
@@ -138,7 +137,7 @@ public:
     Physics const kind;
     int const components;
     Field state, initial, stage, rhs, velocity, gradient, vorticity, density, pressure, temperature,
-            heat_flux, velocity_divergence, velocity_rate, vector_potential, inverse_density,
+            heat_flux, velocity_divergence, velocity_rate, vector_potential,
             speed_squared, vorticity_squared, kinetic_rate, stress, stress_contraction, cfl_speed;
     std::unique_ptr<IncompressibleSolver> incompressible;
     std::unique_ptr<CompressibleSolver> compressible;
@@ -164,7 +163,6 @@ public:
         , velocity_divergence("velocity_divergence", 1, dec.cells)
         , velocity_rate("reconstructed_velocity_rate", 3, dec.cells)
         , vector_potential("export_vector_potential", 3, dec.cells)
-        , inverse_density("inverse_density", 1, dec.cells)
         , speed_squared("speed_squared", 1, dec.cells)
         , vorticity_squared("vorticity_squared", 1, dec.cells)
         , kinetic_rate("kinetic_rate", 1, dec.cells)
@@ -228,15 +226,14 @@ public:
     }
     void gas_velocity(Field const& q, Field const& output)
     {
-        Field const inverse = inverse_density;
         Kokkos::parallel_for(
-                "inverse_fluid_density",
+                "compressible_velocity",
                 dec.cells,
-                KOKKOS_LAMBDA(int i) { inverse(0, i) = 1.0 / q(0, i); });
-        KokkosBlas::
-                scal(output,
-                     Kokkos::subview(inverse, 0, Kokkos::ALL),
-                     Kokkos::subview(q, std::pair<int, int>(1, 4), Kokkos::ALL));
+                KOKKOS_LAMBDA(int i) {
+                    double const inverse_density = 1.0 / q(0, i);
+                    for (int c = 0; c < 3; ++c)
+                        output(c, i) = inverse_density * q(c + 1, i);
+                });
     }
     void evaluate(Field const& q, Field const& result, bool reconstruct_pressure = false)
     {
